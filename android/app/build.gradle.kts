@@ -24,9 +24,18 @@ android {
         multiDexEnabled = true
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../kubadilishana-release.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "kubadilishana2024"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "kubadilishana"
+            keyPassword = System.getenv("KEYSTORE_PASSWORD") ?: "kubadilishana2024"
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

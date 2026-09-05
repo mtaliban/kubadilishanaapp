@@ -43,7 +43,14 @@ jobs:
       - name: Run unit tests
         run: flutter test --no-pub
 
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/kubadilishana-release.jks
+
       - name: Build Release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: flutter build apk --release --target-platform android-arm64 --split-per-abi
 
       - name: Rename APK (weka jina rahisi)
