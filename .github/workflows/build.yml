@@ -2,11 +2,11 @@ name: Build & Release APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
     tags:
       - 'v*'          # v1.0.0, v1.2.3 — inaunda GitHub Release
   pull_request:
-    branches: [main]  # PR: build tu, hakuna release
+    branches: [main, master]  # PR: build tu, hakuna release
 
 jobs:
   build:
