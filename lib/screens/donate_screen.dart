@@ -1,4 +1,4 @@
-/// Donate screen — manual SMS verification payment flow.
+/// Donate screen — manual SMS verification payment flow + history tab.
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
@@ -12,7 +12,8 @@ class DonateScreen extends StatefulWidget {
   State<DonateScreen> createState() => _DonateScreenState();
 }
 
-class _DonateScreenState extends State<DonateScreen> {
+class _DonateScreenState extends State<DonateScreen>
+    with SingleTickerProviderStateMixin {
   // status: idle | sending | processing | confirmed | failed
   String _status = 'idle';
   String _orderId = '';
@@ -21,13 +22,37 @@ class _DonateScreenState extends State<DonateScreen> {
   Map<String, dynamic>? _donationInfo;
   bool _infoLoading = true;
 
+  // History tab
+  late TabController _tabCtrl;
+  List<dynamic> _history = [];
+  bool _historyLoading = false;
+  String _histFilter = 'all';
+
   final _smsCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _tabCtrl = TabController(length: 2, vsync: this);
+    _tabCtrl.addListener(() {
+      if (_tabCtrl.index == 1 && _history.isEmpty) _loadHistory();
+    });
     _loadInfo();
     _setupWS();
+  }
+
+  Future<void> _loadHistory() async {
+    setState(() => _historyLoading = true);
+    try {
+      final res = await ApiService().getPaymentHistory();
+      final data = res.data as Map<String, dynamic>;
+      setState(() {
+        _history = data['payments'] ?? data['items'] ?? [];
+        _historyLoading = false;
+      });
+    } catch (_) {
+      setState(() => _historyLoading = false);
+    }
   }
 
   Future<void> _loadInfo() async {
@@ -65,6 +90,7 @@ class _DonateScreenState extends State<DonateScreen> {
 
   @override
   void dispose() {
+    _tabCtrl.dispose();
     _smsCtrl.dispose();
     super.dispose();
   }
@@ -72,13 +98,26 @@ class _DonateScreenState extends State<DonateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Fanya Mchango')),
-      body: _infoLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: _buildBody(),
-            ),
+      appBar: AppBar(
+        title: const Text('Michango'),
+        bottom: TabBar(
+          controller: _tabCtrl,
+          tabs: const [
+            Tab(icon: Icon(Icons.payment), text: 'Lipa'),
+            Tab(icon: Icon(Icons.history), text: 'Historia'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabCtrl,
+        children: [
+          _infoLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16), child: _buildBody()),
+          _buildHistory(),
+        ],
+      ),
     );
   }
 
@@ -282,5 +321,116 @@ class _DonateScreenState extends State<DonateScreen> {
         _error = msg;
       });
     }
+  }
+
+  Widget _buildHistory() {
+    final filtered = _histFilter == 'all'
+        ? _history
+        : _history.where((p) => (p['status'] ?? '') == _histFilter).toList();
+
+    return Column(
+      children: [
+        // Filter chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(children: [
+            _histChip('all', 'Zote'),
+            _histChip('verifying', 'Inasubiri'),
+            _histChip('approved', 'Imekubaliwa'),
+            _histChip('rejected', 'Imekataliwa'),
+          ]),
+        ),
+        Expanded(
+          child: _historyLoading
+              ? const Center(child: CircularProgressIndicator())
+              : filtered.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.receipt_long,
+                              size: 48, color: AppColors.textLight),
+                          const SizedBox(height: 12),
+                          const Text('Hakuna historia ya malipo',
+                              style:
+                                  TextStyle(color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadHistory,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, i) => _histTile(filtered[i]),
+                      ),
+                    ),
+        ),
+      ],
+    );
+  }
+
+  Widget _histChip(String val, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text(label, style: const TextStyle(fontSize: 12)),
+        selected: _histFilter == val,
+        onSelected: (_) => setState(() => _histFilter = val),
+        selectedColor: AppColors.primary,
+        labelStyle:
+            TextStyle(color: _histFilter == val ? Colors.white : null),
+      ),
+    );
+  }
+
+  Widget _histTile(Map<String, dynamic> p) {
+    final status = p['status'] ?? '';
+    final amount = p['amount'] ?? 0;
+    final date = (p['created_at'] ?? '').toString().split('T').first;
+    Color statusColor;
+    IconData statusIcon;
+    switch (status) {
+      case 'approved':
+        statusColor = AppColors.success;
+        statusIcon = Icons.check_circle;
+        break;
+      case 'rejected':
+        statusColor = AppColors.error;
+        statusIcon = Icons.cancel;
+        break;
+      default:
+        statusColor = AppColors.warning;
+        statusIcon = Icons.hourglass_top;
+    }
+    return Card(
+      margin: const EdgeInsets.only(bottom: 6),
+      child: ListTile(
+        leading: Icon(statusIcon, color: statusColor, size: 28),
+        title: Text('TZS ${amount.toString()}',
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(
+          p['sms_text'] ?? '',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(status,
+                style: TextStyle(
+                    fontSize: 11,
+                    color: statusColor,
+                    fontWeight: FontWeight.bold)),
+            Text(date,
+                style: const TextStyle(
+                    fontSize: 10, color: AppColors.textLight)),
+          ],
+        ),
+      ),
+    );
   }
 }

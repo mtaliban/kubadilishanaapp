@@ -20,11 +20,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _scope = 'incoming';
   int _currentIndex = 0;
 
+  // Active announcements banner
+  List<dynamic> _announcements = [];
+
   @override
   void initState() {
     super.initState();
     _loadBoard();
+    _loadAnnouncements();
     _setupRealtime();
+  }
+
+  Future<void> _loadAnnouncements() async {
+    try {
+      final res = await ApiService().getAnnouncements();
+      final data = res.data as Map<String, dynamic>;
+      if (mounted) {
+        setState(() {
+          _announcements = data['announcements'] ?? data['items'] ?? [];
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadBoard() async {
@@ -70,6 +86,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Column(
         children: [
+          // Announcement banner
+          if (_announcements.isNotEmpty)
+            _AnnouncementBanner(
+              announcements: _announcements,
+              onDismiss: (id) async {
+                await ApiService().dismissAnnouncement(id);
+                setState(() {
+                  _announcements.removeWhere(
+                      (a) => (a['announcement_id'] ?? a['_id']) == id);
+                });
+              },
+            ),
           // Scope toggle
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -401,6 +429,107 @@ class _BoardCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AnnouncementBanner extends StatefulWidget {
+  final List<dynamic> announcements;
+  final void Function(String id) onDismiss;
+
+  const _AnnouncementBanner(
+      {required this.announcements, required this.onDismiss});
+
+  @override
+  State<_AnnouncementBanner> createState() => _AnnouncementBannerState();
+}
+
+class _AnnouncementBannerState extends State<_AnnouncementBanner> {
+  int _idx = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.announcements.isEmpty) return const SizedBox.shrink();
+    if (_idx >= widget.announcements.length) _idx = 0;
+    final a = widget.announcements[_idx] as Map<String, dynamic>;
+    final id = (a['announcement_id'] ?? a['_id'] ?? '').toString();
+    final title = a['title'] ?? '';
+    final message = a['message'] ?? a['body'] ?? '';
+    final total = widget.announcements.length;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.primary.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 4, 0),
+            child: Row(
+              children: [
+                const Icon(Icons.campaign,
+                    size: 16, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(title,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary)),
+                ),
+                if (total > 1)
+                  Text('${ _idx + 1}/$total',
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textLight)),
+                IconButton(
+                  icon:
+                      const Icon(Icons.close, size: 16, color: AppColors.textLight),
+                  onPressed: () {
+                    if (id.isNotEmpty) widget.onDismiss(id);
+                  },
+                  constraints: const BoxConstraints(),
+                  padding: const EdgeInsets.all(8),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+            child: Text(message,
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis),
+          ),
+          if (total > 1)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Row(
+                children: [
+                  TextButton(
+                    onPressed: _idx > 0
+                        ? () => setState(() => _idx--)
+                        : null,
+                    child: const Text('← Iliyopita',
+                        style: TextStyle(fontSize: 11)),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: _idx < total - 1
+                        ? () => setState(() => _idx++)
+                        : null,
+                    child: const Text('Inayofuata →',
+                        style: TextStyle(fontSize: 11)),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
