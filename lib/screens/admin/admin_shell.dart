@@ -12,6 +12,9 @@ import 'admin_feedback_page.dart';
 import 'admin_announcements_page.dart';
 import 'admin_password_resets_page.dart';
 import 'admin_reports_page.dart';
+import 'admin_events_page.dart';
+import 'admin_matches_page.dart';
+import 'admin_real_matches_page.dart';
 
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
@@ -33,6 +36,9 @@ class _AdminShellState extends State<AdminShell> {
     const AdminAnnouncementsPage(),
     const AdminPasswordResetsPage(),
     const AdminReportsPage(),
+    const AdminEventsPage(),
+    const AdminMatchesPage(),
+    const AdminRealMatchesPage(),
   ];
 
   final _titles = const [
@@ -45,9 +51,12 @@ class _AdminShellState extends State<AdminShell> {
     'Matangazo',
     'Nenosiri',
     'Ripoti',
+    'Events',
+    'Mikataba',
+    'Real Matches',
   ];
 
-  final _icons = const [
+  final _icons = [
     Icons.dashboard,
     Icons.people,
     Icons.storage,
@@ -57,6 +66,9 @@ class _AdminShellState extends State<AdminShell> {
     Icons.campaign,
     Icons.lock_reset,
     Icons.assessment,
+    Icons.timeline,
+    Icons.people,
+    Icons.star,
   ];
 
   @override
