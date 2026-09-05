@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.kubadilishana.app"
-    compileSdk = 33
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
