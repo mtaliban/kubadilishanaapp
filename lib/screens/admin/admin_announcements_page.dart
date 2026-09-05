@@ -117,12 +117,15 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                         fontWeight: FontWeight.bold,
                         fontSize: 16)),
                 const SizedBox(height: 8),
-                ..._announcements.map((a) => _AnnouncementTile(
-                      item: a,
-                      onDelete: () => _delete(
-                          (a['announcement_id'] ?? a['_id'] ?? '')
-                              .toString()),
-                    )),
+                ..._announcements.map((a) {
+                      final id = (a['announcement_id'] ?? a['_id'] ?? '')
+                          .toString();
+                      return _AnnouncementTile(
+                        item: a,
+                        onDelete: () => _delete(id),
+                        onResend: () => _resend(id),
+                      );
+                    }),
               ],
             ),
           );
@@ -162,12 +165,32 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       _load();
     } catch (_) {}
   }
+
+  Future<void> _resend(String id) async {
+    if (id.isEmpty) return;
+    try {
+      await ApiService().post('/admin/announcements/$id/resend');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Tangazo limetumwa tena!'),
+            backgroundColor: AppColors.success));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Hitilafu: $e'),
+            backgroundColor: AppColors.error));
+      }
+    }
+  }
 }
 
 class _AnnouncementTile extends StatelessWidget {
   final dynamic item;
   final VoidCallback onDelete;
-  const _AnnouncementTile({required this.item, required this.onDelete});
+  final VoidCallback onResend;
+  const _AnnouncementTile(
+      {required this.item, required this.onDelete, required this.onResend});
 
   @override
   Widget build(BuildContext context) {
@@ -191,13 +214,27 @@ class _AnnouncementTile extends StatelessWidget {
                         fontSize: 14),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline,
-                      size: 18, color: AppColors.error),
-                  tooltip: 'Futa',
-                  onPressed: onDelete,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.send,
+                          size: 18, color: AppColors.primary),
+                      tooltip: 'Tuma Tena',
+                      onPressed: onResend,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          size: 18, color: AppColors.error),
+                      tooltip: 'Futa',
+                      onPressed: onDelete,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
               ],
             ),

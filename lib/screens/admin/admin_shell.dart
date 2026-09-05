@@ -15,6 +15,8 @@ import 'admin_reports_page.dart';
 import 'admin_events_page.dart';
 import 'admin_matches_page.dart';
 import 'admin_real_matches_page.dart';
+import 'admin_monitoring_page.dart';
+import 'admin_csv_page.dart';
 
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
@@ -39,6 +41,8 @@ class _AdminShellState extends State<AdminShell> {
     const AdminEventsPage(),
     const AdminMatchesPage(),
     const AdminRealMatchesPage(),
+    const AdminMonitoringPage(),
+    const AdminCsvPage(),
   ];
 
   final _titles = const [
@@ -54,6 +58,8 @@ class _AdminShellState extends State<AdminShell> {
     'Events',
     'Mikataba',
     'Real Matches',
+    'Ufuatiliaji',
+    'CSV Export',
   ];
 
   final _icons = [
@@ -69,6 +75,8 @@ class _AdminShellState extends State<AdminShell> {
     Icons.timeline,
     Icons.people,
     Icons.star,
+    Icons.monitor_heart,
+    Icons.download,
   ];
 
   @override
