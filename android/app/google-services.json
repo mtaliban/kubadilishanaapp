@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "598883451679",
+    "project_id": "kubadilisha-55ceb",
+    "storage_bucket": "kubadilisha-55ceb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598883451679:android:0445f7d75c44a808eba62a",
+        "android_client_info": {
+          "package_name": "com.kubadilishana.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5-1l21IvP10lBXvZw3gTQsV-oIPGDVzE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
