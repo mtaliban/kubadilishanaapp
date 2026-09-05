@@ -242,7 +242,7 @@ class AuthProvider extends ChangeNotifier {
       }
     });
 
-    _notif.init();
+    _notif.init().catchError((_) {});
   }
 
   String _parseError(dynamic e) {

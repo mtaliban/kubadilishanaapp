@@ -1,4 +1,5 @@
 /// Kubadilishana — main entry point with all routes.
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -24,10 +25,19 @@ import 'screens/call_history_screen.dart';
 import 'screens/settings_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  ApiService().init();
-  runApp(const KubadilishanaApp());
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    try {
+      await Firebase.initializeApp();
+    } catch (_) {
+      // Firebase itaendelea bila FCM kama haiwezi kuanzishwa
+    }
+    ApiService().init();
+    runApp(const KubadilishanaApp());
+  }, (error, stack) {
+    // Catch unhandled exceptions — app haitaanguka
+    debugPrint('Unhandled error: $error');
+  });
 }
 
 class KubadilishanaApp extends StatelessWidget {
