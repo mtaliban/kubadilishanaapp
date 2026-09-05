@@ -116,11 +116,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _resetPassword() async {
     setState(() => _loading = true);
     try {
-      await ApiService().resetPassword({
-        'phone': _phoneCtrl.text.trim(),
-        'code': _codeCtrl.text.trim(),
-        'new_password': _passwordCtrl.text,
-      });
+      await ApiService().resetPassword(
+        _phoneCtrl.text.trim(),
+        _passwordCtrl.text,
+      );
       setState(() { _step = 2; _loading = false; });
     } catch (e) {
       setState(() => _loading = false);

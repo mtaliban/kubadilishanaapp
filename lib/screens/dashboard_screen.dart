@@ -1,5 +1,4 @@
-/// Main dashboard — board cards with real-time WebSocket updates.
-import 'dart:convert';
+/// Main dashboard — board cards from /matches/board with real-time updates.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,10 +15,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  List<dynamic> _boardCards = [];
+  List<dynamic> _candidates = [];
   bool _loading = true;
-  String _filterMkoa = '';
-  String _filterKada = '';
+  String _scope = 'incoming';
   int _currentIndex = 0;
 
   @override
@@ -30,13 +28,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadBoard() async {
+    setState(() => _loading = true);
     try {
-      final res = await ApiService().getDashboard();
+      final res = await ApiService().getDashboard(scope: _scope);
+      final data = res.data as Map<String, dynamic>;
       setState(() {
-        _boardCards = res.data is List ? res.data : (res.data['users'] ?? []);
+        _candidates = data['candidates'] ?? [];
         _loading = false;
       });
-    } catch (e) {
+    } catch (_) {
       setState(() => _loading = false);
     }
   }
@@ -47,6 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ws.on('user.changed', (_) => _loadBoard());
     ws.on('user.registered', (_) => _loadBoard());
     ws.on('user.removed', (_) => _loadBoard());
+    ws.on('user.verified', (_) => _loadBoard());
   }
 
   @override
@@ -67,76 +68,117 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _boardCards.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.people_outline,
-                          size: 64, color: AppColors.textLight),
-                      const SizedBox(height: 16),
-                      Text(
-                        auth.isVerified
-                            ? 'Hakuna watu kwa sasa'
-                            : 'Lipia TZS 2,000 kuona namba za wasioaji',
-                        style: const TextStyle(
-                            fontSize: 16, color: AppColors.textSecondary),
-                        textAlign: TextAlign.center,
-                      ),
-                      if (!auth.isVerified) ...[
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/donate'),
-                          icon: const Icon(Icons.payment),
-                          label: const Text('Lipia Sasa'),
+      body: Column(
+        children: [
+          // Scope toggle
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(
+                    value: 'incoming', label: Text('Wanaokuja')),
+                ButtonSegment(value: 'all', label: Text('Wote')),
+              ],
+              selected: {_scope},
+              onSelectionChanged: (s) {
+                setState(() => _scope = s.first);
+                _loadBoard();
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _candidates.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.people_outline,
+                                size: 64, color: AppColors.textLight),
+                            const SizedBox(height: 16),
+                            Text(
+                              auth.isVerified
+                                  ? 'Hakuna watu kwa sasa'
+                                  : 'Lipia TZS 2,000 kuona namba za wasioaji',
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.textSecondary),
+                              textAlign: TextAlign.center,
+                            ),
+                            if (!auth.isVerified) ...[
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () => Navigator.pushNamed(
+                                    context, '/donate'),
+                                icon: const Icon(Icons.payment),
+                                label: const Text('Lipia Sasa'),
+                              ),
+                            ],
+                          ],
                         ),
-                      ],
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadBoard,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: _boardCards.length,
-                    itemBuilder: (context, i) {
-                      final card = _boardCards[i];
-                      return _BoardCard(
-                        card: card,
-                        isVerified: auth.isVerified,
-                        onTap: () => _showCardDetail(card),
-                      );
-                    },
-                  ),
-                ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _loadBoard,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          itemCount: _candidates.length,
+                          itemBuilder: (context, i) {
+                            final card = _candidates[i];
+                            return _BoardCard(
+                              card: card,
+                              isVerified: auth.isVerified,
+                              onTap: () => _showCardDetail(card),
+                            );
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (i) {
           setState(() => _currentIndex = i);
           switch (i) {
-            case 0: break; // Dashboard
-            case 1: Navigator.pushNamed(context, '/donate'); break;
-            case 2: Navigator.pushNamed(context, '/feedback'); break;
-            case 3: Navigator.pushNamed(context, '/profile'); break;
+            case 0:
+              break;
+            case 1:
+              Navigator.pushNamed(context, '/donate');
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/feedback');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/profile');
+              break;
           }
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textLight,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Nyumbani'),
-          BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Michango'),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Maoni'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Wasifu'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home), label: 'Nyumbani'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.payment), label: 'Michango'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.message), label: 'Maoni'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person), label: 'Wasifu'),
         ],
       ),
     );
   }
 
   void _showCardDetail(dynamic card) {
+    final contactEnabled = card['contact_enabled'] ?? false;
+    final isVerified = card['is_verified'] ?? false;
+    final auth = context.read<AuthProvider>();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -170,13 +212,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: const TextStyle(
                     fontSize: 20, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 4),
+              if (isVerified)
+                const Text('✓ Amethibitishwa',
+                    style:
+                        TextStyle(color: AppColors.success, fontSize: 12)),
               const SizedBox(height: 8),
-              _detailRow(Icons.school, card['cadre_code'] ?? ''),
-              _detailRow(Icons.location_on,
+              _detailRow(Icons.badge,
+                  card['cadre_display'] ?? card['cadre_code'] ?? ''),
+              _detailRow(
+                  Icons.location_on,
                   card['current_station']?['region_name'] ?? ''),
+              _detailRow(
+                  Icons.map, card['current_station']?['district_name'] ?? ''),
+              _detailRow(
+                  Icons.business,
+                  card['current_station']?['facility_name'] ?? ''),
               const Divider(height: 24),
-              // Action buttons
-              if (card['phone_primary'] != null) ...[
+
+              // Contact buttons — only if user isVerified and contactEnabled
+              if (auth.isVerified && contactEnabled && card['phone_primary'] != null) ...[
                 _actionButton(
                   'Piga Simu',
                   Icons.phone,
@@ -200,6 +255,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   () => launchUrl(Uri.parse(
                       'https://wa.me/${card['phone_primary']}')),
                 ),
+              ] else if (!auth.isVerified) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: AppColors.warning.withOpacity(0.3)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.lock, color: AppColors.warning, size: 16),
+                      SizedBox(width: 8),
+                      Text('Lipia kuona namba za mawasiliano',
+                          style: TextStyle(
+                              fontSize: 13, color: AppColors.warning)),
+                    ],
+                  ),
+                ),
               ],
             ],
           ),
@@ -209,13 +283,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _detailRow(IconData icon, String text) {
+    if (text.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Icon(icon, size: 16, color: AppColors.textSecondary),
           const SizedBox(width: 8),
-          Text(text, style: const TextStyle(color: AppColors.textSecondary)),
+          Text(text,
+              style: const TextStyle(color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -235,7 +311,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-/// Individual board card widget.
 class _BoardCard extends StatelessWidget {
   final dynamic card;
   final bool isVerified;
@@ -251,11 +326,13 @@ class _BoardCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final station = card['current_station'] ?? {};
     final name = card['full_name'] ?? 'Mtumiaji';
-    final cadre = card['cadre_code'] ?? '';
+    final cadre = card['cadre_display'] ?? card['cadre_code'] ?? '';
     final region = station['region_name'] ?? '';
     final phone = card['phone_primary'] ?? '';
+    final online = card['online'] ?? false;
+    final contactEnabled = card['contact_enabled'] ?? false;
     final initials =
-        name.split(' ').map((w) => w[0]).take(2).join().toUpperCase();
+        name.split(' ').map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -266,20 +343,37 @@ class _BoardCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Avatar
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: AppColors.primaryLight,
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary),
-                ),
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: AppColors.primaryLight,
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary),
+                    ),
+                  ),
+                  if (online)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: Colors.white, width: 1.5),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: 12),
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,22 +384,20 @@ class _BoardCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text('$cadre • $region',
                         style: const TextStyle(
-                            fontSize: 12, color: AppColors.textSecondary)),
+                            fontSize: 12,
+                            color: AppColors.textSecondary)),
                   ],
                 ),
               ),
-              // Phone (if verified)
-              if (isVerified && phone.isNotEmpty)
-                Column(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.phone,
-                          size: 20, color: Colors.green),
-                      onPressed: () =>
-                          launchUrl(Uri.parse('tel:$phone')),
-                    ),
-                  ],
-                ),
+              if (isVerified && contactEnabled && phone.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.phone,
+                      size: 20, color: Colors.green),
+                  onPressed: () => launchUrl(Uri.parse('tel:$phone')),
+                )
+              else if (!isVerified)
+                const Icon(Icons.lock_outline,
+                    size: 18, color: AppColors.textLight),
             ],
           ),
         ),

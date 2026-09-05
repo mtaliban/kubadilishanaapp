@@ -112,7 +112,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
           onPressed: () async {
             if (ctrl.text.trim().isEmpty) return;
             try {
-              await ApiService().replyFeedback(f['_id'], ctrl.text.trim());
+              await ApiService().adminReplyFeedback(f['_id'] ?? f['id'], ctrl.text.trim());
               _load();
             } catch (_) {}
           },

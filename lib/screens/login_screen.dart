@@ -26,15 +26,15 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
-    if (phone.isEmpty || password.isEmpty) {
+    if (phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Weka namba ya simu na nenosiri')),
+        const SnackBar(content: Text('Weka namba ya simu')),
       );
       return;
     }
 
     final auth = context.read<AuthProvider>();
-    final ok = await auth.login(phone, password);
+    final ok = await auth.login(phone, password: password.isNotEmpty ? password : null);
 
     if (ok && mounted) {
       if (auth.isAdmin) {

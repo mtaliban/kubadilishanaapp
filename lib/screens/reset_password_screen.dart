@@ -105,10 +105,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
     setState(() { _loading = true; _error = null; });
     try {
-      await ApiService().resetPassword({
-        'phone': widget.phone,
-        'new_password': pw,
-      });
+      await ApiService().resetPassword(widget.phone, pw);
       setState(() { _success = true; _loading = false; });
     } catch (e) {
       setState(() { _error = 'Hitilafu — jaribu tena'; _loading = false; });

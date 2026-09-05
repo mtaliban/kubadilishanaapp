@@ -37,6 +37,9 @@ jobs:
         run: flutter analyze --no-fatal-infos
         continue-on-error: true   # usikatize build kwa lint warnings
 
+      - name: Run unit tests
+        run: flutter test --no-pub
+
       - name: Build Release APK
         run: flutter build apk --release --target-platform android-arm64 --split-per-abi
 

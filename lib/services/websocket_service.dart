@@ -1,4 +1,4 @@
-/// Real-time WebSocket connection for live board updates + notifications.
+/// Real-time WebSocket — live board updates, notifications, presence.
 import 'dart:async';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -17,13 +17,15 @@ class WebSocketService {
   bool _connected = false;
   bool _stopped = false;
   String? _token;
-  final Map<String, WsEventCallback> _listeners = {};
+  int _reconnectDelay = 1;
+  final Map<String, List<WsEventCallback>> _listeners = {};
 
   bool get isConnected => _connected;
 
   void connect(String token) {
     _token = token;
     _stopped = false;
+    _reconnectDelay = 1;
     _doConnect();
   }
 
@@ -39,14 +41,16 @@ class WebSocketService {
   void _doConnect() {
     if (_stopped || _token == null) return;
     try {
-      final wsUrl = '${ApiConfig.wsUrl}?token=$_token';
+      final wsUrl = '${ApiConfig.wsUrl}/ws?token=$_token';
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      _connected = false;
 
       _channel!.stream.listen(
         (message) {
           _connected = true;
+          _reconnectDelay = 1; // reset on successful message
           try {
-            final event = jsonDecode(message) as Map<String, dynamic>;
+            final event = jsonDecode(message as String) as Map<String, dynamic>;
             _handleEvent(event);
           } catch (_) {}
         },
@@ -60,11 +64,13 @@ class WebSocketService {
         },
       );
 
-      // Ping every 30s to keep alive
+      // Ping kila sekunde 30 — type: ping (sio event: ping)
       _pingTimer?.cancel();
       _pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-        if (_connected && _channel != null) {
-          _channel!.sink.add(jsonEncode({'event': 'ping'}));
+        if (_channel != null) {
+          try {
+            _channel!.sink.add(jsonEncode({'type': 'ping'}));
+          } catch (_) {}
         }
       });
     } catch (_) {
@@ -74,28 +80,47 @@ class WebSocketService {
 
   void _scheduleReconnect() {
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(const Duration(seconds: 3), _doConnect);
+    final delay = _reconnectDelay;
+    _reconnectDelay = (_reconnectDelay * 2).clamp(1, 30);
+    _reconnectTimer =
+        Timer(Duration(seconds: delay), _doConnect);
   }
 
   void _handleEvent(Map<String, dynamic> event) {
-    final type = event['event'] as String?;
+    final type = (event['event'] ?? event['type']) as String?;
     if (type == null) return;
-    _listeners[type]?.call(event);
-    _listeners['*']?.call(event); // wildcard listener
+    if (type == 'pong') return; // ignore server pong
+
+    // Dispatch to specific listeners
+    final specific = _listeners[type];
+    if (specific != null) {
+      for (final cb in List.of(specific)) {
+        try { cb(event); } catch (_) {}
+      }
+    }
+    // Wildcard
+    final wild = _listeners['*'];
+    if (wild != null) {
+      for (final cb in List.of(wild)) {
+        try { cb(event); } catch (_) {}
+      }
+    }
   }
 
-  /// Listen for a specific event type.
+  /// Sikiliza event maalum.
   void on(String eventType, WsEventCallback callback) {
-    _listeners[eventType] = callback;
+    _listeners.putIfAbsent(eventType, () => []).add(callback);
   }
 
-  /// Remove listener.
-  void off(String eventType) {
-    _listeners.remove(eventType);
+  /// Ondoa listener.
+  void off(String eventType, WsEventCallback callback) {
+    _listeners[eventType]?.remove(callback);
   }
 
-  /// Listen for ALL events.
-  void onAny(WsEventCallback callback) {
-    _listeners['*'] = callback;
-  }
+  /// Ondoa WOTE wa event fulani.
+  void offAll(String eventType) => _listeners.remove(eventType);
+
+  /// Sikiliza KILA event (wildcard).
+  void onAny(WsEventCallback callback) =>
+      _listeners.putIfAbsent('*', () => []).add(callback);
 }
