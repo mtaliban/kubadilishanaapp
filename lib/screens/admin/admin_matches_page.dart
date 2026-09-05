@@ -1,4 +1,4 @@
-/// Admin matches page — view all matches/pairings with filters.
+/// Admin matches page — all pairings stored in DB (historical matches).
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../config/theme.dart';
@@ -12,16 +12,7 @@ class AdminMatchesPage extends StatefulWidget {
 class _AdminMatchesPageState extends State<AdminMatchesPage> {
   List<dynamic> _matches = [];
   bool _loading = true;
-  String _region = '';
-  String _cadre = '';
-
-  final _cadres = [
-    {'code': 'P1', 'label': 'Mwalimu wa Msingi'},
-    {'code': 'S1', 'label': 'Mwalimu wa Sekondari'},
-    {'code': 'Nurse', 'label': 'Muuguzi'},
-    {'code': 'Doctor', 'label': 'Daktari'},
-    {'code': 'CO', 'label': 'Afisa wa Afya'},
-  ];
+  int _total = 0;
 
   @override
   void initState() {
@@ -32,12 +23,11 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final res = await ApiService().get('/admin/matches', queryParameters: {
-        'region': _region,
-        'cadre': _cadre,
-      });
+      final res = await ApiService().adminListMatches(limit: 200);
+      final data = res.data as Map<String, dynamic>;
       setState(() {
-        _matches = res.data is List ? res.data : (res.data['matches'] ?? []);
+        _matches = data['matches'] ?? [];
+        _total = data['total'] ?? 0;
         _loading = false;
       });
     } catch (_) {
@@ -49,29 +39,20 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Filters
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              ..._cadres.map((c) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(c['label']!, style: const TextStyle(fontSize: 11)),
-                  selected: _cadre == c['code'],
-                  onSelected: (_) { setState(() => _cadre = _cadre == c['code'] ? '' : c['code']!); _load(); },
-                  selectedColor: AppColors.primary,
-                  labelStyle: TextStyle(color: _cadre == c['code'] ? Colors.white : null),
-                ),
-              )),
-            ],
-          ),
-        ),
         // Count
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Chip(label: Text('${_matches.length} mikataba', style: const TextStyle(fontSize: 12))),
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Chip(
+                  label: Text('$_total mikataba yote',
+                      style: const TextStyle(fontSize: 12))),
+              const Spacer(),
+              IconButton(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  onPressed: _load),
+            ],
+          ),
         ),
         // Match list
         Expanded(
@@ -80,11 +61,16 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: _matches.isEmpty
-                      ? const Center(child: Text('Hakuna mikataba', style: TextStyle(color: AppColors.textSecondary)))
+                      ? const Center(
+                          child: Text('Hakuna mikataba',
+                              style: TextStyle(
+                                  color: AppColors.textSecondary)))
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12),
                           itemCount: _matches.length,
-                          itemBuilder: (context, i) => _matchTile(_matches[i]),
+                          itemBuilder: (context, i) =>
+                              _matchTile(_matches[i]),
                         ),
                 ),
         ),
@@ -93,8 +79,12 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   }
 
   Widget _matchTile(Map<String, dynamic> m) {
-    final a = m['user_a'] ?? {};
-    final b = m['user_b'] ?? {};
+    // Backend returns: {user_a: {full_name, phone, cadre, region, district, destinations}, user_b: {...}}
+    final a = m['user_a'] as Map<String, dynamic>? ?? {};
+    final b = m['user_b'] as Map<String, dynamic>? ?? {};
+    final date =
+        (m['matched_at'] ?? m['created_at'] ?? '').toString().split('T').first;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -104,50 +94,70 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.swap_horiz, color: AppColors.primary, size: 18),
+                const Icon(Icons.swap_horiz,
+                    color: AppColors.primary, size: 18),
                 const SizedBox(width: 8),
-                Text('Mikataba', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const Text('Mkataba',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14)),
                 const Spacer(),
-                Text(m['created_at'] ?? '', style: const TextStyle(fontSize: 10, color: AppColors.textLight)),
+                Text(date,
+                    style: const TextStyle(
+                        fontSize: 10, color: AppColors.textLight)),
               ],
             ),
             const Divider(height: 12),
-            _personRow(a, 'A'),
+            _personRow(a),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 4),
-              child: Icon(Icons.swap_vert, color: AppColors.textLight, size: 16),
+              child: Center(
+                  child: Icon(Icons.swap_vert,
+                      color: AppColors.textLight, size: 16)),
             ),
-            _personRow(b, 'B'),
+            _personRow(b),
           ],
         ),
       ),
     );
   }
 
-  Widget _personRow(Map<String, dynamic> person, String label) {
+  Widget _personRow(Map<String, dynamic> person) {
+    // Backend fields: full_name, phone, cadre, region, district, destinations
+    final name = person['full_name'] ?? '';
+    final cadre = person['cadre'] ?? '';
+    final region = person['region'] ?? '';
+    final dests = (person['destinations'] as List?)?.join(', ') ?? '';
     return Row(
       children: [
         CircleAvatar(
           radius: 16,
           backgroundColor: AppColors.primaryLight,
-          child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
+          child: Text(
+            name.isNotEmpty ? name[0].toUpperCase() : '?',
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary),
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(person['full_name'] ?? '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              Text('${person['cadre_code'] ?? ''} • ${person['region_name'] ?? ''}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              Text(name,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600)),
+              Text(
+                '$cadre • $region${dests.isNotEmpty ? ' → $dests' : ''}',
+                style: const TextStyle(
+                    fontSize: 11, color: AppColors.textSecondary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
-        if (person['phone_primary'] != null)
-          IconButton(
-            icon: const Icon(Icons.phone, size: 16, color: Colors.green),
-            onPressed: () {},
-          ),
       ],
     );
   }

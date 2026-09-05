@@ -25,9 +25,10 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   Future<void> _load() async {
     try {
+      final skip = (_page - 1) * _pageSize;
       final res = await ApiService().adminUsers(params: {
-        'q': _q,
-        'page': _page,
+        if (_q.isNotEmpty) 'q': _q,
+        'skip': skip,
         'limit': _pageSize,
       });
       setState(() {

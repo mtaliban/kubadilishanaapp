@@ -6,14 +6,16 @@ import '../../config/theme.dart';
 class AdminAnnouncementsPage extends StatefulWidget {
   const AdminAnnouncementsPage({super.key});
   @override
-  State<AdminAnnouncementsPage> createState() => _AdminAnnouncementsPageState();
+  State<AdminAnnouncementsPage> createState() =>
+      _AdminAnnouncementsPageState();
 }
 
 class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   List<dynamic> _announcements = [];
   bool _loading = true;
   final _titleCtrl = TextEditingController();
-  final _bodyCtrl = TextEditingController();
+  final _messageCtrl = TextEditingController();
+  String _audience = 'all';
 
   @override
   void initState() {
@@ -23,9 +25,10 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
 
   Future<void> _load() async {
     try {
-      final res = await ApiService().get('/announcements/admin/list');
+      final res = await ApiService().adminListAnnouncements();
+      final data = res.data as Map<String, dynamic>;
       setState(() {
-        _announcements = res.data is List ? res.data : (res.data['announcements'] ?? []);
+        _announcements = data['announcements'] ?? [];
         _loading = false;
       });
     } catch (_) {
@@ -36,7 +39,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   @override
   void dispose() {
     _titleCtrl.dispose();
-    _bodyCtrl.dispose();
+    _messageCtrl.dispose();
     super.dispose();
   }
 
@@ -56,17 +59,44 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Tuma Tangazo Jipya', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text('Tuma Tangazo Jipya',
+                            style:
+                                TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        TextField(
-                          controller: _titleCtrl,
-                          decoration: const InputDecoration(hintText: 'Kichwa cha habari', isDense: true),
+                        // Audience selector
+                        DropdownButtonFormField<String>(
+                          value: _audience,
+                          decoration: const InputDecoration(
+                              labelText: 'Walengwa', isDense: true),
+                          items: const [
+                            DropdownMenuItem(
+                                value: 'all',
+                                child: Text('Wote')),
+                            DropdownMenuItem(
+                                value: 'health',
+                                child: Text('Afya tu')),
+                            DropdownMenuItem(
+                                value: 'education',
+                                child: Text('Elimu tu')),
+                          ],
+                          onChanged: (v) =>
+                              setState(() => _audience = v ?? 'all'),
                         ),
                         const SizedBox(height: 8),
                         TextField(
-                          controller: _bodyCtrl,
+                          controller: _titleCtrl,
+                          decoration: const InputDecoration(
+                              hintText: 'Kichwa cha habari',
+                              isDense: true),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _messageCtrl,
                           maxLines: 3,
-                          decoration: const InputDecoration(hintText: 'Maelezo ya tangazo...', isDense: true),
+                          decoration: const InputDecoration(
+                              hintText:
+                                  'Maelezo ya tangazo...',
+                              isDense: true),
                         ),
                         const SizedBox(height: 8),
                         SizedBox(
@@ -81,41 +111,129 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Matangazo Yaliyotumwa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                    'Matangazo Yaliyotumwa (${_announcements.length})',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16)),
                 const SizedBox(height: 8),
-                ..._announcements.map((a) => Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: const Icon(Icons.campaign, color: AppColors.primary, size: 20),
-                    title: Text(a['title'] ?? '', style: const TextStyle(fontSize: 14)),
-                    subtitle: Text(a['body'] ?? '', style: const TextStyle(fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    trailing: Text(a['created_at'] ?? '', style: const TextStyle(fontSize: 10, color: AppColors.textLight)),
-                  ),
-                )),
+                ..._announcements.map((a) => _AnnouncementTile(
+                      item: a,
+                      onDelete: () => _delete(
+                          (a['announcement_id'] ?? a['_id'] ?? '')
+                              .toString()),
+                    )),
               ],
             ),
           );
   }
 
   Future<void> _send() async {
-    if (_titleCtrl.text.trim().isEmpty || _bodyCtrl.text.trim().isEmpty) return;
+    final title = _titleCtrl.text.trim();
+    final message = _messageCtrl.text.trim();
+    if (title.isEmpty || message.isEmpty) return;
     try {
-      await ApiService().post('/announcements', data: {
-        'title': _titleCtrl.text.trim(),
-        'body': _bodyCtrl.text.trim(),
+      await ApiService().adminSendAnnouncement({
+        'title': title,
+        'message': message,
+        'audience': _audience,
       });
       _titleCtrl.clear();
-      _bodyCtrl.clear();
+      _messageCtrl.clear();
       await _load();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tangazo limetumwa!'), backgroundColor: AppColors.success));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Tangazo limetumwa!'),
+            backgroundColor: AppColors.success));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error));
       }
     }
+  }
+
+  Future<void> _delete(String id) async {
+    if (id.isEmpty) return;
+    try {
+      await ApiService().adminDeleteAnnouncement(id);
+      _load();
+    } catch (_) {}
+  }
+}
+
+class _AnnouncementTile extends StatelessWidget {
+  final dynamic item;
+  final VoidCallback onDelete;
+  const _AnnouncementTile({required this.item, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.campaign,
+                    color: AppColors.primary, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    item['title'] ?? '',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline,
+                      size: 18, color: AppColors.error),
+                  tooltip: 'Futa',
+                  onPressed: onDelete,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              item['message'] ?? item['body'] ?? '',
+              style: const TextStyle(
+                  fontSize: 12, color: AppColors.textSecondary),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text(
+                  'Walengwa: ${item['audience'] ?? 'all'}',
+                  style: const TextStyle(
+                      fontSize: 11, color: AppColors.textLight),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '${item['recipient_count'] ?? 0} watu',
+                  style: const TextStyle(
+                      fontSize: 11, color: AppColors.textLight),
+                ),
+                const Spacer(),
+                Text(
+                  (item['created_at'] ?? '').toString().split('T').first,
+                  style: const TextStyle(
+                      fontSize: 10, color: AppColors.textLight),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

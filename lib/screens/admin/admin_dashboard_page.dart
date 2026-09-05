@@ -24,44 +24,114 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Future<void> _load() async {
     try {
       final res = await ApiService().adminStats();
-      setState(() { _stats = res.data; _loading = false; });
-    } catch (_) { setState(() => _loading = false); }
+      setState(() {
+        _stats = res.data as Map<String, dynamic>;
+        _loading = false;
+      });
+    } catch (_) {
+      setState(() => _loading = false);
+    }
   }
+
+  // Backend returns: {totals: {users, users_health, users_education,
+  //   users_verified, users_active_7d, matches, matches_24h,
+  //   events, events_24h, messages, calls}, by_cadre, by_region, events_by_type}
+  Map<String, dynamic> get _totals =>
+      (_stats['totals'] as Map<String, dynamic>?) ?? {};
 
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Center(child: CircularProgressIndicator());
+    final byRegion = (_stats['by_region'] as List?) ?? [];
+    final byCadre = (_stats['by_cadre'] as List?) ?? [];
+
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.all(12),
         children: [
           _statsGrid([
-            _stat('Watumiaji', '${_stats['total_users'] ?? 0}', Icons.people, AppColors.primary),
-            _stat('Waliolipia', '${_stats['verified_users'] ?? 0}', Icons.check_circle, AppColors.success),
-            _stat('Michango', 'TZS ${(_stats['total_donations'] ?? 0)}', Icons.payment, AppColors.warning),
-            _stat('Malipo Pending', '${_stats['pending_payments'] ?? 0}', Icons.hourglass_empty, AppColors.info),
-            _stat('Mikataba', '${_stats['total_matches'] ?? 0}', Icons.people, Colors.purple),
-            _stat('Maoni', '${_stats['total_feedback'] ?? 0}', Icons.message, Colors.teal),
-            _stat('Matangazo', '${_stats['total_announcements'] ?? 0}', Icons.campaign, Colors.orange),
-            _stat('Nenosiri', '${_stats['pending_resets'] ?? 0}', Icons.lock_reset, Colors.brown),
+            _stat('Watumiaji', '${_totals['users'] ?? 0}',
+                Icons.people, AppColors.primary),
+            _stat('Waliolipia', '${_totals['users_verified'] ?? 0}',
+                Icons.check_circle, AppColors.success),
+            _stat('Mikataba', '${_totals['matches'] ?? 0}',
+                Icons.swap_horiz, Colors.purple),
+            _stat('Mikataba (24h)', '${_totals['matches_24h'] ?? 0}',
+                Icons.timeline, Colors.indigo),
+            _stat('Afya', '${_totals['users_health'] ?? 0}',
+                Icons.local_hospital, AppColors.error),
+            _stat('Elimu', '${_totals['users_education'] ?? 0}',
+                Icons.school, AppColors.info),
+            _stat('Mawasiliano', '${_totals['calls'] ?? 0}',
+                Icons.phone_in_talk, Colors.teal),
+            _stat('Hai (7 siku)', '${_totals['users_active_7d'] ?? 0}',
+                Icons.online_prediction, AppColors.warning),
           ]),
           const SizedBox(height: 12),
+
+          // Quick info card
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Taarifa za Haraka', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text('Taarifa za Haraka',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
                   const Divider(),
-                  _quickInfo('Watumiaji Wapya (wiki hii)', '${_stats['new_users_week'] ?? 0}'),
-                  _quickInfo('Michango ya Wiki', 'TZS ${_stats['donations_week'] ?? 0}'),
-                  _quickInfo('Mitandao ya Leo', '${_stats['matches_today'] ?? 0}'),
+                  _quickInfo('Majukumu (events jumla)',
+                      '${_totals['events'] ?? 0}'),
+                  _quickInfo('Majukumu (24h)',
+                      '${_totals['events_24h'] ?? 0}'),
+                  _quickInfo('Ujumbe wote',
+                      '${_totals['messages'] ?? 0}'),
                 ],
               ),
             ),
           ),
+          const SizedBox(height: 12),
+
+          // Top regions
+          if (byRegion.isNotEmpty) ...[
+            const Text('Mikoa Inayoongoza',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 8),
+            ...byRegion.take(5).map((r) => Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.location_on,
+                        size: 18, color: AppColors.primary),
+                    title: Text(r['region'] ?? '',
+                        style: const TextStyle(fontSize: 14)),
+                    trailing: Text('${r['count'] ?? 0}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold)),
+                  ),
+                )),
+          ],
+          const SizedBox(height: 12),
+
+          // Top cadres
+          if (byCadre.isNotEmpty) ...[
+            const Text('Kada Inayoongoza',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 8),
+            ...byCadre.take(5).map((c) => Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.badge,
+                        size: 18, color: AppColors.primary),
+                    title: Text(
+                        '${c['cadre'] ?? ''} (${c['category'] ?? ''})',
+                        style: const TextStyle(fontSize: 14)),
+                    trailing: Text('${c['count'] ?? 0}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold)),
+                  ),
+                )),
+          ],
         ],
       ),
     );
@@ -79,7 +149,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
-  Widget _stat(String label, String value, IconData icon, Color color) {
+  Widget _stat(
+      String label, String value, IconData icon, Color color) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -87,7 +158,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8)),
               child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: 12),
@@ -96,8 +169,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  Text(value,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(label,
+                      style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -114,7 +192,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: 13)),
         ],
       ),
     );

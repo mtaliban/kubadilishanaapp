@@ -125,7 +125,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                Text(a['body'] ?? '',
+                                Text(a['message'] ?? a['body'] ?? '',
                                     style: const TextStyle(
                                         fontSize: 14, height: 1.5)),
                                 const SizedBox(height: 8),
