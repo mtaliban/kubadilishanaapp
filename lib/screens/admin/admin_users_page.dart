@@ -1,5 +1,6 @@
 /// Admin users page — list, search, create, edit, delete users.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 import '../../config/theme.dart';
 
@@ -43,8 +44,24 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
+        Column(children: _buildContent(context)),
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton(
+            onPressed: _showCreateDialog,
+            tooltip: 'Ongeza Mtumiaji',
+            child: const Icon(Icons.person_add),
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildContent(BuildContext context) {
+    return [
         // Search bar
         Padding(
           padding: const EdgeInsets.all(12),
@@ -99,13 +116,11 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               ],
             ),
           ),
-      ],
-    );
+    ];
   }
 
   Widget _userTile(Map<String, dynamic> u) {
     final isAdmin = u['is_admin'] ?? false;
-    final verified = u['is_verified'] ?? false;
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
       child: ListTile(
@@ -126,7 +141,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         trailing: PopupMenuButton<String>(
           itemBuilder: (context) => [
             const PopupMenuItem(value: 'view', child: Text('Angalia')),
-            const PopupMenuItem(value: 'edit', child: Text('Hariri')),
+            const PopupMenuItem(value: 'password', child: Text('Angalia Nywila')),
+            const PopupMenuItem(value: 'contact', child: Text('Badilisha Mawasiliano')),
             if (isAdmin)
               const PopupMenuItem(value: 'revoke', child: Text('Ondoa Admin')),
             if (!isAdmin)
@@ -182,10 +198,89 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       case 'view':
         _showUserDetail(u);
         break;
-      case 'edit':
-        // TODO: edit dialog
+      case 'password':
+        _showPassword(u['_id']?.toString() ?? '');
+        break;
+      case 'contact':
+        await ApiService().adminToggleContact(u['_id']?.toString() ?? '');
+        _load();
         break;
     }
+  }
+
+  Future<void> _showPassword(String userId) async {
+    if (userId.isEmpty) return;
+    try {
+      final res = await ApiService().get('/admin/users/$userId/password');
+      final pw = res.data['password'] ?? res.data['plain_password'] ?? '—';
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Nywila ya Mtumiaji'),
+          content: SelectableText(pw,
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: pw));
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Nywila imenakiliwa')));
+              },
+              child: const Text('Nakili'),
+            ),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Funga')),
+          ],
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Hitilafu kupata nywila')));
+    }
+  }
+
+  Future<void> _showCreateDialog() async {
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final pwCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ongeza Mtumiaji'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Jina Kamili')),
+            const SizedBox(height: 8),
+            TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Simu'), keyboardType: TextInputType.phone),
+            const SizedBox(height: 8),
+            TextField(controller: pwCtrl, decoration: const InputDecoration(labelText: 'Nywila'), obscureText: true),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Ghairi')),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameCtrl.text.isEmpty || phoneCtrl.text.isEmpty) return;
+              try {
+                await ApiService().adminCreateUser({
+                  'full_name': nameCtrl.text.trim(),
+                  'phone_primary': phoneCtrl.text.trim(),
+                  if (pwCtrl.text.isNotEmpty) 'password': pwCtrl.text,
+                });
+                Navigator.pop(ctx);
+                _load();
+              } catch (_) {}
+            },
+            child: const Text('Ongeza'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showUserDetail(Map<String, dynamic> u) {
