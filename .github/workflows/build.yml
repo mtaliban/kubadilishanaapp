@@ -40,6 +40,9 @@ jobs:
         run: flutter analyze --no-fatal-infos
         continue-on-error: true   # usikatize build kwa lint warnings
 
+      - name: Generate app icons
+        run: dart run flutter_launcher_icons
+
       - name: Run unit tests
         run: flutter test --no-pub
 
