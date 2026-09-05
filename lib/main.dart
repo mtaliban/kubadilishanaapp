@@ -18,6 +18,10 @@ import 'screens/forgot_password_screen.dart';
 import 'screens/admin_login_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/admin/admin_shell.dart';
+import 'screens/my_matches_screen.dart';
+import 'screens/user_profile_screen.dart';
+import 'screens/call_history_screen.dart';
+import 'screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +42,14 @@ class KubadilishanaApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         initialRoute: '/',
+        onGenerateRoute: (settings) {
+          if (settings.name == '/user-profile') {
+            final userId = settings.arguments as String? ?? '';
+            return MaterialPageRoute(
+                builder: (_) => UserProfileScreen(userId: userId));
+          }
+          return null;
+        },
         routes: {
           '/': (_) => const SplashScreen(),
           '/login': (_) => const LoginScreen(),
@@ -52,6 +64,9 @@ class KubadilishanaApp extends StatelessWidget {
           '/reset-password': (_) => const ResetPasswordScreen(phone: ''),
           '/admin-login': (_) => const AdminLoginScreen(),
           '/admin': (_) => const AdminShell(),
+          '/my-matches': (_) => const MyMatchesScreen(),
+          '/call-history': (_) => const CallHistoryScreen(),
+          '/settings': (_) => const SettingsScreen(),
           '/about': (_) => const _ComingSoon('Kuhusu Sisi'),
         },
       ),

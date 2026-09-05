@@ -62,6 +62,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(color: Colors.white70)),
             ),
           IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Mipangilio',
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await auth.logout();

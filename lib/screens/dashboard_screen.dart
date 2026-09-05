@@ -79,6 +79,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () => Navigator.pushNamed(context, '/notifications'),
           ),
           IconButton(
+            icon: const Icon(Icons.people_alt_outlined),
+            tooltip: 'Mikataba Yangu',
+            onPressed: () => Navigator.pushNamed(context, '/my-matches'),
+          ),
+          IconButton(
             icon: const Icon(Icons.person_outline),
             onPressed: () => Navigator.pushNamed(context, '/profile'),
           ),

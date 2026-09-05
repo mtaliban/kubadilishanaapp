@@ -119,7 +119,14 @@ class ApiService {
   Future<Response> getDashboard({String scope = 'incoming', int limit = 100}) =>
       get('/matches/board', queryParameters: {'scope': scope, 'limit': limit});
 
-  // ── Profile ──
+  // ── Matches ──
+  Future<Response> getMyMatches({int limit = 100}) =>
+      get('/matches/me', queryParameters: {'limit': limit});
+  Future<Response> getTrueMatches({int limit = 100}) =>
+      get('/matches/true', queryParameters: {'limit': limit});
+  Future<Response> getMatchStats() => get('/matches/stats');
+
+  // ── Profile / Users ──
   Future<Response> getMyProfile() => get('/users/me');
   Future<Response> updateProfile(Map<String, dynamic> data) =>
       patch('/users/me', data: data);
@@ -128,6 +135,21 @@ class ApiService {
         'current_password': currentPassword,
         'new_password': newPassword,
       });
+  Future<Response> updateNotificationPrefs(Map<String, dynamic> prefs) =>
+      put('/users/me/notification-prefs', data: prefs);
+  Future<Response> getFollowedRegions() => get('/users/me/followed-regions');
+  Future<Response> updateFollowedRegions(List<dynamic> regionIds) =>
+      put('/users/me/followed-regions', data: {'region_ids': regionIds});
+  Future<Response> updateStation(Map<String, dynamic> data) =>
+      put('/users/me/station', data: data);
+  Future<Response> updateDestinations(List<dynamic> destinations) =>
+      put('/users/me/destinations', data: {'destinations': destinations});
+  Future<Response> getUserProfile(String userId) => get('/users/$userId');
+  Future<Response> getOnlineUsers() => get('/users/online');
+  Future<Response> getRecentUsers({int limit = 20}) =>
+      get('/users/recent', queryParameters: {'limit': limit});
+  Future<Response> getRecentlyActiveUsers({int minutes = 15}) =>
+      get('/users/recently-active', queryParameters: {'minutes': minutes});
 
   // ── Locations ──
   Future<Response> getRegions() => get('/locations/regions');
@@ -187,9 +209,22 @@ class ApiService {
   Future<Response> markNotificationRead(String notificationId) =>
       post('/notifications/$notificationId/read');
 
+  // ── Messaging / Presence ──
+  Future<Response> getCallHistory({int limit = 100}) =>
+      get('/messages/calls', queryParameters: {'limit': limit});
+  Future<Response> getPresence() => get('/messages/presence');
+  Future<Response> getUserPresence(String userId) =>
+      get('/messages/presence/$userId');
+  Future<Response> sendPaymentMessage(String orderId, String message) =>
+      post('/payments/$orderId/message', data: {'message': message});
+  Future<Response> getPaymentMessages(String orderId) =>
+      get('/payments/$orderId/messages');
+
   // ── Announcements ──
   /// Matangazo ya sasa (active).
   Future<Response> getAnnouncements() => get('/announcements/active');
+  Future<Response> getAnnouncementUnreadCount() =>
+      get('/announcements/unread-count');
 
   /// Ondoa tangazo — haonekani tena kwa mtumiaji huyu.
   Future<Response> dismissAnnouncement(String announcementId) =>
@@ -260,4 +295,28 @@ class ApiService {
   Future<Response> adminToggleContact(String userId) =>
       patch('/admin/users/$userId/contact-toggle');
   Future<Response> adminGetData(String type) => get('/admin/data/$type');
+  Future<Response> adminGetUserMatches(String userId) =>
+      get('/admin/users/$userId/matches');
+  Future<Response> adminGetUserBoard(String userId) =>
+      get('/admin/users/$userId/board');
+  Future<Response> adminImportUsers(dynamic formData) =>
+      post('/admin/users/import', data: formData);
+  Future<Response> adminGetMonitoring() => get('/admin/monitoring');
+  Future<Response> adminListData(String type) => get('/admin/data/$type');
+  Future<Response> adminCreateData(String type, Map<String, dynamic> data) =>
+      post('/admin/data/$type', data: data);
+  Future<Response> adminUpdateData(String type, String id, Map<String, dynamic> data) =>
+      patch('/admin/data/$type/$id', data: data);
+  Future<Response> adminDeleteData(String type, String id) =>
+      delete('/admin/data/$type/$id');
+  Future<Response> adminListCsvs() => get('/admin/csv/list');
+  Future<Response> adminExportCsv(String type) =>
+      post('/admin/csv/export', data: {'type': type});
+  Future<Response> adminDownloadCsv(String name) =>
+      get('/admin/csv/download/$name');
+  Future<Response> adminResendAnnouncement(String id) =>
+      post('/admin/announcements/$id/resend');
+  Future<Response> adminPaymentReply(String orderId, String message) =>
+      post('/payments/admin/$orderId/reply', data: {'message': message});
+  Future<Response> getDataVersion() => get('/locations/data-version');
 }
