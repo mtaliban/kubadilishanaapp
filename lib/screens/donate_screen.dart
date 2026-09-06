@@ -123,7 +123,7 @@ class _DonateScreenState extends State<DonateScreen> {
     try {
       await ApiService().createDonation(
           amount: amount, smsText: sms,
-          phone: _phoneCtrl.text.trim(), purpose: 'donation');
+          phone: _phoneCtrl.text.trim());
       if (mounted) {
         setState(() { _sent = true; _sending = false; });
         await Future.delayed(const Duration(seconds: 2));
