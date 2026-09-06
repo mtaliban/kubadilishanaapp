@@ -108,7 +108,8 @@ class AuthProvider extends ChangeNotifier {
       final res = await _api.login(phone, password: password);
       final data = res.data as Map<String, dynamic>;
       if (data['two_factor_required'] == true) {
-        _error = '2FA inahitajika — tumia akaunti ya admin';
+        // Admin 2FA — save email, return false so UI shows OTP input
+        pendingAdminEmail = data['email'] as String? ?? phone;
         _loading = false;
         notifyListeners();
         return false;

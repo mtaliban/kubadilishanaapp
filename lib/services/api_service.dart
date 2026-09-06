@@ -164,6 +164,12 @@ class ApiService {
       get('/cadres/subjects', queryParameters: level != null ? {'level': level} : null);
   Future<Response> getDepartments() => get('/locations/departments');
 
+  Future<Response> getFacilitiesByRegion(int regionId, {String category = 'health', String? employmentSector}) =>
+      get('/locations/regions/$regionId/facilities', queryParameters: {
+        'category': category,
+        if (employmentSector != null) 'employment_sector': employmentSector,
+      });
+
   // ── Payments / Donations ──
   /// Pata namba ya admin ya kulipiana.
   Future<Response> getDonationInfo() => get('/payments/info');

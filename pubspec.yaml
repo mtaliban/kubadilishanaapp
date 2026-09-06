@@ -1,7 +1,7 @@
 name: kubadilishanaapp
 description: "Kubadilishana - Waliopangana"
 publish_to: 'none'
-version: 1.0.8+8
+version: 1.0.9+9
 
 environment:
   sdk: ^3.12.0
