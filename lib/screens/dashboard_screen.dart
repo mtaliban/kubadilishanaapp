@@ -414,11 +414,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(child: RichText(text: TextSpan(
                           style: const TextStyle(fontSize: 13, color: Colors.black87, fontFamily: ''),
                           children: [
-                            TextSpan('Wanaohamia ', style: TextStyle(color: AppColors.primary)),
-                            TextSpan(myRegionName.isNotEmpty ? myRegionName : 'Mkoa Wako',
+                            TextSpan(text: 'Wanaohamia ', style: TextStyle(color: AppColors.primary)),
+                            TextSpan(text: myRegionName.isNotEmpty ? myRegionName : 'Mkoa Wako',
                                 style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black87)),
-                            TextSpan(' — wakitokea ', style: TextStyle(color: AppColors.primary)),
-                            TextSpan(regionName,
+                            TextSpan(text: ' — wakitokea ', style: TextStyle(color: AppColors.primary)),
+                            TextSpan(text: regionName,
                                 style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black87)),
                           ],
                         ))),
@@ -1124,8 +1124,8 @@ class _BoardCard extends StatelessWidget {
                   RichText(text: TextSpan(
                     style: const TextStyle(fontSize: 11, fontFamily: ''),
                     children: [
-                      TextSpan('↓ Anakwenda ', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                      TextSpan(myRegionName, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black87)),
+                      TextSpan(text: '↓ Anakwenda ', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                      TextSpan(text: myRegionName, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black87)),
                     ],
                   )),
                 ],
