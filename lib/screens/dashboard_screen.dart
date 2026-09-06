@@ -63,6 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const _pageSize = 5;
 
   List<dynamic> _announcements = [];
+  int _unreadCount = 0;
 
   // Filters
   List<dynamic> _regions = [];
@@ -92,7 +93,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _loadAnnouncements(),
       _loadRegions(),
       _loadCadres(),
+      _loadUnreadCount(),
     ]);
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final res = await ApiService().getNotifications();
+      final data = res.data;
+      List<dynamic> items = data is List ? data : (data['notifications'] ?? data['items'] ?? []);
+      final unread = items.where((n) => n['read'] == false || n['is_read'] == false).length;
+      if (mounted) setState(() => _unreadCount = unread);
+    } catch (_) {}
   }
 
   Future<void> _loadBoard() async {
@@ -175,6 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ws.on('user.removed', (_) => _loadBoard());
     ws.on('user.profile_updated', (_) { _loadBoard(); _loadTrueMatches(); });
     ws.on('contact.toggled', (_) => _loadBoard());
+    ws.on('notification', (_) => _loadUnreadCount());
   }
 
   void _clearFilters() {
@@ -204,6 +217,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   int get _totalPages => (_candidates.length / _pageSize).ceil().clamp(1, 9999);
 
+  // Grid ya 2 columns kama web
+  List<Widget> _buildGrid(List<dynamic> cards, bool isPaid, List<String> mySubjects,
+      String myRegionName, AuthUser? user) {
+    final rows = <Widget>[];
+    for (int i = 0; i < cards.length; i += 2) {
+      final a = cards[i];
+      final b = i + 1 < cards.length ? cards[i + 1] : null;
+      rows.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: _BoardCard(
+            card: a, isPaid: isPaid, mySubjects: mySubjects, myRegionName: myRegionName,
+            myName: user?.fullName ?? '', myCadre: user?.cadreDisplay ?? user?.cadreCode ?? '',
+            myStation: myRegionName,
+            toast: _toastUserId == (a['user_id'] ?? '') ? _toastMsg : null,
+            onContact: (type) => _onContact(a, type),
+            onToast: (msg) => _showCardToast(msg, a['user_id'] ?? ''),
+          )),
+          const SizedBox(width: 8),
+          if (b != null)
+            Expanded(child: _BoardCard(
+              card: b, isPaid: isPaid, mySubjects: mySubjects, myRegionName: myRegionName,
+              myName: user?.fullName ?? '', myCadre: user?.cadreDisplay ?? user?.cadreCode ?? '',
+              myStation: myRegionName,
+              toast: _toastUserId == (b['user_id'] ?? '') ? _toastMsg : null,
+              onContact: (type) => _onContact(b, type),
+              onToast: (msg) => _showCardToast(msg, b['user_id'] ?? ''),
+            ))
+          else
+            const Expanded(child: SizedBox()),
+        ],
+      ));
+      rows.add(const SizedBox(height: 8));
+    }
+    return rows;
+  }
+
   // Hesabu ya wapya (ndani ya dakika 30)
   int get _freshCount => _candidates.where((c) => _isFresh(c['created_at'] ?? c['joined_at'])).length;
   int get _onlineCount => _candidates.where((c) => c['online'] == true).length;
@@ -232,7 +282,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(children: [
               const Text('Kubadilishana', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const Spacer(),
-              IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () => Navigator.pushNamed(context, '/notifications')),
+              Stack(children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/notifications').then((_) {
+                      setState(() => _unreadCount = 0);
+                    });
+                  },
+                ),
+                if (_unreadCount > 0)
+                  Positioned(top: 8, right: 8,
+                    child: Container(
+                      width: 16, height: 16,
+                      decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.error),
+                      child: Center(child: Text(_unreadCount > 9 ? '9+' : '$_unreadCount',
+                          style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold))),
+                    )),
+              ]),
               IconButton(icon: const Icon(Icons.menu), onPressed: () => _showMenu(context)),
             ]),
           ),
@@ -434,18 +501,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   else if (_candidates.isEmpty)
                     _EmptyBoard(isPaid: isPaid)
                   else ...[
-                    ..._pagedCandidates.map((c) => _BoardCard(
-                      card: c,
-                      isPaid: isPaid,
-                      mySubjects: mySubjects,
-                      myRegionName: myRegionName,
-                      myName: user?.fullName ?? '',
-                      myCadre: user?.cadreDisplay ?? user?.cadreCode ?? '',
-                      myStation: myRegionName,
-                      toast: _toastUserId == (c['user_id'] ?? '') ? _toastMsg : null,
-                      onContact: (type) => _onContact(c, type),
-                      onToast: (msg) => _showCardToast(msg, c['user_id'] ?? ''),
-                    )),
+                    // Grid ya 2 columns kama web
+                  ..._buildGrid(_pagedCandidates, isPaid, mySubjects, myRegionName, user),
                     // Pagination
                     if (_totalPages > 1)
                       _Pagination(
@@ -494,15 +551,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _onContact(dynamic card, String type) async {
     final phone = card['phone_primary'] ?? '';
     final phoneAlt = card['phone_alt'] ?? '';
+    final name = card['full_name'] ?? '';
+    final uid = card['user_id'] ?? '';
     final isPaid = context.read<AuthProvider>().isVerified ||
         (context.read<AuthProvider>().user?.contactEnabled ?? false);
 
     if (!isPaid) {
-      _showCardToast('Changia TZS 5,000 upate namba', card['user_id'] ?? '');
+      _showCardToast('Changia TZS 5,000 upate namba', uid);
       return;
     }
     if (phone.isEmpty) return;
-    try { await ApiService().logContact(card['user_id'] ?? '', type); } catch (_) {}
+
+    // Toast ya uthibitisho kwa mtumiaji aliyeshachangia
+    if (type == 'call') _showCardToast('Piga $name', uid);
+    else if (type == 'sms') _showCardToast('SMS kwa $name', uid);
+    else _showCardToast('WhatsApp kwa $name', uid);
+
+    try { await ApiService().logContact(uid, type); } catch (_) {}
+
     Uri uri;
     if (type == 'call') uri = Uri.parse('tel:$phone');
     else if (type == 'sms') uri = Uri.parse('sms:$phone');
