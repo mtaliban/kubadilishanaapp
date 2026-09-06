@@ -527,7 +527,7 @@ class _Step4KadaState extends State<_Step4Kada> {
     if (cadre == null) return;
     final level = cadre['level'] as String?;
     if (level == 'Primary' || level == 'Secondary') {
-      _loadSubjects(level);
+      _loadSubjects(level!);
     }
   }
 
