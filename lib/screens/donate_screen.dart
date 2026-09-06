@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../providers/auth_provider.dart';
 import '../config/theme.dart';
 
 const _kAdminCall = '0763795801';
+const _kAdminWa = '255625607088';
 
 class DonateScreen extends StatefulWidget {
   const DonateScreen({super.key});
@@ -152,7 +154,7 @@ class _DonateScreenState extends State<DonateScreen> {
         title: const Row(children: [
           Icon(Icons.volunteer_activism, size: 20, color: AppColors.error),
           SizedBox(width: 8),
-          Text('Changia'),
+          Text('Changia Huduma'),
         ]),
       ),
       body: RefreshIndicator(
@@ -161,6 +163,13 @@ class _DonateScreenState extends State<DonateScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+
+            // Subtitle
+            const Text(
+              'Lipa kwa namba hapa chini (M-Pesa, Tigo Pesa, Airtel Money, Halopesa), kisha nakili SMS ya kuthibitisha.',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
 
             // Flash
             if (_flash != null)
@@ -246,7 +255,7 @@ class _DonateScreenState extends State<DonateScreen> {
                   ])),
                 ]),
                 const SizedBox(height: 12),
-                const Text('Nakala ya SMS ya Mtandao', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                const Text('SMS ya Kuthibitisha Malipo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _smsCtrl, maxLines: 4,
@@ -275,7 +284,7 @@ class _DonateScreenState extends State<DonateScreen> {
                   ),
                   child: _sending
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(_sent ? '✓ Imetumwa' : 'Tuma Ombi', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      : Text(_sent ? '✓ Imetumwa' : 'Thibitisha', style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ]),
             ),
@@ -313,6 +322,40 @@ class _DonateScreenState extends State<DonateScreen> {
                 child: Text('Hakuna michango bado', style: TextStyle(color: AppColors.textSecondary)),
               ))
             else ..._filteredHistory.map((p) => _PaymentCard(payment: p)),
+
+            const SizedBox(height: 20),
+
+            // Admin contact section
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('MASWALI AU MATATIZO? WASILIANA NASI',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.8)),
+                const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () => launchUrl(Uri.parse('tel:$_kAdminCall'), mode: LaunchMode.externalApplication),
+                  child: const Row(children: [
+                    Icon(Icons.phone, size: 16, color: AppColors.primary),
+                    SizedBox(width: 8),
+                    Text(_kAdminCall, style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                  ]),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => launchUrl(Uri.parse('https://wa.me/$_kAdminWa'), mode: LaunchMode.externalApplication),
+                  child: const Row(children: [
+                    Icon(Icons.chat, size: 16, color: Color(0xFF25D366)),
+                    SizedBox(width: 8),
+                    Text('+255 625 607 088', style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                  ]),
+                ),
+              ]),
+            ),
 
             const SizedBox(height: 60),
           ]),

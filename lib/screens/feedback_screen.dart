@@ -90,19 +90,20 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       appBar: AppBar(
         title: Row(children: const [
           Icon(Icons.list_alt, size: 20, color: AppColors.primary),
-          SizedBox(width: 8), Text('Maoni na Malamiko'),
+          SizedBox(width: 8), Text('Maoni na Malalamiko'),
         ]),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Text('Tuma maoni yako', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          const Text('Tuma maoni au malalamiko yako moja kwa moja kwa admin — utajibiwa hapa.',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              const Text('Maoni yako', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              const Text('Ujumbe wako', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
               TextField(
                 controller: _msgCtrl, maxLines: 5,
@@ -137,7 +138,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             ]),
           ),
           const SizedBox(height: 20),
-          Text('Historia (${_items.length})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          Text('Maoni yangu (${_items.length})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           const SizedBox(height: 8),
           if (_loading)
             const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))

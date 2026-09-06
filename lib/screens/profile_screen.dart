@@ -112,10 +112,10 @@ class _ViewUser extends StatelessWidget {
     final sector = profile['employment_sector'] ?? '';
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _InfoCard(title: 'Taarifa Binafsi', rows: [
-        _InfoRow('Jina', profile['full_name']),
-        _InfoRow('Simu', profile['phone_primary']),
-        if ((profile['phone_alt'] ?? '').toString().isNotEmpty) _InfoRow('WhatsApp', profile['phone_alt']),
+      _InfoCard(title: 'Utambulisho', rows: [
+        _InfoRow('Jina Kamili', profile['full_name']),
+        _InfoRow('Namba ya Simu', profile['phone_primary']),
+        if ((profile['phone_alt'] ?? '').toString().isNotEmpty) _InfoRow('Simu ya pili', profile['phone_alt']),
         _InfoRow('Idara', cat == 'health' ? 'Afya' : cat == 'education' ? 'Elimu' : cat),
         if (cat == 'health' && sector.toString().isNotEmpty)
           _InfoRow('Wizara', sector == 'wizara_afya' ? 'Wizara ya Afya' : 'TAMISEMI'),
@@ -123,13 +123,13 @@ class _ViewUser extends StatelessWidget {
         if (subjects.isNotEmpty) _InfoRow('Masomo', subjects.join(', ')),
       ]),
       const SizedBox(height: 12),
-      _InfoCard(title: 'Eneo la Sasa', rows: [
+      _InfoCard(title: 'Kituo cha Sasa', rows: [
         _InfoRow('Mkoa', cs['region_name']),
         _InfoRow('Wilaya', cs['district_name']),
         _InfoRow('Kituo', cs['facility_name'] ?? '(Hakuna)'),
       ]),
       const SizedBox(height: 12),
-      _InfoCard(title: 'Maeneo ya Lengo', children: [
+      _InfoCard(title: 'Ninataka Kwenda', children: [
         if (dests.isEmpty)
           const Text('Hakuna lengo', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))
         else
@@ -443,12 +443,12 @@ class _EditProfileState extends State<_EditProfile> {
       if (_error != null) _ErrBox(_error!),
 
       // Card 1: Identity + Cadre + Subjects
-      _InfoCard(title: 'Taarifa Binafsi', children: [
+      _InfoCard(title: 'Utambulisho', children: [
         _formField('Jina Kamili', _nameCtrl),
         const SizedBox(height: 10),
         _formField('Namba ya Simu', _phoneCtrl, keyboard: TextInputType.phone),
         const SizedBox(height: 10),
-        _formField('🟢 Namba ya WhatsApp', _altCtrl, keyboard: TextInputType.phone),
+        _formField('🟢 Simu ya pili (WhatsApp)', _altCtrl, keyboard: TextInputType.phone),
         if (_cadres.isNotEmpty) ...[
           const SizedBox(height: 10),
           const Text('Kada', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
@@ -495,7 +495,7 @@ class _EditProfileState extends State<_EditProfile> {
       const SizedBox(height: 14),
 
       // Card 2: Station
-      _InfoCard(title: 'Eneo la Sasa', children: [
+      _InfoCard(title: 'Kituo cha Sasa', children: [
         const Text('Mkoa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
         const SizedBox(height: 4),
         _Dropdown<int>(
@@ -543,7 +543,7 @@ class _EditProfileState extends State<_EditProfile> {
 
       // Card 3: Destinations
       _InfoCard(
-        title: 'Maeneo ya Lengo',
+        title: 'Ninataka Kwenda',
         trailing: TextButton(
           onPressed: _addDest,
           style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(60, 28)),
