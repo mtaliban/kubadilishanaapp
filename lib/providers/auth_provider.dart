@@ -242,7 +242,8 @@ class AuthProvider extends ChangeNotifier {
       }
     });
 
-    _notif.init().catchError((_) {});
+    // Delay notification init by 5s so it never blocks app startup
+    Future.delayed(const Duration(seconds: 5), () => _notif.init().catchError((_) {}));
   }
 
   String _parseError(dynamic e) {

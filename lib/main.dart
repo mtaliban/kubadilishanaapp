@@ -24,19 +24,44 @@ import 'screens/user_profile_screen.dart';
 import 'screens/call_history_screen.dart';
 import 'screens/settings_screen.dart';
 
-void main() async {
+// Global error log — displayed in _ErrorApp if crash happens
+final List<String> _crashLog = [];
+
+void main() {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Catch widget build errors — show on screen instead of crashing
+    FlutterError.onError = (details) {
+      _crashLog.add('[Flutter] ${details.exceptionAsString()}');
+      FlutterError.presentError(details);
+    };
+
+    // Catch platform errors
+    WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
+      _crashLog.add('[Platform] $error');
+      return true; // handled — don't crash
+    };
+
     try {
       await Firebase.initializeApp();
-    } catch (_) {
-      // Firebase itaendelea bila FCM kama haiwezi kuanzishwa
+    } catch (e) {
+      _crashLog.add('[Firebase] $e');
     }
-    ApiService().init();
+
+    try {
+      ApiService().init();
+    } catch (e) {
+      _crashLog.add('[ApiService] $e');
+    }
+
     runApp(const KubadilishanaApp());
   }, (error, stack) {
-    // Catch unhandled exceptions — app haitaanguka
-    debugPrint('Unhandled error: $error');
+    _crashLog.add('[Zone] $error\n$stack');
+    // Try to show error app if runApp already ran
+    try {
+      runApp(_ErrorApp(error.toString()));
+    } catch (_) {}
   });
 }
 
@@ -45,6 +70,9 @@ class KubadilishanaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Override error widget to show message instead of red screen
+    ErrorWidget.builder = (details) => _ErrorWidget(details.exceptionAsString());
+
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
       child: MaterialApp(
@@ -78,7 +106,86 @@ class KubadilishanaApp extends StatelessWidget {
           '/call-history': (_) => const CallHistoryScreen(),
           '/settings': (_) => const SettingsScreen(),
           '/about': (_) => const _ComingSoon('Kuhusu Sisi'),
+          '/crash-log': (_) => const _CrashLogScreen(),
         },
+      ),
+    );
+  }
+}
+
+// ── Error display widgets ─────────────────────────────────────────────────────
+
+class _ErrorApp extends StatelessWidget {
+  final String message;
+  const _ErrorApp(this.message);
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        backgroundColor: Colors.red.shade50,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Kosa la App',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
+                const SizedBox(height: 8),
+                const Text('Piga picha hii na itume kwa msanidi:',
+                    style: TextStyle(fontSize: 13)),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: SelectableText(
+                      message,
+                      style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorWidget extends StatelessWidget {
+  final String message;
+  const _ErrorWidget(this.message);
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.red.shade100,
+      padding: const EdgeInsets.all(8),
+      child: SingleChildScrollView(
+        child: SelectableText('KOSA: $message',
+            style: const TextStyle(fontSize: 10, color: Colors.red)),
+      ),
+    );
+  }
+}
+
+class _CrashLogScreen extends StatelessWidget {
+  const _CrashLogScreen();
+  @override
+  Widget build(BuildContext context) {
+    final logs = _crashLog.isEmpty ? ['Hakuna makosa yaliyorekodiwa'] : _crashLog;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Kumbukumbu ya Makosa'), backgroundColor: Colors.red),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: logs.length,
+        itemBuilder: (_, i) => Card(
+          color: Colors.red.shade50,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: SelectableText(logs[i],
+                style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
+          ),
+        ),
       ),
     );
   }
@@ -91,7 +198,9 @@ class _ComingSoon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: const Center(child: Text('Inaendelea kuundwa...', style: TextStyle(color: AppColors.textSecondary))),
+      body: const Center(
+          child: Text('Inaendelea kuundwa...',
+              style: TextStyle(color: AppColors.textSecondary))),
     );
   }
 }
