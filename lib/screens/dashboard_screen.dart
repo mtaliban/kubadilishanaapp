@@ -854,17 +854,17 @@ class _TrueMatchCard extends StatelessWidget {
   Widget _tmBtn(IconData icon, String label, VoidCallback onTap, bool enabled) => GestureDetector(
     onTap: enabled ? onTap : null,
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: enabled ? const Color(0xFF6EE7B7) : AppColors.border),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(icon, size: 13, color: enabled ? const Color(0xFF10B981) : AppColors.textLight),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-            color: enabled ? const Color(0xFF10B981) : AppColors.textLight)),
+        Icon(icon, size: 12, color: enabled ? Colors.grey.shade800 : Colors.grey.shade400),
+        const SizedBox(width: 3),
+        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+            color: enabled ? Colors.grey.shade800 : Colors.grey.shade400)),
       ]),
     ),
   );
@@ -1044,13 +1044,13 @@ class _BoardCard extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
           // Row 1: Avatar + info
           Row(children: [
             Stack(children: [
-              CircleAvatar(radius: 20, backgroundColor: AppColors.primaryLight,
+              CircleAvatar(radius: 18, backgroundColor: AppColors.primaryLight,
                   child: Text(initial, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary))),
               if (online)
                 Positioned(right: 0, bottom: 0,
@@ -1188,11 +1188,11 @@ class _BoardCard extends StatelessWidget {
           Row(children: [
             Expanded(child: _contactBtn(Icons.phone, 'Piga', Colors.green,
                 phoneOk ? () => onContact('call') : null)),
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             Expanded(child: _contactBtn(Icons.sms, 'SMS', AppColors.primary,
                 phoneOk ? () => onContact('sms') : null)),
             if (altOk) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Expanded(child: _contactBtn(Icons.chat, 'WA', const Color(0xFF25D366),
                   () => onContact('whatsapp'))),
             ],
@@ -1226,20 +1226,21 @@ class _BoardCard extends StatelessWidget {
     );
   }
 
+  // Buttons ndogo kama web: py-1.5 (6px), text 10px, icon 12px, grau kama web
   Widget _contactBtn(IconData icon, String label, Color color, VoidCallback? onTap) => GestureDetector(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: onTap != null ? color.withOpacity(0.4) : AppColors.border),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(icon, size: 13, color: onTap != null ? color : AppColors.textLight),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-            color: onTap != null ? color : AppColors.textLight)),
+        Icon(icon, size: 12, color: onTap != null ? Colors.grey.shade800 : Colors.grey.shade400),
+        const SizedBox(width: 3),
+        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+            color: onTap != null ? Colors.grey.shade800 : Colors.grey.shade400)),
       ]),
     ),
   );
