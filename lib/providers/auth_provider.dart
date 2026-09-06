@@ -17,6 +17,7 @@ class AuthUser {
   final bool isVerified;
   final bool contactEnabled;
   final Map<String, dynamic>? currentStation;
+  final List<String> subjects;
 
   AuthUser({
     required this.userId,
@@ -31,6 +32,7 @@ class AuthUser {
     this.isVerified = false,
     this.contactEnabled = false,
     this.currentStation,
+    this.subjects = const [],
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
@@ -46,6 +48,7 @@ class AuthUser {
         isVerified: json['is_verified'] ?? false,
         contactEnabled: json['contact_enabled'] ?? false,
         currentStation: json['current_station'],
+        subjects: (json['subjects'] as List?)?.map((s) => s.toString()).toList() ?? [],
       );
 
   AuthUser copyWith({bool? isVerified, bool? contactEnabled}) => AuthUser(
@@ -61,6 +64,7 @@ class AuthUser {
         isVerified: isVerified ?? this.isVerified,
         contactEnabled: contactEnabled ?? this.contactEnabled,
         currentStation: currentStation,
+        subjects: subjects,
       );
 }
 
