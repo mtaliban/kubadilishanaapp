@@ -1,4 +1,4 @@
-package com.kubadilishana.kubadilishana_flutter
+package com.kubadilishana.app
 
 import io.flutter.embedding.android.FlutterActivity
 
