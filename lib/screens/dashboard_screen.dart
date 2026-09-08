@@ -501,7 +501,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   if (_loading)
                     const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()))
                   else if (_candidates.isEmpty)
-                    _EmptyBoard(isPaid: isPaid)
+                    _EmptyBoard(regionName: myRegionName)
                   else ...[
                     // Grid responsive: minmax(165px,1fr) — 1 col kwenye simu ndogo, 2+ kwenye kubwa
                     Builder(builder: (ctx) {
@@ -988,12 +988,15 @@ class _FiltersBar extends StatelessWidget {
     required this.onSubjectQSubmitted, required this.onClear,
   });
 
+  // .input = rounded-md(6px) border-grey-300 px-2.5(10px) py-1.5(6px) text-xs(12px)
+  static const _kGrey300 = Color(0xFFD1D5DB);
   InputDecoration _dec(String hint) => InputDecoration(
     hintText: hint, isDense: true,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
-    disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border.withValues(alpha: 0.4))),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+    disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: _kGrey300.withValues(alpha: 0.5))),
   );
 
   @override
@@ -1060,17 +1063,35 @@ class _FiltersBar extends StatelessWidget {
           onChanged: districtSelected ? onFacilityChanged : null,
         ),
 
-        // Active filter label + clear — kama web (chini ya dropdowns)
-        if (hasFilter) ...[
-          const SizedBox(height: 6),
-          Row(children: [
-            const Spacer(),
-            GestureDetector(
+        // Active filter label + clear — kama web: MapPin + jina + "Futa kichujio"
+        const SizedBox(height: 6),
+        Builder(builder: (ctx) {
+          String? activeLabel;
+          if (facilityId != null && facilities.isNotEmpty) {
+            final f = facilities.cast<dynamic>().firstWhere(
+              (f) => '${f['id'] ?? f['code']}' == facilityId, orElse: () => null);
+            activeLabel = f != null ? '${f['name']}' : null;
+          } else if (districtId != null && districts.isNotEmpty) {
+            final d = districts.cast<dynamic>().firstWhere(
+              (d) => d['id'] == districtId, orElse: () => null);
+            activeLabel = d != null ? '${d['name']}' : null;
+          } else if (regionSel != '__all__' && regions.isNotEmpty) {
+            final r = regions.cast<dynamic>().firstWhere(
+              (r) => '${r['id']}' == regionSel, orElse: () => null);
+            activeLabel = r != null ? '${r['name']}' : null;
+          }
+          return Row(children: [
+            const Icon(Icons.location_on, size: 12, color: AppColors.textSecondary),
+            const SizedBox(width: 2),
+            Expanded(child: Text(activeLabel ?? 'Mikoa Yote',
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                overflow: TextOverflow.ellipsis)),
+            if (hasFilter) GestureDetector(
               onTap: onClear,
               child: const Text('Futa kichujio', style: TextStyle(fontSize: 11, color: AppColors.error)),
             ),
-          ]),
-        ],
+          ]);
+        }),
 
         // ── Subject filter (edu + admin) — baada ya dropdowns kama web ──
         if (isEdu) ...[
@@ -1457,32 +1478,34 @@ class _Pagination extends StatelessWidget {
 
 // ── Empty Board ───────────────────────────────────────────────────────────────
 class _EmptyBoard extends StatelessWidget {
-  final bool isPaid;
-  const _EmptyBoard({required this.isPaid});
+  final String regionName;
+  const _EmptyBoard({required this.regionName});
 
   @override
   Widget build(BuildContext context) {
+    final title = regionName.isNotEmpty
+        ? 'Hakuna mtu wa mkoa mwingine kuja $regionName.'
+        : 'Hakuna mtu anaokuja mkoa wako.';
     return Center(child: Padding(
-      padding: const EdgeInsets.all(40),
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Container(
           width: 56, height: 56,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey.shade100, border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFFF3F4F6),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
           child: const Icon(Icons.people_outline, size: 28, color: AppColors.textLight),
         ),
-        const SizedBox(height: 16),
-        Text(isPaid ? 'Hakuna watu kwa sasa' : 'Changia TZS 5,000 kuona namba za watu',
+        const SizedBox(height: 12),
+        Text(title,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
             textAlign: TextAlign.center),
-        if (!isPaid) ...[
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.pushNamed(context, '/donate'),
-            icon: const Icon(Icons.payment, size: 18),
-            label: const Text('Changia Sasa'),
-            style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-          ),
-        ],
+        const SizedBox(height: 4),
+        const Text('Jisajili na uchague mkoa wako ili uanze.',
+            style: TextStyle(fontSize: 12, color: AppColors.textLight),
+            textAlign: TextAlign.center),
       ]),
     ));
   }
