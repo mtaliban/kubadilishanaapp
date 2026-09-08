@@ -114,6 +114,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
 
   @override
   void dispose() {
+    WebSocketService().off('notification', _onWs);
     _newPaymentTimer?.cancel();
     for (final c in _chatCtrls.values) {
       c.dispose();

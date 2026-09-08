@@ -455,7 +455,7 @@ class _DepsTabState extends State<_DepsTab> {
     if (!mounted) return;
     setState(() => _loading = true);
     try {
-      final res = await ApiService().get('/admin/departments');
+      final res = await ApiService().get('/admin/data/departments');
       if (!mounted) return;
       final list = _parseList(res.data, ['departments']);
       setState(() {
@@ -499,7 +499,7 @@ class _DepsTabState extends State<_DepsTab> {
     if (!ok) return;
     try {
       final code = item['code'] ?? '';
-      await ApiService().delete('/admin/departments/$code');
+      await ApiService().delete('/admin/data/departments/$code');
       await _load();
       widget.flash('Idara imefutwa!');
     } catch (e) {
@@ -612,7 +612,7 @@ class _DeptModalState extends State<_DeptModal> {
       };
       if (_isEdit) {
         final code = widget.item['code'] ?? '';
-        await ApiService().patch('/admin/departments/$code', data: body);
+        await ApiService().patch('/admin/data/departments/$code', data: body);
       } else {
         final codeVal = _code.text.trim().toLowerCase();
         if (codeVal.isEmpty) {
@@ -620,7 +620,7 @@ class _DeptModalState extends State<_DeptModal> {
           return;
         }
         await ApiService()
-            .post('/admin/departments', data: {...body, 'code': codeVal});
+            .post('/admin/data/departments', data: {...body, 'code': codeVal});
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -759,7 +759,7 @@ class _SubjectsTabState extends State<_SubjectsTab> {
     try {
       final params = <String, dynamic>{};
       if (_level.isNotEmpty) params['level'] = _level;
-      final res = await ApiService().get('/admin/subjects', queryParameters: params.isEmpty ? null : params);
+      final res = await ApiService().get('/admin/data/subjects', queryParameters: params.isEmpty ? null : params);
       if (!mounted) return;
       final list = _parseList(res.data, ['subjects']);
       setState(() {
@@ -803,7 +803,7 @@ class _SubjectsTabState extends State<_SubjectsTab> {
     if (!ok) return;
     try {
       final code = item['code'] ?? '';
-      await ApiService().delete('/admin/subjects/$code');
+      await ApiService().delete('/admin/data/subjects/$code');
       await _load();
       widget.flash('Somo limefutwa!');
     } catch (e) {
@@ -930,7 +930,7 @@ class _SubjectModalState extends State<_SubjectModal> {
       final body = {'name': _name.text.trim(), 'level': _level};
       if (_isEdit) {
         final code = widget.item['code'] ?? '';
-        await ApiService().patch('/admin/subjects/$code', data: body);
+        await ApiService().patch('/admin/data/subjects/$code', data: body);
       } else {
         final codeVal = _code.text.trim().toUpperCase();
         if (codeVal.isEmpty) {
@@ -938,7 +938,7 @@ class _SubjectModalState extends State<_SubjectModal> {
           return;
         }
         await ApiService()
-            .post('/admin/subjects', data: {...body, 'code': codeVal});
+            .post('/admin/data/subjects', data: {...body, 'code': codeVal});
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -1059,7 +1059,7 @@ class _CadresTabState extends State<_CadresTab> {
     if (!mounted) return;
     setState(() => _loading = true);
     try {
-      final res = await ApiService().get('/admin/cadres');
+      final res = await ApiService().get('/admin/data/cadres');
       if (!mounted) return;
       final list = _parseList(res.data, ['cadres']);
       setState(() {
@@ -1105,7 +1105,7 @@ class _CadresTabState extends State<_CadresTab> {
     if (!ok) return;
     try {
       final code = item['code'] ?? '';
-      await ApiService().delete('/admin/cadres/$code');
+      await ApiService().delete('/admin/data/cadres/$code');
       await _load();
       widget.flash('Kada imefutwa!');
     } catch (e) {
@@ -1209,7 +1209,7 @@ class _CadreModalState extends State<_CadreModal> {
 
   Future<void> _loadDepartments() async {
     try {
-      final res = await ApiService().get('/admin/departments');
+      final res = await ApiService().get('/admin/data/departments');
       if (!mounted) return;
       final list = _parseList(res.data, ['departments']);
       setState(() {
@@ -1244,7 +1244,7 @@ class _CadreModalState extends State<_CadreModal> {
       };
       if (_isEdit) {
         final code = widget.item['code'] ?? '';
-        await ApiService().patch('/admin/cadres/$code', data: body);
+        await ApiService().patch('/admin/data/cadres/$code', data: body);
       } else {
         final codeVal = _code.text.trim().toUpperCase();
         if (codeVal.isEmpty) {
@@ -1252,7 +1252,7 @@ class _CadreModalState extends State<_CadreModal> {
           return;
         }
         await ApiService()
-            .post('/admin/cadres', data: {...body, 'code': codeVal});
+            .post('/admin/data/cadres', data: {...body, 'code': codeVal});
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -1405,7 +1405,7 @@ class _RegionsTabState extends State<_RegionsTab> {
     if (!mounted) return;
     setState(() => _loading = true);
     try {
-      final res = await ApiService().get('/admin/regions');
+      final res = await ApiService().get('/admin/data/regions');
       if (!mounted) return;
       final list = _parseList(res.data, ['regions']);
       setState(() {
@@ -1448,7 +1448,7 @@ class _RegionsTabState extends State<_RegionsTab> {
     if (!ok) return;
     try {
       final id = item['id'];
-      await ApiService().delete('/admin/regions/$id');
+      await ApiService().delete('/admin/data/regions/$id');
       await _load();
       widget.flash('Mkoa umefutwa!');
     } catch (e) {
@@ -1543,9 +1543,9 @@ class _RegionModalState extends State<_RegionModal> {
       final body = {'name': _name.text.trim()};
       if (_isEdit) {
         final id = widget.item['id'];
-        await ApiService().patch('/admin/regions/$id', data: body);
+        await ApiService().patch('/admin/data/regions/$id', data: body);
       } else {
-        await ApiService().post('/admin/regions', data: body);
+        await ApiService().post('/admin/data/regions', data: body);
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -1650,7 +1650,7 @@ class _DistrictsTabState extends State<_DistrictsTab> {
 
   Future<void> _loadRegions() async {
     try {
-      final res = await ApiService().get('/admin/regions');
+      final res = await ApiService().get('/admin/data/regions');
       if (!mounted) return;
       setState(() {
         _regions = _parseList(res.data, ['regions']);
@@ -1668,7 +1668,7 @@ class _DistrictsTabState extends State<_DistrictsTab> {
     try {
       final params = <String, dynamic>{};
       if (_regionFilter != null) params['region_id'] = _regionFilter;
-      final res = await ApiService().get('/admin/districts',
+      final res = await ApiService().get('/admin/data/districts',
           queryParameters: params.isEmpty ? null : params);
       if (!mounted) return;
       final list = _parseList(res.data, ['districts']);
@@ -1712,7 +1712,7 @@ class _DistrictsTabState extends State<_DistrictsTab> {
     if (!ok) return;
     try {
       final id = item['id'];
-      await ApiService().delete('/admin/districts/$id');
+      await ApiService().delete('/admin/data/districts/$id');
       await _load();
       widget.flash('Wilaya imefutwa!');
     } catch (e) {
@@ -1847,9 +1847,9 @@ class _DistrictModalState extends State<_DistrictModal> {
       final body = {'name': _name.text.trim(), 'region_id': _regionId};
       if (_isEdit) {
         final id = widget.item['id'];
-        await ApiService().patch('/admin/districts/$id', data: body);
+        await ApiService().patch('/admin/data/districts/$id', data: body);
       } else {
-        await ApiService().post('/admin/districts', data: body);
+        await ApiService().post('/admin/data/districts', data: body);
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -1984,7 +1984,7 @@ class _FacilitiesTabState extends State<_FacilitiesTab> {
 
   Future<void> _loadRegions() async {
     try {
-      final res = await ApiService().get('/admin/regions');
+      final res = await ApiService().get('/admin/data/regions');
       if (!mounted) return;
       setState(() {
         _regions = _parseList(res.data, ['regions']);
@@ -2004,7 +2004,7 @@ class _FacilitiesTabState extends State<_FacilitiesTab> {
     });
     try {
       final res = await ApiService()
-          .get('/admin/districts', queryParameters: {'region_id': regionId});
+          .get('/admin/data/districts', queryParameters: {'region_id': regionId});
       if (!mounted) return;
       setState(() {
         _districts = _parseList(res.data, ['districts']);
@@ -2026,7 +2026,7 @@ class _FacilitiesTabState extends State<_FacilitiesTab> {
       if (_districtId != null) params['district_id'] = _districtId;
       final q = _search.text.trim();
       if (q.isNotEmpty) params['q'] = q;
-      final res = await ApiService().get('/admin/facilities',
+      final res = await ApiService().get('/admin/data/facilities',
           queryParameters: params.isEmpty ? null : params);
       if (!mounted) return;
       final list = _parseList(res.data, ['facilities', 'items']);
@@ -2061,7 +2061,7 @@ class _FacilitiesTabState extends State<_FacilitiesTab> {
       final cat = item['category'] ?? '';
       final params = cat.isNotEmpty ? {'category': cat} : null;
       await ApiService()
-          .delete('/admin/facilities/$id', queryParameters: params);
+          .delete('/admin/data/facilities/$id', queryParameters: params);
       await _load();
       widget.flash('Kituo kimefutwa!');
     } catch (e) {
@@ -2301,7 +2301,7 @@ class _FacilityModalState extends State<_FacilityModal> {
     });
     try {
       final res = await ApiService()
-          .get('/admin/districts', queryParameters: {'region_id': regionId});
+          .get('/admin/data/districts', queryParameters: {'region_id': regionId});
       if (!mounted) return;
       setState(() {
         _districts = _parseList(res.data, ['districts']);
@@ -2344,9 +2344,9 @@ class _FacilityModalState extends State<_FacilityModal> {
       }
       if (_isEdit) {
         final id = widget.item['id'] ?? widget.item['code'] ?? '';
-        await ApiService().patch('/admin/facilities/$id', data: body);
+        await ApiService().patch('/admin/data/facilities/$id', data: body);
       } else {
-        await ApiService().post('/admin/facilities', data: body);
+        await ApiService().post('/admin/data/facilities', data: body);
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
