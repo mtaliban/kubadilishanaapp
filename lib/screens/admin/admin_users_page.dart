@@ -714,8 +714,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     }
     return DataTable(
       headingRowHeight: 36,
-      dataRowMinHeight: 52,
-      dataRowMaxHeight: 64,
+      dataRowMinHeight: 44,
+      dataRowMaxHeight: 48,
       columnSpacing: 12,
       horizontalMargin: 12,
       headingRowColor: WidgetStateProperty.all(_kGrey50),

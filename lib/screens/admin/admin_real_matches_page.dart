@@ -587,7 +587,7 @@ class _MatchCard extends StatelessWidget {
                   const Text(
                     'Masomo Yanayofanana:',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: _kGreen700,
                     ),
@@ -606,7 +606,7 @@ class _MatchCard extends StatelessWidget {
                       child: Text(
                         '✓ $s',
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: _kGreen700,
                         ),
@@ -796,7 +796,7 @@ class _UserHalf extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               cadre,
-              style: const TextStyle(fontSize: 10, color: _kGrey500),
+              style: const TextStyle(fontSize: 11, color: _kGrey500),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
@@ -808,12 +808,12 @@ class _UserHalf extends StatelessWidget {
           if (region.isNotEmpty)
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 10, color: _kGrey500),
+                const Icon(Icons.location_on_outlined, size: 11, color: _kGrey500),
                 const SizedBox(width: 2),
                 Expanded(
                   child: Text(
                     'Kutoka: ${[region, district].where((s) => s.isNotEmpty).join(', ')}',
-                    style: const TextStyle(fontSize: 10, color: _kGrey500),
+                    style: const TextStyle(fontSize: 11, color: _kGrey500),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
@@ -826,12 +826,12 @@ class _UserHalf extends StatelessWidget {
             const SizedBox(height: 2),
             Row(
               children: [
-                const Icon(Icons.swap_horiz, size: 10, color: _kGrey500),
+                const Icon(Icons.swap_horiz, size: 11, color: _kGrey500),
                 const SizedBox(width: 2),
                 Expanded(
                   child: Text(
                     'Anataka: ${dests.join(', ')}',
-                    style: const TextStyle(fontSize: 10, color: _kGrey500),
+                    style: const TextStyle(fontSize: 11, color: _kGrey500),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
@@ -856,7 +856,7 @@ class _UserHalf extends StatelessWidget {
                 child: Text(
                   s,
                   style: const TextStyle(
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: _kBlue,
                   ),
@@ -879,13 +879,13 @@ class _UserHalf extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.phone_outlined, size: 10, color: _kGrey500),
+                  const Icon(Icons.phone_outlined, size: 11, color: _kGrey500),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       phone,
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: _kGrey700,
                       ),

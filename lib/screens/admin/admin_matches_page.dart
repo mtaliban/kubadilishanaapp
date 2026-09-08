@@ -366,17 +366,24 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
                             Expanded(
                               child: RefreshIndicator(
                                 onRefresh: _load,
-                                child: ListView.builder(
-                                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-                                  itemCount: pageItems.length,
-                                  itemBuilder: (ctx, i) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
-                                    child: _UserCard(
+                                // grid-cols-1 sm:grid-cols-2 kama web
+                                child: LayoutBuilder(builder: (ctx, constraints) {
+                                  final cols = constraints.maxWidth >= 500 ? 2 : 1;
+                                  return GridView.builder(
+                                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: cols,
+                                      crossAxisSpacing: 10,
+                                      mainAxisSpacing: 10,
+                                      childAspectRatio: cols == 2 ? 0.72 : 1.1,
+                                    ),
+                                    itemCount: pageItems.length,
+                                    itemBuilder: (ctx, i) => _UserCard(
                                       user: pageItems[i] as Map<String, dynamic>,
                                       destRegion: regionName,
                                     ),
-                                  ),
-                                ),
+                                  );
+                                }),
                               ),
                             ),
                             // Pagination
