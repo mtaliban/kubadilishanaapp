@@ -1,6 +1,6 @@
 // AppShell — translation kamili ya AppShell.tsx + MobileTopBar + MobileBottomNav
 // Inashirikishwa na Dashboard, Donate, Feedback, Profile
-// Ina: top bar (hamburger + phone chip + avatar) + bottom nav (4 tabs) + global WS toast
+// Ina: top bar (hamburger + avatar + lang toggle) + bottom nav (4 tabs) + global WS toast
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +11,23 @@ import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 
 const _kAdminPhone = '0763795801';
+
+// ── Language Provider (singleton) ─────────────────────────────────────────────
+/// Kama web LangToggle — SW (Kiswahili) au EN (English)
+class LanguageProvider extends ChangeNotifier {
+  static final LanguageProvider _i = LanguageProvider._();
+  factory LanguageProvider() => _i;
+  LanguageProvider._();
+
+  String _lang = 'sw';
+  String get lang => _lang;
+
+  void setLang(String code) {
+    if (_lang == code) return;
+    _lang = code;
+    notifyListeners();
+  }
+}
 
 // ── Badge Service (singleton) ─────────────────────────────────────────────────
 /// Kama web unreadStore — counts za unread notifications kwa kila route
@@ -494,41 +511,7 @@ class _AppShellState extends State<AppShell> {
 
                   const Spacer(),
 
-                  // ── CENTER-RIGHT: Phone chip + Avatar ───────────────────────
-                  // Phone chip: 0763795801 — inaonekana kila page
-                  GestureDetector(
-                    onTap: () async {
-                      await Clipboard.setData(const ClipboardData(text: _kAdminPhone));
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Namba imenakiliwa: $_kAdminPhone'),
-                            duration: Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF), // brand-blue-50
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: const Color(0xFFBFDBFE)), // brand-blue-200
-                      ),
-                      child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.phone, size: 10, color: Color(0xFF1E40AF)),
-                        SizedBox(width: 3),
-                        Text(_kAdminPhone,
-                            style: TextStyle(
-                              fontSize: 10, fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E40AF),
-                            )),
-                      ]),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-
+                  // ── RIGHT: Avatar + LangToggle (kama web) ──────────────────
                   // Avatar — w-8 h-8 rounded-full
                   GestureDetector(
                     onTap: () => _showProfileMenu(user),
@@ -547,6 +530,8 @@ class _AppShellState extends State<AppShell> {
                           ))),
                     ),
                   ),
+                  const SizedBox(width: 6),
+                  const _LangToggle(),
                 ]),
               ),
 
@@ -619,6 +604,55 @@ class _AppShellState extends State<AppShell> {
           ),
         );
       },
+    );
+  }
+}
+
+// ── LangToggle — kama web: SW / EN buttons kando kando ───────────────────────
+class _LangToggle extends StatelessWidget {
+  const _LangToggle();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: LanguageProvider(),
+      builder: (context, _) {
+        final lang = LanguageProvider().lang;
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFF1E40AF).withValues(alpha: 0.2)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            _btn('SW', 'sw', lang, isLeft: true),
+            _btn('EN', 'en', lang, isLeft: false),
+          ]),
+        );
+      },
+    );
+  }
+
+  Widget _btn(String label, String code, String current, {required bool isLeft}) {
+    final active = current == code;
+    return GestureDetector(
+      onTap: () => LanguageProvider().setLang(code),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF1E40AF) : Colors.transparent,
+          borderRadius: BorderRadius.only(
+            topLeft: isLeft ? const Radius.circular(7) : Radius.zero,
+            bottomLeft: isLeft ? const Radius.circular(7) : Radius.zero,
+            topRight: isLeft ? Radius.zero : const Radius.circular(7),
+            bottomRight: isLeft ? Radius.zero : const Radius.circular(7),
+          ),
+        ),
+        child: Text(label,
+          style: TextStyle(
+            fontSize: 10, fontWeight: FontWeight.bold,
+            color: active ? Colors.white : const Color(0xFF1E40AF),
+          )),
+      ),
     );
   }
 }
