@@ -1006,10 +1006,10 @@ class _FiltersBar extends StatelessWidget {
         cadreCode.isNotEmpty || subjectFilter != 'off' || subjectQ.isNotEmpty;
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1252,9 +1252,9 @@ class _BoardCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis)),
                 if (fresh)
                   Container(margin: const EdgeInsets.only(left: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
-                    child: const Text('Mpya', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white))),
+                    child: const Text('Mpya', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white))),
                 if (online && !fresh)
                   Padding(padding: const EdgeInsets.only(left: 4),
                     child: Text('● Live', style: TextStyle(fontSize: 9, color: Colors.green.shade600, fontWeight: FontWeight.bold))),
@@ -1277,10 +1277,10 @@ class _BoardCard extends StatelessWidget {
               Row(children: [
                 if (category.isNotEmpty)
                   Text(isEdu ? 'Elimu' : 'Afya',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
                 if (cadre.isNotEmpty)
                   Expanded(child: Text(' · $cadre',
-                      style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                       overflow: TextOverflow.ellipsis)),
               ]),
             ])),
@@ -1395,7 +1395,7 @@ class _BoardCard extends StatelessWidget {
                 phoneOk ? () => onContact('sms') : null)),
             if (altOk) ...[
               const SizedBox(width: 6), // gap-1.5 = 6px
-              Expanded(child: _contactBtn(Icons.chat, 'WA',
+              Expanded(child: _contactBtn(Icons.language, 'WA',
                   () => onContact('whatsapp'))),
             ],
           ]),
