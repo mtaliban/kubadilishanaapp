@@ -1022,6 +1022,8 @@ class _FiltersBar extends StatelessWidget {
           initialValue: regionSel,
           decoration: _dec('Mikoa Yote'),
           style: const TextStyle(fontSize: 12, color: Colors.black87),
+          icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF6B7280)),
+          dropdownColor: Colors.white,
           isExpanded: true,
           items: [
             const DropdownMenuItem(value: '__all__', child: Text('Mikoa Yote')),
@@ -1037,6 +1039,9 @@ class _FiltersBar extends StatelessWidget {
           initialValue: districtId,
           decoration: _dec(singleRegionSelected ? 'Wilaya zote' : 'Chagua Wilaya / Halmashauri'),
           style: TextStyle(fontSize: 12, color: singleRegionSelected ? Colors.black87 : Colors.grey),
+          icon: Icon(Icons.keyboard_arrow_down, size: 16,
+              color: singleRegionSelected ? const Color(0xFF6B7280) : const Color(0xFFD1D5DB)),
+          dropdownColor: Colors.white,
           isExpanded: true,
           items: [
             DropdownMenuItem(value: null, child: Text(singleRegionSelected ? 'Wilaya zote' : 'Chagua Wilaya / Halmashauri')),
@@ -1052,6 +1057,9 @@ class _FiltersBar extends StatelessWidget {
           initialValue: facilityId,
           decoration: _dec(districtSelected ? 'Vituo vyote' : 'Chagua Kituo'),
           style: TextStyle(fontSize: 12, color: districtSelected ? Colors.black87 : Colors.grey),
+          icon: Icon(Icons.keyboard_arrow_down, size: 16,
+              color: districtSelected ? const Color(0xFF6B7280) : const Color(0xFFD1D5DB)),
+          dropdownColor: Colors.white,
           isExpanded: true,
           items: [
             DropdownMenuItem(value: null, child: Text(districtSelected ? 'Vituo vyote' : 'Chagua Kituo')),
