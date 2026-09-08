@@ -1,6 +1,7 @@
 /// Call/contact history screen — lists all logged contacts (/messages/calls).
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/websocket_service.dart';
 import '../config/theme.dart';
 
 class CallHistoryScreen extends StatefulWidget {
@@ -19,10 +20,22 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
 
   static const _filters = ['Zote', 'Simu', 'SMS', 'WhatsApp'];
 
+  void _onWs(dynamic _) {
+    if (mounted) _load();
+  }
+
   @override
   void initState() {
     super.initState();
     _load();
+    // Mtumiaji akipigiwa simu/SMS/WhatsApp, historia inajisasisha PAPO HAPO
+    WebSocketService().on('contact.activity', _onWs);
+  }
+
+  @override
+  void dispose() {
+    WebSocketService().off('contact.activity', _onWs);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -31,19 +44,24 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
       _error = null;
     });
     try {
-      final res = await ApiService().get('/messages/calls');
-      final data = res.data as Map<String, dynamic>;
-      final calls = (data['calls'] as List<dynamic>?) ?? [];
-      setState(() {
-        _allCalls = calls;
-        _applyFilter(_filter);
-        _loading = false;
-      });
+      final res = await ApiService().getCallHistory();
+      // Backend returns a plain list [], not a map {calls: [...]}
+      final raw = res.data;
+      final calls = raw is List ? raw : <dynamic>[];
+      if (mounted) {
+        setState(() {
+          _allCalls = calls;
+          _applyFilter(_filter);
+          _loading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -61,7 +79,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   String _swahiliToType(String swahili) {
     switch (swahili) {
       case 'Simu':
-        return 'phone';
+        return 'call';
       case 'SMS':
         return 'sms';
       case 'WhatsApp':
@@ -73,12 +91,11 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
 
   String _typeToSwahili(String type) {
     switch (type.toLowerCase()) {
-      case 'phone':
+      case 'call':
         return 'Simu';
       case 'sms':
         return 'SMS';
       case 'whatsapp':
-      case 'chat':
         return 'WhatsApp';
       default:
         return type;
@@ -87,12 +104,11 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
 
   IconData _iconForType(String type) {
     switch (type.toLowerCase()) {
-      case 'phone':
+      case 'call':
         return Icons.phone;
       case 'sms':
         return Icons.sms;
       case 'whatsapp':
-      case 'chat':
         return Icons.chat;
       default:
         return Icons.contact_phone;
@@ -101,12 +117,11 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
 
   Color _colorForType(String type) {
     switch (type.toLowerCase()) {
-      case 'phone':
+      case 'call':
         return Colors.green;
       case 'sms':
         return Colors.blue;
       case 'whatsapp':
-      case 'chat':
         return const Color(0xFF25D366);
       default:
         return AppColors.textSecondary;
@@ -215,16 +230,22 @@ class _CallCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fromName = call['from_name']?.toString() ?? 'Mtumiaji';
-    final toName = call['to_name']?.toString() ?? 'Mtumiaji';
-    final contactType = call['contact_type']?.toString() ?? '';
-    final createdAt = call['created_at']?.toString() ?? '';
-    final dateStr =
-        createdAt.contains('T') ? createdAt.split('T').first : createdAt;
+    // Backend returns: direction ("out"/"in"), with_full_name, contact_type, initiated_at
+    final direction = call['direction']?.toString() ?? 'out';
+    final withName = call['with_full_name']?.toString() ?? 'Mtumiaji';
+    final contactType = call['contact_type']?.toString() ?? 'call';
+    final initiatedAt = call['initiated_at']?.toString() ?? '';
+
+    // Show date only (strip time)
+    final dateStr = initiatedAt.contains('T')
+        ? initiatedAt.split('T').first
+        : initiatedAt;
 
     final icon = iconForType(contactType);
     final color = colorForType(contactType);
     final swahiliType = typeToSwahili(contactType);
+    final dirIcon = direction == 'out' ? Icons.call_made : Icons.call_received;
+    final dirColor = direction == 'out' ? Colors.blue : Colors.green;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -234,11 +255,17 @@ class _CallCard extends StatelessWidget {
           backgroundColor: color.withOpacity(0.12),
           child: Icon(icon, color: color, size: 20),
         ),
-        title: Text(
-          '$fromName → $toName',
-          style: const TextStyle(
-              fontWeight: FontWeight.w600, fontSize: 13),
-        ),
+        title: Row(children: [
+          Icon(dirIcon, size: 14, color: dirColor),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              withName,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ]),
         subtitle: Text(
           swahiliType,
           style: const TextStyle(

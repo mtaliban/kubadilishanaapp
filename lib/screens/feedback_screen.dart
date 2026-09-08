@@ -37,17 +37,20 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   int _page = 1;
   static const _perPage = 2;
 
+  void _onWs(dynamic payload) {
+    if (payload['type'] == 'feedback.replied' && mounted) _load();
+  }
+
   @override
   void initState() {
     super.initState();
     _load();
-    WebSocketService().on('notification', (payload) {
-      if (payload['type'] == 'feedback.replied' && mounted) _load();
-    });
+    WebSocketService().on('notification', _onWs);
   }
 
   @override
   void dispose() {
+    WebSocketService().off('notification', _onWs);
     _msgCtrl.dispose();
     super.dispose();
   }

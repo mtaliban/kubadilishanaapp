@@ -77,17 +77,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _editing = false;
   String? _message;
 
+  void _onAdminUpdate(dynamic _) => _load();
+
   @override
   void initState() {
     super.initState();
     _load();
-    // Kama web: admin akibadilisha profile yako, inaupdate live
-    WebSocketService().on('user.updated_by_admin', (_) => _load());
+    WebSocketService().on('user.updated_by_admin', _onAdminUpdate);
   }
 
   @override
   void dispose() {
-    WebSocketService().off('user.updated_by_admin', (_) {});
+    WebSocketService().off('user.updated_by_admin', _onAdminUpdate);
     super.dispose();
   }
 
