@@ -136,6 +136,8 @@ class _DonateScreenState extends State<DonateScreen> {
       if (type == 'payment.approved') {
         _setFlash({'type': 'success', 'msg': '✓ Malipo yamethibitishwa'});
         _loadHistory();
+        // Sasisha session — is_verified=True → mtu aweze kupiga SMS/WA (kama web)
+        context.read<AuthProvider>().refreshUser();
       } else if (type == 'payment.rejected') {
         _setFlash({'type': 'info', 'msg': '✗ Malipo yamekataliwa'});
         _loadHistory();

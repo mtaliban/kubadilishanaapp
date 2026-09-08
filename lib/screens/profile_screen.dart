@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/websocket_service.dart';
 import '../widgets/app_shell.dart';
 
 // ── Brand colors (kama web globals.css) ─────────────────────────────────────
@@ -80,6 +81,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _load();
+    // Kama web: admin akibadilisha profile yako, inaupdate live
+    WebSocketService().on('user.updated_by_admin', (_) => _load());
+  }
+
+  @override
+  void dispose() {
+    WebSocketService().off('user.updated_by_admin', (_) {});
+    super.dispose();
   }
 
   Future<void> _load() async {
