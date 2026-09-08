@@ -234,42 +234,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   int get _totalPages => (_candidates.length / _pageSize).ceil().clamp(1, 9999);
 
-  // Grid ya 2 columns kama web
+  // Grid responsive kama web: minmax(165px,1fr) — cols inabadilika na ukubwa wa skrini
   List<Widget> _buildGrid(List<dynamic> cards, bool isPaid, List<String> mySubjects,
-      String myRegionName, AuthUser? user) {
+      String myRegionName, AuthUser? user, {int cols = 1}) {
     final myUserId = user?.userId ?? '';
     final rows = <Widget>[];
-    for (int i = 0; i < cards.length; i += 2) {
-      final a = cards[i];
-      final b = i + 1 < cards.length ? cards[i + 1] : null;
+    for (int i = 0; i < cards.length; i += cols) {
+      final slice = cards.sublist(i, (i + cols).clamp(0, cards.length));
       rows.add(IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: _BoardCard(
-              card: a, isPaid: isPaid, mySubjects: mySubjects, myRegionName: myRegionName,
-              myName: user?.fullName ?? '', myCadre: user?.cadreDisplay ?? user?.cadreCode ?? '',
-              myStation: myRegionName, myUserId: myUserId,
-              toast: _toastUserId == (a['user_id'] ?? '') ? _toastMsg : null,
-              onContact: (type) => _onContact(a, type, user),
-              onToast: (msg) => _showCardToast(msg, a['user_id'] ?? ''),
-            )),
-            const SizedBox(width: 10), // gap-2.5 = 10px
-            if (b != null)
-              Expanded(child: _BoardCard(
-                card: b, isPaid: isPaid, mySubjects: mySubjects, myRegionName: myRegionName,
-                myName: user?.fullName ?? '', myCadre: user?.cadreDisplay ?? user?.cadreCode ?? '',
-                myStation: myRegionName, myUserId: myUserId,
-                toast: _toastUserId == (b['user_id'] ?? '') ? _toastMsg : null,
-                onContact: (type) => _onContact(b, type, user),
-                onToast: (msg) => _showCardToast(msg, b['user_id'] ?? ''),
-              ))
-            else
-              const Expanded(child: SizedBox()),
+            for (int j = 0; j < cols; j++) ...[
+              if (j > 0) const SizedBox(width: 10),
+              if (j < slice.length)
+                Expanded(child: _BoardCard(
+                  card: slice[j], isPaid: isPaid, mySubjects: mySubjects, myRegionName: myRegionName,
+                  myName: user?.fullName ?? '', myCadre: user?.cadreDisplay ?? user?.cadreCode ?? '',
+                  myStation: myRegionName, myUserId: myUserId,
+                  toast: _toastUserId == (slice[j]['user_id'] ?? '') ? _toastMsg : null,
+                  onContact: (type) => _onContact(slice[j], type, user),
+                  onToast: (msg) => _showCardToast(msg, slice[j]['user_id'] ?? ''),
+                ))
+              else
+                const Expanded(child: SizedBox()),
+            ],
           ],
         ),
       ));
-      rows.add(const SizedBox(height: 10)); // gap-2.5 = 10px
+      rows.add(const SizedBox(height: 10));
     }
     return rows;
   }
@@ -510,8 +503,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   else if (_candidates.isEmpty)
                     _EmptyBoard(isPaid: isPaid)
                   else ...[
-                    // Grid ya 2 columns kama web
-                  ..._buildGrid(_pagedCandidates, isPaid, mySubjects, myRegionName, user),
+                    // Grid responsive: minmax(165px,1fr) — 1 col kwenye simu ndogo, 2+ kwenye kubwa
+                    Builder(builder: (ctx) {
+                      final contentW = MediaQuery.of(ctx).size.width - 32;
+                      final cols = (contentW / 165).floor().clamp(1, 3);
+                      return Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: _buildGrid(_pagedCandidates, isPaid, mySubjects, myRegionName, user, cols: cols));
+                    }),
                     // Pagination
                     if (_totalPages > 1)
                       _Pagination(
