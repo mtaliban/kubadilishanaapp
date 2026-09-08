@@ -81,15 +81,31 @@ class _AdminCsvPageState extends State<AdminCsvPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // ── PAGE HEADER ──
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Row(children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(child: Icon(Icons.table_chart_outlined, size: 20, color: Color(0xFF1E40AF))),
+            ),
+            const SizedBox(width: 12),
+            const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Hamisha Data', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+              Text('Pakua data kama faili za CSV', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+            ]),
+          ]),
+        ),
         // Export buttons
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Hamisha Data',
-                  style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 10),
               if (_exporting)
                 const Center(child: Padding(

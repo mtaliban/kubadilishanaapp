@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../services/notification_service.dart';
+import '../services/app_navigator.dart';
 
 class AuthUser {
   final String userId;
@@ -76,6 +77,7 @@ class AuthProvider extends ChangeNotifier {
   AuthUser? _user;
   bool _loading = false;
   String? _error;
+  bool _errorIsNetwork = false;
 
   /// Admin 2FA: email inayosubiri OTP.
   String? pendingAdminEmail;
@@ -86,6 +88,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isAdmin => _user?.isAdmin ?? false;
   bool get isVerified => _user?.isVerified ?? false;
   String? get error => _error;
+  bool get errorIsNetwork => _errorIsNetwork;
 
   Future<bool> restoreSession() async {
     final token = await _api.loadToken();
@@ -107,6 +110,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> login(String phone, {String? password}) async {
     _loading = true;
     _error = null;
+    _errorIsNetwork = false;
     notifyListeners();
     try {
       final res = await _api.login(phone, password: password);
@@ -126,7 +130,10 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = _parseError(e);
+      _errorIsNetwork = _isNetworkError(e);
+      _error = _errorIsNetwork
+          ? 'Kosa la mtandao — tafadhali angalia muunganisho wako na ujaribu tena.'
+          : _parseError(e);
       _loading = false;
       notifyListeners();
       return false;
@@ -174,6 +181,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> adminLoginOtp(String email, String code) async {
     _loading = true;
     _error = null;
+    _errorIsNetwork = false;
     notifyListeners();
     try {
       final res = await _api.adminLoginOtp(email, code);
@@ -187,7 +195,10 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = _parseError(e);
+      _errorIsNetwork = _isNetworkError(e);
+      _error = _errorIsNetwork
+          ? 'Kosa la mtandao — tafadhali angalia muunganisho wako na ujaribu tena.'
+          : _parseError(e);
       _loading = false;
       notifyListeners();
       return false;
@@ -248,7 +259,20 @@ class AuthProvider extends ChangeNotifier {
     });
 
     // Delay notification init by 5s so it never blocks app startup
-    Future.delayed(const Duration(seconds: 5), () => _notif.init().catchError((_) {}));
+    Future.delayed(const Duration(seconds: 5), () {
+      _notif.onNotificationTapped = handleNotificationTap;
+      _notif.init().catchError((_) {});
+    });
+  }
+
+  bool _isNetworkError(dynamic e) {
+    try {
+      if ((e as dynamic).response != null) return false;
+    } catch (_) {}
+    final s = e.toString();
+    return s.contains('SocketException') || s.contains('Network') ||
+        s.contains('Connection') || s.contains('timeout') ||
+        s.contains('Failed host') || s.contains('DioException');
   }
 
   String _parseError(dynamic e) {
@@ -259,10 +283,10 @@ class AuthProvider extends ChangeNotifier {
       if (detail is List && detail.isNotEmpty) return detail[0]['msg'] ?? detail.toString();
     } catch (_) {}
     final s = e.toString();
-    if (s.contains('401')) return 'Namba ya simu au nenosiri si sahihi';
+    if (s.contains('401')) return 'Namba ya simu au password si sahihi. Tafadhali kagua na ujaribu tena.';
     if (s.contains('403')) return 'Hauruhusiwi kuingia';
     if (s.contains('422')) return 'Taarifa zilizowekwa si sahihi';
     if (s.contains('500')) return 'Hitilafu ya server — jaribu tena';
-    return 'Hitilafu — jaribu tena';
+    return 'Namba ya simu au password si sahihi. Tafadhali kagua na ujaribu tena.';
   }
 }

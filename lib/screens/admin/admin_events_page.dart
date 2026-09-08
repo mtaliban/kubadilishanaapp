@@ -49,6 +49,25 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // ── PAGE HEADER ──
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Row(children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(child: Icon(Icons.list_alt_outlined, size: 20, color: Color(0xFF1E40AF))),
+            ),
+            const SizedBox(width: 12),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Matukio ($_total)', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+              const Text('Kumbukumbu ya matukio ya mfumo', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+            ]),
+          ]),
+        ),
         // Daily stats mini row
         if (_dailyStats.isNotEmpty)
           Container(

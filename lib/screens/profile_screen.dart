@@ -1,6 +1,68 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../config/theme.dart';
+import '../widgets/app_shell.dart';
+
+// ── Brand colors (kama web globals.css) ─────────────────────────────────────
+const _kBlue    = Color(0xFF1E40AF); // brand-blue
+const _kGrey900 = Color(0xFF111827); // brand-grey-900
+const _kGrey700 = Color(0xFF374151); // brand-grey-700
+const _kGrey500 = Color(0xFF6B7280); // brand-grey-500
+const _kGrey300 = Color(0xFFD1D5DB); // brand-grey-300
+const _kGrey200 = Color(0xFFE5E7EB); // border-grey-200
+const _kGrey50  = Color(0xFFF9FAFB); // brand-grey-50
+const _kGrey100 = Color(0xFFF3F4F6); // brand-grey-100
+const _kRed     = Color(0xFFDC2626); // brand-red
+const _kGold200 = Color(0xFFFDE68A); // brand-gold-200 (amber-200)
+
+// .card = rounded-xl p-4 border border-grey-200 bg-white
+BoxDecoration _cardDec({Color? borderColor}) => BoxDecoration(
+  color: Colors.white,
+  borderRadius: BorderRadius.circular(12),
+  border: Border.all(color: borderColor ?? _kGrey200),
+);
+
+// .input = rounded-md border-grey-300 px-2.5=10 py-1.5=6 text-xs=12
+InputDecoration _inputDec({String? hint, bool disabled = false}) => InputDecoration(
+  hintText: hint,
+  isDense: true,
+  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 2)),
+  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: disabled ? _kGrey200 : _kGrey300)),
+  hintStyle: const TextStyle(fontSize: 12, color: _kGrey500),
+  filled: true,
+  fillColor: disabled ? _kGrey100 : Colors.white,
+);
+
+// .label = text-sm=14px font-semibold text-grey-700 mb-1.5=6px
+Widget _label(String text) => Padding(
+  padding: const EdgeInsets.only(bottom: 6),
+  child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+);
+
+// btn-primary — text-xs=12px px-3=12px py-1.5=6px rounded-md font-bold brand-blue
+ButtonStyle _btnPrimary() => ElevatedButton.styleFrom(
+  backgroundColor: _kBlue,
+  foregroundColor: Colors.white,
+  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+  minimumSize: const Size(0, 0),
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  elevation: 0,
+);
+
+// btn-outline — text-xs=12px px-3=12px py-1.5=6px rounded-md border-grey-300 text-grey-700
+ButtonStyle _btnOutline() => OutlinedButton.styleFrom(
+  foregroundColor: _kGrey700,
+  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+  side: const BorderSide(color: _kGrey300),
+  minimumSize: const Size(0, 0),
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+);
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -36,49 +98,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_profile == null) return Scaffold(
-        appBar: AppBar(title: const Text('Wasifu')),
-        body: const Center(child: Text('Imeshindikana kupakia')));
+    final isAdmin = _profile?['is_admin'] == true;
 
-    final isAdmin = _profile!['is_admin'] == true;
+    return AppShell(
+      tabIndex: 3,
+      child: _loading
+        ? const Center(
+            child: Padding(
+              padding: EdgeInsets.all(40),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1E40AF))),
+                SizedBox(height: 8),
+                Text('Inapakia...', style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
+              ]),
+            ),
+          )
+        : _profile == null
+          ? const Center(child: Text('Imeshindikana kupakia'))
+          : SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(children: [
-          Text(isAdmin ? 'Wasifu wa Admin' : 'Wasifu Wangu'),
-          if (isAdmin) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(20)),
-              child: const Text('Admin', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary))),
-          ],
-        ]),
-        actions: [
-          if (!_editing)
-            TextButton(onPressed: () => setState(() => _editing = true), child: const Text('Hariri'))
-          else
-            TextButton(onPressed: () => setState(() => _editing = false), child: const Text('Ghairi')),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (_message != null)
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.5), borderRadius: BorderRadius.circular(10)),
-              child: Text(_message!, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600))),
-          if (_editing)
-            isAdmin
-                ? _EditAdminProfile(profile: _profile!, onSaved: _onSaved)
-                : _EditProfile(profile: _profile!, onSaved: _onSaved)
-          else
-            isAdmin ? _ViewAdmin(profile: _profile!) : _ViewUser(profile: _profile!),
-        ]),
-      ),
+                      // ── Header: title + edit/cancel button — kama web ──
+                      // web: flex items-center justify-between flex-wrap gap-2
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        Expanded(child: Row(children: [
+                          // text-2xl = 24px font-bold text-grey-900
+                          Text(isAdmin ? 'Wasifu wa Admin' : 'Wasifu Wangu',
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _kGrey900)),
+                          if (isAdmin) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF), // brand-blue-50
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: const Color(0xFFBFDBFE)), // brand-blue-200
+                              ),
+                              child: const Text('Admin',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)))),
+                          ],
+                        ])),
+                        const SizedBox(width: 8),
+                        if (!_editing)
+                          ElevatedButton(
+                            onPressed: () => setState(() => _editing = true),
+                            style: _btnPrimary(),
+                            child: const Text('Hariri'),
+                          )
+                        else
+                          OutlinedButton(
+                            onPressed: () => setState(() => _editing = false),
+                            style: _btnOutline(),
+                            child: const Text('Ghairi'),
+                          ),
+                      ]),
+
+                      // ── Success message — bg-brand-blue-50 text-brand-blue text-sm rounded-lg p-3 ──
+                      if (_message != null) ...[
+                        const SizedBox(height: 16), // space-y-4
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF), // brand-blue-50
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(_message!, style: const TextStyle(color: _kBlue, fontSize: 14)),
+                        ),
+                      ],
+
+                      const SizedBox(height: 16), // space-y-4
+
+                      // ── Content: view or edit ──
+                      if (_editing)
+                        isAdmin
+                          ? _EditAdminProfile(profile: _profile!, onSaved: _onSaved)
+                          : _EditProfile(profile: _profile!, onSaved: _onSaved)
+                      else
+                        isAdmin ? _ViewAdmin(profile: _profile!) : _ViewUser(profile: _profile!),
+                    ]),
+                  ),
     );
   }
 }
@@ -89,12 +189,12 @@ class _ViewAdmin extends StatelessWidget {
   const _ViewAdmin({required this.profile});
   @override
   Widget build(BuildContext context) {
-    return _InfoCard(title: 'Taarifa za Admin', rows: [
-      _InfoRow('Jina', profile['full_name']),
-      _InfoRow('Email', profile['email']),
-      _InfoRow('Simu', profile['phone_primary']),
-      _InfoRow('Hali ya Email', profile['email_verified'] == true ? 'Imethibitishwa ✓' : 'Haijathibitishwa'),
-      _InfoRow('Jukumu', 'Administrator'),
+    return _InfoCard(title: 'Utambulisho wa Admin', borderColor: _kGold200, rows: [
+      _InfoRow('Jina Kamili', profile['full_name']),
+      _InfoRow('Barua Pepe', profile['email']),
+      _InfoRow('Email imethibitishwa', profile['email_verified'] == true ? 'Ndiyo ✓' : 'Hapana'),
+      _InfoRow('Namba ya Simu', profile['phone_primary']),
+      _InfoRow('Wajibu', 'Administrator'),
     ]);
   }
 }
@@ -112,36 +212,49 @@ class _ViewUser extends StatelessWidget {
     final sector = profile['employment_sector'] ?? '';
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // Card 1: Identity
       _InfoCard(title: 'Utambulisho', rows: [
         _InfoRow('Jina Kamili', profile['full_name']),
         _InfoRow('Namba ya Simu', profile['phone_primary']),
-        if ((profile['phone_alt'] ?? '').toString().isNotEmpty) _InfoRow('Simu ya pili', profile['phone_alt']),
+        if ((profile['phone_alt'] ?? '').toString().isNotEmpty)
+          _InfoRow('Namba ya Pili', profile['phone_alt']),
         _InfoRow('Idara', cat == 'health' ? 'Afya' : cat == 'education' ? 'Elimu' : cat),
         if (cat == 'health' && sector.toString().isNotEmpty)
-          _InfoRow('Wizara', sector == 'wizara_afya' ? 'Wizara ya Afya' : 'TAMISEMI'),
+          _InfoRow('Sehemu ya Ajira', sector == 'wizara_afya' ? 'Wizara ya Afya' : 'TAMISEMI'),
         _InfoRow('Kada', profile['cadre_display'] ?? profile['cadre_code'] ?? ''),
         if (subjects.isNotEmpty) _InfoRow('Masomo', subjects.join(', ')),
       ]),
-      const SizedBox(height: 12),
+      const SizedBox(height: 16), // space-y-4
+
+      // Card 2: Station
       _InfoCard(title: 'Kituo cha Sasa', rows: [
         _InfoRow('Mkoa', cs['region_name']),
         _InfoRow('Wilaya', cs['district_name']),
         _InfoRow('Kituo', cs['facility_name'] ?? '(Hakuna)'),
       ]),
-      const SizedBox(height: 12),
+      const SizedBox(height: 16),
+
+      // Card 3: Destinations
       _InfoCard(title: 'Ninataka Kwenda', children: [
         if (dests.isEmpty)
-          const Text('Hakuna lengo', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))
+          const Text('Hakuna lengo', style: TextStyle(fontSize: 12, color: _kGrey500))
         else
           ...dests.map((d) => Container(
-            margin: const EdgeInsets.only(bottom: 6),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8)),
+            margin: const EdgeInsets.only(bottom: 8), // space-y-2
+            padding: const EdgeInsets.all(8), // p-2 = 8px
+            decoration: BoxDecoration(
+              color: _kGrey50, // bg-brand-grey-50
+              borderRadius: BorderRadius.circular(8), // rounded-lg
+            ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${d['region_name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              // font-semibold text-brand-grey-900 (text-sm implied)
+              Text('${d['region_name'] ?? ''}',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: _kGrey900)),
+              const SizedBox(height: 2),
+              // text-xs text-grey-500
               Text(
                 '${d['district_name'] ?? 'Wilaya yoyote'}${d['facility_name'] != null ? ' • ${d['facility_name']}' : ''}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                style: const TextStyle(fontSize: 12, color: _kGrey500)),
             ]),
           )),
       ]),
@@ -192,19 +305,51 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       if (_error != null) _ErrBox(_error!),
-      _InfoCard(title: 'Taarifa za Admin', children: [
-        _formField('Jina', _nameCtrl),
-        const SizedBox(height: 10),
-        _formField('Simu ya Pili (hiari)', _altCtrl),
-        const SizedBox(height: 10),
-        _disabledField('Email', widget.profile['email'] ?? ''),
+      _InfoCard(title: 'Utambulisho wa Admin', borderColor: _kGold200, children: [
+        // Jina
+        _label('Jina Kamili'),
+        TextField(controller: _nameCtrl, style: const TextStyle(fontSize: 12), decoration: _inputDec()),
+        const SizedBox(height: 12), // space-y-3
+
+        // Simu ya pili
+        _label('Simu ya pili'),
+        TextField(controller: _altCtrl, style: const TextStyle(fontSize: 12), decoration: _inputDec(hint: 'Hiari')),
+        const SizedBox(height: 12),
+
+        // Email (disabled)
+        _label('Barua Pepe'),
+        TextField(
+          controller: TextEditingController(text: widget.profile['email'] ?? ''),
+          enabled: false,
+          style: const TextStyle(fontSize: 12),
+          decoration: _inputDec(disabled: true),
+        ),
+        const SizedBox(height: 4),
+        const Text('Email haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
+            style: TextStyle(fontSize: 12, color: _kGrey500)),
       ]),
-      const SizedBox(height: 14),
-      ElevatedButton(
-        onPressed: _saving ? null : _save,
-        child: _saving
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-            : const Text('Hifadhi')),
+      const SizedBox(height: 16),
+
+      // Save button — btn-primary text-xs px-4=16px py-1.5=6px
+      Align(
+        alignment: Alignment.centerRight,
+        child: ElevatedButton(
+          onPressed: _saving ? null : _save,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kBlue,
+            foregroundColor: Colors.white,
+            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            minimumSize: const Size(0, 0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: 0,
+          ),
+          child: _saving
+              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Hifadhi'),
+        ),
+      ),
       const SizedBox(height: 60),
     ]);
   }
@@ -222,14 +367,12 @@ class _EditProfile extends StatefulWidget {
 class _EditProfileState extends State<_EditProfile> {
   late TextEditingController _nameCtrl, _phoneCtrl, _altCtrl, _curPwdCtrl, _newPwdCtrl;
 
-  // Cadre & Subjects
   String _cadreCode = '';
   List<dynamic> _cadres = [];
   List<dynamic> _availSubjects = [];
   List<String> _subjects = [];
   bool _loadingSubjects = false;
 
-  // Station
   int? _stationRegionId;
   int? _stationDistrictId;
   String? _stationFacilityId;
@@ -237,10 +380,9 @@ class _EditProfileState extends State<_EditProfile> {
   List<dynamic> _stationDistricts = [];
   List<dynamic> _stationFacilities = [];
 
-  // Destinations
   List<Map<String, dynamic>> _destinations = [];
   Map<int, List<dynamic>> _destDistricts = {};
-  Map<int, List<dynamic>> _destFacilities = {};
+  final Map<int, List<dynamic>> _destFacilities = {};
 
   bool _saving = false, _changingPwd = false;
   String? _error, _pwdMsg;
@@ -271,8 +413,7 @@ class _EditProfileState extends State<_EditProfile> {
     final cs = widget.profile['current_station'] as Map? ?? {};
     _stationRegionId = cs['region_id'] as int?;
     _stationDistrictId = cs['district_id'] as int?;
-    final fid = cs['facility_id'];
-    _stationFacilityId = fid != null ? fid.toString() : null;
+    _stationFacilityId = cs['facility_id']?.toString();
 
     _destinations = (widget.profile['desired_destinations'] as List? ?? [])
         .map((d) => Map<String, dynamic>.from(d as Map))
@@ -385,7 +526,7 @@ class _EditProfileState extends State<_EditProfile> {
         'phone_alt': _altCtrl.text.trim().isEmpty ? null : _altCtrl.text.trim(),
         'cadre_code': _cadreCode.isEmpty ? null : _cadreCode,
         'subjects': _subjects,
-        if (station != null) 'current_station': station,
+        'current_station': ?station,
         'desired_destinations': dests,
       });
       final res = await ApiService().getMyProfile();
@@ -403,7 +544,7 @@ class _EditProfileState extends State<_EditProfile> {
     setState(() { _changingPwd = true; _pwdMsg = null; });
     try {
       await ApiService().changePassword(_curPwdCtrl.text, _newPwdCtrl.text);
-      if (mounted) setState(() { _pwdMsg = '✓ Nenosiri limebadilishwa'; _curPwdCtrl.clear(); _newPwdCtrl.clear(); });
+      if (mounted) setState(() { _pwdMsg = 'Password imebadilishwa ✓'; _curPwdCtrl.clear(); _newPwdCtrl.clear(); });
     } catch (e) {
       setState(() => _pwdMsg = _parseErr(e));
     }
@@ -442,36 +583,58 @@ class _EditProfileState extends State<_EditProfile> {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       if (_error != null) _ErrBox(_error!),
 
-      // Card 1: Identity + Cadre + Subjects
+      // ── Card 1: Identity + Cadre + Subjects ──
       _InfoCard(title: 'Utambulisho', children: [
-        _formField('Jina Kamili', _nameCtrl),
-        const SizedBox(height: 10),
-        _formField('Namba ya Simu', _phoneCtrl, keyboard: TextInputType.phone),
-        const SizedBox(height: 10),
-        _formField('🟢 Simu ya pili (WhatsApp)', _altCtrl, keyboard: TextInputType.phone),
+        // Jina
+        _label('Jina Kamili'),
+        TextField(controller: _nameCtrl, style: const TextStyle(fontSize: 12), decoration: _inputDec()),
+        const SizedBox(height: 12), // space-y-3
+
+        // Simu ya kawaida
+        _label('Namba ya Simu (Normal)'),
+        TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone,
+            style: const TextStyle(fontSize: 12), decoration: _inputDec()),
+        const SizedBox(height: 12),
+
+        // WhatsApp
+        _label('🟢 Namba ya WhatsApp *'),
+        TextField(controller: _altCtrl, keyboardType: TextInputType.phone,
+            style: const TextStyle(fontSize: 12), decoration: _inputDec(hint: '0623456789')),
+
+        // Kada
         if (_cadres.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          const Text('Kada', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          _Dropdown<String>(
+          const SizedBox(height: 12),
+          _label('Kada'),
+          _DropInput<String>(
             value: _cadres.any((c) => c['code'] == _cadreCode) ? _cadreCode : null,
             hint: '— Chagua Kada —',
             items: _cadres.map((c) => DropdownMenuItem<String>(
               value: c['code'] as String,
-              child: Text(c['display_name'] ?? c['code'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
+              child: Text(c['display_name'] ?? c['code'] ?? '', style: const TextStyle(fontSize: 12)))).toList(),
             onChanged: (v) {
               setState(() { _cadreCode = v ?? ''; _subjects = []; _availSubjects = []; });
               if (_subjectLevel != null) _loadSubjects(_subjectLevel!);
             },
           ),
         ],
+
+        // Masomo (kama kada ina level)
         if (_subjectLevel != null) ...[
-          const SizedBox(height: 10),
-          Text('Masomo ($_subjectLevel)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
+          _label('Masomo ($_subjectLevel)'),
           if (_loadingSubjects)
-            const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2)))
+            // Loader2 + "Inapakia..." kama web
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
+                SizedBox(width: 18, height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: _kGrey500)),
+                SizedBox(width: 8),
+                Text('Inapakia...', style: TextStyle(fontSize: 14, color: _kGrey500)),
+              ]),
+            )
           else
+            // flex flex-wrap gap-1.5 max-h-44 overflow-y-auto
             Wrap(spacing: 6, runSpacing: 6, children: _availSubjects.map((s) {
               final code = (s['code'] ?? s['name'] ?? '').toString();
               final name = (s['name'] ?? code).toString();
@@ -479,113 +642,161 @@ class _EditProfileState extends State<_EditProfile> {
               return GestureDetector(
                 onTap: () => setState(() => selected ? _subjects.remove(code) : _subjects.add(code)),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  // px-3=12 py-1.5=6 rounded-lg=8 text-xs=12 font-medium
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : Colors.white,
+                    color: selected ? _kBlue : Colors.white,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: selected ? AppColors.primary : AppColors.border)),
+                    border: Border.all(color: selected ? _kBlue : _kGrey300),
+                  ),
                   child: Text(name, style: TextStyle(
-                    fontSize: 11,
-                    color: selected ? Colors.white : AppColors.textSecondary,
-                    fontWeight: FontWeight.w500))),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: selected ? Colors.white : _kGrey700,
+                  )),
+                ),
               );
             }).toList()),
         ],
       ]),
-      const SizedBox(height: 14),
+      const SizedBox(height: 16),
 
-      // Card 2: Station
+      // ── Card 2: Station ──
       _InfoCard(title: 'Kituo cha Sasa', children: [
-        const Text('Mkoa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 4),
-        _Dropdown<int>(
+        _label('Mkoa'),
+        _DropInput<int>(
           value: _regions.any((r) => r['id'] == _stationRegionId) ? _stationRegionId : null,
           hint: '— Chagua Mkoa —',
           items: _regions.map((r) => DropdownMenuItem<int>(
             value: r['id'] as int,
-            child: Text(r['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
+            child: Text(r['name'] ?? '', style: const TextStyle(fontSize: 12)))).toList(),
           onChanged: (v) {
             setState(() { _stationRegionId = v; _stationDistrictId = null; _stationFacilityId = null; _stationDistricts = []; _stationFacilities = []; });
             if (v != null) ApiService().getDistricts(v).then((r) { if (mounted) setState(() => _stationDistricts = _asList(r.data)); }).catchError((_) {});
           },
         ),
-        const SizedBox(height: 10),
-        const Text('Wilaya', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 4),
-        _Dropdown<int>(
+        const SizedBox(height: 12),
+
+        _label('Wilaya'),
+        _DropInput<int>(
           value: _stationDistricts.any((d) => d['id'] == _stationDistrictId) ? _stationDistrictId : null,
           hint: '— Chagua Wilaya —',
           items: _stationDistricts.map((d) => DropdownMenuItem<int>(
             value: d['id'] as int,
-            child: Text(d['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
+            child: Text(d['name'] ?? '', style: const TextStyle(fontSize: 12)))).toList(),
           onChanged: (v) {
             setState(() { _stationDistrictId = v; _stationFacilityId = null; _stationFacilities = []; });
             if (v != null) ApiService().getFacilities(v, category: _category).then((r) { if (mounted) setState(() => _stationFacilities = _asList(r.data)); }).catchError((_) {});
           },
         ),
-        const SizedBox(height: 10),
-        Text(_category == 'health' ? 'Hospitali/Kituo (hiari)' : 'Shule (hiari)',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 4),
-        _Dropdown<String>(
+        const SizedBox(height: 12),
+
+        _label(_category == 'health' ? 'Hospitali/Kituo (hiari)' : 'Shule (hiari)'),
+        _DropInput<String>(
           value: (_stationFacilityId?.isNotEmpty == true && _stationFacilities.any((f) => (f['id'] ?? f['code']).toString() == _stationFacilityId)) ? _stationFacilityId : null,
           hint: _category == 'health' ? 'Hospitali/Kituo chote cha wilaya hii' : 'Shule zote za wilaya hii',
           items: _stationFacilities.map((f) {
             final id = (f['id'] ?? f['code']).toString();
             final name = f['name'] as String? ?? id;
             final type = f['type'] as String? ?? '';
-            return DropdownMenuItem<String>(value: id, child: Text(type.isNotEmpty ? '$name ($type)' : name, style: const TextStyle(fontSize: 13)));
+            return DropdownMenuItem<String>(value: id, child: Text(type.isNotEmpty ? '$name ($type)' : name, style: const TextStyle(fontSize: 12)));
           }).toList(),
           onChanged: _stationDistrictId == null ? null : (v) => setState(() => _stationFacilityId = v),
         ),
       ]),
-      const SizedBox(height: 14),
+      const SizedBox(height: 16),
 
-      // Card 3: Destinations
+      // ── Card 3: Destinations ──
       _InfoCard(
         title: 'Ninataka Kwenda',
-        trailing: TextButton(
-          onPressed: _addDest,
-          style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(60, 28)),
-          child: const Text('+ Ongeza', style: TextStyle(fontSize: 12))),
+        trailing: GestureDetector(
+          onTap: _addDest,
+          // text-brand-blue text-sm=14px
+          child: const Text('+ Ongeza', style: TextStyle(fontSize: 14, color: _kBlue)),
+        ),
         children: [
           if (_destinations.isEmpty)
             const Text('Bonyeza "+ Ongeza" kuongeza eneo la lengo',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary))
+                style: TextStyle(fontSize: 12, color: _kGrey500))
           else
             for (int i = 0; i < _destinations.length; i++) _buildDestRow(i),
-        ]),
-      const SizedBox(height: 14),
+        ],
+      ),
+      const SizedBox(height: 16),
 
-      ElevatedButton(
-        onPressed: _saving ? null : _save,
-        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-        child: _saving
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-            : const Text('Hifadhi Mabadiliko', style: TextStyle(fontWeight: FontWeight.bold))),
+      // ── Save button — btn-primary text-xs px-4=16px py-1.5=6px ──
+      Align(
+        alignment: Alignment.centerRight,
+        child: ElevatedButton(
+          onPressed: _saving ? null : _save,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kBlue,
+            foregroundColor: Colors.white,
+            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            minimumSize: const Size(0, 0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: 0,
+          ),
+          child: _saving
+              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Hifadhi Mabadiliko'),
+        ),
+      ),
       const SizedBox(height: 20),
 
-      // Card 4: Password
-      _InfoCard(title: '🔑 Badilisha Nenosiri', children: [
-        if (_pwdMsg != null)
+      // ── Card 4: Password — space-y-2.5 inside ──
+      _InfoCard(title: '🔑 Badilisha Password', children: [
+        // pwd success/error message
+        if (_pwdMsg != null) ...[
           Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // px-2.5=10 py-1.5=6
             decoration: BoxDecoration(
-              color: _pwdMsg!.startsWith('✓') ? Colors.green.shade50 : AppColors.error.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(8)),
+              color: _pwdMsg!.startsWith('✓') || _pwdMsg!.contains('imebadilishwa')
+                  ? Colors.green.shade50 : const Color(0xFFFEF2F2),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Text(_pwdMsg!, style: TextStyle(
-              fontSize: 12,
-              color: _pwdMsg!.startsWith('✓') ? Colors.green.shade700 : AppColors.error))),
-        _formField('Nenosiri la sasa', _curPwdCtrl, obscure: true),
-        const SizedBox(height: 10),
-        _formField('Nenosiri jipya (min. 6)', _newPwdCtrl, obscure: true),
+                fontSize: 12,
+                color: _pwdMsg!.startsWith('✓') || _pwdMsg!.contains('imebadilishwa')
+                    ? Colors.green.shade700 : _kRed))),
+          const SizedBox(height: 10),
+        ],
+
+        // Password ya sasa — input !py-1.5 text-sm=14px (overrides text-xs)
+        _label('Password ya sasa'),
+        TextField(
+          controller: _curPwdCtrl, obscureText: true,
+          style: const TextStyle(fontSize: 14), // text-sm
+          decoration: _inputDec(),
+        ),
+        const SizedBox(height: 10), // space-y-2.5 ≈ 10px
+
+        _label('Password mpya (angalau herufi 6)'),
+        TextField(
+          controller: _newPwdCtrl, obscureText: true,
+          style: const TextStyle(fontSize: 14),
+          decoration: _inputDec(),
+        ),
         const SizedBox(height: 12),
+
+        // Badilisha button — text-xs=12px px-3=12px py-1.5=6px rounded-lg border-brand-blue text-brand-blue
         OutlinedButton(
           onPressed: _changingPwd ? null : _changePwd,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _kBlue,
+            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            side: const BorderSide(color: _kBlue),
+            minimumSize: const Size(0, 0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           child: _changingPwd
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Badilisha Nenosiri', style: TextStyle(fontSize: 13))),
+              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Badilisha Password'),
+        ),
       ]),
       const SizedBox(height: 60),
     ]);
@@ -600,16 +811,18 @@ class _EditProfileState extends State<_EditProfile> {
     final facilityList = districtId != null ? (_destFacilities[districtId] ?? []) : <dynamic>[];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(bottom: 8), // space-y-2
+      // p-3=12px rounded-xl=12px bg-brand-grey-50 — NO border (web doesn't have border)
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border)),
+        color: _kGrey50,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Region select + delete button
         Row(children: [
           Expanded(
-            child: _Dropdown<int>(
+            child: _DropInput<int>(
               value: regionId == 0 ? null : (_regions.any((r) => r['id'] == regionId) ? regionId : null),
               hint: '— Chagua Mkoa —',
               items: _regions.map((r) => DropdownMenuItem<int>(
@@ -622,15 +835,20 @@ class _EditProfileState extends State<_EditProfile> {
               },
             ),
           ),
-          IconButton(
-            onPressed: () => _delDest(i),
-            icon: const Icon(Icons.close, size: 18, color: AppColors.error),
-            constraints: const BoxConstraints(),
-            padding: const EdgeInsets.only(left: 8)),
+          // Delete: text-brand-red text-sm px-2 kama web
+          GestureDetector(
+            onTap: () => _delDest(i),
+            child: const Padding(
+              padding: EdgeInsets.only(left: 8),
+              child: Text('✕', style: TextStyle(color: _kRed, fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ),
         ]),
+
+        // Wilaya select
         if (regionId > 0) ...[
-          const SizedBox(height: 6),
-          _Dropdown<int>(
+          const SizedBox(height: 8), // space-y-2
+          _DropInput<int>(
             value: districtId != null && districtList.any((x) => x['id'] == districtId) ? districtId : null,
             hint: 'Wilaya yoyote',
             items: districtList.map((x) => DropdownMenuItem<int>(
@@ -644,9 +862,11 @@ class _EditProfileState extends State<_EditProfile> {
             }),
           ),
         ],
+
+        // Facility select
         if (districtId != null && facilityList.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          _Dropdown<String>(
+          const SizedBox(height: 8),
+          _DropInput<String>(
             value: facilityId != null && facilityList.any((f) => (f['id'] ?? f['code']).toString() == facilityId) ? facilityId : null,
             hint: _category == 'health' ? 'Hospitali/Kituo chote' : 'Shule zote',
             items: facilityList.map((f) {
@@ -668,34 +888,39 @@ class _EditProfileState extends State<_EditProfile> {
 
 // ── Shared Widgets ────────────────────────────────────────────────────────────
 
+// .card = rounded-xl p-4 border-grey-200 bg-white
 class _InfoCard extends StatelessWidget {
   final String title;
   final Widget? trailing;
   final List<Widget>? children;
   final List<_InfoRow>? rows;
-  const _InfoCard({required this.title, this.trailing, this.children, this.rows});
+  final Color? borderColor;
+  const _InfoCard({required this.title, this.trailing, this.children, this.rows, this.borderColor});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border)),
+      padding: const EdgeInsets.all(16), // p-4 = 16px
+      decoration: _cardDec(borderColor: borderColor),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
-          if (trailing != null) trailing!,
+          // font-bold text-grey-900
+          Expanded(child: Text(title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kGrey900))),
+          ?trailing,
         ]),
-        const SizedBox(height: 10),
-        if (rows != null) ...rows!,
-        if (children != null) ...children!,
+        const SizedBox(height: 12), // mb-3 = 12px
+        if (rows != null) ...rows!.where((r) {
+          final v = r.value?.toString() ?? '';
+          return v.isNotEmpty;
+        })
+        else ...?children,
       ]),
     );
   }
 }
 
+// Row widget: flex justify-between gap-4, label=grey-500 text-sm, value=grey-900 font-medium
 class _InfoRow extends StatelessWidget {
   final String label;
   final dynamic value;
@@ -706,80 +931,74 @@ class _InfoRow extends StatelessWidget {
     final v = value?.toString() ?? '';
     if (v.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      // space-y-2 = 8px between rows
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(width: 110, child: Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))),
-        Expanded(child: Text(v, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500))),
-      ]));
+        // text-brand-grey-500 — label (flexible, kama web justify-between)
+        Expanded(
+          flex: 2,
+          child: Text('$label:', style: const TextStyle(fontSize: 14, color: _kGrey500)),
+        ),
+        const SizedBox(width: 16), // gap-4 = 16px
+        // font-medium text-grey-900 text-right
+        Expanded(
+          flex: 3,
+          child: Text(v,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _kGrey900)),
+        ),
+      ]),
+    );
   }
 }
 
+// Error box: bg-red-50 text-brand-red text-sm rounded-lg p-3
 class _ErrBox extends StatelessWidget {
   final String message;
   const _ErrBox(this.message);
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: AppColors.error.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
-      child: Text(message, style: const TextStyle(color: AppColors.error, fontSize: 12)));
-  }
-}
-
-class _Dropdown<T> extends StatelessWidget {
-  final T? value;
-  final String hint;
-  final List<DropdownMenuItem<T>> items;
-  final void Function(T?)? onChanged;
-  const _Dropdown({required this.hint, required this.items, this.value, this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      isExpanded: true,
-      decoration: InputDecoration(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        isDense: true),
-      hint: Text(hint, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-      items: items,
-      onChanged: onChanged,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12), // p-3 = 12px
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2), // bg-red-50
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(message, style: const TextStyle(color: _kRed, fontSize: 14)),
     );
   }
 }
 
-Widget _formField(String label, TextEditingController ctrl, {TextInputType? keyboard, bool obscure = false}) {
-  return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-    const SizedBox(height: 4),
-    TextField(
-      controller: ctrl,
-      keyboardType: keyboard,
-      obscureText: obscure,
-      decoration: InputDecoration(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        isDense: true)),
-  ]);
-}
+// Dropdown styled like .input: rounded-md=6px border-grey-300 px-2.5=10 py-1.5=6 text-xs=12
+class _DropInput<T> extends StatelessWidget {
+  final T? value;
+  final String hint;
+  final List<DropdownMenuItem<T>> items;
+  final void Function(T?)? onChanged;
+  const _DropInput({required this.hint, required this.items, this.value, this.onChanged});
 
-Widget _disabledField(String label, String value) {
-  return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-    const SizedBox(height: 4),
-    TextField(
-      controller: TextEditingController(text: value),
-      enabled: false,
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<T>(
+      initialValue: value,
+      isExpanded: true,
       decoration: InputDecoration(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         isDense: true,
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border)))),
-  ]);
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 2)),
+        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+        filled: true,
+        fillColor: Colors.white,
+      ),
+      hint: Text(hint, style: const TextStyle(fontSize: 12, color: _kGrey500)),
+      style: const TextStyle(fontSize: 12, color: _kGrey900),
+      items: items,
+      onChanged: onChanged,
+    );
+  }
 }
 
 String _parseErr(dynamic e) {

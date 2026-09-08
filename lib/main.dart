@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'services/api_service.dart';
+import 'services/app_navigator.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -76,6 +77,7 @@ class KubadilishanaApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
       child: MaterialApp(
+        navigatorKey: appNavigatorKey,
         title: 'Kubadilishana',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,

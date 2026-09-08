@@ -34,8 +34,27 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 80),
         children: [
+          // ── PAGE HEADER ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+            child: Row(children: [
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Center(child: Icon(Icons.bar_chart_outlined, size: 20, color: Color(0xFF1E40AF))),
+              ),
+              const SizedBox(width: 12),
+              const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Ripoti', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+                Text('Takwimu za mapato, watumiaji na mikataba', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+              ]),
+            ]),
+          ),
           // Period selector
           Row(
             children: [7, 30, 90, 365].map((d) => Padding(

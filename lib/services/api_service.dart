@@ -183,6 +183,7 @@ class ApiService {
       post('/payments/donate', data: {
         'amount': amount,
         'sms_text': smsText,
+        'purpose': 'donation',
         if (phone != null) 'phone': phone,
       });
 
@@ -276,8 +277,14 @@ class ApiService {
         if (cadreCode != null) 'cadre_code': cadreCode,
         'limit': limit,
       });
-  Future<Response> adminReports({int days = 30}) =>
-      get('/admin/reports', queryParameters: {'days': days});
+  Future<Response> adminReports({int days = 365, String? region, String? category, String? level}) =>
+      get('/admin/reports', queryParameters: {
+        'days': days,
+        if (region != null && region.isNotEmpty) 'region': region,
+        if (category != null && category.isNotEmpty) 'category': category,
+        if (level != null && level.isNotEmpty) 'level': level,
+      });
+  Future<Response> adminListDepartments() => get('/admin/departments');
   Future<Response> adminEvents({String? eventType, int limit = 100, int skip = 0}) =>
       get('/admin/events', queryParameters: {
         if (eventType != null) 'event_type': eventType,

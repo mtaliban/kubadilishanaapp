@@ -33,18 +33,45 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return _loading
-        ? const Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-            onRefresh: _load,
-            child: _resets.isEmpty
-                ? const Center(child: Text('Hakuna ombi la nenosiri', style: TextStyle(color: AppColors.textSecondary)))
-                : ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: _resets.length,
-                    itemBuilder: (context, i) => _resetTile(_resets[i]),
-                  ),
-          );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── PAGE HEADER ──
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Row(children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(child: Icon(Icons.lock_reset_outlined, size: 20, color: Color(0xFF1E40AF))),
+            ),
+            const SizedBox(width: 12),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Ombi la Nenosiri (${_resets.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+              const Text('Maombi ya kubadilisha nenosiri', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+            ]),
+          ]),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: _resets.isEmpty
+                      ? const Center(child: Text('Hakuna ombi la nenosiri', style: TextStyle(color: AppColors.textSecondary)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
+                          itemCount: _resets.length,
+                          itemBuilder: (context, i) => _resetTile(_resets[i]),
+                        ),
+                ),
+        ),
+      ],
+    );
   }
 
   Widget _resetTile(Map<String, dynamic> r) {

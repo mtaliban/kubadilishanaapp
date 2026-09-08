@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../config/theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -57,53 +56,57 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.primary, AppColors.primaryDark],
-          ),
-        ),
+      backgroundColor: Colors.white,
+      body: Center(
         child: FadeTransition(
           opacity: _fadeAnim,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
-              ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Image.asset(
-                  'assets/images/logo.jpeg',
-                  width: 110,
-                  height: 110,
-                  fit: BoxFit.cover,
+              // Logo — kama web login: h-20 rounded-xl shadow-md
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x1A000000), blurRadius: 6, offset: Offset(0, 4)),
+                    BoxShadow(color: Color(0x0D000000), blurRadius: 4, offset: Offset(0, 2)),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.asset(
+                    'assets/images/logo.jpeg',
+                    width: 96,
+                    height: 96,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               const Text(
                 'Kubadilishana',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1.2,
+                  color: Color(0xFF111827), // brand-grey-900
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               const Text(
                 'Waliopangana',
                 style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                  letterSpacing: 0.5,
+                  fontSize: 13,
+                  color: Color(0xFF6B7280), // brand-grey-500
                 ),
               ),
-              const SizedBox(height: 48),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                strokeWidth: 2,
+              const SizedBox(height: 40),
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFF1E40AF), // brand-blue
+                ),
               ),
             ],
           ),

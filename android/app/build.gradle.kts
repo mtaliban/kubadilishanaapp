@@ -8,7 +8,6 @@ android {
     namespace = "com.kubadilishana.app"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
-
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
