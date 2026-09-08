@@ -194,7 +194,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ws.on('user.changed', (_) => _loadBoard());
     ws.on('user.removed', (_) => _loadBoard());
     ws.on('user.profile_updated', (_) { _loadBoard(); _loadTrueMatches(); });
-    ws.on('contact.toggled', (_) => _loadBoard());
+    ws.on('contact.toggled', (_) {
+      _loadBoard();
+      context.read<AuthProvider>().refreshUser();
+    });
     ws.on('announcement', (_) => _loadAnnouncements());
     ws.on('announcement.new', (_) => _loadAnnouncements());
     ws.on('notification', (payload) {

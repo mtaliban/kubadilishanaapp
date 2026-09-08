@@ -243,6 +243,14 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshUser() async {
+    try {
+      final res = await _api.getMe();
+      _user = AuthUser.fromJson(res.data as Map<String, dynamic>);
+      notifyListeners();
+    } catch (_) {}
+  }
+
   void _setupRealtime() {
     _api.loadToken().then((t) {
       if (t != null) _ws.connect(t);
