@@ -42,19 +42,19 @@ InputDecoration _inp(String hint, {IconData? prefix}) => InputDecoration(
   hintText: hint,
   hintStyle: const TextStyle(fontSize: 14, color: _kGrey400),
   prefixIcon: prefix != null ? Icon(prefix, size: 18, color: _kGrey400) : null,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
   filled: true,
   fillColor: Colors.white,
   border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(12),
     borderSide: const BorderSide(color: _kGrey200),
   ),
   enabledBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(12),
     borderSide: const BorderSide(color: _kGrey200),
   ),
   focusedBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(12),
     borderSide: const BorderSide(color: _kBlue, width: 1.5),
   ),
 );

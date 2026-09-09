@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/websocket_service.dart';
+import '../../widgets/select_sheet.dart';
 
 // ── Brand colors ──────────────────────────────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);
@@ -1027,9 +1028,11 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   // ── CREATE DIALOG ──────────────────────────────────────────────────────────
   Future<void> _showCreateDialog() async {
-    await showDialog(
+    await showModalBottomSheet(
       context: context,
-      builder: (ctx) => _CreateUserDialog(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _CreateUserSheet(
         regions: _regions,
         onCreated: (created) {
           _showMsg('Mtumiaji mpya ameongezwa');
@@ -2181,15 +2184,16 @@ class _EditUserDialogState extends State<_EditUserDialog> {
 }
 
 // ── CREATE USER DIALOG ────────────────────────────────────────────────────────
-class _CreateUserDialog extends StatefulWidget {
+// ── CREATE USER BOTTOM SHEET ──────────────────────────────────────────────────
+class _CreateUserSheet extends StatefulWidget {
   final List<dynamic> regions;
   final void Function(Map<String, dynamic> created) onCreated;
-  const _CreateUserDialog({required this.regions, required this.onCreated});
+  const _CreateUserSheet({required this.regions, required this.onCreated});
   @override
-  State<_CreateUserDialog> createState() => _CreateUserDialogState();
+  State<_CreateUserSheet> createState() => _CreateUserSheetState();
 }
 
-class _CreateUserDialogState extends State<_CreateUserDialog> {
+class _CreateUserSheetState extends State<_CreateUserSheet> {
   final _nameCtrl     = TextEditingController();
   final _phoneCtrl    = TextEditingController();
   final _phoneAltCtrl = TextEditingController();
@@ -2199,19 +2203,20 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
   String _cadreCode = '';
   String _status   = 'active';
   bool   _isAdmin  = false;
-  String _sector   = 'tamisemi'; // wizara_afya or tamisemi (for health)
+  String _sector   = 'tamisemi';
 
   int?   _regionId;
+  String _regionName = '';
   int?   _districtId;
+  String _districtName = '';
   String _facilityId = '';
+  String _facilityName = '';
 
   List<dynamic> _cadres    = [];
   List<dynamic> _districts = [];
   List<dynamic> _facilities = [];
   List<dynamic> _subjects  = [];
   final Set<String>   _selectedSubjects = {};
-
-  // Destinations: each has {region_id, district_id, districts}
   final List<Map<String, dynamic>> _destinations = [];
 
   bool _saving = false;
@@ -2226,10 +2231,8 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _phoneCtrl.dispose();
-    _phoneAltCtrl.dispose();
-    _pwCtrl.dispose();
+    _nameCtrl.dispose(); _phoneCtrl.dispose();
+    _phoneAltCtrl.dispose(); _pwCtrl.dispose();
     super.dispose();
   }
 
@@ -2250,8 +2253,12 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
     } catch (_) {}
   }
 
-  Future<void> _onRegion(int? id) async {
-    setState(() { _regionId = id; _districtId = null; _facilityId = ''; _districts = []; _facilities = []; });
+  Future<void> _onRegion(int? id, String name) async {
+    setState(() {
+      _regionId = id; _regionName = name;
+      _districtId = null; _districtName = ''; _facilityId = ''; _facilityName = '';
+      _districts = []; _facilities = [];
+    });
     if (id == null) return;
     try {
       final r = await ApiService().getDistricts(id);
@@ -2260,8 +2267,8 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
     } catch (_) {}
   }
 
-  Future<void> _onDistrict(int? id) async {
-    setState(() { _districtId = id; _facilityId = ''; _facilities = []; });
+  Future<void> _onDistrict(int? id, String name) async {
+    setState(() { _districtId = id; _districtName = name; _facilityId = ''; _facilityName = ''; _facilities = []; });
     if (id == null) return;
     try {
       final r = await ApiService().getFacilities(id, category: _category.isEmpty ? 'health' : _category);
@@ -2270,10 +2277,12 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
     } catch (_) {}
   }
 
-  Future<void> _onDestRegion(int index, int? id) async {
+  Future<void> _onDestRegion(int index, int? id, String name) async {
     setState(() {
       _destinations[index]['region_id'] = id;
+      _destinations[index]['region_name'] = name;
       _destinations[index]['district_id'] = null;
+      _destinations[index]['district_name'] = '';
       _destinations[index]['districts'] = <dynamic>[];
     });
     if (id == null) return;
@@ -2288,399 +2297,516 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
     if (_cadreCode.isEmpty || _cadres.isEmpty) return false;
     final cadre = _cadres.firstWhere((c) => '${c['code']}' == _cadreCode, orElse: () => null);
     if (cadre == null) return false;
-    final level = (cadre['level'] ?? '') as String;
-    return level.isNotEmpty;
+    return ((cadre['level'] ?? '') as String).isNotEmpty;
+  }
+
+  String _cadreLabel(String code) {
+    if (code.isEmpty) return '';
+    final c = _cadres.firstWhere((c) => '${c['code']}' == code, orElse: () => null);
+    return c != null ? '${c['name'] ?? code}' : code;
   }
 
   Widget _lbl(String t) => Text(t,
-    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kGrey500));
+    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+      color: _kGrey500, letterSpacing: 0.3));
 
-  Widget _fld(String label, TextEditingController ctrl, {TextInputType? keyboard, bool obscure = false}) {
+  InputDecoration _inp(String hint, {IconData? icon}) => InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
+    prefixIcon: icon != null ? Icon(icon, size: 17, color: _kGrey400) : null,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+    filled: true, fillColor: Colors.white,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+  );
+
+  Widget _field(String label, TextEditingController ctrl, {TextInputType? keyboard, bool obscure = false, IconData? icon}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _lbl(label),
-      const SizedBox(height: 4),
-      TextField(
-        controller: ctrl,
-        keyboardType: keyboard,
-        obscureText: obscure,
-        style: const TextStyle(fontSize: 13),
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 2)),
-        ),
-      ),
+      const SizedBox(height: 5),
+      TextField(controller: ctrl, keyboardType: keyboard, obscureText: obscure,
+        style: const TextStyle(fontSize: 14, color: _kGrey900),
+        autocorrect: false, enableSuggestions: false,
+        decoration: _inp('', icon: icon)),
     ]);
-  }
-
-  Widget _drop<T>({required T value, required List<DropdownMenuItem<T>> items,
-      required ValueChanged<T> onChange, String? hint}) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          isExpanded: true,
-          value: value,
-          hint: hint != null ? Text(hint, style: const TextStyle(fontSize: 12, color: _kGrey400)) : null,
-          style: const TextStyle(fontSize: 13, color: _kGrey700),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: _kGrey400),
-          onChanged: (v) { if (v != null) onChange(v); },
-          items: items,
-        ),
-      ),
-    );
-  }
-
-  Widget _locDrop<T>({required T value, required String hint,
-      required List<DropdownMenuItem<T>> items, required ValueChanged<T?> onChanged}) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          isExpanded: true,
-          value: value,
-          hint: Text(hint, style: const TextStyle(fontSize: 12, color: _kGrey400)),
-          style: const TextStyle(fontSize: 12, color: _kGrey700),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: _kGrey400),
-          onChanged: onChanged,
-          items: items,
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      insetPadding: const EdgeInsets.all(16),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Ongeza Mtumiaji',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-          const SizedBox(height: 16),
+    final regionItems = [
+      (value: 0, label: '— Chagua Mkoa —', subtitle: null as String?),
+      ...widget.regions.map((r) {
+        final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+        return (value: id, label: '${r['name'] ?? r['region_name'] ?? r['id']}', subtitle: null as String?);
+      }),
+    ];
+    final districtItems = [
+      (value: 0, label: '— Chagua Wilaya —', subtitle: null as String?),
+      ..._districts.map((d) {
+        final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+        return (value: id, label: '${d['name'] ?? d['district_name'] ?? d['id']}', subtitle: null as String?);
+      }),
+    ];
+    final facilityItems = [
+      (value: '', label: '— Chagua Kituo —', subtitle: null as String?),
+      ..._facilities.map((f) {
+        final id = '${f['id'] ?? f['facility_id']}';
+        return (value: id, label: '${f['name'] ?? f['facility_name'] ?? id}', subtitle: null as String?);
+      }),
+    ];
+    final cadreItems = [
+      (value: '', label: '— Chagua Kada —', subtitle: null as String?),
+      ..._cadres.map((c) => (value: '${c['code']}', label: '${c['name'] ?? c['code']}', subtitle: null as String?)),
+    ];
 
-          if (_error != null) ...[
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: _kRed50, borderRadius: BorderRadius.circular(8)),
-              child: Text(_error!, style: const TextStyle(fontSize: 12, color: _kRed)),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          _fld('Jina Kamili *', _nameCtrl),
-          const SizedBox(height: 10),
-          _fld('Namba ya Simu *', _phoneCtrl, keyboard: TextInputType.phone),
-          const SizedBox(height: 10),
-          _fld('WhatsApp (phone_alt)', _phoneAltCtrl, keyboard: TextInputType.phone),
-          const SizedBox(height: 10),
-          _fld('Nywila *', _pwCtrl, obscure: true),
-          const SizedBox(height: 10),
-
-          // Category
-          _lbl('Idara'),
-          const SizedBox(height: 4),
-          _drop<String>(
-            value: _category,
-            items: const [
-              DropdownMenuItem(value: 'health',     child: Text('Afya', style: TextStyle(fontSize: 13))),
-              DropdownMenuItem(value: 'education',  child: Text('Elimu', style: TextStyle(fontSize: 13))),
-            ],
-            onChange: (v) {
-              setState(() { _category = v; _cadreCode = ''; _cadres = []; });
-              _loadCadres();
-              _loadSubjects();
-            },
-          ),
-          const SizedBox(height: 10),
-
-          // Sector (health only)
-          if (_category == 'health') ...[
-            _lbl('Sekta'),
-            const SizedBox(height: 4),
-            _drop<String>(
-              value: _sector,
-              items: const [
-                DropdownMenuItem(value: 'tamisemi',    child: Text('TAMISEMI', style: TextStyle(fontSize: 13))),
-                DropdownMenuItem(value: 'wizara_afya', child: Text('Wizara ya Afya', style: TextStyle(fontSize: 13))),
-              ],
-              onChange: (v) => setState(() => _sector = v),
-            ),
-            const SizedBox(height: 10),
-          ],
-
-          // Cadre
-          if (_cadres.isNotEmpty) ...[
-            _lbl('Kada'),
-            const SizedBox(height: 4),
-            _drop<String>(
-              value: _cadres.any((c) => '${c['code']}' == _cadreCode) ? _cadreCode : '',
-              hint: 'Chagua Kada',
-              items: [
-                const DropdownMenuItem(value: '', child: Text('— Chagua Kada —', style: TextStyle(fontSize: 12, color: _kGrey400))),
-                ..._cadres.map((c) => DropdownMenuItem<String>(
-                  value: '${c['code']}',
-                  child: Text('${c['name'] ?? c['code']}',
-                    style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                )),
-              ],
-              onChange: (v) => setState(() => _cadreCode = v),
-            ),
-            const SizedBox(height: 10),
-          ],
-
-          // Subjects picker
-          if (_showSubjects && _subjects.isNotEmpty) ...[
-            _lbl('Masomo'),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: _subjects.map((s) {
-                final name = s is String ? s : '${s['name'] ?? s}';
-                final selected = _selectedSubjects.contains(name);
-                return GestureDetector(
-                  onTap: () => setState(() {
-                    if (selected) { _selectedSubjects.remove(name); }
-                    else { _selectedSubjects.add(name); }
-                  }),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: selected ? _kGold : Colors.white,
-                      border: Border.all(color: selected ? _kGold : _kGrey300),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(name, style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w600,
-                      color: selected ? Colors.white : _kGrey500)),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 10),
-          ],
-
-          // Status
-          _lbl('Hali'),
-          const SizedBox(height: 4),
-          _drop<String>(
-            value: _status,
-            items: const [
-              DropdownMenuItem(value: 'active',   child: Text('Hai', style: TextStyle(fontSize: 13))),
-              DropdownMenuItem(value: 'inactive', child: Text('Haifanyi kazi', style: TextStyle(fontSize: 13))),
-              DropdownMenuItem(value: 'disabled', child: Text('Imesimamishwa', style: TextStyle(fontSize: 13))),
-            ],
-            onChange: (v) => setState(() => _status = v),
-          ),
-          const SizedBox(height: 10),
-
-          // Admin checkbox
-          GestureDetector(
-            onTap: () => setState(() => _isAdmin = !_isAdmin),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.92,
+        minChildSize: 0.5,
+        maxChildSize: 0.97,
+        expand: false,
+        builder: (_, ctrl) => Column(children: [
+          // Handle
+          Container(margin: const EdgeInsets.only(top: 10, bottom: 4),
+            width: 36, height: 4,
+            decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2))),
+          // Header
+          Padding(padding: const EdgeInsets.fromLTRB(20, 4, 16, 8),
             child: Row(children: [
-              SizedBox(width: 18, height: 18,
-                child: Checkbox(
-                  value: _isAdmin,
-                  onChanged: (v) => setState(() => _isAdmin = v!),
-                  activeColor: _kBlue,
-                )),
-              const SizedBox(width: 8),
-              const Text('Admin', style: TextStyle(fontSize: 13)),
-            ]),
-          ),
-          const SizedBox(height: 16),
+              const Icon(Icons.person_add_outlined, size: 20, color: _kBlue),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Ongeza Mtumiaji',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _kGrey900))),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.close, size: 16, color: _kGrey500)),
+              ),
+            ])),
+          const Divider(height: 1),
+          // Form
+          Expanded(child: ListView(
+            controller: ctrl,
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            children: [
 
-          // Station: Region
-          _lbl('Kituo — Mkoa'),
-          const SizedBox(height: 4),
-          _locDrop<int?>(
-            value: _regionId,
-            hint: 'Chagua Mkoa',
-            items: [
-              const DropdownMenuItem<int?>(value: null, child: Text('— Chagua Mkoa —')),
-              ...widget.regions.map((r) {
-                final id = r['id'] is int ? r['id'] as int : int.tryParse('${r['id']}');
-                return DropdownMenuItem<int?>(
-                  value: id,
-                  child: Text('${r['name'] ?? r['region_name'] ?? r['id']}',
-                    style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                );
-              }),
-            ],
-            onChanged: _onRegion,
-          ),
-
-          if (_regionId != null && _districts.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            _lbl('Wilaya'),
-            const SizedBox(height: 4),
-            _locDrop<int?>(
-              value: _districtId,
-              hint: 'Chagua Wilaya',
-              items: [
-                const DropdownMenuItem<int?>(value: null, child: Text('— Chagua Wilaya —')),
-                ..._districts.map((d) {
-                  final id = d['id'] is int ? d['id'] as int : int.tryParse('${d['id']}');
-                  return DropdownMenuItem<int?>(
-                    value: id,
-                    child: Text('${d['name'] ?? d['district_name'] ?? d['id']}',
-                      style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                  );
-                }),
-              ],
-              onChanged: _onDistrict,
-            ),
-          ],
-
-          if (_districtId != null && _facilities.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            _lbl('Kituo'),
-            const SizedBox(height: 4),
-            _locDrop<String>(
-              value: _facilityId.isEmpty ? '' : _facilityId,
-              hint: 'Chagua Kituo',
-              items: [
-                const DropdownMenuItem<String>(value: '', child: Text('— Chagua Kituo —')),
-                ..._facilities.map((f) {
-                  final id = '${f['id'] ?? f['facility_id']}';
-                  return DropdownMenuItem<String>(
-                    value: id,
-                    child: Text('${f['name'] ?? f['facility_name'] ?? id}',
-                      style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                  );
-                }),
-              ],
-              onChanged: (v) { if (v != null) setState(() => _facilityId = v); },
-            ),
-          ],
-
-          // Destinations
-          const SizedBox(height: 16),
-          _lbl('Mikoa Anayotaka'),
-          const SizedBox(height: 6),
-          ..._destinations.asMap().entries.map((entry) {
-            final i = entry.key;
-            final dest = entry.value;
-            final destDistList = dest['districts'] as List<dynamic>;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(children: [
-                Expanded(child: _locDrop<int?>(
-                  value: dest['region_id'] as int?,
-                  hint: 'Mkoa',
-                  items: [
-                    const DropdownMenuItem<int?>(value: null, child: Text('— Mkoa —')),
-                    ...widget.regions.map((r) {
-                      final id = r['id'] is int ? r['id'] as int : int.tryParse('${r['id']}');
-                      return DropdownMenuItem<int?>(
-                        value: id,
-                        child: Text('${r['name'] ?? r['region_name'] ?? r['id']}',
-                          style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis),
-                      );
-                    }),
-                  ],
-                  onChanged: (v) => _onDestRegion(i, v),
-                )),
-                const SizedBox(width: 6),
-                Expanded(child: _locDrop<int?>(
-                  value: dest['district_id'] as int?,
-                  hint: 'Wilaya',
-                  items: [
-                    const DropdownMenuItem<int?>(value: null, child: Text('— Wilaya —')),
-                    ...destDistList.map((d) {
-                      final id = d['id'] is int ? d['id'] as int : int.tryParse('${d['id']}');
-                      return DropdownMenuItem<int?>(
-                        value: id,
-                        child: Text('${d['name'] ?? d['district_name'] ?? d['id']}',
-                          style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis),
-                      );
-                    }),
-                  ],
-                  onChanged: (v) => setState(() => _destinations[i]['district_id'] = v),
-                )),
-                const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () => setState(() => _destinations.removeAt(i)),
-                  child: const Icon(Icons.close, size: 18, color: _kGrey400),
+              if (_error != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: _kRed50, borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFFECACA))),
+                  child: Row(children: [
+                    const Icon(Icons.error_outline, size: 16, color: _kRed),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(_error!, style: const TextStyle(fontSize: 13, color: _kRed))),
+                  ]),
                 ),
-              ]),
-            );
-          }),
-          TextButton.icon(
-            onPressed: () => setState(() => _destinations.add({'region_id': null, 'district_id': null, 'districts': <dynamic>[]})),
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('+ Ongeza Mkoa', style: TextStyle(fontSize: 12)),
-            style: TextButton.styleFrom(foregroundColor: _kBlue),
-          ),
+                const SizedBox(height: 14),
+              ],
 
-          const SizedBox(height: 20),
-          Row(children: [
-            Expanded(child: OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Ghairi'),
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white),
-              onPressed: _saving ? null : () async {
-                if (_nameCtrl.text.trim().isEmpty || _phoneCtrl.text.trim().isEmpty || _pwCtrl.text.isEmpty) {
-                  setState(() => _error = 'Jaza sehemu zote zinazohitajika (*)');
-                  return;
-                }
-                setState(() { _saving = true; _error = null; });
-                try {
-                  final res = await ApiService().adminCreateUser({
-                    'full_name':    _nameCtrl.text.trim(),
-                    'phone_primary': _phoneCtrl.text.trim(),
-                    if (_phoneAltCtrl.text.isNotEmpty) 'phone_alt': _phoneAltCtrl.text.trim(),
-                    'password':    _pwCtrl.text,
-                    'category':    _category,
-                    'status':      _status,
-                    'is_admin':    _isAdmin,
-                    if (_cadreCode.isNotEmpty)           'cadre_code': _cadreCode,
-                    if (_selectedSubjects.isNotEmpty)    'subjects': _selectedSubjects.toList(),
-                    if (_category == 'health')           'employment_sector': _sector,
-                    if (_regionId != null)               'region_id': _regionId,
-                    if (_districtId != null)             'district_id': _districtId,
-                    if (_facilityId.isNotEmpty)          'facility_id': _facilityId,
-                    'desired_destinations': _destinations
-                      .where((d) => d['region_id'] != null)
-                      .map((d) => {
-                        'region_id': d['region_id'],
-                        if (d['district_id'] != null) 'district_id': d['district_id'],
-                      }).toList(),
-                  });
-                  final created = res.data is Map ? res.data as Map<String, dynamic> : <String, dynamic>{};
-                  if (!mounted) return;
-                  Navigator.pop(context); // ignore: use_build_context_synchronously
-                  widget.onCreated(created);
-                } catch (e) {
-                  setState(() { _saving = false; _error = 'Hitilafu: $e'; });
-                }
-              },
-              child: _saving
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Ongeza'),
-            )),
-          ]),
+              // ── Personal info section ───────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: _kGrey50, borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _kGrey100)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Maelezo ya Mtumiaji',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5)),
+                  const SizedBox(height: 12),
+                  _field('Jina Kamili *', _nameCtrl, icon: Icons.person_outline),
+                  const SizedBox(height: 10),
+                  _field('Namba ya Simu *', _phoneCtrl, keyboard: TextInputType.phone, icon: Icons.phone_outlined),
+                  const SizedBox(height: 10),
+                  _field('WhatsApp (optional)', _phoneAltCtrl, keyboard: TextInputType.phone, icon: Icons.message_outlined),
+                  const SizedBox(height: 10),
+                  _field('Nywila *', _pwCtrl, obscure: true, icon: Icons.lock_outlined),
+                ]),
+              ),
+              const SizedBox(height: 14),
+
+              // ── Category + Sector ───────────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: _kGrey50, borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _kGrey100)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Sekta na Kada',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5)),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      _lbl('Idara'),
+                      const SizedBox(height: 5),
+                      SelectField(
+                        hint: 'Chagua Idara',
+                        value: _category == 'health' ? 'Afya' : 'Elimu',
+                        onTap: () async {
+                          final v = await showSelectSheet<String>(context,
+                            title: 'Chagua Idara',
+                            items: const [
+                              (value: 'health', label: 'Afya', subtitle: 'Health Sector' as String?),
+                              (value: 'education', label: 'Elimu', subtitle: 'Education Sector' as String?),
+                            ],
+                            selected: _category);
+                          if (v != null && v != _category) {
+                            setState(() { _category = v; _cadreCode = ''; _cadres = []; });
+                            _loadCadres(); _loadSubjects();
+                          }
+                        },
+                      ),
+                    ])),
+                    if (_category == 'health') ...[
+                      const SizedBox(width: 10),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        _lbl('Sekta'),
+                        const SizedBox(height: 5),
+                        SelectField(
+                          hint: 'Chagua Sekta',
+                          value: _sector == 'tamisemi' ? 'TAMISEMI' : 'Wizara ya Afya',
+                          onTap: () async {
+                            final v = await showSelectSheet<String>(context,
+                              title: 'Chagua Sekta',
+                              items: const [
+                                (value: 'tamisemi', label: 'TAMISEMI', subtitle: null as String?),
+                                (value: 'wizara_afya', label: 'Wizara ya Afya', subtitle: null as String?),
+                              ],
+                              selected: _sector);
+                            if (v != null) setState(() => _sector = v);
+                          },
+                        ),
+                      ])),
+                    ],
+                  ]),
+                  const SizedBox(height: 10),
+                  _lbl('Kada'),
+                  const SizedBox(height: 5),
+                  SelectField(
+                    hint: 'Chagua Kada',
+                    value: _cadreLabel(_cadreCode).isEmpty ? null : _cadreLabel(_cadreCode),
+                    disabled: _cadres.isEmpty,
+                    onTap: _cadres.isEmpty ? null : () async {
+                      final v = await showSelectSheet<String>(context,
+                        title: 'Chagua Kada', items: cadreItems,
+                        selected: _cadreCode, searchable: true);
+                      if (v != null) setState(() => _cadreCode = v == '' ? '' : v);
+                    },
+                  ),
+                  // Subjects
+                  if (_showSubjects && _subjects.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _lbl('Masomo'),
+                    const SizedBox(height: 6),
+                    Wrap(spacing: 6, runSpacing: 6,
+                      children: _subjects.map((s) {
+                        final name = s is String ? s : '${s['name'] ?? s}';
+                        final sel = _selectedSubjects.contains(name);
+                        return GestureDetector(
+                          onTap: () => setState(() { sel ? _selectedSubjects.remove(name) : _selectedSubjects.add(name); }),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: sel ? _kGold : Colors.white,
+                              border: Border.all(color: sel ? _kGold : _kGrey300),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(name, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                              color: sel ? Colors.white : _kGrey500)),
+                          ),
+                        );
+                      }).toList()),
+                  ],
+                  const SizedBox(height: 10),
+                  Row(children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      _lbl('Hali'),
+                      const SizedBox(height: 5),
+                      SelectField(
+                        hint: 'Hali',
+                        value: _status == 'active' ? 'Hai' : _status == 'inactive' ? 'Haifanyi kazi' : 'Imesimamishwa',
+                        onTap: () async {
+                          final v = await showSelectSheet<String>(context,
+                            title: 'Chagua Hali',
+                            items: const [
+                              (value: 'active', label: 'Hai', subtitle: null as String?),
+                              (value: 'inactive', label: 'Haifanyi kazi', subtitle: null as String?),
+                              (value: 'disabled', label: 'Imesimamishwa', subtitle: null as String?),
+                            ],
+                            selected: _status);
+                          if (v != null) setState(() => _status = v);
+                        },
+                      ),
+                    ])),
+                    const SizedBox(width: 10),
+                    Expanded(child: GestureDetector(
+                      onTap: () => setState(() => _isAdmin = !_isAdmin),
+                      child: Container(
+                        height: 43,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: _isAdmin ? _kBlue50 : Colors.white,
+                          border: Border.all(color: _isAdmin ? _kBlue : _kGrey200),
+                          borderRadius: BorderRadius.circular(8)),
+                        child: Row(children: [
+                          Icon(_isAdmin ? Icons.shield : Icons.shield_outlined, size: 16,
+                            color: _isAdmin ? _kBlue : _kGrey400),
+                          const SizedBox(width: 6),
+                          Text('Admin', style: TextStyle(fontSize: 13,
+                            color: _isAdmin ? _kBlue : _kGrey500,
+                            fontWeight: _isAdmin ? FontWeight.w600 : FontWeight.normal)),
+                        ]),
+                      ),
+                    )),
+                  ]),
+                ]),
+              ),
+              const SizedBox(height: 14),
+
+              // ── Station ─────────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: _kGrey50, borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _kGrey100)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Kituo cha Sasa',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5)),
+                  const SizedBox(height: 12),
+                  _lbl('Mkoa'),
+                  const SizedBox(height: 5),
+                  SelectField(
+                    hint: 'Chagua Mkoa',
+                    value: _regionName.isEmpty ? null : _regionName,
+                    onTap: () async {
+                      final v = await showSelectSheet<int>(context,
+                        title: 'Chagua Mkoa', items: regionItems,
+                        selected: _regionId ?? 0, searchable: true);
+                      if (v != null) {
+                        final name = v == 0 ? '' : '${widget.regions.firstWhere((r) {
+                          final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                          return id == v;
+                        }, orElse: () => {'name': ''})['name']}';
+                        _onRegion(v == 0 ? null : v, name);
+                      }
+                    },
+                  ),
+                  if (_regionId != null && _districts.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _lbl('Wilaya'),
+                    const SizedBox(height: 5),
+                    SelectField(
+                      hint: 'Chagua Wilaya',
+                      value: _districtName.isEmpty ? null : _districtName,
+                      onTap: () async {
+                        final v = await showSelectSheet<int>(context,
+                          title: 'Chagua Wilaya', items: districtItems,
+                          selected: _districtId ?? 0, searchable: true);
+                        if (v != null) {
+                          final name = v == 0 ? '' : '${_districts.firstWhere((d) {
+                            final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                            return id == v;
+                          }, orElse: () => {'name': ''})['name']}';
+                          _onDistrict(v == 0 ? null : v, name);
+                        }
+                      },
+                    ),
+                  ],
+                  if (_districtId != null && _facilities.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _lbl('Kituo'),
+                    const SizedBox(height: 5),
+                    SelectField(
+                      hint: 'Chagua Kituo',
+                      value: _facilityName.isEmpty ? null : _facilityName,
+                      onTap: () async {
+                        final v = await showSelectSheet<String>(context,
+                          title: 'Chagua Kituo', items: facilityItems,
+                          selected: _facilityId, searchable: true);
+                        if (v != null) {
+                          final name = v.isEmpty ? '' : '${_facilities.firstWhere((f) {
+                            final id = '${f['id'] ?? f['facility_id']}';
+                            return id == v;
+                          }, orElse: () => {'name': ''})['name']}';
+                          setState(() { _facilityId = v; _facilityName = name; });
+                        }
+                      },
+                    ),
+                  ],
+                ]),
+              ),
+              const SizedBox(height: 14),
+
+              // ── Destinations ────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: _kGrey50, borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _kGrey100)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    const Expanded(child: Text('Mikoa Anayotaka Kwenda',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5))),
+                    GestureDetector(
+                      onTap: () => setState(() => _destinations.add({'region_id': null, 'region_name': '', 'district_id': null, 'district_name': '', 'districts': <dynamic>[]})),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: _kBlue, borderRadius: BorderRadius.circular(999)),
+                        child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.add, size: 12, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text('Ongeza', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                        ]),
+                      ),
+                    ),
+                  ]),
+                  if (_destinations.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text('Bonyeza "Ongeza" kuongeza mkoa wa lengo',
+                        style: TextStyle(fontSize: 12, color: _kGrey400)),
+                    )
+                  else ...[
+                    const SizedBox(height: 10),
+                    ..._destinations.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final dest = entry.value;
+                      final dests = dest['districts'] as List<dynamic>;
+                      final destDistItems = [
+                        (value: 0, label: '— Wilaya —', subtitle: null as String?),
+                        ...dests.map((d) {
+                          final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                          return (value: id, label: '${d['name'] ?? d['district_name'] ?? d['id']}', subtitle: null as String?);
+                        }),
+                      ];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(children: [
+                          Container(
+                            width: 24, height: 24, margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(color: _kBlue50, shape: BoxShape.circle),
+                            child: Center(child: Text('${i + 1}',
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kBlue))),
+                          ),
+                          Expanded(child: SelectField(
+                            hint: 'Mkoa',
+                            value: (dest['region_name'] as String?)?.isNotEmpty == true ? dest['region_name'] as String : null,
+                            onTap: () async {
+                              final v = await showSelectSheet<int>(context,
+                                title: 'Mkoa wa Lengo', items: regionItems,
+                                selected: (dest['region_id'] as int?) ?? 0, searchable: true);
+                              if (v != null) {
+                                final name = v == 0 ? '' : '${widget.regions.firstWhere((r) {
+                                  final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                                  return id == v;
+                                }, orElse: () => {'name': ''})['name']}';
+                                _onDestRegion(i, v == 0 ? null : v, name);
+                              }
+                            },
+                          )),
+                          if (dests.isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            Expanded(child: SelectField(
+                              hint: 'Wilaya',
+                              value: (dest['district_name'] as String?)?.isNotEmpty == true ? dest['district_name'] as String : null,
+                              onTap: () async {
+                                final v = await showSelectSheet<int>(context,
+                                  title: 'Wilaya ya Lengo', items: destDistItems,
+                                  selected: (dest['district_id'] as int?) ?? 0, searchable: true);
+                                if (v != null) {
+                                  final name = v == 0 ? '' : '${dests.firstWhere((d) {
+                                    final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                                    return id == v;
+                                  }, orElse: () => {'name': ''})['name']}';
+                                  setState(() {
+                                    _destinations[i]['district_id'] = v == 0 ? null : v;
+                                    _destinations[i]['district_name'] = name;
+                                  });
+                                }
+                              },
+                            )),
+                          ],
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () => setState(() => _destinations.removeAt(i)),
+                            child: Container(
+                              width: 28, height: 28,
+                              decoration: BoxDecoration(color: _kRed50, borderRadius: BorderRadius.circular(6)),
+                              child: const Icon(Icons.close, size: 14, color: _kRed)),
+                          ),
+                        ]),
+                      );
+                    }),
+                  ],
+                ]),
+              ),
+              const SizedBox(height: 20),
+
+              // ── Save button ─────────────────────────────────────────
+              SizedBox(
+                width: double.infinity, height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kBlue,
+                    disabledBackgroundColor: _kBlue.withValues(alpha: 0.6),
+                    foregroundColor: Colors.white,
+                    disabledForegroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                  onPressed: _saving ? null : () async {
+                    final name  = _nameCtrl.text.trim();
+                    final phone = _phoneCtrl.text.trim();
+                    final pw    = _pwCtrl.text;
+                    if (name.isEmpty || phone.isEmpty || pw.isEmpty) {
+                      setState(() => _error = 'Jaza sehemu zote zinazohitajika (*)');
+                      return;
+                    }
+                    setState(() { _saving = true; _error = null; });
+                    try {
+                      final res = await ApiService().adminCreateUser({
+                        'full_name': name, 'phone_primary': phone,
+                        if (_phoneAltCtrl.text.isNotEmpty) 'phone_alt': _phoneAltCtrl.text.trim(),
+                        'password': pw, 'category': _category,
+                        'status': _status, 'is_admin': _isAdmin,
+                        if (_cadreCode.isNotEmpty)           'cadre_code': _cadreCode,
+                        if (_selectedSubjects.isNotEmpty)    'subjects': _selectedSubjects.toList(),
+                        if (_category == 'health')           'employment_sector': _sector,
+                        if (_regionId != null)               'region_id': _regionId,
+                        if (_districtId != null)             'district_id': _districtId,
+                        if (_facilityId.isNotEmpty)          'facility_id': _facilityId,
+                        'desired_destinations': _destinations
+                          .where((d) => d['region_id'] != null)
+                          .map((d) => {
+                            'region_id': d['region_id'],
+                            if (d['district_id'] != null) 'district_id': d['district_id'],
+                          }).toList(),
+                      });
+                      final created = res.data is Map ? res.data as Map<String, dynamic> : <String, dynamic>{};
+                      if (!mounted) return;
+                      widget.onCreated(created);
+                      if (mounted) Navigator.pop(context); // ignore: use_build_context_synchronously
+                    } catch (e) {
+                      setState(() { _saving = false; _error = 'Hitilafu: $e'; });
+                    }
+                  },
+                  child: _saving
+                    ? const SizedBox(width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(Icons.person_add_outlined, size: 18),
+                        SizedBox(width: 8),
+                        Text('Ongeza Mtumiaji'),
+                      ]),
+                ),
+              ),
+            ],
+          )),
         ]),
       ),
     );

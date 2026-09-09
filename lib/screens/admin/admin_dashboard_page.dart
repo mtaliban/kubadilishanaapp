@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/websocket_service.dart';
+import '../../widgets/select_sheet.dart';
 
 // ── Exact brand colors from globals.css ───────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);  // brand-blue
@@ -52,6 +54,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   String _fDept   = '';
   String _fLevel  = '';
 
+  // Toast
+  String? _toast;
+  Timer?  _toastTimer;
+  Timer?  _debounce;
+
   @override
   void initState() {
     super.initState();
@@ -62,14 +69,53 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   void _setupRealtime() {
-    WebSocketService().onAny((_) {
+    final ws = WebSocketService();
+    ws.onAny((payload) {
       if (!mounted) return;
       setState(() => _live = true);
-      _loadAll();
       Future.delayed(const Duration(seconds: 8), () {
         if (mounted) setState(() => _live = false);
       });
+      // debounce stats refresh like web (1500ms)
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 1500), () {
+        _loadAll();
+        _loadActivity();
+      });
     });
+
+    // event-specific toasts
+    ws.on('user.registered', (_) {
+      _showToast('🆕 Mtumiaji mpya amejisajili!');
+    });
+    ws.on('payment.submitted', (_) {
+      _showToast('💳 Malipo mapya yamepokelewa — kagua!');
+    });
+    ws.on('payment.approved', (_) {
+      _showToast('✅ Malipo yameidhinishwa!');
+    });
+    ws.on('feedback.new', (_) {
+      _showToast('💬 Malalamiko/Maoni mapya yamewasilishwa!');
+    });
+  }
+
+  void _showToast(String msg) {
+    _toastTimer?.cancel();
+    setState(() => _toast = null);
+    Future.microtask(() {
+      if (!mounted) return;
+      setState(() => _toast = msg);
+      _toastTimer = Timer(const Duration(seconds: 4), () {
+        if (mounted) setState(() => _toast = null);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _toastTimer?.cancel();
+    _debounce?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadAll() async {
@@ -220,7 +266,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     final incomTotal = _byRegion.fold<int>(0, (s, r) => s + (r['incoming'] as int));
 
     // p-4 space-y-6 → 16px padding, 24px between sections
-    return RefreshIndicator(
+    return Stack(children: [
+      RefreshIndicator(
       onRefresh: _loadAll,
       color: _kBlue,
       child: ListView(
@@ -363,7 +410,40 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           ],
         ],
       ),
-    );
+    ),
+
+      // ── Toast overlay ──────────────────────────────────────────────────────
+      if (_toast != null)
+        Positioned(
+          top: 12, left: 16, right: 16,
+          child: AnimatedOpacity(
+            opacity: _toast != null ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 300),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: _kBlue,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [BoxShadow(
+                    color: Color(0x33000000), blurRadius: 16, offset: Offset(0, 4))],
+                ),
+                child: Row(children: [
+                  const Icon(Icons.notifications_active, size: 16, color: Colors.white),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(_toast!,
+                    style: const TextStyle(fontSize: 13, color: Colors.white,
+                      fontWeight: FontWeight.w500))),
+                  GestureDetector(
+                    onTap: () { _toastTimer?.cancel(); setState(() => _toast = null); },
+                    child: const Icon(Icons.close, size: 16, color: Colors.white70)),
+                ]),
+              ),
+            ),
+          ),
+        ),
+    ]);
   }
 }
 
@@ -521,7 +601,7 @@ class _TabBtn extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  FILTERS ROW — 3 dropdowns (mkoa / idara / ngazi)
+//  FILTERS ROW — 3 select sheets (mkoa / idara / ngazi)
 // ─────────────────────────────────────────────────────────────────────────────
 class _FiltersRow extends StatelessWidget {
   final List<String>  allRegions;
@@ -533,76 +613,104 @@ class _FiltersRow extends StatelessWidget {
     required this.fRegion, required this.fDept, required this.fLevel,
     required this.onRegion, required this.onDept, required this.onLevel,
   });
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [
-      _Drop(
-        value: fRegion, hint: 'Mikoa Yote',
-        items: [
-          const DropdownMenuItem(value: '', child: Text('Mikoa Yote', style: TextStyle(fontSize: 13))),
-          ...allRegions.map((r) => DropdownMenuItem(value: r,
-            child: Text(r, style: const TextStyle(fontSize: 13)))),
-        ],
-        onChange: onRegion,
-      ),
-      const SizedBox(height: 8),
-      _Drop(
-        value: fDept, hint: 'Idara Zote',
-        items: [
-          const DropdownMenuItem(value: '', child: Text('Idara Zote', style: TextStyle(fontSize: 13))),
-          ...departments.map((d) {
-            final icon = (d['icon'] ?? '') as String;
-            final name = (d['name'] ?? d['code'] ?? '') as String;
-            return DropdownMenuItem(value: '${d['code']}',
-              child: Text(icon.isNotEmpty ? '$icon $name' : name,
-                style: const TextStyle(fontSize: 13)));
-          }),
-        ],
-        onChange: onDept,
-      ),
-      const SizedBox(height: 8),
-      _Drop(
-        value: fLevel, hint: 'Ngazi Zote',
-        items: const [
-          DropdownMenuItem(value: '', child: Text('Ngazi Zote', style: TextStyle(fontSize: 13))),
-          DropdownMenuItem(value: 'Primary',   child: Text('Primary (Msingi)', style: TextStyle(fontSize: 13))),
-          DropdownMenuItem(value: 'Secondary', child: Text('Secondary (Sekondari)', style: TextStyle(fontSize: 13))),
-        ],
-        onChange: onLevel,
-      ),
-    ]);
-  }
-}
 
-class _Drop extends StatelessWidget {
-  final String value, hint;
-  final List<DropdownMenuItem<String>> items;
-  final ValueChanged<String> onChange;
-  const _Drop({required this.value, required this.hint,
-      required this.items, required this.onChange});
+  String? _deptLabel(String code) {
+    if (code.isEmpty) return null;
+    final d = departments.firstWhere((d) => d['code'] == code, orElse: () => null);
+    if (d == null) return code;
+    final icon = (d['icon'] ?? '') as String;
+    final name = (d['name'] ?? code) as String;
+    return icon.isNotEmpty ? '$icon $name' : name;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final regionItems = [
+      (value: '', label: 'Mikoa Yote', subtitle: null as String?),
+      ...allRegions.map((r) => (value: r, label: r, subtitle: null as String?)),
+    ];
+    final deptItems = [
+      (value: '', label: 'Idara Zote', subtitle: null as String?),
+      ...departments.map((d) {
+        final icon = (d['icon'] ?? '') as String;
+        final name = (d['name'] ?? d['code'] ?? '') as String;
+        return (value: '${d['code']}', label: icon.isNotEmpty ? '$icon $name' : name, subtitle: null as String?);
+      }),
+    ];
+    final levelItems = [
+      (value: '', label: 'Ngazi Zote', subtitle: null as String?),
+      (value: 'Primary',   label: 'Primary', subtitle: 'Walimu wa Msingi' as String?),
+      (value: 'Secondary', label: 'Secondary', subtitle: 'Walimu wa Sekondari' as String?),
+    ];
+
     return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(12), // .input = rounded-xl
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: value,
-          style: const TextStyle(fontSize: 13, color: _kGrey700),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: _kGrey400),
-          onChanged: (v) => onChange(v ?? ''),
-          items: items,
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Row(children: [
+          Icon(Icons.tune, size: 15, color: _kGrey700),
+          SizedBox(width: 6),
+          Text('Vichujio', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey700)),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(child: _label('Mkoa')),
+          const SizedBox(width: 8),
+          Expanded(child: _label('Idara')),
+        ]),
+        const SizedBox(height: 4),
+        Row(children: [
+          Expanded(child: SelectField(
+            hint: 'Mikoa Yote',
+            value: fRegion.isNotEmpty ? fRegion : null,
+            onTap: () async {
+              final v = await showSelectSheet<String>(context,
+                title: 'Chagua Mkoa', items: regionItems,
+                selected: fRegion, searchable: allRegions.length > 5);
+              if (v != null) onRegion(v);
+            },
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: SelectField(
+            hint: 'Idara Zote',
+            value: _deptLabel(fDept),
+            onTap: () async {
+              final v = await showSelectSheet<String>(context,
+                title: 'Chagua Idara', items: deptItems,
+                selected: fDept, searchable: departments.length > 5);
+              if (v != null) onDept(v);
+            },
+          )),
+        ]),
+        const SizedBox(height: 8),
+        SelectField(
+          hint: 'Ngazi Zote',
+          value: fLevel.isNotEmpty ? fLevel : null,
+          onTap: () async {
+            final v = await showSelectSheet<String>(context,
+              title: 'Chagua Ngazi', items: levelItems, selected: fLevel);
+            if (v != null) onLevel(v);
+          },
         ),
-      ),
+        if (fRegion.isNotEmpty || fDept.isNotEmpty || fLevel.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () { onRegion(''); onDept(''); onLevel(''); },
+            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.close, size: 13, color: _kOrange),
+              SizedBox(width: 4),
+              Text('Futa Vichujio', style: TextStyle(fontSize: 12, color: _kOrange,
+                fontWeight: FontWeight.w500)),
+            ]),
+          ),
+        ],
+      ]),
     );
   }
 }
+
+Widget _label(String t) => Text(t,
+  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: _kGrey500));
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  NUMBER TABLE — # | Jina | % | Idadi (kama web NumberTable)
@@ -979,7 +1087,7 @@ class _RecentActivityCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  USERS TAB — search + DataTable (kama web UsersTab)
+//  USERS TAB — search + mobile card list
 // ─────────────────────────────────────────────────────────────────────────────
 class _UsersTab extends StatelessWidget {
   final List<dynamic> users;
@@ -989,83 +1097,159 @@ class _UsersTab extends StatelessWidget {
   const _UsersTab({required this.users, required this.total,
       required this.q, required this.onSearch});
 
+  String _initials(String name) {
+    final parts = name.trim().split(' ').where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // Search — .input class (rounded-xl)
+      // Search
       Container(
-        height: 40,
+        height: 42,
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(color: _kGrey200),
-          borderRadius: BorderRadius.circular(12)), // rounded-xl
+          borderRadius: BorderRadius.circular(12)),
         child: TextField(
           onChanged: onSearch,
-          style: const TextStyle(fontSize: 12),
+          style: const TextStyle(fontSize: 13),
           decoration: const InputDecoration(
             hintText: 'Tafuta mtumiaji...',
-            hintStyle: TextStyle(fontSize: 12, color: _kGrey400),
+            hintStyle: TextStyle(fontSize: 13, color: _kGrey400),
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-            prefixIcon: Icon(Icons.search, size: 16, color: _kGrey400),
-            prefixIconConstraints: BoxConstraints(minWidth: 32, minHeight: 32)),
+            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            prefixIcon: Icon(Icons.search, size: 17, color: _kGrey400),
+            prefixIconConstraints: BoxConstraints(minWidth: 38, minHeight: 38)),
         ),
       ),
+      const SizedBox(height: 10),
+      Row(children: [
+        Text('Jumla: $total',
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGrey500)),
+        if (users.length < total) ...[
+          const Text(' · ', style: TextStyle(color: _kGrey300)),
+          Text('Inaonyesha ${users.length}',
+            style: const TextStyle(fontSize: 12, color: _kGrey400)),
+        ],
+      ]),
       const SizedBox(height: 8),
-      Text('Jumla: $total',
-        style: const TextStyle(fontSize: 12, color: _kGrey500)),
-      const SizedBox(height: 8),
-      // Table in .card container
-      Container(
-        decoration: _cardDecoration(),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowHeight: 36,
-            dataRowMinHeight: 40,
-            dataRowMaxHeight: 48,
-            columnSpacing: 16,
-            headingRowColor: WidgetStateProperty.all(_kGrey50),
-            headingTextStyle: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.bold, color: _kGrey500),
-            dataTextStyle: const TextStyle(fontSize: 12, color: _kGrey700),
-            dividerThickness: 1,
-            columns: const [
-              DataColumn(label: Text('JINA')),
-              DataColumn(label: Text('SIMU')),
-              DataColumn(label: Text('KADA')),
-              DataColumn(label: Text('MKOA')),
-              DataColumn(label: Text('ANAKOTAKA')),
-              DataColumn(label: Text('ADMIN')),
-            ],
-            rows: users.map((u) {
-              final isAdmin = u['is_admin'] == true;
-              final station = u['current_station'] as Map? ?? {};
-              final dests = (u['desired_destinations'] as List?) ?? [];
-              final destsStr = dests.map((d) => '${d['region_name'] ?? d}').join(', ');
-              return DataRow(cells: [
-                DataCell(Text('${u['full_name'] ?? ''}',
-                  style: const TextStyle(fontWeight: FontWeight.w600))),
-                DataCell(Text('${u['phone_primary'] ?? ''}',
-                  style: const TextStyle(color: _kBlue))),
-                DataCell(Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: _kBlue50, borderRadius: BorderRadius.circular(4)),
-                  child: Text('${u['cadre_code'] ?? ''}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kBlue)))),
-                DataCell(Text('${station['region_name'] ?? ''}')),
-                DataCell(Text(destsStr,
-                  style: const TextStyle(fontSize: 11, color: _kGrey500),
-                  overflow: TextOverflow.ellipsis)),
-                DataCell(isAdmin
-                    ? const Icon(Icons.shield_outlined, size: 16, color: _kBlue)
-                    : const Text('—', style: TextStyle(color: _kGrey400))),
-              ]);
-            }).toList(),
-          ),
-        ),
-      ),
+      if (users.isEmpty)
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          alignment: Alignment.center,
+          decoration: _cardDecoration(),
+          child: const Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.people_outline, size: 36, color: _kGrey300),
+            SizedBox(height: 8),
+            Text('Hakuna watumiaji',
+              style: TextStyle(fontSize: 13, color: _kGrey400)),
+          ]),
+        )
+      else
+        ...users.map((u) {
+          final name    = '${u['full_name'] ?? ''}';
+          final phone   = '${u['phone_primary'] ?? ''}';
+          final cadre   = '${u['cadre_code'] ?? u['cadre_name'] ?? ''}';
+          final isAdmin = u['is_admin'] == true;
+          final verified= u['is_verified'] == true || u['contact_enabled'] == true;
+          final station = u['current_station'] as Map? ?? {};
+          final region  = '${station['region_name'] ?? u['region_name'] ?? ''}';
+          final dests   = (u['desired_destinations'] as List?) ?? [];
+          final destsStr= dests.map((d) => '${d['region_name'] ?? d}').join(', ');
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(14),
+            decoration: _cardDecoration(),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // Avatar circle
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isAdmin ? _kBlue : _kBlue50,
+                  border: Border.all(
+                    color: isAdmin ? _kBlue : const Color(0xFFBFDBFE), width: 1.5)),
+                child: Center(child: Text(_initials(name),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
+                    color: isAdmin ? Colors.white : _kBlue))),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Name + admin badge row
+                Row(children: [
+                  Expanded(child: Text(name,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey900),
+                    overflow: TextOverflow.ellipsis)),
+                  if (isAdmin) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: _kBlue, borderRadius: BorderRadius.circular(4)),
+                      child: const Text('ADMIN',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold,
+                          color: Colors.white, letterSpacing: 0.5))),
+                  ],
+                  if (verified && !isAdmin) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: const Color(0xFF86EFAC))),
+                      child: const Text('AMELIPA',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold,
+                          color: Color(0xFF16A34A), letterSpacing: 0.5))),
+                  ],
+                ]),
+                const SizedBox(height: 4),
+                // Phone
+                Row(children: [
+                  const Icon(Icons.phone_outlined, size: 11, color: _kGrey400),
+                  const SizedBox(width: 4),
+                  Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue,
+                    fontWeight: FontWeight.w500)),
+                ]),
+                const SizedBox(height: 4),
+                // Cadre + region
+                Row(children: [
+                  if (cadre.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _kBlue50, borderRadius: BorderRadius.circular(4)),
+                      child: Text(cadre,
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _kBlue))),
+                    const SizedBox(width: 6),
+                  ],
+                  if (region.isNotEmpty) ...[
+                    const Icon(Icons.location_on_outlined, size: 11, color: _kGrey400),
+                    const SizedBox(width: 2),
+                    Expanded(child: Text(region,
+                      style: const TextStyle(fontSize: 11, color: _kGrey500),
+                      overflow: TextOverflow.ellipsis)),
+                  ],
+                ]),
+                // Destinations
+                if (destsStr.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Icon(Icons.arrow_forward_outlined, size: 11, color: _kOrange),
+                    const SizedBox(width: 4),
+                    Expanded(child: Text(destsStr,
+                      style: const TextStyle(fontSize: 11, color: _kOrange),
+                      overflow: TextOverflow.ellipsis, maxLines: 2)),
+                  ]),
+                ],
+              ])),
+            ]),
+          );
+        }),
     ]);
   }
 }
