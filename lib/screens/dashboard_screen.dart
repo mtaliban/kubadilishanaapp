@@ -1365,16 +1365,12 @@ class _BoardCard extends StatelessWidget {
                 style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
           ],
 
-          // Masomo (kwa walimu)
+          // Masomo (kwa walimu) — web: label "Masomo:" full-width juu, kisha chips
           if (subjects.isNotEmpty) ...[
-            const SizedBox(height: 8), // gap-2 = 8px
+            const SizedBox(height: 8),
+            const Text('Masomo:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+            const SizedBox(height: 4),
             Wrap(spacing: 4, runSpacing: 4, children: [
-              if (anySubjectMatch)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(999)),
-                  child: const Text('Masomo yanalingana', style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
               ...subjects.take(4).map((s) {
                 final matched = mySubjects.contains(s);
                 return Container(
@@ -1389,6 +1385,18 @@ class _BoardCard extends StatelessWidget {
                           color: matched ? Colors.white : const Color(0xFF374151))),
                 );
               }),
+              // Match badge — kama web: bg-blue-50 text-blue-700 border-blue/20
+              if (anySubjectMatch)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF), // brand-blue-50
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0xFF1E40AF).withValues(alpha: 0.2)),
+                  ),
+                  child: const Text('✓ Masomo yanalingana',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1D4ED8))),
+                ),
             ]),
           ],
 
