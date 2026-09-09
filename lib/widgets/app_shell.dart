@@ -512,7 +512,7 @@ class _AppShellState extends State<AppShell> {
                   const Spacer(),
 
                   // ── RIGHT: Avatar + LangToggle (kama web) ──────────────────
-                  // Avatar — w-8 h-8 rounded-full
+                  // Avatar — w-8 h-8 rounded-full bg-brand-blue-50 border-blue-200 text-blue-700
                   GestureDetector(
                     onTap: () => _showProfileMenu(user),
                     child: Container(
@@ -520,13 +520,13 @@ class _AppShellState extends State<AppShell> {
                       width: 32, height: 32,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFF3F4F6),
-                        border: Border.all(color: const Color(0xFFD1D5DB)),
+                        color: const Color(0xFFEFF6FF), // brand-blue-50
+                        border: Border.all(color: const Color(0xFFBFDBFE)), // brand-blue-200
                       ),
                       child: Center(child: Text(initial,
                           style: const TextStyle(
                             fontSize: 12, fontWeight: FontWeight.bold,
-                            color: Color(0xFF111827),
+                            color: Color(0xFF1D4ED8), // brand-blue-700
                           ))),
                     ),
                   ),

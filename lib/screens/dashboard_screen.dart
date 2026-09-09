@@ -87,10 +87,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Toast ndani ya card (local — siyo global WS toast ambayo iko AppShell)
   String? _toastUserId;
   String? _toastMsg;
+  Timer? _toastTimer;
+
+  // Global toast (juu ya screen) — kwa payment/contact_toggled notifications
+  String? _globalToast;
+  Timer? _globalToastTimer;
 
   @override
   void dispose() {
     _subjectQCtrl.dispose();
+    _toastTimer?.cancel();
+    _globalToastTimer?.cancel();
     super.dispose();
   }
 
@@ -195,9 +202,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ws.on('user.changed', (_) => _loadBoard());
     ws.on('user.removed', (_) => _loadBoard());
     ws.on('user.profile_updated', (_) { _loadBoard(); _loadTrueMatches(); });
-    ws.on('contact.toggled', (_) {
+    ws.on('contact.toggled', (payload) {
+      context.read<AuthProvider>().refreshUser().then((_) {
+        if (!mounted) return;
+        final enabled = payload['contact_enabled'] == true;
+        if (enabled) {
+          _showGlobalToast('✅ Admin amefungua namba — sasa unaweza kuwasiliana!');
+        }
+      });
       _loadBoard();
-      context.read<AuthProvider>().refreshUser();
     });
     ws.on('announcement', (_) => _loadAnnouncements());
     ws.on('announcement.new', (_) => _loadAnnouncements());
@@ -224,10 +237,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showCardToast(String msg, String uid) {
-    setState(() { _toastMsg = msg; _toastUserId = uid; });
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) setState(() { _toastMsg = null; _toastUserId = null; });
+    // Cancel previous timer, clear first (re-animation trick kama web), then set
+    _toastTimer?.cancel();
+    setState(() { _toastMsg = null; _toastUserId = null; });
+    Future.microtask(() {
+      if (!mounted) return;
+      setState(() { _toastMsg = msg; _toastUserId = uid; });
+      _toastTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) setState(() { _toastMsg = null; _toastUserId = null; });
+      });
     });
+  }
+
+  void _showGlobalToast(String msg) {
+    _globalToastTimer?.cancel();
+    if (mounted) {
+      setState(() => _globalToast = msg);
+      _globalToastTimer = Timer(const Duration(seconds: 4), () {
+        if (mounted) setState(() => _globalToast = null);
+      });
+    }
   }
 
   List<dynamic> get _pagedCandidates {
@@ -542,6 +571,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
+        // Global toast — payment/contact_toggled notification (iko juu ya screen)
+        if (_globalToast != null)
+          Positioned(
+            top: 12, left: 16, right: 16,
+            child: Material(
+              elevation: 6,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E40AF), // brand-blue
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.check_circle, color: Colors.white, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(_globalToast!,
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
+                  GestureDetector(
+                    onTap: () { _globalToastTimer?.cancel(); setState(() => _globalToast = null); },
+                    child: const Icon(Icons.close, color: Colors.white, size: 16),
+                  ),
+                ]),
+              ),
+            ),
+          ),
       ]),
     );
   }
@@ -1271,10 +1326,8 @@ class _BoardCard extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     overflow: TextOverflow.ellipsis)),
                 if (fresh)
-                  Container(margin: const EdgeInsets.only(left: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
-                    child: const Text('Mpya', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white))),
+                  Padding(padding: const EdgeInsets.only(left: 4),
+                    child: _PulseBadge(label: 'Mpya', bg: AppColors.primary, textColor: Colors.white)),
                 if (online && !fresh)
                   Padding(padding: const EdgeInsets.only(left: 4),
                     child: Text('● Live', style: TextStyle(fontSize: 9, color: Colors.green.shade600, fontWeight: FontWeight.bold))),
@@ -1667,6 +1720,43 @@ class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixi
     child: Container(
       width: 8, height: 8,
       decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.green),
+    ),
+  );
+}
+
+// ── Pulsing "Mpya" badge — kama web `animate-[newPulse_1s_ease-in-out_infinite]` ──
+class _PulseBadge extends StatefulWidget {
+  final String label;
+  final Color bg;
+  final Color textColor;
+  const _PulseBadge({required this.label, required this.bg, required this.textColor});
+  @override
+  State<_PulseBadge> createState() => _PulseBadgeState();
+}
+
+class _PulseBadgeState extends State<_PulseBadge> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
+      ..repeat(reverse: true);
+    _scale = Tween<double>(begin: 0.95, end: 1.05).animate(
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) => ScaleTransition(
+    scale: _scale,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(color: widget.bg, borderRadius: BorderRadius.circular(10)),
+      child: Text(widget.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: widget.textColor)),
     ),
   );
 }
