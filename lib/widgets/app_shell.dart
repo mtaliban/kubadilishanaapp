@@ -213,7 +213,6 @@ class _AppShellState extends State<AppShell> {
     final pos = rb.localToGlobal(Offset.zero);
     final sz = rb.size;
     final counts = Map<String, int>.from(_badge.counts);
-    final wsLive = WebSocketService().isConnected;
 
     _menuOverlay = OverlayEntry(builder: (_) => Stack(children: [
       Positioned.fill(child: GestureDetector(
@@ -237,37 +236,7 @@ class _AppShellState extends State<AppShell> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              // WS status pill
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Row(children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: wsLive ? const Color(0xFFDCFCE7) : const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: wsLive ? const Color(0xFF86EFAC) : const Color(0xFFE5E7EB)),
-                    ),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Container(
-                        width: 6, height: 6,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: wsLive ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(wsLive ? 'LIVE' : 'OFFLINE',
-                          style: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.bold,
-                            color: wsLive ? const Color(0xFF15803D) : const Color(0xFF6B7280),
-                          )),
-                    ]),
-                  ),
-                ]),
-              ),
-              // Nav links
+              // Nav links (kama web — hakuna WS pill kwenye mobile hamburger)
               _dropLink(context, Icons.dashboard_outlined, 'Nyumbani', '/dashboard',
                   counts, widget.tabIndex == 0),
               _dropLink(context, Icons.volunteer_activism_outlined, 'Changia', '/donate',

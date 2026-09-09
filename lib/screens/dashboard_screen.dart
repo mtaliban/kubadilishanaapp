@@ -9,10 +9,10 @@ import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../config/theme.dart';
 import '../widgets/app_shell.dart';
+import '../widgets/select_sheet.dart';
 
 // WhatsApp SVG paths (white = FAB, dark = small contact button)
 const _kWaSvg = '''<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="white" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>''';
-const _kWaSvgDark = '''<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#111827" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>''';
 
 const _kAdminPhone = '0763795801';
 const _kWaGroup = 'https://chat.whatsapp.com/Gm43LFnroiZLV9wynX3FpP';
@@ -1047,18 +1047,14 @@ class _FiltersBar extends StatelessWidget {
     required this.onSubjectQSubmitted, required this.onClear,
   });
 
-  // .input = rounded-md(6px) border-grey-300 px-2.5(10px) py-1.5(6px) text-xs(12px) bg-white
-  static const _kGrey300 = Color(0xFFD1D5DB);
-  static const _kGrey100 = Color(0xFFF3F4F6);
-  InputDecoration _dec(String hint, {bool disabled = false}) => InputDecoration(
+  static InputDecoration _searchDec(String hint) => InputDecoration(
     hintText: hint, isDense: true,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    filled: true,
-    fillColor: disabled ? _kGrey100 : Colors.white,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
-    disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    filled: true, fillColor: const Color(0xFFF9FAFB),
+    prefixIcon: const Icon(Icons.search, size: 16, color: Color(0xFF9CA3AF)),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
     hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
   );
 
@@ -1068,181 +1064,208 @@ class _FiltersBar extends StatelessWidget {
     final hasFilter = regionSel != '__all__' || districtId != null || facilityId != null ||
         cadreCode.isNotEmpty || subjectFilter != 'off' || subjectQ.isNotEmpty;
 
+    // Labels za thamani zilizochaguliwa
+    final regionLabel = regionSel == '__all__' ? null
+        : regions.cast<dynamic>().firstWhere((r) => '${r['id']}' == regionSel, orElse: () => null)?['name'] as String?;
+    final districtLabel = districtId == null ? null
+        : districts.cast<dynamic>().firstWhere((d) => d['id'] == districtId, orElse: () => null)?['name'] as String?;
+    final facilityLabel = facilityId == null ? null
+        : facilities.cast<dynamic>().firstWhere((f) => '${f['id'] ?? f['code']}' == facilityId, orElse: () => null)?['name'] as String?;
+    final cadreLabel = cadreCode.isEmpty ? null
+        : cadres.cast<dynamic>().firstWhere((c) => '${c['code']}' == cadreCode, orElse: () => null)?['display_name'] as String? ?? cadreCode;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // ── "Wanakotoka (Mkoa)" label kama web ──
-        const Text('Wanakotoka (Mkoa)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-        const SizedBox(height: 4),
 
-        // Mkoa
-        DropdownButtonFormField<String>(
-          initialValue: regionSel,
-          decoration: _dec('Mikoa Yote'),
-          style: const TextStyle(fontSize: 12, color: Colors.black87),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF6B7280)),
-          dropdownColor: Colors.white,
-          isExpanded: true,
-          items: [
-            const DropdownMenuItem(value: '__all__', child: Text('Mikoa Yote')),
-            ...regions.map((r) => DropdownMenuItem(value: '${r['id']}', child: Text('${r['name']}'))),
-          ],
-          onChanged: onRegionChanged,
+        // ── Header: title + clear ──
+        Row(children: [
+          const Icon(Icons.tune_rounded, size: 14, color: AppColors.primary),
+          const SizedBox(width: 6),
+          const Text('Vichujio', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+          const Spacer(),
+          if (hasFilter)
+            GestureDetector(
+              onTap: onClear,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text('Futa', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.error)),
+              ),
+            ),
+        ]),
+
+        const SizedBox(height: 10),
+        const Text('Mkoa (Wanakotoka)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        const SizedBox(height: 5),
+
+        // Mkoa — bottom sheet picker
+        SelectField(
+          hint: 'Mikoa Yote',
+          value: regionLabel,
+          onTap: () async {
+            final items = [
+              (value: '__all__', label: 'Mikoa Yote', subtitle: null),
+              ...regions.map((r) => (value: '${r['id']}', label: '${r['name']}', subtitle: null)),
+            ];
+            final result = await showSelectSheet<String>(
+              context, title: 'Chagua Mkoa', items: items, selected: regionSel, searchable: true,
+            );
+            if (result != null) onRegionChanged(result);
+          },
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
+        Text('Wilaya / Halmashauri',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                color: singleRegionSelected ? const Color(0xFF374151) : const Color(0xFFD1D5DB))),
+        const SizedBox(height: 5),
 
         // Wilaya — disabled unless mkoa mmoja
-        DropdownButtonFormField<int?>(
-          initialValue: districtId,
-          decoration: _dec(singleRegionSelected ? 'Wilaya zote' : 'Chagua Wilaya / Halmashauri',
-              disabled: !singleRegionSelected),
-          style: const TextStyle(fontSize: 12, color: Colors.black87),
-          icon: Icon(Icons.keyboard_arrow_down, size: 16,
-              color: singleRegionSelected ? const Color(0xFF6B7280) : const Color(0xFFD1D5DB)),
-          dropdownColor: Colors.white,
-          isExpanded: true,
-          items: [
-            DropdownMenuItem(value: null, child: Text(singleRegionSelected ? 'Wilaya zote' : 'Chagua Wilaya / Halmashauri',
-                style: TextStyle(color: singleRegionSelected ? Colors.black87 : const Color(0xFF9CA3AF)))),
-            ...districts.map((d) => DropdownMenuItem(value: d['id'] as int, child: Text('${d['name']}'))),
-          ],
-          onChanged: singleRegionSelected ? onDistrictChanged : null,
+        SelectField(
+          hint: singleRegionSelected ? 'Wilaya Zote' : 'Chagua Mkoa kwanza',
+          value: districtLabel,
+          disabled: !singleRegionSelected,
+          onTap: !singleRegionSelected ? null : () async {
+            final items = [
+              (value: null as int?, label: 'Wilaya Zote', subtitle: null),
+              ...districts.map((d) => (value: d['id'] as int?, label: '${d['name']}', subtitle: null)),
+            ];
+            final result = await showSelectSheet<int?>(
+              context, title: 'Chagua Wilaya', items: items, selected: districtId, searchable: true,
+            );
+            if (result != null || result == null) onDistrictChanged(result);
+          },
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
+        Text('Kituo / Hospitali',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                color: districtSelected ? const Color(0xFF374151) : const Color(0xFFD1D5DB))),
+        const SizedBox(height: 5),
 
-        // Kituo — disabled unless wilaya imechaguliwa
-        DropdownButtonFormField<String?>(
-          initialValue: facilityId,
-          decoration: _dec(districtSelected ? 'Vituo vyote' : 'Chagua Kituo',
-              disabled: !districtSelected),
-          style: const TextStyle(fontSize: 12, color: Colors.black87),
-          icon: Icon(Icons.keyboard_arrow_down, size: 16,
-              color: districtSelected ? const Color(0xFF6B7280) : const Color(0xFFD1D5DB)),
-          dropdownColor: Colors.white,
-          isExpanded: true,
-          items: [
-            DropdownMenuItem(value: null, child: Text(districtSelected ? 'Vituo vyote' : 'Chagua Kituo',
-                style: TextStyle(color: districtSelected ? Colors.black87 : const Color(0xFF9CA3AF)))),
-            ...facilities.map((f) => DropdownMenuItem(
-              value: '${f['id'] ?? f['code']}',
-              child: Text('${f['name']}', overflow: TextOverflow.ellipsis),
-            )),
-          ],
-          onChanged: districtSelected ? onFacilityChanged : null,
+        // Kituo — disabled unless wilaya
+        SelectField(
+          hint: districtSelected ? 'Vituo Vyote' : 'Chagua Wilaya kwanza',
+          value: facilityLabel,
+          disabled: !districtSelected,
+          onTap: !districtSelected ? null : () async {
+            final items = [
+              (value: null as String?, label: 'Vituo Vyote', subtitle: null),
+              ...facilities.map((f) => (
+                value: '${f['id'] ?? f['code']}' as String?,
+                label: '${f['name']}',
+                subtitle: null,
+              )),
+            ];
+            final result = await showSelectSheet<String?>(
+              context, title: 'Chagua Kituo', items: items, selected: facilityId, searchable: true,
+            );
+            if (result != null || result == null) onFacilityChanged(result);
+          },
         ),
 
-        // Active filter label + clear — kama web: MapPin + jina + "Futa kichujio"
-        const SizedBox(height: 6),
-        Builder(builder: (ctx) {
-          String? activeLabel;
-          if (facilityId != null && facilities.isNotEmpty) {
-            final f = facilities.cast<dynamic>().firstWhere(
-              (f) => '${f['id'] ?? f['code']}' == facilityId, orElse: () => null);
-            activeLabel = f != null ? '${f['name']}' : null;
-          } else if (districtId != null && districts.isNotEmpty) {
-            final d = districts.cast<dynamic>().firstWhere(
-              (d) => d['id'] == districtId, orElse: () => null);
-            activeLabel = d != null ? '${d['name']}' : null;
-          } else if (regionSel != '__all__' && regions.isNotEmpty) {
-            final r = regions.cast<dynamic>().firstWhere(
-              (r) => '${r['id']}' == regionSel, orElse: () => null);
-            activeLabel = r != null ? '${r['name']}' : null;
-          }
-          return Row(children: [
-            const Icon(Icons.location_on, size: 12, color: AppColors.textSecondary),
-            const SizedBox(width: 2),
-            Expanded(child: Text(activeLabel ?? 'Mikoa Yote',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-                overflow: TextOverflow.ellipsis)),
-            if (hasFilter) GestureDetector(
-              onTap: onClear,
-              child: const Text('Futa kichujio', style: TextStyle(fontSize: 11, color: AppColors.error)),
-            ),
-          ]);
-        }),
-
-        // ── Subject filter (edu + admin) — baada ya dropdowns kama web ──
-        if (isEdu) ...[
+        // Active location label
+        if (regionLabel != null || districtLabel != null || facilityLabel != null) ...[
           const SizedBox(height: 8),
           Row(children: [
-            const Text('Masomo:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-            const SizedBox(width: 6),
-            Wrap(spacing: 4, runSpacing: 4, children: [
-              for (final entry in [
-                ('off', 'Wote'),
-                ('all', 'Masomo yote mawili'),
-                ('any', 'Somo moja'),
-                ('none', 'Wasio match'),
-              ])
-                GestureDetector(
-                  onTap: () => onSubjectFilterChanged(entry.$1),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: subjectFilter == entry.$1 ? AppColors.primary : Colors.transparent,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: subjectFilter == entry.$1 ? AppColors.primary : const Color(0xFFD1D5DB),
-                      ),
+            const Icon(Icons.location_on_rounded, size: 12, color: AppColors.primary),
+            const SizedBox(width: 3),
+            Expanded(child: Text(
+              facilityLabel ?? districtLabel ?? regionLabel ?? '',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.primary),
+              overflow: TextOverflow.ellipsis,
+            )),
+          ]),
+        ],
+
+        // ── Subject filter chips (edu + admin) ──
+        if (isEdu) ...[
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+          const Text('Masomo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final entry in [
+              ('off', 'Wote'),
+              ('all', 'Yote mawili'),
+              ('any', 'Somo moja'),
+              ('none', 'Wasio match'),
+            ])
+              GestureDetector(
+                onTap: () => onSubjectFilterChanged(entry.$1),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: subjectFilter == entry.$1 ? AppColors.primary : Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: subjectFilter == entry.$1 ? AppColors.primary : const Color(0xFFD1D5DB),
                     ),
-                    child: Text(entry.$2, style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w600,
-                      color: subjectFilter == entry.$1 ? Colors.white : const Color(0xFF4B5563),
-                    )),
+                    boxShadow: subjectFilter == entry.$1
+                        ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 4)]
+                        : [],
                   ),
+                  child: Text(entry.$2, style: TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w600,
+                    color: subjectFilter == entry.$1 ? Colors.white : const Color(0xFF4B5563),
+                  )),
                 ),
-            ]),
+              ),
           ]),
           if (subjectFilter != 'off') ...[
-            const SizedBox(height: 6),
-            Row(children: [
-              const Icon(Icons.search, size: 14, color: AppColors.textLight),
-              const SizedBox(width: 6),
-              Expanded(child: TextField(
-                controller: subjectQCtrl,
-                decoration: _dec('Tafuta masomo (k.m. MATH, KISWAHILI — unaweza kuweka mawili au zaidi)...').copyWith(
-                  suffixIcon: subjectQ.isNotEmpty
-                      ? IconButton(icon: const Icon(Icons.clear, size: 14),
-                          onPressed: () { subjectQCtrl.clear(); onSubjectQChanged(''); onSubjectQSubmitted(''); })
-                      : null,
-                ),
-                style: const TextStyle(fontSize: 12),
-                onChanged: onSubjectQChanged,
-                onSubmitted: onSubjectQSubmitted,
-                textInputAction: TextInputAction.search,
-              )),
-            ]),
+            const SizedBox(height: 8),
+            TextField(
+              controller: subjectQCtrl,
+              decoration: _searchDec('Tafuta masomo (MATH, KISWAHILI...)').copyWith(
+                suffixIcon: subjectQ.isNotEmpty
+                    ? IconButton(icon: const Icon(Icons.clear, size: 14, color: Color(0xFF9CA3AF)),
+                        onPressed: () { subjectQCtrl.clear(); onSubjectQChanged(''); onSubjectQSubmitted(''); })
+                    : null,
+              ),
+              style: const TextStyle(fontSize: 12),
+              onChanged: onSubjectQChanged,
+              onSubmitted: onSubjectQSubmitted,
+              textInputAction: TextInputAction.search,
+            ),
           ],
         ],
 
-        // Kada — health users + admin only
+        // ── Kada (health + admin) ──
         if (showCadre) ...[
-          const SizedBox(height: 8),
-          Row(children: [
-            const Text('Idara:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-            const SizedBox(width: 8),
-            Expanded(child: DropdownButtonFormField<String>(
-              initialValue: cadreCode.isEmpty ? '' : cadreCode,
-              decoration: _dec('Idara Zote'),
-              style: const TextStyle(fontSize: 12, color: Colors.black87),
-              isExpanded: true,
-              items: [
-                const DropdownMenuItem(value: '', child: Text('Idara Zote')),
-                ...cadres.map((c) => DropdownMenuItem(
-                  value: '${c['code']}',
-                  child: Text('${c['display_name'] ?? c['code']}', overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+          const Text('Idara / Kada', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+          const SizedBox(height: 6),
+          SelectField(
+            hint: 'Idara Zote',
+            value: cadreLabel,
+            onTap: () async {
+              final items = [
+                (value: '' as String?, label: 'Idara Zote', subtitle: null),
+                ...cadres.map((c) => (
+                  value: '${c['code']}' as String?,
+                  label: '${c['display_name'] ?? c['code']}',
+                  subtitle: null,
                 )),
-              ],
-              onChanged: onCadreChanged,
-            )),
-          ]),
+              ];
+              final result = await showSelectSheet<String?>(
+                context, title: 'Chagua Idara / Kada', items: items, selected: cadreCode.isEmpty ? '' : cadreCode, searchable: true,
+              );
+              if (result != null || result == null) onCadreChanged(result);
+            },
+          ),
         ],
       ]),
     );

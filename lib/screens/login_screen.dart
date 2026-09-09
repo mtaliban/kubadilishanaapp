@@ -381,6 +381,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 TextField(
                                   controller: _otpCtrl,
                                   keyboardType: TextInputType.number,
+                                  autocorrect: false,
+                                  enableSuggestions: false,
                                   maxLength: 6,
                                   textAlign: TextAlign.center,
                                   autofocus: true,
@@ -485,34 +487,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
 
-            // ── Back button — absolute top-4 left-4 (kama web position: absolute) ──
-            // inline-flex items-center gap-1.5 text-sm font-medium text-brand-grey-600 px-2 py-1.5 rounded-lg
-            Positioned(
-              top: 16, // top-4
-              left: 16, // left-4
-              child: GestureDetector(
-                onTap: () => Navigator.canPop(context) ? Navigator.pop(context) : null,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6), // px-2 py-1.5
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)), // rounded-lg
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.arrow_back_ios_new, size: 16, color: Color(0xFF4B5563)), // ArrowLeft size=16 text-brand-grey-600
-                      SizedBox(width: 6), // gap-1.5
-                      Text(
-                        'Rudi',
-                        style: TextStyle(
-                          fontSize: 14, // text-sm
-                          fontWeight: FontWeight.w500, // font-medium
-                          color: Color(0xFF4B5563), // text-brand-grey-600
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            // Back button removed — app hana previous page ya kurudi kwenye login
 
           ],
         ),

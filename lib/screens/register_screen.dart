@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/select_sheet.dart';
 
 const _kBlue = Color(0xFF1E40AF);
 const _kGrey300 = Color(0xFFD1D5DB);
@@ -45,6 +46,8 @@ InputDecoration _dropDec({String? hint}) => InputDecoration(
 ButtonStyle _btnPrimary() => ElevatedButton.styleFrom(
       backgroundColor: _kBlue,
       foregroundColor: Colors.white,
+      disabledBackgroundColor: const Color(0xFF1E40AF).withValues(alpha: 0.75), // stays blue, not grey
+      disabledForegroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -64,10 +67,10 @@ ButtonStyle _btnOutline() => OutlinedButton.styleFrom(
 Widget _loadingRow({double verticalPad = 32}) => Padding(
       padding: EdgeInsets.symmetric(vertical: verticalPad),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: const [
-        SizedBox(width: 20, height: 20,
+        SizedBox(width: 14, height: 14,
             child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF9CA3AF))),
         SizedBox(width: 8),
-        Text('Inapakia...', style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
+        Text('Inapakia...', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
       ]),
     );
 
@@ -108,7 +111,7 @@ Widget _btnRow({required VoidCallback onBack, required VoidCallback onNext,
                 ? Row(mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: const [
-                      SizedBox(width: 14, height: 14,
+                      SizedBox(width: 12, height: 12,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
                       SizedBox(width: 8),
                       Text('Ninajisajili...'),
@@ -705,17 +708,21 @@ class _Step2IdaraState extends State<_Step2Idara> {
         const Text('Chagua Idara *',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          initialValue: _selected.isEmpty ? null : _selected,
-          decoration: _dropDec(hint: '-- Chagua Idara --'),
-          style: const TextStyle(fontSize: 12, color: _kGrey900),
-          items: _departments
-              .map((d) => DropdownMenuItem<String>(
-                    value: d['code'] as String,
-                    child: Text(d['name'] as String, style: const TextStyle(fontSize: 12)),
-                  ))
-              .toList(),
-          onChanged: (v) => setState(() => _selected = v ?? ''),
+        SelectField(
+          hint: '-- Chagua Idara --',
+          value: _selected.isEmpty ? null : _departments.cast<dynamic>()
+              .firstWhere((d) => d['code'] == _selected, orElse: () => null)?['name'] as String?,
+          onTap: () async {
+            final items = _departments.map((d) => (
+              value: d['code'] as String,
+              label: d['name'] as String,
+              subtitle: null,
+            )).toList();
+            final result = await showSelectSheet<String>(
+              context, title: 'Chagua Idara', items: items, selected: _selected.isEmpty ? null : _selected,
+            );
+            if (result != null) setState(() => _selected = result);
+          },
         ),
       ],
 
@@ -759,18 +766,19 @@ class _Step3WizaraState extends State<_Step3Wizara> {
       const Text('Wizara *',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
       const SizedBox(height: 6),
-      DropdownButtonFormField<String>(
-        initialValue: _sector.isEmpty ? null : _sector,
-        decoration: _dropDec(hint: '-- Chagua --'),
-        style: const TextStyle(fontSize: 12, color: _kGrey900),
-        items: const [
-          DropdownMenuItem(
-              value: 'wizara_afya',
-              child: Text('Wizara ya Afya', style: TextStyle(fontSize: 12))),
-          DropdownMenuItem(
-              value: 'tamisemi', child: Text('TAMISEMI', style: TextStyle(fontSize: 12))),
-        ],
-        onChanged: (v) => setState(() => _sector = v ?? ''),
+      SelectField(
+        hint: '-- Chagua --',
+        value: _sector.isEmpty ? null : (_sector == 'wizara_afya' ? 'Wizara ya Afya' : 'TAMISEMI'),
+        onTap: () async {
+          final items = [
+            (value: 'wizara_afya', label: 'Wizara ya Afya', subtitle: null),
+            (value: 'tamisemi', label: 'TAMISEMI', subtitle: null),
+          ];
+          final result = await showSelectSheet<String>(
+            context, title: 'Chagua Wizara', items: items, selected: _sector.isEmpty ? null : _sector,
+          );
+          if (result != null) setState(() => _sector = result);
+        },
       ),
 
       _btnRow(
@@ -860,19 +868,22 @@ class _Step4KadaState extends State<_Step4Kada> {
         const Text('Kada *',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          initialValue: _cadreCode.isEmpty ? null : _cadreCode,
-          decoration: _dropDec(hint: '-- Chagua Kada --'),
-          style: const TextStyle(fontSize: 12, color: _kGrey900),
-          items: _cadres
-              .map((c) => DropdownMenuItem<String>(
-                    value: c['code'] as String,
-                    child: Text(
-                        c['display_name'] as String? ?? c['code'] as String,
-                        style: const TextStyle(fontSize: 12)),
-                  ))
-              .toList(),
-          onChanged: (v) { if (v != null) _onCadreChanged(v); },
+        SelectField(
+          hint: '-- Chagua Kada --',
+          value: _cadreCode.isEmpty ? null : _cadres.cast<dynamic>()
+              .firstWhere((c) => c['code'] == _cadreCode, orElse: () => null)?['display_name'] as String? ?? _cadreCode,
+          onTap: () async {
+            final items = _cadres.map((c) => (
+              value: c['code'] as String,
+              label: c['display_name'] as String? ?? c['code'] as String,
+              subtitle: null,
+            )).toList();
+            final result = await showSelectSheet<String>(
+              context, title: 'Chagua Kada', items: items,
+              selected: _cadreCode.isEmpty ? null : _cadreCode, searchable: true,
+            );
+            if (result != null) _onCadreChanged(result);
+          },
         ),
       ],
 
@@ -1109,17 +1120,21 @@ class _Step5StationState extends State<_Step5Station> {
         const Text('Mkoa *',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 6),
-        DropdownButtonFormField<int>(
-          initialValue: _regionId,
-          decoration: _dropDec(hint: 'Chagua Mkoa'),
-          style: const TextStyle(fontSize: 12, color: _kGrey900),
-          items: _regions
-              .map((r) => DropdownMenuItem<int>(
-                    value: r['id'] as int,
-                    child: Text(r['name'] as String, style: const TextStyle(fontSize: 12)),
-                  ))
-              .toList(),
-          onChanged: (v) { if (v != null) _onRegionChanged(v); },
+        SelectField(
+          hint: 'Chagua Mkoa',
+          value: _regionId == null ? null : _regions.cast<dynamic>()
+              .firstWhere((r) => r['id'] == _regionId, orElse: () => null)?['name'] as String?,
+          onTap: () async {
+            final items = _regions.map((r) => (
+              value: r['id'] as int,
+              label: r['name'] as String,
+              subtitle: null,
+            )).toList();
+            final result = await showSelectSheet<int>(
+              context, title: 'Chagua Mkoa', items: items, selected: _regionId, searchable: true,
+            );
+            if (result != null) _onRegionChanged(result);
+          },
         ),
 
         if (_isWizara && _regionId != null) ...[
@@ -1130,17 +1145,21 @@ class _Step5StationState extends State<_Step5Station> {
           if (_loadingFacilities)
             Center(child: _loadingRow(verticalPad: 8))
           else
-            DropdownButtonFormField<String>(
-              initialValue: _facilityId,
-              decoration: _dropDec(hint: 'Chagua Hospitali'),
-              style: const TextStyle(fontSize: 12, color: _kGrey900),
-              items: _facilities
-                  .map((f) => DropdownMenuItem<String>(
-                        value: '${f['id'] ?? f['code']}',
-                        child: Text(f['name'] as String? ?? '', style: const TextStyle(fontSize: 12)),
-                      ))
-                  .toList(),
-              onChanged: (v) => setState(() => _facilityId = v),
+            SelectField(
+              hint: 'Chagua Hospitali ya Rufaa',
+              value: _facilityId == null ? null : (_facilities.cast<dynamic>()
+                  .firstWhere((f) => '${f['id'] ?? f['code']}' == _facilityId, orElse: () => null)?['name'] as String?),
+              onTap: () async {
+                final items = _facilities.map((f) => (
+                  value: '${f['id'] ?? f['code']}' as String,
+                  label: '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
+                  subtitle: null,
+                )).toList();
+                final result = await showSelectSheet<String>(
+                  context, title: 'Chagua Hospitali', items: items, selected: _facilityId, searchable: true,
+                );
+                if (result != null) setState(() => _facilityId = result);
+              },
             ),
         ],
 
@@ -1152,17 +1171,21 @@ class _Step5StationState extends State<_Step5Station> {
           if (_loadingDistricts)
             Center(child: _loadingRow(verticalPad: 8))
           else
-            DropdownButtonFormField<int>(
-              initialValue: _districtId,
-              decoration: _dropDec(hint: 'Chagua Wilaya'),
-              style: const TextStyle(fontSize: 12, color: _kGrey900),
-              items: _districts
-                  .map((d) => DropdownMenuItem<int>(
-                        value: d['id'] as int,
-                        child: Text(d['name'] as String, style: const TextStyle(fontSize: 12)),
-                      ))
-                  .toList(),
-              onChanged: (v) { if (v != null) _onDistrictChanged(v); },
+            SelectField(
+              hint: 'Chagua Wilaya',
+              value: _districtId == null ? null : _districts.cast<dynamic>()
+                  .firstWhere((d) => d['id'] == _districtId, orElse: () => null)?['name'] as String?,
+              onTap: () async {
+                final items = _districts.map((d) => (
+                  value: d['id'] as int,
+                  label: d['name'] as String,
+                  subtitle: null,
+                )).toList();
+                final result = await showSelectSheet<int>(
+                  context, title: 'Chagua Wilaya', items: items, selected: _districtId, searchable: true,
+                );
+                if (result != null) _onDistrictChanged(result);
+              },
             ),
         ],
 
@@ -1178,17 +1201,25 @@ class _Step5StationState extends State<_Step5Station> {
           if (_loadingFacilities)
             Center(child: _loadingRow(verticalPad: 8))
           else
-            DropdownButtonFormField<String>(
-              initialValue: _facilityId,
-              decoration: _dropDec(hint: 'Chagua (hiari)'),
-              style: const TextStyle(fontSize: 12, color: _kGrey900),
-              items: _facilities
-                  .map((f) => DropdownMenuItem<String>(
-                        value: '${f['id'] ?? f['code']}',
-                        child: Text(f['name'] as String? ?? '', style: const TextStyle(fontSize: 12)),
-                      ))
-                  .toList(),
-              onChanged: (v) => setState(() => _facilityId = v),
+            SelectField(
+              hint: widget.initial['category'] == 'health' ? 'Chagua Hospitali/Kituo (hiari)' : 'Chagua Shule (hiari)',
+              value: _facilityId == null ? null : _facilities.cast<dynamic>()
+                  .firstWhere((f) => '${f['id'] ?? f['code']}' == _facilityId, orElse: () => null)?['name'] as String?,
+              onTap: () async {
+                final items = [
+                  (value: null as String?, label: 'Bila Kituo (Hiari)', subtitle: null),
+                  ..._facilities.map((f) => (
+                    value: '${f['id'] ?? f['code']}' as String?,
+                    label: '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
+                    subtitle: null,
+                  )),
+                ];
+                final result = await showSelectSheet<String?>(
+                  context, title: widget.initial['category'] == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
+                  items: items, selected: _facilityId, searchable: true,
+                );
+                if (result != null || result == null) setState(() => _facilityId = result);
+              },
             ),
         ],
       ],
@@ -1405,18 +1436,20 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
       const Text('Umefanya kazi kwa miaka mingapi? *',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
       const SizedBox(height: 6),
-      DropdownButtonFormField<String>(
-        initialValue: _years.isEmpty ? null : _years,
-        decoration: _dropDec(hint: 'Chagua miaka ya kazi'),
-        style: const TextStyle(fontSize: 12, color: _kGrey900), // .input = text-xs=12px
-        items: const [
-          DropdownMenuItem(value: '1', child: Text('1', style: TextStyle(fontSize: 12))),
-          DropdownMenuItem(value: '2', child: Text('2', style: TextStyle(fontSize: 12))),
-          DropdownMenuItem(
-              value: '3',
-              child: Text('3+ (miaka 3 au zaidi)', style: TextStyle(fontSize: 12))),
-        ],
-        onChanged: (v) => setState(() => _years = v ?? ''),
+      SelectField(
+        hint: 'Chagua miaka ya kazi',
+        value: _years.isEmpty ? null : (_years == '3' ? '3+ (miaka 3 au zaidi)' : _years),
+        onTap: () async {
+          final items = [
+            (value: '1', label: '1 mwaka', subtitle: null),
+            (value: '2', label: '2 miaka', subtitle: null),
+            (value: '3', label: '3+ (miaka 3 au zaidi)', subtitle: null),
+          ];
+          final result = await showSelectSheet<String>(
+            context, title: 'Miaka ya Kazi', items: items, selected: _years.isEmpty ? null : _years,
+          );
+          if (result != null) setState(() => _years = result);
+        },
       ),
 
       _btnRow(
@@ -1470,17 +1503,21 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
         const SizedBox(height: 12),
 
         // Region select — web: input text-sm → fontSize 14
-        DropdownButtonFormField<int>(
-          initialValue: rid,
-          decoration: _dropDec(hint: '— Chagua Mkoa wa Lengo —'),
-          style: const TextStyle(fontSize: 14, color: _kGrey900),
-          items: _regions
-              .map((r) => DropdownMenuItem<int>(
-                    value: r['id'] as int,
-                    child: Text(r['name'] as String, style: const TextStyle(fontSize: 14)),
-                  ))
-              .toList(),
-          onChanged: (v) => _onRegionChanged(i, v),
+        SelectField(
+          hint: '— Chagua Mkoa wa Lengo —',
+          value: rid == null ? null : _regions.cast<dynamic>()
+              .firstWhere((r) => r['id'] == rid, orElse: () => null)?['name'] as String?,
+          onTap: () async {
+            final items = _regions.map((r) => (
+              value: r['id'] as int,
+              label: r['name'] as String,
+              subtitle: null,
+            )).toList();
+            final result = await showSelectSheet<int>(
+              context, title: 'Chagua Mkoa wa Lengo', items: items, selected: rid, searchable: true,
+            );
+            if (result != null) _onRegionChanged(i, result);
+          },
         ),
 
         // ── Wizara ya Afya: Hospitali ya Rufaa ──
@@ -1500,25 +1537,26 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
                   style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
             )
           else
-            DropdownButtonFormField<String>(
-              initialValue: d.facilityId,
-              decoration: _dropDec(hint: 'Chagua Hospitali ya Rufaa'),
-              style: const TextStyle(fontSize: 14, color: _kGrey900),
-              items: (_regionFacilities[rid] ?? [])
-                  .map((f) => DropdownMenuItem<String>(
-                        value: '${f['id'] ?? f['code']}',
-                        child: Text(
-                          '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ))
-                  .toList(),
-              onChanged: (v) => setState(() {
-                d.facilityId = v;
-                final fac = (_regionFacilities[rid] ?? [])
-                    .firstWhere((f) => '${f['id'] ?? f['code']}' == v, orElse: () => null);
-                d.facilityName = fac?['name'] as String?;
-              }),
+            SelectField(
+              hint: 'Chagua Hospitali ya Rufaa',
+              value: d.facilityId == null ? null : (_regionFacilities[rid!] ?? []).cast<dynamic>()
+                  .firstWhere((f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null)?['name'] as String?,
+              onTap: () async {
+                final facList = _regionFacilities[rid!] ?? [];
+                final items = facList.map((f) => (
+                  value: '${f['id'] ?? f['code']}' as String,
+                  label: '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
+                  subtitle: null,
+                )).toList();
+                final result = await showSelectSheet<String>(
+                  context, title: 'Chagua Hospitali ya Rufaa', items: items, selected: d.facilityId, searchable: true,
+                );
+                if (result != null) setState(() {
+                  d.facilityId = result;
+                  final fac = facList.firstWhere((f) => '${f['id'] ?? f['code']}' == result, orElse: () => null);
+                  d.facilityName = fac?['name'] as String?;
+                });
+              },
             ),
         ],
 
@@ -1560,29 +1598,33 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
           ),
           const SizedBox(height: 8),
           // Kituo select — web: input text-sm (optional)
-          DropdownButtonFormField<String>(
-            initialValue: d.facilityId,
-            decoration: _dropDec(
-              hint: _category == 'health'
-                  ? 'Chagua Hospitali/Kituo (hiari)'
-                  : 'Chagua Shule (hiari)',
-            ),
-            style: const TextStyle(fontSize: 14, color: _kGrey900),
-            items: tamisemiFacs
-                .map((f) => DropdownMenuItem<String>(
-                      value: '${f['id'] ?? f['code']}',
-                      child: Text(
-                        '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ))
-                .toList(),
-            onChanged: (v) => setState(() {
-              d.facilityId = v;
-              final fac = tamisemiFacs.firstWhere(
-                  (f) => '${f['id'] ?? f['code']}' == v, orElse: () => null);
-              d.facilityName = fac?['name'] as String?;
-            }),
+          SelectField(
+            hint: _category == 'health' ? 'Chagua Hospitali/Kituo (hiari)' : 'Chagua Shule (hiari)',
+            value: d.facilityId == null ? null : tamisemiFacs.cast<dynamic>()
+                .firstWhere((f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null)?['name'] as String?,
+            onTap: () async {
+              final items = [
+                (value: null as String?, label: 'Bila Kituo (Hiari)', subtitle: null),
+                ...tamisemiFacs.map((f) => (
+                  value: '${f['id'] ?? f['code']}' as String?,
+                  label: '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
+                  subtitle: null,
+                )),
+              ];
+              final result = await showSelectSheet<String?>(
+                context, title: _category == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
+                items: items, selected: d.facilityId, searchable: true,
+              );
+              setState(() {
+                d.facilityId = result;
+                if (result != null) {
+                  final fac = tamisemiFacs.firstWhere((f) => '${f['id'] ?? f['code']}' == result, orElse: () => null);
+                  d.facilityName = fac?['name'] as String?;
+                } else {
+                  d.facilityName = null;
+                }
+              });
+            },
           ),
         ],
       ]),
