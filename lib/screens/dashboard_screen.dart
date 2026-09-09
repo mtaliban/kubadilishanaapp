@@ -992,15 +992,19 @@ class _FiltersBar extends StatelessWidget {
     required this.onSubjectQSubmitted, required this.onClear,
   });
 
-  // .input = rounded-md(6px) border-grey-300 px-2.5(10px) py-1.5(6px) text-xs(12px)
+  // .input = rounded-md(6px) border-grey-300 px-2.5(10px) py-1.5(6px) text-xs(12px) bg-white
   static const _kGrey300 = Color(0xFFD1D5DB);
-  InputDecoration _dec(String hint) => InputDecoration(
+  static const _kGrey100 = Color(0xFFF3F4F6);
+  InputDecoration _dec(String hint, {bool disabled = false}) => InputDecoration(
     hintText: hint, isDense: true,
     contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    filled: true,
+    fillColor: disabled ? _kGrey100 : Colors.white,
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
-    disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: _kGrey300.withValues(alpha: 0.5))),
+    disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+    hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
   );
 
   @override
@@ -1041,14 +1045,16 @@ class _FiltersBar extends StatelessWidget {
         // Wilaya — disabled unless mkoa mmoja
         DropdownButtonFormField<int?>(
           initialValue: districtId,
-          decoration: _dec(singleRegionSelected ? 'Wilaya zote' : 'Chagua Wilaya / Halmashauri'),
-          style: TextStyle(fontSize: 12, color: singleRegionSelected ? Colors.black87 : Colors.grey),
+          decoration: _dec(singleRegionSelected ? 'Wilaya zote' : 'Chagua Wilaya / Halmashauri',
+              disabled: !singleRegionSelected),
+          style: const TextStyle(fontSize: 12, color: Colors.black87),
           icon: Icon(Icons.keyboard_arrow_down, size: 16,
               color: singleRegionSelected ? const Color(0xFF6B7280) : const Color(0xFFD1D5DB)),
           dropdownColor: Colors.white,
           isExpanded: true,
           items: [
-            DropdownMenuItem(value: null, child: Text(singleRegionSelected ? 'Wilaya zote' : 'Chagua Wilaya / Halmashauri')),
+            DropdownMenuItem(value: null, child: Text(singleRegionSelected ? 'Wilaya zote' : 'Chagua Wilaya / Halmashauri',
+                style: TextStyle(color: singleRegionSelected ? Colors.black87 : const Color(0xFF9CA3AF)))),
             ...districts.map((d) => DropdownMenuItem(value: d['id'] as int, child: Text('${d['name']}'))),
           ],
           onChanged: singleRegionSelected ? onDistrictChanged : null,
@@ -1059,14 +1065,16 @@ class _FiltersBar extends StatelessWidget {
         // Kituo — disabled unless wilaya imechaguliwa
         DropdownButtonFormField<String?>(
           initialValue: facilityId,
-          decoration: _dec(districtSelected ? 'Vituo vyote' : 'Chagua Kituo'),
-          style: TextStyle(fontSize: 12, color: districtSelected ? Colors.black87 : Colors.grey),
+          decoration: _dec(districtSelected ? 'Vituo vyote' : 'Chagua Kituo',
+              disabled: !districtSelected),
+          style: const TextStyle(fontSize: 12, color: Colors.black87),
           icon: Icon(Icons.keyboard_arrow_down, size: 16,
               color: districtSelected ? const Color(0xFF6B7280) : const Color(0xFFD1D5DB)),
           dropdownColor: Colors.white,
           isExpanded: true,
           items: [
-            DropdownMenuItem(value: null, child: Text(districtSelected ? 'Vituo vyote' : 'Chagua Kituo')),
+            DropdownMenuItem(value: null, child: Text(districtSelected ? 'Vituo vyote' : 'Chagua Kituo',
+                style: TextStyle(color: districtSelected ? Colors.black87 : const Color(0xFF9CA3AF)))),
             ...facilities.map((f) => DropdownMenuItem(
               value: '${f['id'] ?? f['code']}',
               child: Text('${f['name']}', overflow: TextOverflow.ellipsis),
@@ -1121,17 +1129,17 @@ class _FiltersBar extends StatelessWidget {
                 GestureDetector(
                   onTap: () => onSubjectFilterChanged(entry.$1),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: subjectFilter == entry.$1 ? AppColors.primary : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                        color: subjectFilter == entry.$1 ? AppColors.primary : AppColors.border,
+                        color: subjectFilter == entry.$1 ? AppColors.primary : const Color(0xFFD1D5DB),
                       ),
                     ),
                     child: Text(entry.$2, style: TextStyle(
                       fontSize: 11, fontWeight: FontWeight.w600,
-                      color: subjectFilter == entry.$1 ? Colors.white : AppColors.textSecondary,
+                      color: subjectFilter == entry.$1 ? Colors.white : const Color(0xFF4B5563),
                     )),
                   ),
                 ),
@@ -1248,8 +1256,8 @@ class _BoardCard extends StatelessWidget {
           // Row 1: Avatar + info
           Row(children: [
             Stack(children: [
-              CircleAvatar(radius: 18, backgroundColor: const Color(0xFFF3F4F6), // grey-100
-                  child: Text(initial, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF111827)))), // grey-900
+              CircleAvatar(radius: 18, backgroundColor: const Color(0xFFEFF6FF), // brand-blue-50
+                  child: Text(initial, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)))), // brand-blue-700
               if (online)
                 Positioned(right: 0, bottom: 0,
                   child: Container(width: 9, height: 9,
@@ -1300,16 +1308,20 @@ class _BoardCard extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // Location box (gray bg kama web — px-2=8px, py-1.5=6px)
+          // Location box — web: bg-brand-blue-50 rounded-xl px-2.5 py-2 border-brand-blue-100
           if ((station['region_name'] ?? '').isNotEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF), // brand-blue-50
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFDBEAFE)), // brand-blue-100
+              ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  Icon(Icons.location_on, size: 11, color: Colors.grey.shade500),
+                  const Icon(Icons.location_on, size: 11, color: Color(0xFF9CA3AF)),
                   const SizedBox(width: 3),
-                  Text('Kutoka: ', style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+                  const Text('Kutoka: ', style: TextStyle(fontSize: 11, color: Color(0xFF4B5563), fontWeight: FontWeight.w500)),
                   Expanded(child: Text(
                     [station['district_name'], station['region_name']]
                         .where((v) => v != null && v.toString().isNotEmpty).join(', '),
@@ -1318,11 +1330,11 @@ class _BoardCard extends StatelessWidget {
                   )),
                 ]),
                 if (activeDest != null && (activeDest['region_name'] ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 4), // space-y-1 = 4px
+                  const SizedBox(height: 6),
                   Row(children: [
-                    Icon(Icons.flag, size: 11, color: Colors.grey.shade500),
+                    const Icon(Icons.flag, size: 11, color: Color(0xFF1E40AF)),
                     const SizedBox(width: 3),
-                    Text('Kwenda: ', style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+                    const Text('Kwenda: ', style: TextStyle(fontSize: 11, color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600)),
                     Expanded(child: Text(
                       [activeDest['region_name'], activeDest['district_name']]
                           .where((v) => v != null && v.toString().isNotEmpty).join(', '),
@@ -1332,14 +1344,16 @@ class _BoardCard extends StatelessWidget {
                   ]),
                 ],
                 if (myRegionName.isNotEmpty) ...[
-                  const SizedBox(height: 4), // space-y-1 = 4px
-                  RichText(text: TextSpan(
-                    style: const TextStyle(fontSize: 11, fontFamily: ''),
-                    children: [
-                      TextSpan(text: '↓ Anakwenda ', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                      TextSpan(text: myRegionName, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1F2937))),
-                    ],
-                  )),
+                  const SizedBox(height: 6),
+                  const Divider(height: 1, color: Color(0xFFDBEAFE)),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    const Text('↓ Anakuja: ',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF))),
+                    Expanded(child: Text(myRegionName,
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF1F2937)),
+                        overflow: TextOverflow.ellipsis)),
+                  ]),
                 ],
               ]),
             ),
@@ -1364,14 +1378,15 @@ class _BoardCard extends StatelessWidget {
               ...subjects.take(4).map((s) {
                 final matched = mySubjects.contains(s);
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: matched ? AppColors.primaryLight : Colors.grey.shade100,
+                    color: matched ? AppColors.primary : Colors.white,
                     borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: matched ? AppColors.primary : const Color(0xFFD1D5DB)),
                   ),
                   child: Text('$s${matched ? ' ✓' : ''}',
-                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600,
-                          color: matched ? AppColors.primary : Colors.grey.shade600)),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
+                          color: matched ? Colors.white : const Color(0xFF374151))),
                 );
               }),
             ]),
@@ -1467,14 +1482,13 @@ class _BoardCard extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF25D366), // WhatsApp green — kama web
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFD1D5DB)),
       ),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        SvgPicture.string(_kWaSvgDark, width: 12, height: 12),
+        SvgPicture.string(_kWaSvg, width: 12, height: 12), // white SVG on green bg
         const SizedBox(width: 3),
-        const Text('WA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+        const Text('WA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
       ]),
     ),
   );
