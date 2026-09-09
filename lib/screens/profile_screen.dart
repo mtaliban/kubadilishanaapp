@@ -249,24 +249,36 @@ class _ViewUser extends StatelessWidget {
         if (dests.isEmpty)
           const Text('Hakuna lengo', style: TextStyle(fontSize: 12, color: _kGrey500))
         else
-          ...dests.map((d) => Container(
-            margin: const EdgeInsets.only(bottom: 8), // space-y-2
-            padding: const EdgeInsets.all(8), // p-2 = 8px
-            decoration: BoxDecoration(
-              color: _kGrey50, // bg-brand-grey-50
-              borderRadius: BorderRadius.circular(8), // rounded-lg
-            ),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // font-semibold text-brand-grey-900 (text-sm implied)
-              Text('${d['region_name'] ?? ''}',
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: _kGrey900)),
-              const SizedBox(height: 2),
-              // text-xs text-grey-500
-              Text(
-                '${d['district_name'] ?? 'Wilaya yoyote'}${d['facility_name'] != null ? ' • ${d['facility_name']}' : ''}',
-                style: const TextStyle(fontSize: 12, color: _kGrey500)),
-            ]),
-          )),
+          ...dests.asMap().entries.map((entry) {
+            final i = entry.key;
+            final d = entry.value;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+              decoration: BoxDecoration(
+                color: _kGrey50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF3F4F6)),
+              ),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                SizedBox(
+                  width: 20,
+                  child: Text('${i + 1}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kBlue)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${d['region_name'] ?? ''}',
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: _kGrey900)),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${d['district_name'] ?? 'Wilaya yoyote'}${d['facility_name'] != null ? ' • ${d['facility_name']}' : ''}',
+                    style: const TextStyle(fontSize: 12, color: _kGrey500)),
+                ])),
+              ]),
+            );
+          }),
       ]),
       const SizedBox(height: 60),
     ]);
