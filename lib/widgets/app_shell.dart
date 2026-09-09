@@ -477,7 +477,7 @@ class _AppShellState extends State<AppShell> {
         final counts = _badge.counts;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: Colors.white,
           body: SafeArea(
             child: Column(children: [
 
