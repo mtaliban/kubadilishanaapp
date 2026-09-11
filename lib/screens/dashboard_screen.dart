@@ -33,7 +33,9 @@ String _timeAgo(String? isoDate) {
     if (diff.inMinutes < 60) return 'dakika ${diff.inMinutes} zilizopita';
     if (diff.inHours < 24) return 'saa ${diff.inHours} zilizopita';
     if (diff.inDays == 1) return 'jana';
-    return 'siku ${diff.inDays} zilizopita';
+    if (diff.inDays < 7) return 'siku ${diff.inDays} zilizopita';
+    final weeks = (diff.inDays / 7).floor();
+    return 'wiki $weeks zilizopita';
   } catch (_) { return ''; }
 }
 
@@ -1334,14 +1336,14 @@ class _BoardCard extends StatelessWidget {
             : [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: Offset(0, 2))],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.max, children: [
 
           // Row 1: Avatar + info
           Row(children: [
             Stack(children: [
-              CircleAvatar(radius: 18, backgroundColor: const Color(0xFFEFF6FF), // brand-blue-50
-                  child: Text(initial, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)))), // brand-blue-700
+              CircleAvatar(radius: 22, backgroundColor: const Color(0xFFEFF6FF), // brand-blue-50
+                  child: Text(initial, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)))), // brand-blue-700
               if (online)
                 Positioned(right: 0, bottom: 0,
                   child: Container(width: 9, height: 9,
@@ -1352,7 +1354,7 @@ class _BoardCard extends StatelessWidget {
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Expanded(child: Text(name,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                     overflow: TextOverflow.ellipsis)),
                 if (fresh)
                   Padding(padding: const EdgeInsets.only(left: 4),
@@ -1379,10 +1381,10 @@ class _BoardCard extends StatelessWidget {
               Wrap(spacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 if (category.isNotEmpty)
                   Text(isEdu ? 'Elimu' : 'Afya',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                 if (cadre.isNotEmpty)
                   Text(cadre,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 // Health cadre code badge — kama web: bg-emerald-500 text-white rounded-full
                 if (!isEdu && card['cadre_code'] != null && (card['cadre_code'] as String).isNotEmpty)
                   Container(
@@ -1403,7 +1405,7 @@ class _BoardCard extends StatelessWidget {
           // Location box — web: bg-brand-blue-50 rounded-xl px-2.5 py-2 border-brand-blue-100
           if ((station['region_name'] ?? '').isNotEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF6FF), // brand-blue-50
                 borderRadius: BorderRadius.circular(12),
@@ -1411,40 +1413,40 @@ class _BoardCard extends StatelessWidget {
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  const Icon(Icons.location_on, size: 11, color: Color(0xFFEF4444)),
-                  const SizedBox(width: 3),
-                  const Text('Kutoka: ', style: TextStyle(fontSize: 11, color: Color(0xFF4B5563), fontWeight: FontWeight.w500)),
+                  const Icon(Icons.location_on, size: 13, color: Color(0xFFEF4444)),
+                  const SizedBox(width: 4),
+                  const Text('Kutoka: ', style: TextStyle(fontSize: 12, color: Color(0xFF4B5563), fontWeight: FontWeight.w500)),
                   Expanded(child: Text.rich(
                     TextSpan(children: [
                       TextSpan(
                         text: station['region_name']?.toString() ?? '',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
                       ),
                       if ((station['district_name'] ?? '').toString().isNotEmpty)
                         TextSpan(
                           text: ', ${station['district_name']}',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
                         ),
                     ]),
                     overflow: TextOverflow.ellipsis,
                   )),
                 ]),
                 if (activeDest != null && (activeDest['region_name'] ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
                   Row(children: [
-                    const Icon(Icons.adjust, size: 11, color: Color(0xFF1E40AF)),
-                    const SizedBox(width: 3),
-                    const Text('→ Anataka: ', style: TextStyle(fontSize: 11, color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600)),
+                    const Icon(Icons.adjust, size: 13, color: Color(0xFF1E40AF)),
+                    const SizedBox(width: 4),
+                    const Text('→ Anataka: ', style: TextStyle(fontSize: 12, color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600)),
                     Expanded(child: Text.rich(
                       TextSpan(children: [
                         TextSpan(
                           text: activeDest['region_name']?.toString() ?? '',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
                         ),
                         if ((activeDest['district_name'] ?? '').toString().isNotEmpty)
                           TextSpan(
                             text: ', ${activeDest['district_name']}',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
                           ),
                       ]),
                       overflow: TextOverflow.ellipsis,
@@ -1452,14 +1454,14 @@ class _BoardCard extends StatelessWidget {
                   ]),
                 ],
                 if (myRegionName.isNotEmpty && matchingDest != null) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
                   const Divider(height: 1, color: Color(0xFFDBEAFE)),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
                   Row(children: [
                     const Text('↓ Anakuja: ',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF))),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF))),
                     Expanded(child: Text(myRegionName,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF1F2937)),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF1F2937)),
                         overflow: TextOverflow.ellipsis)),
                   ]),
                 ],
@@ -1468,42 +1470,46 @@ class _BoardCard extends StatelessWidget {
 
           // Miaka ya kazi
           if (years != null) ...[
-            const SizedBox(height: 8), // gap-2 = 8px
+            const SizedBox(height: 8),
             Text('Miaka ya kazi: ${years == 3 ? "3+ (miaka 3 au zaidi)" : "$years ${years == 1 ? 'mwaka' : 'miaka'}"}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
           ],
 
           // Masomo (kwa walimu) — web: label "Masomo:" full-width juu, kisha chips
           if (subjects.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            const Text('Masomo:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+            const SizedBox(height: 10),
+            const Text('Masomo:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
             const SizedBox(height: 4),
             Wrap(spacing: 4, runSpacing: 4, children: [
               ...subjects.take(4).map((s) {
                 final matched = mySubjects.contains(s);
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
                     color: matched ? AppColors.primary : Colors.white,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: matched ? AppColors.primary : const Color(0xFFD1D5DB)),
                   ),
                   child: Text('$s${matched ? ' ✓' : ''}',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold,
                           color: matched ? Colors.white : const Color(0xFF374151))),
                 );
               }),
               // Match badge — kama web: bg-blue-50 text-blue-700 border-blue/20
               if (anySubjectMatch)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF), // brand-blue-50
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: const Color(0xFF1E40AF).withValues(alpha: 0.2)),
                   ),
-                  child: const Text('@ Masomo yanalingana',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1D4ED8))),
+                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.adjust, size: 12, color: Color(0xFF1D4ED8)),
+                    SizedBox(width: 4),
+                    Text('Masomo yanalingana',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1D4ED8))),
+                  ]),
                 ),
             ]),
           ],
@@ -1512,11 +1518,11 @@ class _BoardCard extends StatelessWidget {
           if (ago.isNotEmpty) ...[
             const SizedBox(height: 8), // gap-2 = 8px
             Row(children: [
-              Icon(fresh ? Icons.bolt : Icons.access_time, size: 11,
+              Icon(fresh ? Icons.bolt : Icons.access_time, size: 13,
                   color: fresh ? AppColors.primary : const Color(0xFF9CA3AF)),
-              const SizedBox(width: 3),
+              const SizedBox(width: 4),
               Expanded(child: Text(fresh ? 'Mpya · $ago' : ago,
-                  style: TextStyle(fontSize: 11,
+                  style: TextStyle(fontSize: 12,
                       color: fresh ? AppColors.primary : const Color(0xFF9CA3AF),
                       fontWeight: fresh ? FontWeight.bold : FontWeight.w500))),
             ]),
