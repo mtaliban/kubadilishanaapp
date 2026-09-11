@@ -1965,84 +1965,67 @@ class _EditUserDialogState extends State<_EditUserDialog> {
             controller: ctrl,
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
-          const SizedBox(height: 0),
-
-          _fld('Jina Kamili', _nameCtrl),
-          const SizedBox(height: 10),
-          _fld('Namba ya Simu', _phoneCtrl, keyboard: TextInputType.phone),
-          const SizedBox(height: 10),
-          _fld('WhatsApp (phone_alt)', _phoneAltCtrl, keyboard: TextInputType.phone),
-          const SizedBox(height: 10),
-          if (_isAdmin) ...[
-            _fld('Barua Pepe (email)', _emailCtrl, keyboard: TextInputType.emailAddress),
+          // ── Section 1: Personal info ────────────────────────────
+          _editSection('Maelezo Binafsi', Icons.person_outline, [
+            _fld('Jina Kamili *', _nameCtrl),
             const SizedBox(height: 10),
-          ],
-          _fld('Nywila Mpya (acha tupu kubaki ile ile)', _pwCtrl, obscure: true),
-          const SizedBox(height: 10),
-
-          // Status
-          _lbl('Hali'),
-          const SizedBox(height: 4),
-          SelectField(
-            hint: 'Chagua Hali',
-            value: _status == 'active' ? 'Hai' : _status == 'inactive' ? 'Haifanyi kazi' : 'Imesimamishwa',
-            onTap: () async {
-              final v = await showSelectSheet<String>(context,
-                title: 'Chagua Hali',
-                items: const [
-                  (value: 'active',   label: 'Hai',            subtitle: null as String?),
-                  (value: 'inactive', label: 'Haifanyi kazi',  subtitle: null as String?),
-                  (value: 'disabled', label: 'Imesimamishwa',  subtitle: null as String?),
-                ],
-                selected: _status);
-              if (v != null) setState(() => _status = v);
-            },
-          ),
-          const SizedBox(height: 10),
-
-          // Checkboxes
-          Row(children: [
-            Expanded(child: GestureDetector(
-              onTap: () => setState(() => _isVerified = !_isVerified),
-              child: Row(children: [
-                SizedBox(width: 18, height: 18,
-                  child: Checkbox(
-                    value: _isVerified,
-                    onChanged: (v) => setState(() => _isVerified = v!),
-                    activeColor: _kBlue,
-                  )),
-                const SizedBox(width: 6),
-                const Expanded(child: Text('Amethibitishwa', style: TextStyle(fontSize: 12))),
-              ]),
-            )),
-            Expanded(child: GestureDetector(
-              onTap: () => setState(() => _isAdmin = !_isAdmin),
-              child: Row(children: [
-                SizedBox(width: 18, height: 18,
-                  child: Checkbox(
-                    value: _isAdmin,
-                    onChanged: (v) => setState(() => _isAdmin = v!),
-                    activeColor: _kBlue,
-                  )),
-                const SizedBox(width: 6),
-                const Expanded(child: Text('Admin', style: TextStyle(fontSize: 12))),
-              ]),
-            )),
+            _fld('Namba ya Simu', _phoneCtrl, keyboard: TextInputType.phone),
+            const SizedBox(height: 10),
+            _fld('WhatsApp (simu mbadala)', _phoneAltCtrl, keyboard: TextInputType.phone),
+            if (_isAdmin) ...[
+              const SizedBox(height: 10),
+              _fld('Barua Pepe', _emailCtrl, keyboard: TextInputType.emailAddress),
+            ],
+            const SizedBox(height: 10),
+            _fld('Nywila Mpya (tupu = bila mabadiliko)', _pwCtrl, obscure: true),
           ]),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Loading spinner while fetching cadres / station data
-          if (_initLoading)
-            const Center(child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: SizedBox(width: 18, height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue)),
-            ))
-          else ...[
-            // Cadre
-            if (_cadres.isNotEmpty) ...[
+          // ── Section 2: Status + Role + Cadre ───────────────────
+          _editSection('Hali na Hadhi', Icons.shield_outlined, [
+            _lbl('Hali'),
+            const SizedBox(height: 5),
+            SelectField(
+              hint: 'Chagua Hali',
+              value: _status == 'active' ? 'Hai' : _status == 'inactive' ? 'Haifanyi kazi' : 'Imesimamishwa',
+              onTap: () async {
+                final v = await showSelectSheet<String>(context,
+                  title: 'Chagua Hali',
+                  items: const [
+                    (value: 'active',   label: 'Hai',            subtitle: null as String?),
+                    (value: 'inactive', label: 'Haifanyi kazi',  subtitle: null as String?),
+                    (value: 'disabled', label: 'Imesimamishwa',  subtitle: null as String?),
+                  ],
+                  selected: _status);
+                if (v != null) setState(() => _status = v);
+              },
+            ),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: _toggleTile(
+                label: 'Amelipa / Amethibitishwa',
+                icon: Icons.verified_outlined,
+                value: _isVerified,
+                activeColor: _kGreenDk,
+                onChanged: (v) => setState(() => _isVerified = v),
+              )),
+              const SizedBox(width: 10),
+              Expanded(child: _toggleTile(
+                label: 'Admin',
+                icon: Icons.shield_outlined,
+                value: _isAdmin,
+                activeColor: _kGold,
+                onChanged: (v) => setState(() => _isAdmin = v),
+              )),
+            ]),
+            if (_initLoading) ...[
+              const SizedBox(height: 12),
+              const Center(child: SizedBox(width: 18, height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue))),
+            ] else if (_cadres.isNotEmpty) ...[
+              const SizedBox(height: 12),
               _lbl('Kada'),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               SelectField(
                 hint: 'Chagua Kada',
                 value: _cadreCode.isEmpty ? null : (() {
@@ -2064,44 +2047,37 @@ class _EditUserDialogState extends State<_EditUserDialog> {
                   if (v != null) setState(() => _cadreCode = v);
                 },
               ),
-              const SizedBox(height: 10),
-            ],
-
-            // Subjects picker (only if cadre has level)
-            if (_showSubjects && _subjects.isNotEmpty) ...[
-              _lbl('Masomo'),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: _subjects.map((s) {
-                  final name = s is String ? s : '${s['name'] ?? s}';
-                  final selected = _selectedSubjects.contains(name);
-                  return GestureDetector(
-                    onTap: () => setState(() {
-                      if (selected) { _selectedSubjects.remove(name); }
-                      else { _selectedSubjects.add(name); }
-                    }),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: selected ? _kGold : Colors.white,
-                        border: Border.all(color: selected ? _kGold : _kGrey300),
-                        borderRadius: BorderRadius.circular(999),
+              if (_showSubjects && _subjects.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _lbl('Masomo'),
+                const SizedBox(height: 6),
+                Wrap(spacing: 6, runSpacing: 6,
+                  children: _subjects.map((s) {
+                    final name = s is String ? s : '${s['name'] ?? s}';
+                    final sel = _selectedSubjects.contains(name);
+                    return GestureDetector(
+                      onTap: () => setState(() { sel ? _selectedSubjects.remove(name) : _selectedSubjects.add(name); }),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: sel ? _kGold : Colors.white,
+                          border: Border.all(color: sel ? _kGold : _kGrey300),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(name, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                          color: sel ? Colors.white : _kGrey500)),
                       ),
-                      child: Text(name, style: TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w600,
-                        color: selected ? Colors.white : _kGrey500)),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 10),
+                    );
+                  }).toList()),
+              ],
             ],
+          ]),
+          const SizedBox(height: 12),
 
-            // Station: Region
-            _lbl('Kituo — Mkoa'),
-            const SizedBox(height: 4),
+          // ── Section 3: Station ──────────────────────────────────
+          _editSection('Kituo cha Sasa', Icons.location_on_outlined, [
+            _lbl('Mkoa'),
+            const SizedBox(height: 5),
             SelectField(
               hint: 'Chagua Mkoa',
               value: _regionName.isEmpty ? null : _regionName,
@@ -2125,12 +2101,10 @@ class _EditUserDialogState extends State<_EditUserDialog> {
                 }
               },
             ),
-
-            // District (shown after region selected)
             if (_regionId != null) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
               _lbl('Wilaya'),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               SelectField(
                 hint: 'Chagua Wilaya',
                 value: _districtName.isEmpty ? null : _districtName,
@@ -2156,12 +2130,10 @@ class _EditUserDialogState extends State<_EditUserDialog> {
                 },
               ),
             ],
-
-            // Facility (shown after district selected)
             if (_districtId != null && _facilities.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
               _lbl('Kituo'),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               SelectField(
                 hint: 'Chagua Kituo',
                 value: _facilityName.isEmpty ? null : _facilityName,
@@ -2183,85 +2155,126 @@ class _EditUserDialogState extends State<_EditUserDialog> {
                 },
               ),
             ],
+          ]),
+          const SizedBox(height: 12),
 
-            // Desired destinations section
-            const SizedBox(height: 16),
-            _lbl('Mikoa Anayotaka'),
-            const SizedBox(height: 6),
-            ..._destinations.asMap().entries.map((entry) {
-              final i = entry.key;
-              final dest = entry.value;
-              final destDistList = dest['districts'] as List<dynamic>;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(children: [
-                  Expanded(child: SelectField(
-                    hint: 'Mkoa',
-                    value: (dest['region_name'] as String?)?.isNotEmpty == true ? dest['region_name'] as String : null,
-                    onTap: () async {
-                      final items = [
-                        (value: 0, label: '— Mkoa —', subtitle: null as String?),
-                        ...widget.regions.map((r) {
-                          final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
-                          return (value: id, label: '${r['name'] ?? r['region_name'] ?? r['id']}', subtitle: null as String?);
-                        }),
-                      ];
-                      final v = await showSelectSheet<int>(context,
-                        title: 'Mkoa wa Lengo', items: items,
-                        selected: (dest['region_id'] as int?) ?? 0, searchable: true);
-                      if (v != null) {
-                        final name = v == 0 ? '' : '${widget.regions.firstWhere((r) {
-                          final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
-                          return id == v;
-                        }, orElse: () => {'name': ''})['name']}';
-                        _onDestRegion(i, v == 0 ? null : v);
-                        setState(() => _destinations[i]['region_name'] = name);
-                      }
-                    },
-                  )),
-                  const SizedBox(width: 6),
-                  Expanded(child: SelectField(
-                    hint: 'Wilaya',
-                    value: (dest['district_name'] as String?)?.isNotEmpty == true ? dest['district_name'] as String : null,
-                    disabled: destDistList.isEmpty,
-                    onTap: destDistList.isEmpty ? null : () async {
-                      final items = [
-                        (value: 0, label: '— Wilaya —', subtitle: null as String?),
-                        ...destDistList.map((d) {
-                          final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
-                          return (value: id, label: '${d['name'] ?? d['district_name'] ?? d['id']}', subtitle: null as String?);
-                        }),
-                      ];
-                      final v = await showSelectSheet<int>(context,
-                        title: 'Wilaya ya Lengo', items: items,
-                        selected: (dest['district_id'] as int?) ?? 0, searchable: destDistList.length > 6);
-                      if (v != null) {
-                        final name = v == 0 ? '' : '${destDistList.firstWhere((d) {
-                          final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
-                          return id == v;
-                        }, orElse: () => {'name': ''})['name']}';
-                        setState(() {
-                          _destinations[i]['district_id'] = v == 0 ? null : v;
-                          _destinations[i]['district_name'] = name;
-                        });
-                      }
-                    },
-                  )),
-                  const SizedBox(width: 4),
-                  GestureDetector(
-                    onTap: () => setState(() => _destinations.removeAt(i)),
-                    child: const Icon(Icons.close, size: 18, color: _kGrey400),
-                  ),
-                ]),
-              );
-            }),
-            TextButton.icon(
-              onPressed: () => setState(() => _destinations.add({'region_id': null, 'district_id': null, 'districts': <dynamic>[]})),
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('+ Ongeza Mkoa', style: TextStyle(fontSize: 12)),
-              style: TextButton.styleFrom(foregroundColor: _kBlue),
+          // ── Section 4: Desired destinations ────────────────────
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _kGrey50, borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _kGrey100),
             ),
-          ],
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                const Icon(Icons.swap_horiz_rounded, size: 14, color: _kGrey500),
+                const SizedBox(width: 6),
+                const Expanded(child: Text('MIKOA ANAYOTAKA KWENDA',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5))),
+                GestureDetector(
+                  onTap: () => setState(() => _destinations.add({
+                    'region_id': null, 'region_name': '', 'district_id': null,
+                    'district_name': '', 'districts': <dynamic>[],
+                  })),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: _kBlue, borderRadius: BorderRadius.circular(999)),
+                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.add, size: 12, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text('Ongeza', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                    ]),
+                  ),
+                ),
+              ]),
+              if (_destinations.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Text('Bonyeza "Ongeza" kuongeza mkoa wa lengo',
+                    style: TextStyle(fontSize: 12, color: _kGrey400)),
+                )
+              else ...[
+                const SizedBox(height: 10),
+                ..._destinations.asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final dest = entry.value;
+                  final destDistList = dest['districts'] as List<dynamic>;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(children: [
+                      Container(
+                        width: 22, height: 22, margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(color: _kBlue50, shape: BoxShape.circle),
+                        child: Center(child: Text('${i + 1}',
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kBlue))),
+                      ),
+                      Expanded(child: SelectField(
+                        hint: 'Mkoa',
+                        value: (dest['region_name'] as String?)?.isNotEmpty == true ? dest['region_name'] as String : null,
+                        onTap: () async {
+                          final items = [
+                            (value: 0, label: '— Mkoa —', subtitle: null as String?),
+                            ...widget.regions.map((r) {
+                              final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                              return (value: id, label: '${r['name'] ?? r['region_name'] ?? r['id']}', subtitle: null as String?);
+                            }),
+                          ];
+                          final v = await showSelectSheet<int>(context,
+                            title: 'Mkoa wa Lengo', items: items,
+                            selected: (dest['region_id'] as int?) ?? 0, searchable: true);
+                          if (v != null) {
+                            final name = v == 0 ? '' : '${widget.regions.firstWhere((r) {
+                              final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                              return id == v;
+                            }, orElse: () => {'name': ''})['name']}';
+                            _onDestRegion(i, v == 0 ? null : v);
+                            setState(() => _destinations[i]['region_name'] = name);
+                          }
+                        },
+                      )),
+                      if (destDistList.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        Expanded(child: SelectField(
+                          hint: 'Wilaya',
+                          value: (dest['district_name'] as String?)?.isNotEmpty == true ? dest['district_name'] as String : null,
+                          onTap: () async {
+                            final items = [
+                              (value: 0, label: '— Wilaya —', subtitle: null as String?),
+                              ...destDistList.map((d) {
+                                final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                                return (value: id, label: '${d['name'] ?? d['district_name'] ?? d['id']}', subtitle: null as String?);
+                              }),
+                            ];
+                            final v = await showSelectSheet<int>(context,
+                              title: 'Wilaya ya Lengo', items: items,
+                              selected: (dest['district_id'] as int?) ?? 0, searchable: destDistList.length > 6);
+                            if (v != null) {
+                              final name = v == 0 ? '' : '${destDistList.firstWhere((d) {
+                                final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                                return id == v;
+                              }, orElse: () => {'name': ''})['name']}';
+                              setState(() {
+                                _destinations[i]['district_id'] = v == 0 ? null : v;
+                                _destinations[i]['district_name'] = name;
+                              });
+                            }
+                          },
+                        )),
+                      ],
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () => setState(() => _destinations.removeAt(i)),
+                        child: Container(
+                          width: 28, height: 28,
+                          decoration: BoxDecoration(color: _kRed50, borderRadius: BorderRadius.circular(6)),
+                          child: const Icon(Icons.close, size: 14, color: _kRed)),
+                      ),
+                    ]),
+                  );
+                }),
+              ],
+            ]),
+          ),
 
           const SizedBox(height: 24),
           Row(children: [
@@ -2311,6 +2324,67 @@ class _EditUserDialogState extends State<_EditUserDialog> {
           ]),
           ],
         )),
+        ]),
+      ),
+    );
+  }
+
+  Widget _editSection(String title, IconData icon, List<Widget> children) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _kGrey50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _kGrey100),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(icon, size: 14, color: _kGrey500),
+          const SizedBox(width: 6),
+          Text(title.toUpperCase(),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+              color: _kGrey500, letterSpacing: 0.5)),
+        ]),
+        const SizedBox(height: 12),
+        ...children,
+      ]),
+    );
+  }
+
+  Widget _toggleTile({
+    required String label,
+    required IconData icon,
+    required bool value,
+    required Color activeColor,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: value ? activeColor.withValues(alpha: 0.08) : Colors.white,
+          border: Border.all(
+            color: value ? activeColor.withValues(alpha: 0.4) : _kGrey200),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(children: [
+          Icon(icon, size: 16, color: value ? activeColor : _kGrey400),
+          const SizedBox(width: 8),
+          Expanded(child: Text(label,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500,
+              color: value ? activeColor : _kGrey700))),
+          Container(
+            width: 18, height: 18,
+            decoration: BoxDecoration(
+              color: value ? activeColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: value ? activeColor : _kGrey300),
+            ),
+            child: value
+              ? const Icon(Icons.check, size: 12, color: Colors.white)
+              : null,
+          ),
         ]),
       ),
     );
