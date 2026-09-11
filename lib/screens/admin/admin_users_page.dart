@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart' show FormData, MultipartFile;
+import 'package:file_picker/file_picker.dart';
 import '../../services/api_service.dart';
 import '../../services/websocket_service.dart';
 import '../../widgets/select_sheet.dart';
@@ -223,17 +226,15 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     if (_selected.isEmpty) return;
     final ids = List<String>.from(_selected);
     final label = action == 'delete' ? 'Futa' : action == 'disable' ? 'Simamisha' : 'Rudisha';
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('$label ${ids.length} Watumiaji?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true),
-            child: Text(label, style: TextStyle(color: action == 'delete' ? _kRed : _kBlue))),
-        ],
-      ),
-    ) ?? false;
+    final ok = await _confirmSheet(
+      title: '$label ${ids.length} Watumiaji?',
+      subtitle: action == 'delete' ? 'Watakwenda kwenye Trash' : 'Hatua hii inaweza kugeuzwa',
+      confirmLabel: label,
+      icon: action == 'delete' ? Icons.delete_outline_rounded : Icons.block_rounded,
+      iconColor: action == 'delete' ? _kRed : _kBlue,
+      iconBg: action == 'delete' ? _kRed50 : _kBlue50,
+      confirmColor: action == 'delete' ? _kRed : _kBlue,
+    );
     if (!ok) return;
     setState(() { _bulkBusy = true; });
     try {
@@ -252,17 +253,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   Future<void> _toggleAdmin(Map<String, dynamic> u) async {
     final isAdmin = u['is_admin'] == true;
     if (isAdmin) {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Ondoa Admin?'),
-          content: Text('${u['full_name']} (${u['phone_primary']}) atapoteza hadhi ya Admin.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Ondoa', style: TextStyle(color: _kRed))),
-          ],
-        ),
-      ) ?? false;
+      final ok = await _confirmSheet(
+        title: 'Ondoa Admin?',
+        subtitle: '${u['full_name']} atapoteza hadhi ya Admin',
+        confirmLabel: 'Ondoa',
+        icon: Icons.shield_outlined,
+      );
       if (!ok) return;
       await ApiService().adminRevoke(_uid(u));
       _showMsg('${u['full_name']}: admin imeondolewa');
@@ -278,17 +274,15 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   Future<void> _toggleSuspend(Map<String, dynamic> u) async {
     final next = u['status'] == 'disabled' ? 'active' : 'disabled';
     if (next == 'disabled') {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Simamisha Mtumiaji?'),
-          content: Text('${u['full_name']} (${u['phone_primary']})'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Simamisha', style: TextStyle(color: _kRed))),
-          ],
-        ),
-      ) ?? false;
+      final ok = await _confirmSheet(
+        title: 'Simamisha Mtumiaji?',
+        subtitle: '${u['full_name']} (${u['phone_primary']})',
+        confirmLabel: 'Simamisha',
+        icon: Icons.block_rounded,
+        iconColor: _kOrangeTx,
+        iconBg: _kOrange50,
+        confirmColor: _kOrangeTx,
+      );
       if (!ok) return;
     }
     try {
@@ -312,17 +306,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   }
 
   Future<void> _delete(Map<String, dynamic> u) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Futa Mtumiaji?'),
-        content: Text('${u['full_name']} (${u['phone_primary']})\n\nAkaunti itakwenda kwenye Trash na inaweza kurudishwa.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Futa', style: TextStyle(color: _kRed))),
-        ],
-      ),
-    ) ?? false;
+    final ok = await _confirmSheet(
+      title: 'Futa Mtumiaji?',
+      subtitle: '${u['full_name']} — atakwenda Trash, anaweza kurudishwa',
+      confirmLabel: 'Futa',
+      icon: Icons.delete_outline_rounded,
+    );
     if (!ok) return;
     try {
       await ApiService().adminDeleteUser(_uid(u));
@@ -342,17 +331,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   }
 
   Future<void> _purgeTrash(Map<String, dynamic> u) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Futa Kabisa?'),
-        content: Text('${u['full_name']} — hii haiwezi kugeuzwa!'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Futa Kabisa', style: TextStyle(color: _kRed))),
-        ],
-      ),
-    ) ?? false;
+    final ok = await _confirmSheet(
+      title: 'Futa Kabisa?',
+      subtitle: '${u['full_name']} — hii haiwezi kugeuzwa!',
+      confirmLabel: 'Futa Kabisa',
+      icon: Icons.delete_forever_outlined,
+    );
     if (!ok) return;
     try {
       await ApiService().delete('/admin/trash/${_uid(u)}');
@@ -363,18 +347,15 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   Future<void> _restoreAllTrash() async {
     if (_trash.isEmpty) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rudisha Zote?'),
-        content: Text('Rudisha watumiaji ${_trash.length} kutoka kwenye Trash.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Rudisha', style: TextStyle(color: Color(0xFF16A34A)))),
-        ],
-      ),
-    ) ?? false;
+    final ok = await _confirmSheet(
+      title: 'Rudisha Zote?',
+      subtitle: 'Watumiaji ${_trash.length} watarudishwa kutoka Trash',
+      confirmLabel: 'Rudisha',
+      icon: Icons.restore_rounded,
+      iconColor: _kGreenDk,
+      iconBg: _kGreen50,
+      confirmColor: _kGreenDk,
+    );
     if (!ok) return;
     try {
       await ApiService().post('/admin/trash/restore-all');
@@ -386,24 +367,109 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   Future<void> _purgeAllTrash() async {
     if (_trash.isEmpty) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Futa Zote Kabisa?'),
-        content: const Text('Hii haiwezi kugeuzwa! Watumiaji wote kwenye Trash watafutwa kabisa.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Futa Kabisa', style: TextStyle(color: _kRed))),
-        ],
-      ),
-    ) ?? false;
+    final ok = await _confirmSheet(
+      title: 'Futa Zote Kabisa?',
+      subtitle: 'Watumiaji wote kwenye Trash watafutwa kabisa — haiwezi kugeuzwa!',
+      confirmLabel: 'Futa Kabisa',
+      icon: Icons.delete_forever_outlined,
+    );
     if (!ok) return;
     try {
       await ApiService().delete('/admin/trash');
       _showMsg('Trash imefutwa kabisa');
       setState(() { _trash = []; _trashTotal = 0; });
     } catch (e) { _showMsg('Hitilafu: $e'); }
+  }
+
+  // ── Confirm bottom sheet (replaces all AlertDialogs) ─────────────────────────
+  Future<bool> _confirmSheet({
+    required String title,
+    required String subtitle,
+    required String confirmLabel,
+    IconData icon = Icons.warning_amber_rounded,
+    Color iconColor = _kRed,
+    Color iconBg = _kRed50,
+    Color confirmColor = _kRed,
+  }) async {
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 32, height: 4, margin: const EdgeInsets.only(bottom: 18),
+            decoration: BoxDecoration(color: _kGrey300, borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 52, height: 52,
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            child: Icon(icon, color: iconColor, size: 26),
+          ),
+          const SizedBox(height: 12),
+          Text(title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900),
+            textAlign: TextAlign.center),
+          const SizedBox(height: 5),
+          Text(subtitle,
+            style: const TextStyle(fontSize: 12, color: _kGrey500),
+            textAlign: TextAlign.center),
+          const SizedBox(height: 22),
+          Row(children: [
+            Expanded(child: OutlinedButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: _kGrey200),
+                foregroundColor: _kGrey700,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Hapana', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            )),
+            const SizedBox(width: 10),
+            Expanded(child: FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: confirmColor,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: Text(confirmLabel, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            )),
+          ]),
+        ]),
+      ),
+    );
+    return ok == true;
+  }
+
+  // ── Import users from CSV/Excel ───────────────────────────────────────────────
+  Future<void> _importUsers() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _ImportSheet(
+        onImport: (bytes, filename) async {
+          Navigator.pop(ctx);
+          setState(() => _loading = true);
+          try {
+            final formData = FormData.fromMap({
+              'file': MultipartFile.fromBytes(bytes, filename: filename),
+            });
+            final res  = await ApiService().adminImportUsers(formData);
+            final data = (res.data as Map<String, dynamic>?) ?? {};
+            _showMsg('Import: ${data['message'] ?? 'Imefanikiwa'} (${data['imported'] ?? data['count'] ?? 0} watumiaji)');
+            _load();
+          } catch (e) {
+            setState(() => _loading = false);
+            _showMsg('Hitilafu ya import: $e');
+          }
+        },
+      ),
+    );
   }
 
   // ── Add Admin Bottom Sheet ────────────────────────────────────────────────────
@@ -589,11 +655,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               ),
               _PillBtn(
                 label: 'Import',
-                icon: Icons.download_outlined,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Import bado haijatekelezwa')));
-                },
+                icon: Icons.upload_file_outlined,
+                onTap: _importUsers,
               ),
             ]),
           ]),
@@ -952,14 +1015,43 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   // ── PAGINATION ─────────────────────────────────────────────────────────────
   Widget _buildPagination() {
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      _PageBtn(label: '← Rudi', enabled: _page > 1, onTap: () { setState(() => _page--); }),
-      const SizedBox(width: 12),
-      Text('$_page / $_totalPages',
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey500)),
-      const SizedBox(width: 12),
-      _PageBtn(label: 'Endelea →', enabled: _page < _totalPages, onTap: () { setState(() => _page++); }),
-    ]);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        _NavBtn(icon: Icons.chevron_left_rounded, enabled: _page > 1, onTap: () => setState(() => _page--)),
+        const SizedBox(width: 8),
+        // Page numbers
+        for (int i = 1; i <= _totalPages; i++) ...[
+          if (i == 1 || i == _totalPages || (i >= _page - 1 && i <= _page + 1)) ...[
+            if (i > 1 && i < _page - 1) ...[
+              const Text('…', style: TextStyle(fontSize: 13, color: _kGrey400)),
+              const SizedBox(width: 4),
+            ],
+            GestureDetector(
+              onTap: i == _page ? null : () => setState(() => _page = i),
+              child: Container(
+                width: 30, height: 30,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: i == _page ? _kBlue : Colors.white,
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(color: i == _page ? _kBlue : _kGrey200),
+                ),
+                child: Center(child: Text('$i',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+                    color: i == _page ? Colors.white : _kGrey700))),
+              ),
+            ),
+            if (i < _totalPages && i > _page + 1) ...[
+              const SizedBox(width: 4),
+              const Text('…', style: TextStyle(fontSize: 13, color: _kGrey400)),
+            ],
+          ],
+        ],
+        const SizedBox(width: 8),
+        _NavBtn(icon: Icons.chevron_right_rounded, enabled: _page < _totalPages, onTap: () => setState(() => _page++)),
+      ]),
+    );
   }
 
   // ── TRASH SECTION ──────────────────────────────────────────────────────────
@@ -1283,27 +1375,23 @@ class _ActBtn extends StatelessWidget {
   }
 }
 
-class _PageBtn extends StatelessWidget {
-  final String label;
+class _NavBtn extends StatelessWidget {
+  final IconData icon;
   final bool enabled;
   final VoidCallback onTap;
-  const _PageBtn({required this.label, required this.enabled, required this.onTap});
+  const _NavBtn({required this.icon, required this.enabled, required this.onTap});
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        alignment: Alignment.center,
+        width: 30, height: 30,
         decoration: BoxDecoration(
-          border: Border.all(color: enabled ? _kGrey200 : _kGrey100),
-          borderRadius: BorderRadius.circular(12),
           color: Colors.white,
+          border: Border.all(color: _kGrey200),
+          borderRadius: BorderRadius.circular(7),
         ),
-        child: Text(label, style: TextStyle(
-          fontSize: 13, fontWeight: FontWeight.w600,
-          color: enabled ? _kGrey700 : _kGrey300)),
+        child: Icon(icon, size: 16, color: enabled ? _kGrey700 : _kGrey300),
       ),
     );
   }
@@ -3043,6 +3131,146 @@ class _CreateUserSheetState extends State<_CreateUserSheet> {
           )),
         ]),
       ),
+    );
+  }
+}
+
+// ── IMPORT USERS BOTTOM SHEET ─────────────────────────────────────────────────
+class _ImportSheet extends StatefulWidget {
+  final Future<void> Function(List<int> bytes, String filename) onImport;
+  const _ImportSheet({required this.onImport});
+  @override
+  State<_ImportSheet> createState() => _ImportSheetState();
+}
+
+class _ImportSheetState extends State<_ImportSheet> {
+  bool _picking = false;
+  String? _pickedName;
+  List<int>? _pickedBytes;
+
+  Future<void> _pick() async {
+    setState(() => _picking = true);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv', 'xlsx', 'xls'],
+        withData: true,
+      );
+      if (result != null && result.files.isNotEmpty) {
+        final f = result.files.first;
+        final bytes = f.bytes?.toList() ??
+            (f.path != null ? await File(f.path!).readAsBytes() : null);
+        if (bytes != null) {
+          setState(() { _pickedBytes = bytes; _pickedName = f.name; });
+        }
+      }
+    } catch (_) {}
+    setState(() => _picking = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        // Handle
+        Container(width: 32, height: 4, margin: const EdgeInsets.only(bottom: 18),
+          decoration: BoxDecoration(color: _kGrey300, borderRadius: BorderRadius.circular(2))),
+
+        // Header
+        Row(children: [
+          Container(width: 40, height: 40,
+            decoration: BoxDecoration(color: _kBlue50, borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.upload_file_outlined, color: _kBlue, size: 20)),
+          const SizedBox(width: 12),
+          const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Import Watumiaji', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: _kGrey900)),
+            Text('Pakua faili la CSV au Excel', style: TextStyle(fontSize: 11, color: _kGrey400)),
+          ])),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(width: 30, height: 30,
+              decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(8)),
+              child: const Icon(Icons.close_rounded, size: 15, color: _kGrey500)),
+          ),
+        ]),
+        const SizedBox(height: 16),
+
+        // Format hint
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _kBlue50, borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFBFDBFE)),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Row(children: [
+              Icon(Icons.info_outline_rounded, size: 13, color: _kBlue),
+              SizedBox(width: 6),
+              Text('Muundo unaohitajika', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kBlue)),
+            ]),
+            const SizedBox(height: 6),
+            const Text(
+              'CSV/Excel yenye safu: full_name, phone_primary, category (health/education), region_id, district_id',
+              style: TextStyle(fontSize: 11, color: _kGrey700, height: 1.5),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 14),
+
+        // File picked indicator
+        if (_pickedName != null)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: _kGreen50, borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _kGreen200),
+            ),
+            child: Row(children: [
+              const Icon(Icons.check_circle_outline, size: 15, color: _kGreenDk),
+              const SizedBox(width: 8),
+              Expanded(child: Text(_pickedName!,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGreenDk),
+                overflow: TextOverflow.ellipsis)),
+            ]),
+          ),
+
+        // Buttons
+        Row(children: [
+          Expanded(child: OutlinedButton.icon(
+            onPressed: _picking ? null : _pick,
+            icon: _picking
+              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue))
+              : const Icon(Icons.folder_open_outlined, size: 16),
+            label: Text(_pickedName != null ? 'Badilisha Faili' : 'Chagua Faili',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _kBlue,
+              side: const BorderSide(color: _kGrey200),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          )),
+          if (_pickedBytes != null) ...[
+            const SizedBox(width: 10),
+            Expanded(child: FilledButton.icon(
+              onPressed: () => widget.onImport(_pickedBytes!, _pickedName!),
+              icon: const Icon(Icons.upload_rounded, size: 16),
+              label: const Text('Pakia', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              style: FilledButton.styleFrom(
+                backgroundColor: _kBlue,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            )),
+          ],
+        ]),
+      ]),
     );
   }
 }
