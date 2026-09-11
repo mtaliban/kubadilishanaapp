@@ -22,6 +22,12 @@ const _kRed200 = Color(0xFFFEE2E2);
 const _kAmber50  = Color(0xFFFFFBEB);
 const _kAmber200 = Color(0xFFFDE68A);
 const _kAmber700 = Color(0xFFB45309);
+const _kPurple50  = Color(0xFFF5F3FF);
+const _kPurple200 = Color(0xFFDDD6FE);
+const _kPurple700 = Color(0xFF6D28D9);
+const _kOrange50  = Color(0xFFFFF7ED);
+const _kOrange200 = Color(0xFFFED7AA);
+const _kOrange700 = Color(0xFFC2410C);
 
 const _kPageSize = 3;
 
@@ -135,7 +141,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Futa Maoni',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
         content: const Text('Una uhakika unataka kufuta maoni haya?',
@@ -213,17 +219,30 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
         ),
         const SizedBox(height: 12),
 
-        // ── Status filter chips with counts ──
+        // ── Stats summary row ──
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(children: [
+            _StatPill(label: 'Zote', count: totalCount, color: _kBlue),
+            const SizedBox(width: 8),
+            _StatPill(label: 'Wazi', count: openCount, color: _kAmber700),
+            const SizedBox(width: 8),
+            _StatPill(label: 'Imejibiwa', count: repliedCount, color: _kGreen700),
+          ]),
+        ),
+        const SizedBox(height: 10),
+
+        // ── Status filter chips ──
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(children: [
-              _Chip(label: 'Zote ($totalCount)',         value: '',        current: _status, onTap: _setStatus),
+              _Chip(label: 'Zote',      value: '',        current: _status, onTap: _setStatus),
               const SizedBox(width: 8),
-              _Chip(label: 'Wazi ($openCount)',           value: 'open',    current: _status, onTap: _setStatus),
+              _Chip(label: 'Wazi',      value: 'open',    current: _status, onTap: _setStatus),
               const SizedBox(width: 8),
-              _Chip(label: 'Imejibiwa ($repliedCount)',   value: 'replied', current: _status, onTap: _setStatus),
+              _Chip(label: 'Imejibiwa', value: 'replied', current: _status, onTap: _setStatus),
             ]),
           ),
         ),
@@ -233,16 +252,22 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Container(
-            height: 40,
+            height: 44,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: _kGrey200),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1)),
+              ],
             ),
             child: Row(children: [
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                child: Icon(Icons.search, size: 18, color: _kGrey500),
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(Icons.search, size: 18, color: _kGrey400),
               ),
               Expanded(
                 child: TextField(
@@ -254,7 +279,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     hintStyle: TextStyle(fontSize: 13, color: _kGrey400),
                     border: InputBorder.none,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    contentPadding: EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
@@ -271,7 +296,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: _flashOk ? _kGreen50 : _kRed50,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: _flashOk ? _kGreen200 : _kRed200),
               ),
               child: Row(children: [
@@ -297,17 +322,38 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
           child: _loading
               ? const Center(
                   child: SizedBox(
-                      width: 20, height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue)))
+                      width: 24, height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: _kBlue)))
               : RefreshIndicator(
                   onRefresh: () => _load(),
                   color: _kBlue,
                   child: _items.isEmpty
-                      ? const Center(
-                          child: Text('Hakuna maoni bado',
-                              style: TextStyle(fontSize: 13, color: _kGrey500)))
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 64, height: 64,
+                                decoration: BoxDecoration(
+                                    color: _kGrey100,
+                                    borderRadius: BorderRadius.circular(32)),
+                                child: const Icon(Icons.inbox_outlined,
+                                    size: 32, color: _kGrey400),
+                              ),
+                              const SizedBox(height: 12),
+                              const Text('Hakuna maoni bado',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: _kGrey500)),
+                              const SizedBox(height: 4),
+                              const Text('Maoni mapya yataonekana hapa',
+                                  style: TextStyle(fontSize: 12, color: _kGrey400)),
+                            ],
+                          ),
+                        )
                       : ListView(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                          padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
                           children: [
                             ...pageItems.asMap().entries.map((e) {
                               final globalIndex =
@@ -341,6 +387,34 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   }
 }
 
+// ── Stat pill ──────────────────────────────────────────────────────────────
+class _StatPill extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+  const _StatPill({required this.label, required this.count, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(children: [
+        Text('$count',
+            style: TextStyle(
+                fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+        const SizedBox(width: 4),
+        Text(label,
+            style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.8))),
+      ]),
+    );
+  }
+}
+
 // ── Status chip ────────────────────────────────────────────────────────────
 class _Chip extends StatelessWidget {
   final String label;
@@ -358,20 +432,24 @@ class _Chip extends StatelessWidget {
     final active = current == value;
     return GestureDetector(
       onTap: () => onTap(value),
-      child: Container(
-        height: 30,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: active ? _kBlue : Colors.white,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: _kBlue),
+          border: Border.all(color: active ? _kBlue : _kGrey200),
+          boxShadow: active
+              ? [BoxShadow(color: _kBlue.withValues(alpha: 0.25), blurRadius: 6, offset: const Offset(0, 2))]
+              : [],
         ),
         child: Center(
           child: Text(label,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: active ? Colors.white : _kGrey700,
+                fontWeight: FontWeight.w600,
+                color: active ? Colors.white : _kGrey500,
               )),
         ),
       ),
@@ -438,7 +516,7 @@ class _PaginationRow extends StatelessWidget {
     return GestureDetector(
       onTap: active ? null : () => onPage(n),
       child: Container(
-        width: 28, height: 28,
+        width: 32, height: 32,
         decoration: BoxDecoration(
           color: active ? _kBlue : Colors.white,
           borderRadius: BorderRadius.circular(8),
@@ -460,14 +538,14 @@ class _PaginationRow extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 28, height: 28,
+        width: 32, height: 32,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: _kGrey200),
         ),
         child: Center(
-            child: Icon(icon, size: 16, color: enabled ? _kGrey700 : _kGrey400)),
+            child: Icon(icon, size: 18, color: enabled ? _kGrey700 : _kGrey400)),
       ),
     );
   }
@@ -478,9 +556,9 @@ class _Ellipsis extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SizedBox(
-      width: 28, height: 28,
+      width: 32, height: 32,
       child: Center(
-          child: Text('…', style: TextStyle(fontSize: 13, color: _kGrey400))),
+          child: Text('…', style: TextStyle(fontSize: 14, color: _kGrey400))),
     );
   }
 }
@@ -509,6 +587,8 @@ class _FeedbackCard extends StatefulWidget {
 class _FeedbackCardState extends State<_FeedbackCard> {
   final _replyCtrl = TextEditingController();
   bool _sending    = false;
+  bool _expanded   = false;
+  bool _showReply  = false;
 
   @override
   void dispose() {
@@ -523,11 +603,51 @@ class _FeedbackCardState extends State<_FeedbackCard> {
       final id = widget.f['_id'] ?? widget.f['id'];
       await ApiService().adminReplyFeedback(id, _replyCtrl.text.trim());
       _replyCtrl.clear();
+      setState(() { _sending = false; _showReply = false; });
       widget.onReplied();
     } catch (_) {
       setState(() => _sending = false);
       widget.onFlash('Hitilafu ya kutuma jibu', ok: false);
     }
+  }
+
+  // ── Type badge data ────────────────────────────────────────────────────
+  ({String label, Color bg, Color fg, Color border, IconData icon})
+      _typeBadge(String rawType) {
+    final t = rawType.toLowerCase();
+    if (t.contains('malalamiko') || t.contains('complaint')) {
+      return (label: 'Malalamiko', bg: _kRed50, fg: _kRed, border: _kRed200,
+          icon: Icons.report_outlined);
+    }
+    if (t.contains('maoni') || t.contains('feedback') || t.contains('suggestion')) {
+      return (label: 'Maoni', bg: _kBlue50, fg: _kBlue, border: const Color(0xFFBFDBFE),
+          icon: Icons.chat_bubble_outline);
+    }
+    if (t.contains('swali') || t.contains('question')) {
+      return (label: 'Swali', bg: _kPurple50, fg: _kPurple700, border: _kPurple200,
+          icon: Icons.help_outline);
+    }
+    if (t.contains('tatizo') || t.contains('bug') || t.contains('issue')) {
+      return (label: 'Tatizo', bg: _kOrange50, fg: _kOrange700, border: _kOrange200,
+          icon: Icons.bug_report_outlined);
+    }
+    return (label: rawType.isNotEmpty ? rawType : 'Maoni',
+        bg: _kGrey100, fg: _kGrey700, border: _kGrey200,
+        icon: Icons.chat_bubble_outline);
+  }
+
+  // ── Avatar color from name ────────────────────────────────────────────
+  Color _avatarColor(String name) {
+    final colors = [
+      const Color(0xFF1E40AF), // blue
+      const Color(0xFF6D28D9), // purple
+      const Color(0xFF065F46), // green
+      const Color(0xFF92400E), // amber
+      const Color(0xFF991B1B), // red
+      const Color(0xFF1E3A5F), // navy
+    ];
+    if (name.isEmpty) return colors[0];
+    return colors[name.codeUnitAt(0) % colors.length];
   }
 
   @override
@@ -539,178 +659,334 @@ class _FeedbackCardState extends State<_FeedbackCard> {
     final message    = (f['message'] ?? '').toString();
     final userName   = (f['user_name'] ?? f['name'] ?? 'Mtumiaji').toString();
     final userPhone  = (f['user_phone'] ?? f['phone'] ?? '').toString().trim();
+    final rawType    = (f['type'] ?? f['category'] ?? '').toString();
     final rawDate    = (f['created_at'] ?? f['createdAt'] ?? '').toString();
-    final dateStr    = rawDate.isNotEmpty ? rawDate.split('T').first : '';
+    final dateStr    = rawDate.isNotEmpty
+        ? rawDate.replaceAll('T', ' ').split('.').first
+        : '';
+
+    final initial    = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
+    final avatarColor = _avatarColor(userName);
+    final badge      = _typeBadge(rawType.isNotEmpty ? rawType : (subject.isNotEmpty ? subject : ''));
+
+    final isLong     = message.length > 120;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _kGrey200),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: hasReply ? _kGreen200 : _kGrey200, width: hasReply ? 1.5 : 1),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
               offset: const Offset(0, 2)),
         ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // ── Header: index + name + badge + delete ──
-        Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          Container(
-            width: 22, height: 22,
-            decoration:
-                BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(6)),
-            child: Center(
-              child: Text('${widget.index}',
-                  style: const TextStyle(
-                      fontSize: 10, fontWeight: FontWeight.bold, color: _kGrey500)),
-            ),
+
+        // ── Card top accent bar (status indicator) ──
+        Container(
+          height: 3,
+          decoration: BoxDecoration(
+            color: hasReply ? _kGreen700 : _kAmber700,
+            borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16), topRight: Radius.circular(16)),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(userName,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey900),
-                overflow: TextOverflow.ellipsis),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: hasReply ? _kGreen50 : _kAmber50,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: hasReply ? _kGreen200 : _kAmber200),
-            ),
-            child: Text(
-              hasReply ? 'Imejibiwa' : 'Wazi',
-              style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: hasReply ? _kGreen700 : _kAmber700),
-            ),
-          ),
-          const SizedBox(width: 6),
-          GestureDetector(
-            onTap: () => widget.onDelete(widget.f),
-            child: Container(
-              width: 30, height: 30,
-              decoration: BoxDecoration(
-                color: _kRed50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _kRed200),
-              ),
-              child:
-                  const Center(child: Icon(Icons.delete_outline, size: 15, color: _kRed)),
-            ),
-          ),
-        ]),
+        ),
 
-        // ── Phone ──
-        if (userPhone.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Row(children: [
-            const Icon(Icons.phone_outlined, size: 12, color: _kGrey400),
-            const SizedBox(width: 4),
-            Text(userPhone, style: const TextStyle(fontSize: 11, color: _kGrey500)),
-          ]),
-        ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-        // ── Subject ──
-        if (subject.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(subject,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey900)),
-        ],
-
-        // ── Message ──
-        const SizedBox(height: 6),
-        Text(message,
-            style: const TextStyle(fontSize: 13, color: _kGrey700, height: 1.5)),
-
-        // ── Date ──
-        const SizedBox(height: 8),
-        Row(children: [
-          const Icon(Icons.access_time, size: 12, color: _kGrey400),
-          const SizedBox(width: 4),
-          Text(dateStr, style: const TextStyle(fontSize: 11, color: _kGrey500)),
-        ]),
-
-        // ── Admin reply display ──
-        if (hasReply) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _kBlue50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFBFDBFE)),
-            ),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Row(children: [
-                Icon(Icons.verified_user_outlined, size: 12, color: _kBlue),
-                SizedBox(width: 4),
-                Text('JIBU LA ADMIN',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: _kBlue,
-                        letterSpacing: 0.6)),
-              ]),
-              const SizedBox(height: 4),
-              Text(adminReply.toString(),
-                  style: const TextStyle(fontSize: 13, color: _kGrey700)),
-            ]),
-          ),
-        ],
-
-        // ── Reply input — always visible ──
-        const SizedBox(height: 10),
-        Row(children: [
-          Expanded(
-            child: Container(
-              height: 36,
-              decoration: BoxDecoration(
-                color: _kGrey50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _kGrey200),
-              ),
-              child: TextField(
-                controller: _replyCtrl,
-                style: const TextStyle(fontSize: 13, color: _kGrey900),
-                decoration: InputDecoration(
-                  hintText: hasReply ? 'Badilisha jibu...' : 'Andika jibu...',
-                  hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            // ── Row 1: Avatar + name/phone + badges + delete ──
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // Avatar
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                    color: avatarColor,
+                    borderRadius: BorderRadius.circular(22)),
+                child: Center(
+                  child: Text(initial,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold,
+                          color: Colors.white)),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: _sending ? null : _send,
-            child: Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: _kBlue,
-                borderRadius: BorderRadius.circular(8),
+              const SizedBox(width: 10),
+
+              // Name + phone
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(userName,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.bold,
+                          color: _kGrey900),
+                      overflow: TextOverflow.ellipsis),
+                  if (userPhone.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Row(children: [
+                      const Icon(Icons.phone_outlined, size: 11, color: _kGrey400),
+                      const SizedBox(width: 3),
+                      Text(userPhone,
+                          style: const TextStyle(fontSize: 11, color: _kGrey500)),
+                    ]),
+                  ],
+                ]),
               ),
-              child: _sending
-                  ? const Center(
-                      child: SizedBox(
-                          width: 14, height: 14,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white)))
-                  : const Center(
-                      child: Icon(Icons.send, size: 16, color: Colors.white)),
+
+              // Badges column
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                // Status badge
+                _Badge(
+                  label: hasReply ? 'Imejibiwa' : 'Mpya',
+                  bg: hasReply ? _kGreen50 : _kAmber50,
+                  fg: hasReply ? _kGreen700 : _kAmber700,
+                  border: hasReply ? _kGreen200 : _kAmber200,
+                  icon: hasReply ? Icons.check_circle_outline : Icons.schedule,
+                ),
+                const SizedBox(height: 4),
+                // Type badge
+                _Badge(
+                  label: badge.label,
+                  bg: badge.bg,
+                  fg: badge.fg,
+                  border: badge.border,
+                  icon: badge.icon,
+                ),
+              ]),
+
+              // Delete button
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => widget.onDelete(widget.f),
+                child: Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(
+                    color: _kRed50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _kRed200),
+                  ),
+                  child: const Center(
+                      child: Icon(Icons.delete_outline, size: 16, color: _kRed)),
+                ),
+              ),
+            ]),
+
+            // ── Subject ──
+            if (subject.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(subject,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w700, color: _kGrey900)),
+            ],
+
+            // ── Message (truncatable) ──
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: isLong ? () => setState(() => _expanded = !_expanded) : null,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(
+                  message,
+                  style: const TextStyle(
+                      fontSize: 13, color: _kGrey700, height: 1.55),
+                  maxLines: _expanded ? null : 3,
+                  overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                ),
+                if (isLong) ...[
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 14, color: _kBlue,
+                    ),
+                    Text(
+                      _expanded ? 'Onyesha kidogo' : 'Soma zaidi',
+                      style: const TextStyle(
+                          fontSize: 11, color: _kBlue,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ]),
+                ],
+              ]),
             ),
-          ),
-        ]),
+
+            // ── Date/time ──
+            const SizedBox(height: 10),
+            Row(children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                    color: _kGrey50,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: _kGrey200)),
+                child: Row(children: [
+                  const Icon(Icons.access_time_rounded, size: 11, color: _kGrey400),
+                  const SizedBox(width: 4),
+                  Text(dateStr,
+                      style: const TextStyle(fontSize: 11, color: _kGrey500)),
+                ]),
+              ),
+            ]),
+
+            // ── Admin reply display ──
+            if (hasReply) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _kBlue50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Row(children: [
+                    Icon(Icons.verified_user_outlined, size: 13, color: _kBlue),
+                    SizedBox(width: 5),
+                    Text('JIBU LA ADMIN',
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: _kBlue,
+                            letterSpacing: 0.8)),
+                  ]),
+                  const SizedBox(height: 6),
+                  Text(adminReply.toString(),
+                      style: const TextStyle(
+                          fontSize: 13, color: _kGrey700, height: 1.5)),
+                ]),
+              ),
+            ],
+
+            // ── Reply toggle / input ──
+            const SizedBox(height: 12),
+            if (!_showReply && !hasReply)
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () => setState(() => _showReply = true),
+                  icon: const Icon(Icons.reply, size: 16),
+                  label: const Text('Jibu Maoni',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: _kBlue,
+                    backgroundColor: _kBlue50,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: const BorderSide(color: Color(0xFFBFDBFE))),
+                  ),
+                ),
+              )
+            else if (_showReply || hasReply) ...[
+              if (hasReply)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    'Badilisha jibu:',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: _kGrey500,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+              Row(children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _kGrey50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _kGrey200),
+                    ),
+                    child: TextField(
+                      controller: _replyCtrl,
+                      style: const TextStyle(fontSize: 13, color: _kGrey900),
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: hasReply ? 'Badilisha jibu...' : 'Andika jibu...',
+                        hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _sending ? null : _send,
+                  child: Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      color: _kBlue,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: _sending
+                        ? const Center(
+                            child: SizedBox(
+                                width: 16, height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white)))
+                        : const Center(
+                            child: Icon(Icons.send_rounded,
+                                size: 18, color: Colors.white)),
+                  ),
+                ),
+              ]),
+              if (!hasReply) ...[
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: () => setState(() => _showReply = false),
+                  child: const Text('Ghairi',
+                      style: TextStyle(
+                          fontSize: 11, color: _kGrey500,
+                          decoration: TextDecoration.underline)),
+                ),
+              ],
+            ],
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+// ── Small badge widget ─────────────────────────────────────────────────────
+class _Badge extends StatelessWidget {
+  final String label;
+  final Color bg;
+  final Color fg;
+  final Color border;
+  final IconData icon;
+
+  const _Badge({
+    required this.label,
+    required this.bg,
+    required this.fg,
+    required this.border,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: border),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 10, color: fg),
+        const SizedBox(width: 3),
+        Text(label,
+            style: TextStyle(
+                fontSize: 10, fontWeight: FontWeight.w700, color: fg)),
       ]),
     );
   }

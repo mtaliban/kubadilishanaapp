@@ -395,185 +395,226 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
 
   // ── Contact card ───────────────────────────────────────────────────────────
 
+  /// Returns icon, background color, border color, and text color for a type.
+  ({IconData icon, Color bg, Color border, Color fg}) _typeStyle(String? type) {
+    switch (type) {
+      case 'call':
+        return (icon: Icons.phone, bg: _kGreen50, border: _kGreen200, fg: _kGreen700);
+      case 'sms':
+        return (icon: Icons.chat_bubble, bg: _kBlue50, border: _kBlue200, fg: _kBlue);
+      case 'whatsapp':
+        return (icon: Icons.chat_bubble_outline, bg: _kEmerald50, border: _kEmerald200, fg: _kEmerald700);
+      default:
+        return (icon: Icons.contact_phone, bg: _kGrey100, border: _kGrey300, fg: _kGrey700);
+    }
+  }
+
   Widget _buildCard(Map contact, int index) {
-    final type        = contact['contact_type'] as String?;
-    final fromName    = contact['from_full_name'] ?? contact['from_name'] ?? '—';
-    final toName      = contact['to_full_name']   ?? contact['to_name']   ?? '—';
-    final fromPhone   = contact['from_phone'] ?? '';
-    final toPhone     = contact['to_phone']   ?? '';
-    final fromRegion  = contact['from_region'] ?? '';
-    final toRegion    = contact['to_region']   ?? '';
-    final fromCat     = contact['from_category'] ?? '';
-    final fromCadre   = contact['from_cadre']    ?? '';
-    final toCat       = contact['to_category']   ?? '';
-    final toCadre     = contact['to_cadre']      ?? '';
-    final timeRaw     = contact['initiated_at']  ?? contact['created_at'];
-    final timeStr     = _formatTime(timeRaw);
+    final type       = contact['contact_type'] as String?;
+    final fromName   = contact['from_full_name'] ?? contact['from_name'] ?? '—';
+    final toName     = contact['to_full_name']   ?? contact['to_name']   ?? '—';
+    final fromPhone  = contact['from_phone'] ?? '';
+    final toPhone    = contact['to_phone']   ?? '';
+    final fromRegion = contact['from_region'] ?? '';
+    final toRegion   = contact['to_region']   ?? '';
+    final fromCat    = contact['from_category'] ?? '';
+    final fromCadre  = contact['from_cadre']    ?? '';
+    final toCat      = contact['to_category']   ?? '';
+    final toCadre    = contact['to_cadre']      ?? '';
+    final timeRaw    = contact['initiated_at']  ?? contact['created_at'];
+    final timeStr    = _formatTime(timeRaw);
+    final style      = _typeStyle(type);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _kGrey200),
-        boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 1))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x08000000), blurRadius: 6, offset: Offset(0, 2)),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Row 1: index + badge + time
+            // ── Top row: type icon circle + from→to + badge ──────────────────
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '#$index',
-                  style: const TextStyle(fontSize: 11, color: _kGrey400, fontWeight: FontWeight.w500),
+                // Contact type icon circle
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: style.bg,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: style.border),
+                  ),
+                  child: Icon(style.icon, size: 20, color: style.fg),
                 ),
+                const SizedBox(width: 12),
+
+                // From → To flow
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // From person
+                      _nameBlock(
+                        name: fromName,
+                        phone: fromPhone,
+                        sub: [fromCat, fromCadre].where((s) => s.isNotEmpty).join(' · '),
+                      ),
+
+                      // Arrow
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Row(
+                          children: [
+                            Icon(Icons.arrow_downward, size: 13, color: style.fg.withAlpha(130)),
+                            const SizedBox(width: 4),
+                            Text(
+                              'kwenda',
+                              style: TextStyle(fontSize: 10, color: style.fg.withAlpha(150)),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // To person
+                      _nameBlock(
+                        name: toName,
+                        phone: toPhone,
+                        sub: [toCat, toCadre].where((s) => s.isNotEmpty).join(' · '),
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(width: 8),
-                _typeBadge(type),
-                const Spacer(),
-                Text(
-                  timeStr,
-                  style: const TextStyle(fontSize: 11, color: _kGrey400),
+
+                // Right column: badge + index
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _typeBadge(type, style),
+                    const SizedBox(height: 6),
+                    Text(
+                      '#$index',
+                      style: const TextStyle(fontSize: 10, color: _kGrey400),
+                    ),
+                  ],
                 ),
               ],
             ),
+
+            // ── Divider + bottom meta row ────────────────────────────────────
             const SizedBox(height: 10),
+            const Divider(height: 1, thickness: 1, color: _kGrey100),
+            const SizedBox(height: 8),
 
-            // Row 2: Mtumaji
-            _personRow(
-              label: 'Mtumaji',
-              name: fromName,
-              phone: fromPhone,
-              category: fromCat,
-              cadre: fromCadre,
-              icon: Icons.person_outline,
-            ),
-            const SizedBox(height: 2),
+            Row(
+              children: [
+                // Date/time
+                const Icon(Icons.access_time_outlined, size: 12, color: _kGrey400),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    timeStr,
+                    style: const TextStyle(fontSize: 11, color: _kGrey500),
+                  ),
+                ),
 
-            // Arrow divider
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  const SizedBox(width: 28),
-                  const Icon(Icons.arrow_forward, size: 14, color: _kGrey300),
-                ],
-              ),
-            ),
-
-            // Row 3: Mpokeaji
-            _personRow(
-              label: 'Mpokeaji',
-              name: toName,
-              phone: toPhone,
-              category: toCat,
-              cadre: toCadre,
-              icon: Icons.person,
-            ),
-
-            // Row 4: Regions (only when present)
-            if (fromRegion.isNotEmpty || toRegion.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              const Divider(height: 1, color: _kGrey100),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.location_on_outlined, size: 13, color: _kGrey400),
-                  const SizedBox(width: 4),
+                // Regions (when present)
+                if (fromRegion.isNotEmpty || toRegion.isNotEmpty) ...[
+                  const Icon(Icons.location_on_outlined, size: 12, color: _kGrey400),
+                  const SizedBox(width: 3),
                   Text(
                     fromRegion.isNotEmpty ? fromRegion : '—',
                     style: const TextStyle(fontSize: 11, color: _kGrey500),
                   ),
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6),
-                    child: Icon(Icons.swap_horiz, size: 14, color: _kGrey300),
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(Icons.arrow_forward, size: 11, color: _kGrey300),
                   ),
                   Text(
                     toRegion.isNotEmpty ? toRegion : '—',
                     style: const TextStyle(fontSize: 11, color: _kGrey500),
                   ),
                 ],
-              ),
-            ],
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _personRow({
-    required String label,
+  /// Renders a person name, phone, and optional sub-label.
+  Widget _nameBlock({
     required String name,
     required String phone,
-    required String category,
-    required String cadre,
-    required IconData icon,
+    required String sub,
   }) {
-    final sub = [category, cadre].where((s) => s.isNotEmpty).join(' · ');
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 28,
-          child: Icon(icon, size: 15, color: _kGrey400),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(fontSize: 10, color: _kGrey400, fontWeight: FontWeight.w500),
-              ),
-              Text(
-                name,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey900),
-              ),
-              if (phone.isNotEmpty)
-                Text(phone, style: const TextStyle(fontSize: 11, color: _kGrey500)),
-              if (sub.isNotEmpty)
-                Text(sub, style: const TextStyle(fontSize: 11, color: _kGrey400)),
-            ],
+        Text(
+          name,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: _kGrey900,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
+        if (phone.isNotEmpty) ...[
+          const SizedBox(height: 1),
+          Text(
+            phone,
+            style: const TextStyle(fontSize: 12, color: _kGrey500),
+          ),
+        ],
+        if (sub.isNotEmpty) ...[
+          const SizedBox(height: 1),
+          Text(
+            sub,
+            style: const TextStyle(fontSize: 11, color: _kGrey400),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ],
     );
   }
 
-  Widget _typeBadge(String? type) {
-    Color bg, border, textColor;
-    IconData icon;
-    switch (type) {
-      case 'call':
-        bg = _kGreen50; border = _kGreen200; textColor = _kGreen700; icon = Icons.phone;
-        break;
-      case 'sms':
-        bg = _kBlue50; border = _kBlue200; textColor = _kBlue; icon = Icons.sms;
-        break;
-      case 'whatsapp':
-        bg = _kEmerald50; border = _kEmerald200; textColor = _kEmerald700; icon = Icons.chat_bubble_outline;
-        break;
-      default:
-        bg = _kGrey100; border = _kGrey300; textColor = _kGrey700; icon = Icons.contact_phone;
-    }
+  Widget _typeBadge(
+    String? type,
+    ({IconData icon, Color bg, Color border, Color fg}) style,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: bg,
+        color: style.bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
+        border: Border.all(color: style.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: textColor),
+          Icon(style.icon, size: 11, color: style.fg),
           const SizedBox(width: 4),
           Text(
             _typeName(type),
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: style.fg,
+            ),
           ),
         ],
       ),

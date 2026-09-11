@@ -18,9 +18,12 @@ const _kGreen600 = Color(0xFF16A34A);
 const _kGreen700 = Color(0xFF15803D);
 const _kRed      = Color(0xFFDC2626);
 const _kRed50    = Color(0xFFFEF2F2);
-const _kOrange   = Color(0xFFF97316);
-const _kOrange50 = Color(0xFFFFF7ED);
+const _kOrange    = Color(0xFFF97316);
 const _kOrange700 = Color(0xFFC2410C);
+
+// Amber for pending status border
+const _kAmber    = Color(0xFFF59E0B);
+const _kAmber50  = Color(0xFFFFFBEB);
 
 const _kPageSize = 3;
 
@@ -533,294 +536,489 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
         ]),
       );
 
+  // ── Status helpers ────────────────────────────────────────────────────────
+
+  Color _statusBorderColor(String status) {
+    switch (status) {
+      case 'approved': return _kGreen600;
+      case 'rejected': return _kRed;
+      default:         return _kAmber;
+    }
+  }
+
+  // ── Payment Card (mobile-first design) ───────────────────────────────────
+
   Widget _paymentCard(Map<String, dynamic> p) {
-    final status = p['status'] ?? 'verifying';
+    final status    = p['status'] ?? 'verifying';
     final isPending = status == 'verifying';
-    final orderId = (p['order_id'] ?? p['_id'] ?? '').toString();
-    final name = p['user_name'] ?? p['full_name'] ?? '';
-    final phone = p['phone'] ?? p['phone_primary'] ?? '';
-    final amount = p['amount'] ?? 0;
-    final smsText = (p['sms_text'] ?? '').toString();
-    final note = (p['note'] ?? '').toString();
-    final isSmsOpen = _smsExpanded[orderId] == true;
+    final orderId   = (p['order_id'] ?? p['_id'] ?? '').toString();
+    final name      = (p['user_name'] ?? p['full_name'] ?? '').toString();
+    final phone     = (p['phone'] ?? p['phone_primary'] ?? '').toString();
+    final amount    = p['amount'] ?? 0;
+    final method    = (p['payment_method'] ?? p['method'] ?? '').toString();
+    final smsText   = (p['sms_text'] ?? '').toString();
+    final note      = (p['note'] ?? '').toString();
+    final isSmsOpen  = _smsExpanded[orderId] == true;
     final isChatOpen = _chatExpanded[orderId] == true;
-    final isBusy = _approving[orderId] == true;
-    final isExpired = p['expired'] == true;
+    final isBusy     = _approving[orderId] == true;
+    final isExpired  = p['expired'] == true;
     final hasMessages =
         (p['messages'] as List?)?.isNotEmpty == true;
 
     _chatCtrls.putIfAbsent(orderId, () => TextEditingController());
 
+    final borderColor = _statusBorderColor(status);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _kGrey200),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 2))
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
         ],
       ),
-      child: Column(children: [
-        // ── Card body ──
-        Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-            // Amount + status badge
-            Row(children: [
-              Expanded(
-                child: Text(
-                  'TZS ${amount is num ? amount.toStringAsFixed(0) : amount}',
-                  style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: _kGrey900),
-                ),
-              ),
-              _statusBadge(status),
-            ]),
-            const SizedBox(height: 6),
-            // Name
-            Text(name,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _kGrey700)),
-            // Phone
-            Text(phone,
-                style: const TextStyle(
-                    fontSize: 12, color: _kBlue)),
-            const SizedBox(height: 4),
-            // Date + order_id row
-            Row(children: [
-              Expanded(
-                child: Text(_fmtDate(p['created_at'] as String?),
-                    style: const TextStyle(
-                        fontSize: 11, color: _kGrey400)),
-              ),
-              if (orderId.isNotEmpty)
-                Text(
-                  orderId.length > 14
-                      ? '…${orderId.substring(orderId.length - 14)}'
-                      : orderId,
-                  style: const TextStyle(
-                      fontSize: 10,
-                      fontFamily: 'monospace',
-                      color: _kGrey400),
-                ),
-            ]),
-            // Expired tag
-            if (isExpired && isPending) ...[
-              const SizedBox(height: 4),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.access_time,
-                    size: 11, color: _kOrange),
-                const SizedBox(width: 3),
-                const Text('Imeisha muda',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: _kOrange)),
-              ]),
-            ],
-            const SizedBox(height: 10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Color-coded left border
+              Container(width: 5, color: borderColor),
 
-            // Action buttons row
-            Row(children: [
-              // View SMS button
-              if (smsText.isNotEmpty) ...[
-                _pillBtn(
-                  label: isSmsOpen ? 'Ficha SMS' : 'Ona SMS',
-                  icon: isSmsOpen
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: _kGrey600,
-                  bg: _kGrey100,
-                  border: _kGrey200,
-                  busy: false,
-                  onTap: () => setState(() =>
-                      _smsExpanded[orderId] = !isSmsOpen),
+              // Card content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Top section: amount + status badge ──────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Amount (large, prominent)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'TZS ${amount is num ? amount.toStringAsFixed(0) : amount}',
+                                  style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                      color: _kGrey900,
+                                      letterSpacing: -0.5),
+                                ),
+                                // Payment method badge
+                                if (method.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  _methodBadge(method),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Status badge (top-right)
+                          _statusBadge(status),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // ── User info ───────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Row(children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: _kGrey100,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.person_outline,
+                                size: 18, color: _kGrey500),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name.isNotEmpty ? name : 'Mtumiaji',
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: _kGrey900),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (phone.isNotEmpty)
+                                Text(
+                                  phone,
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: _kBlue),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ]),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // ── Meta row: date + order ID ───────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Row(children: [
+                        const Icon(Icons.schedule_outlined,
+                            size: 12, color: _kGrey400),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            _fmtDate(p['created_at'] as String?),
+                            style: const TextStyle(
+                                fontSize: 11, color: _kGrey400),
+                          ),
+                        ),
+                        if (orderId.isNotEmpty)
+                          Text(
+                            orderId.length > 12
+                                ? '#…${orderId.substring(orderId.length - 12)}'
+                                : '#$orderId',
+                            style: const TextStyle(
+                                fontSize: 10,
+                                fontFamily: 'monospace',
+                                color: _kGrey400),
+                          ),
+                      ]),
+                    ),
+
+                    // Expired tag
+                    if (isExpired && isPending) ...[
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          const Icon(Icons.access_time,
+                              size: 12, color: _kOrange),
+                          const SizedBox(width: 4),
+                          const Text('Imeisha muda',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: _kOrange)),
+                        ]),
+                      ),
+                    ],
+
+                    const SizedBox(height: 12),
+                    Container(height: 1, color: _kGrey100),
+
+                    // ── Action buttons ──────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Primary actions row (Idhinisha / Kataa)
+                          if (isPending) ...[
+                            Row(children: [
+                              // Idhinisha button
+                              Expanded(
+                                child: _actionBtn(
+                                  label: isBusy ? 'Inafanya kazi...' : 'Idhinisha',
+                                  icon: Icons.check_circle_rounded,
+                                  color: Colors.white,
+                                  bg: _kGreen600,
+                                  busy: isBusy,
+                                  onTap: () => _approve(orderId),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Kataa button
+                              Expanded(
+                                child: _actionBtn(
+                                  label: 'Kataa',
+                                  icon: Icons.cancel_rounded,
+                                  color: Colors.white,
+                                  bg: _kRed,
+                                  busy: isBusy,
+                                  onTap: () => _reject(orderId),
+                                ),
+                              ),
+                            ]),
+                            const SizedBox(height: 8),
+                          ],
+
+                          // Secondary actions row (SMS / Mazungumzo)
+                          Row(children: [
+                            // View SMS button
+                            if (smsText.isNotEmpty) ...[
+                              _secondaryBtn(
+                                label: isSmsOpen ? 'Ficha SMS' : 'SMS',
+                                icon: isSmsOpen
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.sms_outlined,
+                                color: _kBlue,
+                                bg: _kBlue50,
+                                onTap: () => setState(() =>
+                                    _smsExpanded[orderId] = !isSmsOpen),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            // Chat button (if rejected or has messages)
+                            if (status == 'rejected' || hasMessages) ...[
+                              _secondaryBtn(
+                                label: isChatOpen ? 'Funga' : 'Mazungumzo',
+                                icon: Icons.chat_bubble_outline_rounded,
+                                color: _kBlue,
+                                bg: _kBlue50,
+                                onTap: () {
+                                  final next = !isChatOpen;
+                                  setState(() => _chatExpanded[orderId] = next);
+                                  if (next && _chatMessages[orderId] == null) {
+                                    _loadChat(orderId);
+                                  }
+                                },
+                              ),
+                            ],
+                          ]),
+                        ],
+                      ),
+                    ),
+
+                    // ── SMS expand ──────────────────────────────────────
+                    if (isSmsOpen && smsText.isNotEmpty) ...[
+                      Container(height: 1, color: _kGrey100),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                          Row(children: [
+                            const Icon(Icons.sms_outlined,
+                                size: 11, color: _kGrey500),
+                            const SizedBox(width: 5),
+                            const Text('SMS YA MTOA MCHANGO',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: _kGrey500,
+                                    letterSpacing: 0.8)),
+                          ]),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: _kGrey50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: _kGrey200),
+                            ),
+                            child: Text(smsText,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontFamily: 'monospace',
+                                    color: _kGrey700)),
+                          ),
+                          if (note.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Row(children: [
+                              const Icon(Icons.warning_amber_rounded,
+                                  size: 12, color: _kRed),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text('Kumbuka: $note',
+                                    style: const TextStyle(
+                                        fontSize: 11, color: _kRed)),
+                              ),
+                            ]),
+                          ],
+                        ]),
+                      ),
+                    ],
+
+                    // ── Chat expand ─────────────────────────────────────
+                    if (isChatOpen) ...[
+                      Container(height: 1, color: _kGrey100),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                        child: Column(children: [
+                          Row(children: [
+                            const Icon(Icons.chat_bubble_outline_rounded,
+                                size: 11, color: _kGrey500),
+                            const SizedBox(width: 5),
+                            const Text('MAZUNGUMZO NA MTOA MCHANGO',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: _kGrey500,
+                                    letterSpacing: 0.8)),
+                          ]),
+                          const SizedBox(height: 10),
+                          // Messages
+                          _buildChatMessages(orderId),
+                          const SizedBox(height: 8),
+                          // Reply input
+                          Row(children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _chatCtrls[orderId],
+                                style: const TextStyle(fontSize: 13),
+                                decoration: InputDecoration(
+                                  hintText: 'Andika jibu...',
+                                  hintStyle: const TextStyle(
+                                      fontSize: 13, color: _kGrey400),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  filled: true,
+                                  fillColor: _kGrey50,
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide:
+                                          const BorderSide(color: _kGrey200)),
+                                  enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide:
+                                          const BorderSide(color: _kGrey200)),
+                                  focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: const BorderSide(
+                                          color: _kBlue, width: 1.5)),
+                                ),
+                                onSubmitted: (_) => _sendReply(orderId),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: _replying[orderId] == true
+                                  ? null
+                                  : () => _sendReply(orderId),
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: _kBlue,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: _replying[orderId] == true
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(10),
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white))
+                                    : const Icon(Icons.send_rounded,
+                                        size: 16, color: Colors.white),
+                              ),
+                            ),
+                          ]),
+                        ]),
+                      ),
+                    ],
+                  ],
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Full-width primary action button (Idhinisha / Kataa)
+  Widget _actionBtn({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Color bg,
+    required bool busy,
+    required VoidCallback onTap,
+  }) =>
+      GestureDetector(
+        onTap: busy ? null : onTap,
+        child: Opacity(
+          opacity: busy ? 0.6 : 1.0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 15, color: color),
                 const SizedBox(width: 6),
+                Text(label,
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: color)),
               ],
-              // Chat button (if rejected or has messages)
-              if (status == 'rejected' || hasMessages) ...[
-                _pillBtn(
-                  label: isChatOpen ? 'Funga' : 'Mazungumzo',
-                  icon: Icons.chat_bubble_outline,
-                  color: _kBlue,
-                  bg: _kBlue50,
-                  border: _kBlue.withValues(alpha: 0.2),
-                  busy: false,
-                  onTap: () {
-                    final next = !isChatOpen;
-                    setState(() => _chatExpanded[orderId] = next);
-                    if (next && _chatMessages[orderId] == null) {
-                      _loadChat(orderId);
-                    }
-                  },
-                ),
-                const SizedBox(width: 6),
-              ],
-              const Spacer(),
-              // Approve / Reject buttons
-              if (isPending) ...[
-                _pillBtn(
-                  label: isBusy ? '...' : 'Thibitisha',
-                  icon: Icons.check_circle_outline,
-                  color: _kGreen700,
-                  bg: _kGreen50,
-                  border: const Color(0xFFBBF7D0),
-                  busy: isBusy,
-                  onTap: () => _approve(orderId),
-                ),
-                const SizedBox(width: 6),
-                _pillBtn(
-                  label: 'Kataa',
-                  icon: Icons.cancel_outlined,
-                  color: _kRed,
-                  bg: _kRed50,
-                  border: const Color(0xFFFECACA),
-                  busy: isBusy,
-                  onTap: () => _reject(orderId),
-                ),
-              ],
-            ]),
+            ),
+          ),
+        ),
+      );
+
+  /// Compact secondary button (SMS / Mazungumzo)
+  Widget _secondaryBtn({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Color bg,
+    required VoidCallback onTap,
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withValues(alpha: 0.25)),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 5),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color)),
           ]),
         ),
+      );
 
-        // ── SMS expand ──
-        if (isSmsOpen && smsText.isNotEmpty) ...[
-          Container(height: 1, color: _kGrey200),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-              Row(children: [
-                const Icon(Icons.credit_card_outlined,
-                    size: 11, color: _kGrey500),
-                const SizedBox(width: 5),
-                const Text('SMS YA MTOA MCHANGO',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: _kGrey500,
-                        letterSpacing: 0.8)),
-              ]),
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: _kGrey50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(smsText,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontFamily: 'monospace',
-                        color: _kGrey700)),
-              ),
-              if (note.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Row(children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      size: 12, color: _kRed),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text('Kumbuka: $note',
-                        style: const TextStyle(
-                            fontSize: 11, color: _kRed)),
-                  ),
-                ]),
-              ],
-            ]),
-          ),
-        ],
-
-        // ── Chat expand ──
-        if (isChatOpen) ...[
-          Container(height: 1, color: _kGrey200),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-            child: Column(children: [
-              Row(children: [
-                const Icon(Icons.chat_bubble_outline,
-                    size: 11, color: _kGrey500),
-                const SizedBox(width: 5),
-                const Text('MAZUNGUMZO NA MTOA MCHANGO',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: _kGrey500,
-                        letterSpacing: 0.8)),
-              ]),
-              const SizedBox(height: 10),
-              // Messages
-              _buildChatMessages(orderId),
-              const SizedBox(height: 8),
-              // Reply input
-              Row(children: [
-                Expanded(
-                  child: TextField(
-                    controller: _chatCtrls[orderId],
-                    style: const TextStyle(fontSize: 13),
-                    decoration: InputDecoration(
-                      hintText: 'Andika jibu...',
-                      hintStyle: const TextStyle(
-                          fontSize: 13, color: _kGrey400),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      filled: true,
-                      fillColor: _kGrey50,
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide:
-                              const BorderSide(color: _kGrey200)),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide:
-                              const BorderSide(color: _kGrey200)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                              color: _kBlue, width: 1.5)),
-                    ),
-                    onSubmitted: (_) => _sendReply(orderId),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _replying[orderId] == true
-                      ? null
-                      : () => _sendReply(orderId),
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: _kBlue,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: _replying[orderId] == true
-                        ? const Padding(
-                            padding: EdgeInsets.all(10),
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white))
-                        : const Icon(Icons.send_rounded,
-                            size: 16, color: Colors.white),
-                  ),
-                ),
-              ]),
-            ]),
-          ),
-        ],
-      ]),
+  /// Small payment method badge (M-Pesa, etc.)
+  Widget _methodBadge(String method) {
+    final label = method.toUpperCase();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: _kGrey100,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: _kGrey200),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: _kGrey600,
+            letterSpacing: 0.5),
+      ),
     );
   }
 
@@ -892,7 +1090,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
         fg = _kGreen700;
         bg = _kGreen50;
         border = const Color(0xFFBBF7D0);
-        label = 'Imekubaliwa';
+        label = 'Imeidhinishwa';
         icon = Icons.check_circle_outline;
       case 'rejected':
         fg = _kRed;
@@ -902,8 +1100,8 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
         icon = Icons.cancel_outlined;
       default:
         fg = _kOrange700;
-        bg = _kOrange50;
-        border = const Color(0xFFFED7AA);
+        bg = _kAmber50;
+        border = const Color(0xFFFDE68A);
         label = 'Inasubiri';
         icon = Icons.access_time;
     }
@@ -926,40 +1124,6 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       ]),
     );
   }
-
-  Widget _pillBtn({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required Color bg,
-    required Color border,
-    required bool busy,
-    required VoidCallback onTap,
-  }) =>
-      GestureDetector(
-        onTap: busy ? null : onTap,
-        child: Opacity(
-          opacity: busy ? 0.5 : 1.0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: border),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 12, color: color),
-              const SizedBox(width: 4),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: color)),
-            ]),
-          ),
-        ),
-      );
 
   Widget _paginationRow() {
     final canNext = _page < _totalPages;
