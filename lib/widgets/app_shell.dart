@@ -236,14 +236,13 @@ class _AppShellState extends State<AppShell> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              // Nav links (kama web — hakuna WS pill kwenye mobile hamburger)
-              _dropLink(context, Icons.dashboard_outlined, 'Nyumbani', '/dashboard',
+              _dropLink(context, 'assets/icons/layout-dashboard.svg', 'Nyumbani', '/dashboard',
                   counts, widget.tabIndex == 0),
-              _dropLink(context, Icons.volunteer_activism_outlined, 'Changia', '/donate',
+              _dropLink(context, 'assets/icons/hand-coins.svg', 'Changia', '/donate',
                   counts, widget.tabIndex == 1),
-              _dropLink(context, Icons.assignment_outlined, 'Maoni', '/feedback',
+              _dropLink(context, 'assets/icons/clipboard-list.svg', 'Maoni', '/feedback',
                   counts, widget.tabIndex == 2),
-              _dropLink(context, Icons.person_outline, 'Wasifu', '/profile',
+              _dropLink(context, 'assets/icons/user.svg', 'Wasifu', '/profile',
                   counts, widget.tabIndex == 3),
             ]),
           ),
@@ -253,7 +252,7 @@ class _AppShellState extends State<AppShell> {
     Overlay.of(context).insert(_menuOverlay!);
   }
 
-  Widget _dropLink(BuildContext ctx, IconData icon, String label, String route,
+  Widget _dropLink(BuildContext ctx, String svgAsset, String label, String route,
       Map<String, int> counts, bool active) {
     final badge = counts[route] ?? 0;
     final color = active ? const Color(0xFF1E40AF) : const Color(0xFF374151);
@@ -270,7 +269,8 @@ class _AppShellState extends State<AppShell> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(children: [
-          Icon(icon, size: 18, color: color),
+          SvgPicture.asset(svgAsset, width: 18, height: 18,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn)),
           const SizedBox(width: 12),
           Expanded(child: Text(label,
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: color))),
@@ -446,7 +446,7 @@ class _AppShellState extends State<AppShell> {
         final counts = _badge.counts;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: Colors.white,
           body: SafeArea(
             child: Column(children: [
 

@@ -42,7 +42,7 @@ class AppTheme {
       surface: Colors.white,
       onSurface: AppColors.textPrimary,
     ),
-    scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+    scaffoldBackgroundColor: Colors.white,
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,

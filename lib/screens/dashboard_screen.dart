@@ -539,7 +539,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Grid responsive: minmax(165px,1fr) — 1 col kwenye simu ndogo, 2+ kwenye kubwa
                     Builder(builder: (ctx) {
                       final contentW = MediaQuery.of(ctx).size.width - 32;
-                      final cols = (contentW / 165).floor().clamp(1, 3);
+                      // 1 col on phone (<600px), 2 col on tablet — kama web sm:grid-cols-2
+                      final cols = contentW >= 568 ? 2 : 1;
                       return Column(crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: _buildGrid(_pagedCandidates, isPaid, mySubjects, myRegionName, user, cols: cols));
                     }),
@@ -1512,7 +1513,7 @@ class _BoardCard extends StatelessWidget {
             Expanded(child: _contactBtn(Icons.phone, 'Piga',
                 phoneOk ? () => onContact('call') : null)),
             const SizedBox(width: 6), // gap-1.5 = 6px
-            Expanded(child: _contactBtn(Icons.message_outlined, 'SMS',
+            Expanded(child: _contactBtn(Icons.chat_bubble_outline, 'SMS',
                 phoneOk ? () => onContact('sms') : null)),
             if (altOk) ...[
               const SizedBox(width: 6), // gap-1.5 = 6px
