@@ -46,17 +46,6 @@ Widget _label(String text) => Padding(
 );
 
 // btn-primary — text-sm=14px px-4 py-2 rounded-lg font-bold brand-blue full-width
-ButtonStyle _btnPrimary() => ElevatedButton.styleFrom(
-  backgroundColor: _kBlue,
-  foregroundColor: Colors.white,
-  textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-  minimumSize: const Size(double.infinity, 48),
-  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-  elevation: 0,
-);
-
 // btn-outline — text-xs=12px px-3=12px py-1.5=6px rounded-md border-grey-300 text-grey-700
 ButtonStyle _btnOutline() => OutlinedButton.styleFrom(
   foregroundColor: _kGrey700,
@@ -531,14 +520,26 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
 
       const SizedBox(height: 24),
 
-      // ── Save button: full-width, 48px, solid blue ──
-      ElevatedButton(
-        onPressed: _saving ? null : _save,
-        style: _btnPrimary(),
-        child: _saving
-            ? const SizedBox(width: 18, height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-            : const Text('Hifadhi Mabadiliko'),
+      // ── Save button ──
+      Align(
+        alignment: Alignment.centerLeft,
+        child: ElevatedButton(
+          onPressed: _saving ? null : _save,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kBlue,
+            foregroundColor: Colors.white,
+            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            minimumSize: const Size(0, 0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: 0,
+          ),
+          child: _saving
+              ? const SizedBox(width: 16, height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Hifadhi Mabadiliko'),
+        ),
       ),
 
       const SizedBox(height: 60),
@@ -556,7 +557,7 @@ class _EditProfile extends StatefulWidget {
 }
 
 class _EditProfileState extends State<_EditProfile> {
-  late TextEditingController _nameCtrl, _phoneCtrl, _altCtrl, _curPwdCtrl, _newPwdCtrl;
+  late TextEditingController _nameCtrl, _phoneCtrl, _altCtrl;
 
   String _cadreCode = '';
   List<dynamic> _cadres = [];
@@ -575,8 +576,8 @@ class _EditProfileState extends State<_EditProfile> {
   Map<int, List<dynamic>> _destDistricts = {};
   final Map<int, List<dynamic>> _destFacilities = {};
 
-  bool _saving = false, _changingPwd = false;
-  String? _error, _pwdMsg;
+  bool _saving = false;
+  String? _error;
 
   String get _category => widget.profile['category'] as String? ?? '';
 
@@ -595,8 +596,6 @@ class _EditProfileState extends State<_EditProfile> {
     _nameCtrl = TextEditingController(text: widget.profile['full_name'] ?? '');
     _phoneCtrl = TextEditingController(text: widget.profile['phone_primary'] ?? '');
     _altCtrl = TextEditingController(text: widget.profile['phone_alt'] ?? '');
-    _curPwdCtrl = TextEditingController();
-    _newPwdCtrl = TextEditingController();
 
     _cadreCode = widget.profile['cadre_code'] as String? ?? '';
     _subjects = (widget.profile['subjects'] as List?)?.map((s) => s.toString()).toList() ?? [];
@@ -671,7 +670,6 @@ class _EditProfileState extends State<_EditProfile> {
   @override
   void dispose() {
     _nameCtrl.dispose(); _phoneCtrl.dispose(); _altCtrl.dispose();
-    _curPwdCtrl.dispose(); _newPwdCtrl.dispose();
     super.dispose();
   }
 
@@ -725,21 +723,6 @@ class _EditProfileState extends State<_EditProfile> {
     } catch (e) {
       setState(() { _saving = false; _error = _parseErr(e); });
     }
-  }
-
-  Future<void> _changePwd() async {
-    if (_newPwdCtrl.text.length < 6) {
-      setState(() => _pwdMsg = 'Nenosiri lazima liwe na herufi 6+');
-      return;
-    }
-    setState(() { _changingPwd = true; _pwdMsg = null; });
-    try {
-      await ApiService().changePassword(_curPwdCtrl.text, _newPwdCtrl.text);
-      if (mounted) setState(() { _pwdMsg = 'Password imebadilishwa ✓'; _curPwdCtrl.clear(); _newPwdCtrl.clear(); });
-    } catch (e) {
-      setState(() => _pwdMsg = _parseErr(e));
-    }
-    if (mounted) setState(() => _changingPwd = false);
   }
 
   void _addDest() => setState(() => _destinations.add({
@@ -911,70 +894,27 @@ class _EditProfileState extends State<_EditProfile> {
       ),
       const SizedBox(height: 24),
 
-      // ── Save button — full-width 48px ──
-      ElevatedButton(
-        onPressed: _saving ? null : _save,
-        style: _btnPrimary(),
-        child: _saving
-            ? const SizedBox(width: 18, height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-            : const Text('Hifadhi Mabadiliko'),
-      ),
-      const SizedBox(height: 20),
-
-      // ── Card 4: Password ──
-      _InfoCard(title: 'Badilisha Password', children: [
-        if (_pwdMsg != null) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: _pwdMsg!.startsWith('✓') || _pwdMsg!.contains('imebadilishwa')
-                  ? Colors.green.shade50 : const Color(0xFFFEF2F2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(_pwdMsg!, style: TextStyle(
-                fontSize: 13,
-                color: _pwdMsg!.startsWith('✓') || _pwdMsg!.contains('imebadilishwa')
-                    ? Colors.green.shade700 : _kRed))),
-          const SizedBox(height: 14),
-        ],
-
-        _label('Password ya sasa'),
-        TextField(
-          controller: _curPwdCtrl, obscureText: true,
-          style: const TextStyle(fontSize: 14),
-          decoration: _inputDec(),
-        ),
-        const SizedBox(height: 20),
-
-        _label('Password mpya (angalau herufi 6)'),
-        TextField(
-          controller: _newPwdCtrl, obscureText: true,
-          style: const TextStyle(fontSize: 14),
-          decoration: _inputDec(),
-        ),
-        const SizedBox(height: 16),
-
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: _changingPwd ? null : _changePwd,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _kBlue,
-              textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              side: const BorderSide(color: _kBlue),
-              minimumSize: const Size(double.infinity, 48),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: _changingPwd
-                ? const SizedBox(width: 18, height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Badilisha Password'),
+      // ── Save button ──
+      Align(
+        alignment: Alignment.centerLeft,
+        child: ElevatedButton(
+          onPressed: _saving ? null : _save,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kBlue,
+            foregroundColor: Colors.white,
+            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            minimumSize: const Size(0, 0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: 0,
           ),
+          child: _saving
+              ? const SizedBox(width: 16, height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Hifadhi Mabadiliko'),
         ),
-      ]),
+      ),
       const SizedBox(height: 60),
     ]);
   }
