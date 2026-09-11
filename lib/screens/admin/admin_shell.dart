@@ -324,16 +324,16 @@ class _AdminShellState extends State<AdminShell> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              _dropLink(Icons.dashboard_outlined,         'Admin',           null,                0,   counts, active: _pageIndex == 0),
-              _dropLink(Icons.people_outline,             'Watumiaji',       '/admin/users',      1,   counts, active: _pageIndex == 1),
-              _dropLink(Icons.swap_horiz,                 'Waliopata Wenzao', null,                10,  counts, active: _pageIndex == 10),
-              _dropLink(Icons.favorite_border,            'Match za Kweli',  '/admin/real-matches', 11, counts, active: _pageIndex == 11),
-              _dropLink(Icons.storage_outlined,           'Data',            null,                2,   counts, active: _pageIndex == 2),
-              _dropLink(Icons.campaign_outlined,          'Matangazo',       null,                6,   counts, active: _pageIndex == 6),
-              _dropLink(Icons.account_balance_wallet_outlined, 'Malipo',    '/admin/payments',   3,   counts, active: _pageIndex == 3),
-              _dropLink(Icons.phone_outlined,             'Waliopigiana',    null,                4,   counts, active: _pageIndex == 4),
-              _dropLink(Icons.assignment_outlined,        'Maoni',           '/admin/feedback',   5,   counts, active: _pageIndex == 5),
-              _dropLink(Icons.person_outline,             'Wasifu',          '/profile',          -1,  counts),
+              _dropLink('Admin',            null,                0,   counts, active: _pageIndex == 0,  svg: 'assets/icons/crown.svg'),
+              _dropLink('Watumiaji',        '/admin/users',      1,   counts, active: _pageIndex == 1,  svg: 'assets/icons/users.svg'),
+              _dropLink('Waliopata Wenzao', null,                10,  counts, active: _pageIndex == 10, svg: 'assets/icons/git-merge.svg'),
+              _dropLink('Match za Kweli',   '/admin/real-matches', 11, counts, active: _pageIndex == 11, svg: 'assets/icons/git-merge.svg'),
+              _dropLink('Data',             null,                2,   counts, active: _pageIndex == 2,  icon: Icons.storage_outlined),
+              _dropLink('Matangazo',        null,                6,   counts, active: _pageIndex == 6,  icon: Icons.campaign_outlined),
+              _dropLink('Malipo',           '/admin/payments',   3,   counts, active: _pageIndex == 3,  svg: 'assets/icons/wallet.svg'),
+              _dropLink('Waliopigiana',     null,                4,   counts, active: _pageIndex == 4,  icon: Icons.phone_outlined),
+              _dropLink('Maoni',            '/admin/feedback',   5,   counts, active: _pageIndex == 5,  svg: 'assets/icons/clipboard-list.svg'),
+              _dropLink('Wasifu',           '/profile',          -1,  counts, icon: Icons.person_outline),
             ]),
           ),
         ),
@@ -342,8 +342,8 @@ class _AdminShellState extends State<AdminShell> {
     Overlay.of(context).insert(_menuOverlay!);
   }
 
-  Widget _dropLink(IconData icon, String label, String? badgeRoute, int targetPageIdx,
-      Map<String, int> counts, {bool active = false}) {
+  Widget _dropLink(String label, String? badgeRoute, int targetPageIdx,
+      Map<String, int> counts, {bool active = false, IconData? icon, String? svg}) {
     final badge = badgeRoute != null ? (counts[badgeRoute] ?? 0) : 0;
     final color = active ? _kBlue : _kGrey700;
     return GestureDetector(
@@ -358,12 +358,19 @@ class _AdminShellState extends State<AdminShell> {
       behavior: HitTestBehavior.opaque,
       child: Container(
         width: double.infinity,
+        color: active ? _kBlue.withValues(alpha: 0.06) : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(children: [
-          Icon(icon, size: 18, color: color),
+          SizedBox(
+            width: 20, height: 20,
+            child: svg != null
+                ? SvgPicture.asset(svg, width: 18, height: 18,
+                    colorFilter: ColorFilter.mode(color, BlendMode.srcIn))
+                : Icon(icon ?? Icons.circle_outlined, size: 18, color: color),
+          ),
           const SizedBox(width: 12),
           Expanded(child: Text(label,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: color),
+            style: TextStyle(fontSize: 14, fontWeight: active ? FontWeight.w600 : FontWeight.w500, color: color),
             overflow: TextOverflow.ellipsis)),
           if (badge > 0) Container(
             width: 20, height: 20,

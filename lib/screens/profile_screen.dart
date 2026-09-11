@@ -14,25 +14,27 @@ const _kGrey50  = Color(0xFFF9FAFB); // brand-grey-50
 const _kGrey100 = Color(0xFFF3F4F6); // brand-grey-100
 const _kRed     = Color(0xFFDC2626); // brand-red
 const _kGold200 = Color(0xFFFDE68A); // brand-gold-200 (amber-200)
+const _kAmber   = Color(0xFFF59E0B); // amber-500
+const _kAmberLight = Color(0xFFFBBF24); // amber-400
 
 // .card = rounded-xl p-4 border border-grey-200 bg-white
 BoxDecoration _cardDec({Color? borderColor}) => BoxDecoration(
   color: Colors.white,
-  borderRadius: BorderRadius.circular(12),
+  borderRadius: BorderRadius.circular(14),
   border: Border.all(color: borderColor ?? _kGrey200),
-  boxShadow: [BoxShadow(color: const Color(0x0D000000), blurRadius: 2, offset: Offset(0, 1))],
+  boxShadow: [BoxShadow(color: const Color(0x14000000), blurRadius: 6, offset: Offset(0, 2))],
 );
 
 // .input = rounded-md border-grey-300 px-2.5=10 py-1.5=6 text-xs=12
 InputDecoration _inputDec({String? hint, bool disabled = false}) => InputDecoration(
   hintText: hint,
   isDense: true,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 2)),
-  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: disabled ? _kGrey200 : _kGrey300)),
-  hintStyle: const TextStyle(fontSize: 12, color: _kGrey500),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey300)),
+  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey300)),
+  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue, width: 2)),
+  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: disabled ? _kGrey200 : _kGrey300)),
+  hintStyle: const TextStyle(fontSize: 13, color: _kGrey500),
   filled: true,
   fillColor: disabled ? _kGrey100 : Colors.white,
 );
@@ -43,14 +45,14 @@ Widget _label(String text) => Padding(
   child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
 );
 
-// btn-primary — text-xs=12px px-3=12px py-1.5=6px rounded-md font-bold brand-blue
+// btn-primary — text-sm=14px px-4 py-2 rounded-lg font-bold brand-blue full-width
 ButtonStyle _btnPrimary() => ElevatedButton.styleFrom(
   backgroundColor: _kBlue,
   foregroundColor: Colors.white,
-  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-  minimumSize: const Size(0, 0),
+  textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  minimumSize: const Size(double.infinity, 48),
   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
   elevation: 0,
 );
@@ -64,6 +66,18 @@ ButtonStyle _btnOutline() => OutlinedButton.styleFrom(
   side: const BorderSide(color: _kGrey300),
   minimumSize: const Size(0, 0),
   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+);
+
+// btn-primary small (for app bar area)
+ButtonStyle _btnPrimarySmall() => ElevatedButton.styleFrom(
+  backgroundColor: _kBlue,
+  foregroundColor: Colors.white,
+  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+  minimumSize: const Size(0, 0),
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  elevation: 0,
 );
 
 class ProfileScreen extends StatefulWidget {
@@ -129,67 +143,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-                      // ── Header: title + edit/cancel button — kama web ──
-                      // web: flex items-center justify-between flex-wrap gap-2
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        Expanded(child: Row(children: [
-                          // text-2xl = 24px font-bold text-grey-900
-                          Text(isAdmin ? 'Wasifu wa Admin' : 'Wasifu Wangu',
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _kGrey900)),
-                          if (isAdmin) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF), // brand-blue-50
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(color: const Color(0xFFBFDBFE)), // brand-blue-200
-                              ),
-                              child: const Text('Admin',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)))),
-                          ],
-                        ])),
-                        const SizedBox(width: 8),
-                        if (!_editing)
-                          ElevatedButton(
-                            onPressed: () => setState(() => _editing = true),
-                            style: _btnPrimary(),
-                            child: const Text('Hariri'),
-                          )
-                        else
-                          OutlinedButton(
-                            onPressed: () => setState(() => _editing = false),
-                            style: _btnOutline(),
-                            child: const Text('Ghairi'),
-                          ),
-                      ]),
+                // ── Header: title + edit/cancel button ──
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Expanded(child: Text(
+                    isAdmin ? 'Wasifu wa Admin' : 'Wasifu Wangu',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _kGrey900),
+                  )),
+                  const SizedBox(width: 8),
+                  if (!_editing)
+                    ElevatedButton(
+                      onPressed: () => setState(() => _editing = true),
+                      style: _btnPrimarySmall(),
+                      child: const Text('Hariri'),
+                    )
+                  else
+                    OutlinedButton(
+                      onPressed: () => setState(() => _editing = false),
+                      style: _btnOutline(),
+                      child: const Text('Ghairi'),
+                    ),
+                ]),
 
-                      // ── Success message — bg-brand-blue-50 text-brand-blue text-sm rounded-lg p-3 ──
-                      if (_message != null) ...[
-                        const SizedBox(height: 16), // space-y-4
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF), // brand-blue-50
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(_message!, style: const TextStyle(color: _kBlue, fontSize: 14)),
-                        ),
-                      ],
-
-                      const SizedBox(height: 16), // space-y-4
-
-                      // ── Content: view or edit ──
-                      if (_editing)
-                        isAdmin
-                          ? _EditAdminProfile(profile: _profile!, onSaved: _onSaved)
-                          : _EditProfile(profile: _profile!, onSaved: _onSaved)
-                      else
-                        isAdmin ? _ViewAdmin(profile: _profile!) : _ViewUser(profile: _profile!),
-                    ]),
+                // ── Success message ──
+                if (_message != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(_message!, style: const TextStyle(color: _kBlue, fontSize: 14)),
                   ),
+                ],
+
+                const SizedBox(height: 20),
+
+                // ── Content: view or edit ──
+                if (_editing)
+                  isAdmin
+                    ? _EditAdminProfile(profile: _profile!, onSaved: _onSaved)
+                    : _EditProfile(profile: _profile!, onSaved: _onSaved)
+                else
+                  isAdmin ? _ViewAdmin(profile: _profile!) : _ViewUser(profile: _profile!),
+              ]),
+            ),
     );
   }
 }
@@ -198,15 +198,116 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class _ViewAdmin extends StatelessWidget {
   final Map<String, dynamic> profile;
   const _ViewAdmin({required this.profile});
+
   @override
   Widget build(BuildContext context) {
-    return _InfoCard(title: 'Utambulisho wa Admin', borderColor: _kGold200, rows: [
-      _InfoRow('Jina Kamili', profile['full_name']),
-      _InfoRow('Barua Pepe', profile['email']),
-      _InfoRow('Email imethibitishwa', profile['email_verified'] == true ? 'Ndiyo ✓' : 'Hapana'),
-      _InfoRow('Namba ya Simu', profile['phone_primary']),
-      _InfoRow('Wajibu', 'Administrator'),
-    ]);
+    final name = profile['full_name']?.toString() ?? '';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'A';
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // ── Avatar circle with gold gradient ──
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [_kAmber, _kAmberLight],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _kAmber.withValues(alpha: 0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              // small crown icon below avatar
+              const Icon(Icons.workspace_premium_rounded, size: 20, color: _kAmber),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── Name + subtitle ──
+        Text(
+          name,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _kGrey900),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Msimamizi',
+          style: TextStyle(fontSize: 13, color: _kGrey500),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 10),
+
+        // ── Admin badge pill ──
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7), // amber-100
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: _kAmberLight),
+            ),
+            child: const Text(
+              'Admin',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF92400E), // amber-800
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // ── Divider ──
+        const Divider(color: _kGrey200, height: 1),
+
+        const SizedBox(height: 20),
+
+        // ── Info card ──
+        _InfoCard(
+          title: 'Utambulisho wa Admin',
+          borderColor: _kGold200,
+          rows: [
+            _InfoRow('Jina Kamili', profile['full_name']),
+            _InfoRow('Barua Pepe', profile['email']),
+            _InfoRow('Namba ya Simu', profile['phone_primary']),
+            _InfoRow('Email Imethibitishwa', profile['email_verified'] == true ? 'Ndiyo' : 'Hapana'),
+            _InfoRow('Wajibu', 'Administrator'),
+          ],
+        ),
+
+        const SizedBox(height: 60),
+      ],
+    );
   }
 }
 
@@ -221,8 +322,58 @@ class _ViewUser extends StatelessWidget {
     final subjects = profile['subjects'] as List? ?? [];
     final cat = profile['category'] ?? '';
     final sector = profile['employment_sector'] ?? '';
+    final name = profile['full_name']?.toString() ?? '';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+
+      // ── Profile avatar ──
+      Center(
+        child: Column(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _kBlue,
+                boxShadow: [
+                  BoxShadow(
+                    color: _kBlue.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              name,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              cat == 'health' ? 'Sekta ya Afya' : cat == 'education' ? 'Sekta ya Elimu' : cat,
+              style: const TextStyle(fontSize: 13, color: _kGrey500),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+
+      const SizedBox(height: 20),
+
       // Card 1: Identity
       _InfoCard(title: 'Utambulisho', rows: [
         _InfoRow('Jina Kamili', profile['full_name']),
@@ -235,7 +386,7 @@ class _ViewUser extends StatelessWidget {
         _InfoRow('Kada', profile['cadre_display'] ?? profile['cadre_code'] ?? ''),
         if (subjects.isNotEmpty) _InfoRow('Masomo', subjects.join(', ')),
       ]),
-      const SizedBox(height: 16), // space-y-4
+      const SizedBox(height: 16),
 
       // Card 2: Station
       _InfoCard(title: 'Kituo cha Sasa', rows: [
@@ -328,51 +479,68 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       if (_error != null) _ErrBox(_error!),
-      _InfoCard(title: 'Utambulisho wa Admin', borderColor: _kGold200, children: [
-        // Jina
-        _label('Jina Kamili'),
-        TextField(controller: _nameCtrl, style: const TextStyle(fontSize: 12), decoration: _inputDec()),
-        const SizedBox(height: 12), // space-y-3
 
-        // Simu ya pili
-        _label('Simu ya pili'),
-        TextField(controller: _altCtrl, style: const TextStyle(fontSize: 12), decoration: _inputDec(hint: 'Hiari')),
-        const SizedBox(height: 12),
+      // ── Form card ──
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _cardDec(borderColor: _kGold200),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          // Card header
+          Row(children: const [
+            Icon(Icons.manage_accounts_rounded, size: 18, color: _kAmber),
+            SizedBox(width: 8),
+            Text('Utambulisho wa Admin',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: _kGrey900)),
+          ]),
+          const SizedBox(height: 20),
 
-        // Email (disabled)
-        _label('Barua Pepe'),
-        TextField(
-          controller: TextEditingController(text: widget.profile['email'] ?? ''),
-          enabled: false,
-          style: const TextStyle(fontSize: 12),
-          decoration: _inputDec(disabled: true),
-        ),
-        const SizedBox(height: 4),
-        const Text('Email haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
-            style: TextStyle(fontSize: 12, color: _kGrey500)),
-      ]),
-      const SizedBox(height: 16),
-
-      // Save button — btn-primary text-xs px-4=16px py-1.5=6px
-      Align(
-        alignment: Alignment.centerRight,
-        child: ElevatedButton(
-          onPressed: _saving ? null : _save,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _kBlue,
-            foregroundColor: Colors.white,
-            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-            minimumSize: const Size(0, 0),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            elevation: 0,
+          // Jina
+          _label('Jina Kamili'),
+          TextField(
+            controller: _nameCtrl,
+            style: const TextStyle(fontSize: 14),
+            decoration: _inputDec(hint: 'Jina lako kamili'),
           ),
-          child: _saving
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Hifadhi'),
-        ),
+          const SizedBox(height: 20),
+
+          // Simu ya pili
+          _label('Namba ya Simu (Pili / WhatsApp)'),
+          TextField(
+            controller: _altCtrl,
+            keyboardType: TextInputType.phone,
+            style: const TextStyle(fontSize: 14),
+            decoration: _inputDec(hint: 'Hiari'),
+          ),
+          const SizedBox(height: 20),
+
+          // Email (disabled)
+          _label('Barua Pepe'),
+          TextField(
+            controller: TextEditingController(text: widget.profile['email'] ?? ''),
+            enabled: false,
+            style: const TextStyle(fontSize: 14),
+            decoration: _inputDec(disabled: true),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Email haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
+            style: TextStyle(fontSize: 12, color: _kGrey500),
+          ),
+        ]),
       ),
+
+      const SizedBox(height: 24),
+
+      // ── Save button: full-width, 48px, solid blue ──
+      ElevatedButton(
+        onPressed: _saving ? null : _save,
+        style: _btnPrimary(),
+        child: _saving
+            ? const SizedBox(width: 18, height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            : const Text('Hifadhi Mabadiliko'),
+      ),
+
       const SizedBox(height: 60),
     ]);
   }
@@ -610,30 +778,30 @@ class _EditProfileState extends State<_EditProfile> {
       _InfoCard(title: 'Utambulisho', children: [
         // Jina
         _label('Jina Kamili'),
-        TextField(controller: _nameCtrl, style: const TextStyle(fontSize: 12), decoration: _inputDec()),
-        const SizedBox(height: 12), // space-y-3
+        TextField(controller: _nameCtrl, style: const TextStyle(fontSize: 14), decoration: _inputDec()),
+        const SizedBox(height: 20),
 
         // Simu ya kawaida
         _label('Namba ya Simu (Normal)'),
         TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone,
-            style: const TextStyle(fontSize: 12), decoration: _inputDec()),
-        const SizedBox(height: 12),
+            style: const TextStyle(fontSize: 14), decoration: _inputDec()),
+        const SizedBox(height: 20),
 
         // WhatsApp
-        _label('🟢 Namba ya WhatsApp *'),
+        _label('Namba ya WhatsApp *'),
         TextField(controller: _altCtrl, keyboardType: TextInputType.phone,
-            style: const TextStyle(fontSize: 12), decoration: _inputDec(hint: '0623456789')),
+            style: const TextStyle(fontSize: 14), decoration: _inputDec(hint: '0623456789')),
 
         // Kada
         if (_cadres.isNotEmpty) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           _label('Kada'),
           _DropInput<String>(
             value: _cadres.any((c) => c['code'] == _cadreCode) ? _cadreCode : null,
             hint: '— Chagua Kada —',
             items: _cadres.map((c) => DropdownMenuItem<String>(
               value: c['code'] as String,
-              child: Text(c['display_name'] ?? c['code'] ?? '', style: const TextStyle(fontSize: 12)))).toList(),
+              child: Text(c['display_name'] ?? c['code'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
             onChanged: (v) {
               setState(() { _cadreCode = v ?? ''; _subjects = []; _availSubjects = []; });
               if (_subjectLevel != null) _loadSubjects(_subjectLevel!);
@@ -643,10 +811,9 @@ class _EditProfileState extends State<_EditProfile> {
 
         // Masomo (kama kada ina level)
         if (_subjectLevel != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           _label('Masomo ($_subjectLevel)'),
           if (_loadingSubjects)
-            // Loader2 + "Inapakia..." kama web
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
@@ -657,7 +824,6 @@ class _EditProfileState extends State<_EditProfile> {
               ]),
             )
           else
-            // flex flex-wrap gap-1.5 max-h-44 overflow-y-auto
             Wrap(spacing: 6, runSpacing: 6, children: _availSubjects.map((s) {
               final code = (s['code'] ?? s['name'] ?? '').toString();
               final name = (s['name'] ?? code).toString();
@@ -665,7 +831,6 @@ class _EditProfileState extends State<_EditProfile> {
               return GestureDetector(
                 onTap: () => setState(() => selected ? _subjects.remove(code) : _subjects.add(code)),
                 child: Container(
-                  // px-3=12 py-1.5=6 rounded-lg=8 text-xs=12 font-medium
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: selected ? _kBlue : Colors.white,
@@ -673,7 +838,7 @@ class _EditProfileState extends State<_EditProfile> {
                     border: Border.all(color: selected ? _kBlue : _kGrey300),
                   ),
                   child: Text(name, style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: selected ? Colors.white : _kGrey700,
                   )),
@@ -692,13 +857,13 @@ class _EditProfileState extends State<_EditProfile> {
           hint: '— Chagua Mkoa —',
           items: _regions.map((r) => DropdownMenuItem<int>(
             value: r['id'] as int,
-            child: Text(r['name'] ?? '', style: const TextStyle(fontSize: 12)))).toList(),
+            child: Text(r['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
           onChanged: (v) {
             setState(() { _stationRegionId = v; _stationDistrictId = null; _stationFacilityId = null; _stationDistricts = []; _stationFacilities = []; });
             if (v != null) ApiService().getDistricts(v).then((r) { if (mounted) setState(() => _stationDistricts = _asList(r.data)); }).catchError((_) {});
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
 
         _label('Wilaya'),
         _DropInput<int>(
@@ -706,13 +871,13 @@ class _EditProfileState extends State<_EditProfile> {
           hint: '— Chagua Wilaya —',
           items: _stationDistricts.map((d) => DropdownMenuItem<int>(
             value: d['id'] as int,
-            child: Text(d['name'] ?? '', style: const TextStyle(fontSize: 12)))).toList(),
+            child: Text(d['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
           onChanged: (v) {
             setState(() { _stationDistrictId = v; _stationFacilityId = null; _stationFacilities = []; });
             if (v != null) ApiService().getFacilities(v, category: _category).then((r) { if (mounted) setState(() => _stationFacilities = _asList(r.data)); }).catchError((_) {});
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
 
         _label(_category == 'health' ? 'Hospitali/Kituo (hiari)' : 'Shule (hiari)'),
         _DropInput<String>(
@@ -722,7 +887,7 @@ class _EditProfileState extends State<_EditProfile> {
             final id = (f['id'] ?? f['code']).toString();
             final name = f['name'] as String? ?? id;
             final type = f['type'] as String? ?? '';
-            return DropdownMenuItem<String>(value: id, child: Text(type.isNotEmpty ? '$name ($type)' : name, style: const TextStyle(fontSize: 12)));
+            return DropdownMenuItem<String>(value: id, child: Text(type.isNotEmpty ? '$name ($type)' : name, style: const TextStyle(fontSize: 13)));
           }).toList(),
           onChanged: _stationDistrictId == null ? null : (v) => setState(() => _stationFacilityId = v),
         ),
@@ -734,7 +899,6 @@ class _EditProfileState extends State<_EditProfile> {
         title: 'Ninataka Kwenda',
         trailing: GestureDetector(
           onTap: _addDest,
-          // text-brand-blue text-sm=14px
           child: const Text('+ Ongeza', style: TextStyle(fontSize: 14, color: _kBlue)),
         ),
         children: [
@@ -745,56 +909,43 @@ class _EditProfileState extends State<_EditProfile> {
             for (int i = 0; i < _destinations.length; i++) _buildDestRow(i),
         ],
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 24),
 
-      // ── Save button — btn-primary text-xs px-4=16px py-1.5=6px ──
-      Align(
-        alignment: Alignment.centerRight,
-        child: ElevatedButton(
-          onPressed: _saving ? null : _save,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _kBlue,
-            foregroundColor: Colors.white,
-            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-            minimumSize: const Size(0, 0),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            elevation: 0,
-          ),
-          child: _saving
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Hifadhi Mabadiliko'),
-        ),
+      // ── Save button — full-width 48px ──
+      ElevatedButton(
+        onPressed: _saving ? null : _save,
+        style: _btnPrimary(),
+        child: _saving
+            ? const SizedBox(width: 18, height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            : const Text('Hifadhi Mabadiliko'),
       ),
       const SizedBox(height: 20),
 
-      // ── Card 4: Password — space-y-2.5 inside ──
-      _InfoCard(title: '🔑 Badilisha Password', children: [
-        // pwd success/error message
+      // ── Card 4: Password ──
+      _InfoCard(title: 'Badilisha Password', children: [
         if (_pwdMsg != null) ...[
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // px-2.5=10 py-1.5=6
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: _pwdMsg!.startsWith('✓') || _pwdMsg!.contains('imebadilishwa')
                   ? Colors.green.shade50 : const Color(0xFFFEF2F2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(_pwdMsg!, style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: _pwdMsg!.startsWith('✓') || _pwdMsg!.contains('imebadilishwa')
                     ? Colors.green.shade700 : _kRed))),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
         ],
 
-        // Password ya sasa — input !py-1.5 text-sm=14px (overrides text-xs)
         _label('Password ya sasa'),
         TextField(
           controller: _curPwdCtrl, obscureText: true,
-          style: const TextStyle(fontSize: 14), // text-sm
+          style: const TextStyle(fontSize: 14),
           decoration: _inputDec(),
         ),
-        const SizedBox(height: 10), // space-y-2.5 ≈ 10px
+        const SizedBox(height: 20),
 
         _label('Password mpya (angalau herufi 6)'),
         TextField(
@@ -802,23 +953,26 @@ class _EditProfileState extends State<_EditProfile> {
           style: const TextStyle(fontSize: 14),
           decoration: _inputDec(),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
-        // Badilisha button — text-xs=12px px-3=12px py-1.5=6px rounded-lg border-brand-blue text-brand-blue
-        OutlinedButton(
-          onPressed: _changingPwd ? null : _changePwd,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: _kBlue,
-            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            side: const BorderSide(color: _kBlue),
-            minimumSize: const Size(0, 0),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _changingPwd ? null : _changePwd,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _kBlue,
+              textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              side: const BorderSide(color: _kBlue),
+              minimumSize: const Size(double.infinity, 48),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: _changingPwd
+                ? const SizedBox(width: 18, height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Badilisha Password'),
           ),
-          child: _changingPwd
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Badilisha Password'),
         ),
       ]),
       const SizedBox(height: 60),
@@ -834,12 +988,12 @@ class _EditProfileState extends State<_EditProfile> {
     final facilityList = districtId != null ? (_destFacilities[districtId] ?? []) : <dynamic>[];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8), // space-y-2
-      // p-3=12px rounded-xl=12px bg-brand-grey-50 — NO border (web doesn't have border)
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _kGrey50,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _kGrey200),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         // Region select + delete button
@@ -850,7 +1004,7 @@ class _EditProfileState extends State<_EditProfile> {
               hint: '— Chagua Mkoa —',
               items: _regions.map((r) => DropdownMenuItem<int>(
                 value: r['id'] as int,
-                child: Text(r['name'] ?? '', style: const TextStyle(fontSize: 12)))).toList(),
+                child: Text(r['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
               onChanged: (v) {
                 if (v == null) return;
                 final r = _regions.firstWhere((r) => r['id'] == v, orElse: () => null);
@@ -858,25 +1012,29 @@ class _EditProfileState extends State<_EditProfile> {
               },
             ),
           ),
-          // Delete: text-brand-red text-sm px-2 kama web
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () => _delDest(i),
-            child: const Padding(
-              padding: EdgeInsets.only(left: 8),
-              child: Text('✕', style: TextStyle(color: _kRed, fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.close_rounded, color: _kRed, size: 16),
             ),
           ),
         ]),
 
         // Wilaya select
         if (regionId > 0) ...[
-          const SizedBox(height: 8), // space-y-2
+          const SizedBox(height: 10),
           _DropInput<int>(
             value: districtId != null && districtList.any((x) => x['id'] == districtId) ? districtId : null,
             hint: 'Wilaya yoyote',
             items: districtList.map((x) => DropdownMenuItem<int>(
               value: x['id'] as int,
-              child: Text(x['name'] ?? '', style: const TextStyle(fontSize: 12)))).toList(),
+              child: Text(x['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
             onChanged: (v) => _updateDest(i, {
               'district_id': v,
               'district_name': v != null ? (districtList.firstWhere((x) => x['id'] == v, orElse: () => null)?['name']) : null,
@@ -888,7 +1046,7 @@ class _EditProfileState extends State<_EditProfile> {
 
         // Facility select
         if (districtId != null && facilityList.isNotEmpty) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           _DropInput<String>(
             value: facilityId != null && facilityList.any((f) => (f['id'] ?? f['code']).toString() == facilityId) ? facilityId : null,
             hint: _category == 'health' ? 'Hospitali/Kituo chote' : 'Shule zote',
@@ -896,7 +1054,7 @@ class _EditProfileState extends State<_EditProfile> {
               final fid = (f['id'] ?? f['code']).toString();
               final fname = f['name'] as String? ?? fid;
               final ftype = f['type'] as String? ?? '';
-              return DropdownMenuItem<String>(value: fid, child: Text(ftype.isNotEmpty ? '$fname ($ftype)' : fname, style: const TextStyle(fontSize: 12)));
+              return DropdownMenuItem<String>(value: fid, child: Text(ftype.isNotEmpty ? '$fname ($ftype)' : fname, style: const TextStyle(fontSize: 13)));
             }).toList(),
             onChanged: (v) {
               final fac = v != null ? facilityList.firstWhere((f) => (f['id'] ?? f['code']).toString() == v, orElse: () => null) : null;
@@ -923,16 +1081,15 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16), // p-4 = 16px
+      padding: const EdgeInsets.all(16),
       decoration: _cardDec(borderColor: borderColor),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          // font-bold text-grey-900
           Expanded(child: Text(title,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kGrey900))),
           ?trailing,
         ]),
-        const SizedBox(height: 12), // mb-3 = 12px
+        const SizedBox(height: 12),
         if (rows != null) ...rows!.where((r) {
           final v = r.value?.toString() ?? '';
           return v.isNotEmpty;
@@ -943,7 +1100,7 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-// Row widget: flex justify-between gap-4, label=grey-500 text-sm, value=grey-900 font-medium
+// Row widget: label=grey-500 12px, value=grey-900 14px, divider between rows
 class _InfoRow extends StatelessWidget {
   final String label;
   final dynamic value;
@@ -953,24 +1110,27 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = value?.toString() ?? '';
     if (v.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      // space-y-2 = 8px between rows
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // text-brand-grey-500 — label (flexible, kama web justify-between)
-        Expanded(
-          flex: 2,
-          child: Text('$label:', style: const TextStyle(fontSize: 14, color: _kGrey500)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(
+              flex: 2,
+              child: Text('$label:', style: const TextStyle(fontSize: 12, color: _kGrey500)),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 3,
+              child: Text(v,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _kGrey900)),
+            ),
+          ]),
         ),
-        const SizedBox(width: 16), // gap-4 = 16px
-        // font-medium text-grey-900 text-right
-        Expanded(
-          flex: 3,
-          child: Text(v,
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _kGrey900)),
-        ),
-      ]),
+        const Divider(color: _kGrey200, height: 1),
+      ],
     );
   }
 }
@@ -983,9 +1143,9 @@ class _ErrBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12), // p-3 = 12px
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2), // bg-red-50
+        color: const Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(message, style: const TextStyle(color: _kRed, fontSize: 14)),
@@ -993,7 +1153,7 @@ class _ErrBox extends StatelessWidget {
   }
 }
 
-// Dropdown styled like .input: rounded-md=6px border-grey-300 px-2.5=10 py-1.5=6 text-xs=12
+// Dropdown styled like .input
 class _DropInput<T> extends StatelessWidget {
   final T? value;
   final String hint;
@@ -1008,16 +1168,16 @@ class _DropInput<T> extends StatelessWidget {
       isExpanded: true,
       decoration: InputDecoration(
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 2)),
-        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey300)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey300)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue, width: 2)),
+        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
         filled: true,
         fillColor: Colors.white,
       ),
-      hint: Text(hint, style: const TextStyle(fontSize: 12, color: _kGrey500)),
-      style: const TextStyle(fontSize: 12, color: _kGrey900),
+      hint: Text(hint, style: const TextStyle(fontSize: 13, color: _kGrey500)),
+      style: const TextStyle(fontSize: 13, color: _kGrey900),
       items: items,
       onChanged: onChanged,
     );

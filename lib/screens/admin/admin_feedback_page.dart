@@ -29,7 +29,7 @@ const _kOrange50  = Color(0xFFFFF7ED);
 const _kOrange200 = Color(0xFFFED7AA);
 const _kOrange700 = Color(0xFFC2410C);
 
-const _kPageSize = 3;
+const _kPageSize = 8;
 
 // ── Main page ──────────────────────────────────────────────────────────────
 class AdminFeedbackPage extends StatefulWidget {
@@ -192,16 +192,23 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header ──
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        // ── Header with gradient background bar ──
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFEFF6FF), Colors.white],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
           child: Row(children: [
             Container(
-              width: 40, height: 40,
+              width: 44, height: 44,
               decoration: BoxDecoration(
                   color: _kBlue50, borderRadius: BorderRadius.circular(10)),
               child: const Center(
-                  child: Icon(Icons.assignment_outlined, size: 20, color: _kBlue)),
+                  child: Icon(Icons.assignment_outlined, size: 24, color: _kBlue)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -209,7 +216,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                 Text(
                   'Maoni${totalCount > 0 ? " ($totalCount)" : ""}',
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900),
+                      fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900),
                 ),
                 const Text('Maoni na malalamiko ya watumiaji',
                     style: TextStyle(fontSize: 12, color: _kGrey500)),
@@ -217,17 +224,16 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
             ),
           ]),
         ),
-        const SizedBox(height: 12),
 
         // ── Stats summary row ──
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(children: [
-            _StatPill(label: 'Zote', count: totalCount, color: _kBlue),
+            _StatPill(label: 'Zote',      count: totalCount,   color: _kBlue,    icon: Icons.inbox),
             const SizedBox(width: 8),
-            _StatPill(label: 'Wazi', count: openCount, color: _kAmber700),
+            _StatPill(label: 'Wazi',      count: openCount,    color: _kAmber700, icon: Icons.mark_email_unread),
             const SizedBox(width: 8),
-            _StatPill(label: 'Imejibiwa', count: repliedCount, color: _kGreen700),
+            _StatPill(label: 'Imejibiwa', count: repliedCount, color: _kGreen700, icon: Icons.mark_email_read),
           ]),
         ),
         const SizedBox(height: 10),
@@ -248,20 +254,20 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
         ),
         const SizedBox(height: 10),
 
-        // ── Search box ──
+        // ── Search box (48px, subtle shadow) ──
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Container(
-            height: 44,
+            height: 48,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: _kGrey200),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1)),
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2)),
               ],
             ),
             child: Row(children: [
@@ -279,7 +285,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     hintStyle: TextStyle(fontSize: 13, color: _kGrey400),
                     border: InputBorder.none,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
               ),
@@ -392,21 +398,24 @@ class _StatPill extends StatelessWidget {
   final String label;
   final int count;
   final Color color;
-  const _StatPill({required this.label, required this.count, required this.color});
+  final IconData icon;
+  const _StatPill({required this.label, required this.count, required this.color, required this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(children: [
+        Icon(icon, size: 13, color: color.withValues(alpha: 0.8)),
+        const SizedBox(width: 5),
         Text('$count',
             style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+                fontSize: 16, fontWeight: FontWeight.bold, color: color)),
         const SizedBox(width: 4),
         Text(label,
             style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.8))),
@@ -434,7 +443,7 @@ class _Chip extends StatelessWidget {
       onTap: () => onTap(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: 32,
+        height: 36,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: active ? _kBlue : Colors.white,
@@ -678,18 +687,18 @@ class _FeedbackCardState extends State<_FeedbackCard> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
             color: hasReply ? _kGreen200 : _kGrey200, width: hasReply ? 1.5 : 1),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2)),
+              color: Color(0x0A000000),
+              blurRadius: 12,
+              offset: Offset(0, 3)),
         ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-        // ── Card top accent bar (status indicator) ──
+        // ── Card top accent bar (4px) ──
         Container(
-          height: 3,
+          height: 4,
           decoration: BoxDecoration(
             color: hasReply ? _kGreen700 : _kAmber700,
             borderRadius: const BorderRadius.only(
@@ -703,7 +712,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
 
             // ── Row 1: Avatar + name/phone + badges + delete ──
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // Avatar
+              // Avatar (44x44)
               Container(
                 width: 44, height: 44,
                 decoration: BoxDecoration(
@@ -832,32 +841,49 @@ class _FeedbackCardState extends State<_FeedbackCard> {
               ),
             ]),
 
-            // ── Admin reply display ──
+            // ── Admin reply display — blue-50 bg with left accent bar ──
             if (hasReply) ...[
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _kBlue50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Left 3px blue accent bar
+                    Container(
+                      width: 3,
+                      decoration: BoxDecoration(
+                        color: _kBlue,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _kBlue50,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          const Row(children: [
+                            Icon(Icons.verified_user_outlined, size: 13, color: _kBlue),
+                            SizedBox(width: 5),
+                            Text('JIBU LA ADMIN',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: _kBlue,
+                                    letterSpacing: 0.8)),
+                          ]),
+                          const SizedBox(height: 6),
+                          Text(adminReply.toString(),
+                              style: const TextStyle(
+                                  fontSize: 13, color: _kGrey700, height: 1.5)),
+                        ]),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Row(children: [
-                    Icon(Icons.verified_user_outlined, size: 13, color: _kBlue),
-                    SizedBox(width: 5),
-                    Text('JIBU LA ADMIN',
-                        style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: _kBlue,
-                            letterSpacing: 0.8)),
-                  ]),
-                  const SizedBox(height: 6),
-                  Text(adminReply.toString(),
-                      style: const TextStyle(
-                          fontSize: 13, color: _kGrey700, height: 1.5)),
-                ]),
               ),
             ],
 
@@ -866,18 +892,18 @@ class _FeedbackCardState extends State<_FeedbackCard> {
             if (!_showReply && !hasReply)
               SizedBox(
                 width: double.infinity,
-                child: TextButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: () => setState(() => _showReply = true),
-                  icon: const Icon(Icons.reply, size: 16),
+                  icon: const Icon(Icons.reply_rounded, size: 18),
                   label: const Text('Jibu Maoni',
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  style: TextButton.styleFrom(
+                  style: OutlinedButton.styleFrom(
                     foregroundColor: _kBlue,
                     backgroundColor: _kBlue50,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: const BorderSide(color: Color(0xFFBFDBFE)),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: Color(0xFFBFDBFE))),
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               )

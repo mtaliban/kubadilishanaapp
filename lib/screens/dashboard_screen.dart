@@ -21,8 +21,7 @@ const _kFreshMs = 30; // dakika — MPYA badge
 String _initials(String name) {
   final parts = name.trim().split(' ').where((w) => w.isNotEmpty).toList();
   if (parts.isEmpty) return 'M';
-  if (parts.length == 1) return parts[0][0].toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return parts[0][0].toUpperCase();
 }
 
 String _timeAgo(String? isoDate) {
@@ -1199,7 +1198,7 @@ class _FiltersBar extends StatelessWidget {
           Wrap(spacing: 6, runSpacing: 6, children: [
             for (final entry in [
               ('off', 'Wote'),
-              ('all', 'Yote mawili'),
+              ('all', 'Masomo yote mawili'),
               ('any', 'Somo moja'),
               ('none', 'Wasio match'),
             ])

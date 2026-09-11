@@ -24,7 +24,7 @@ const _kEmerald50  = Color(0xFFECFDF5);
 const _kEmerald200 = Color(0xFFA7F3D0);
 const _kEmerald700 = Color(0xFF047857);
 
-const _kPageSize = 20;
+const _kPageSize = 15;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -180,7 +180,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
       color: Colors.white,
       child: Row(
         children: [
-          // Icon box
+          // Icon box — blue, phone icon
           Container(
             width: 40, height: 40,
             decoration: BoxDecoration(
@@ -188,7 +188,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Center(
-              child: Icon(Icons.trending_up, size: 20, color: _kBlue),
+              child: Icon(Icons.phone_outlined, size: 20, color: _kBlue),
             ),
           ),
           const SizedBox(width: 12),
@@ -208,7 +208,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
               ],
             ),
           ),
-          // LIVE badge
+          // Smaller LIVE badge
           if (!_loading) _buildLiveBadge(),
         ],
       ),
@@ -217,7 +217,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
 
   Widget _buildLiveBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: _kGreen50,
         borderRadius: BorderRadius.circular(20),
@@ -227,11 +227,11 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 7, height: 7,
+            width: 6, height: 6,
             decoration: const BoxDecoration(color: _kGreen600, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 5),
-          const Text('LIVE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kGreen600)),
+          const SizedBox(width: 4),
+          const Text('LIVE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGreen600)),
         ],
       ),
     );
@@ -306,7 +306,8 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
       onTap: () => _setFilter(filter),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
         decoration: BoxDecoration(
           color:        active ? activeBg   : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -317,8 +318,9 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 14, color: active ? activeText : _kGrey500),
+            Icon(icon, size: 16, color: active ? activeText : _kGrey500),
             const SizedBox(width: 5),
             Text(
               label,
@@ -395,17 +397,21 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
 
   // ── Contact card ───────────────────────────────────────────────────────────
 
-  /// Returns icon, background color, border color, and text color for a type.
-  ({IconData icon, Color bg, Color border, Color fg}) _typeStyle(String? type) {
+  /// Returns icon, background color, border color, text color, and top bar color for a type.
+  ({IconData icon, Color bg, Color border, Color fg, Color topBar}) _typeStyle(String? type) {
     switch (type) {
       case 'call':
-        return (icon: Icons.phone, bg: _kGreen50, border: _kGreen200, fg: _kGreen700);
+        return (icon: Icons.phone, bg: _kGreen50, border: _kGreen200, fg: _kGreen700,
+            topBar: _kGreen600);
       case 'sms':
-        return (icon: Icons.chat_bubble, bg: _kBlue50, border: _kBlue200, fg: _kBlue);
+        return (icon: Icons.chat_bubble, bg: _kBlue50, border: _kBlue200, fg: _kBlue,
+            topBar: _kBlue);
       case 'whatsapp':
-        return (icon: Icons.chat_bubble_outline, bg: _kEmerald50, border: _kEmerald200, fg: _kEmerald700);
+        return (icon: Icons.chat_bubble_outline, bg: _kEmerald50, border: _kEmerald200,
+            fg: _kEmerald700, topBar: const Color(0xFF16A34A));
       default:
-        return (icon: Icons.contact_phone, bg: _kGrey100, border: _kGrey300, fg: _kGrey700);
+        return (icon: Icons.contact_phone, bg: _kGrey100, border: _kGrey300, fg: _kGrey700,
+            topBar: _kGrey400);
     }
   }
 
@@ -435,120 +441,172 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
           BoxShadow(color: Color(0x08000000), blurRadius: 6, offset: Offset(0, 2)),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Top row: type icon circle + from→to + badge ──────────────────
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Thick colored top bar ────────────────────────────────────────
+          Container(
+            height: 5,
+            decoration: BoxDecoration(
+              color: style.topBar,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Contact type icon circle
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: style.bg,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: style.border),
-                  ),
-                  child: Icon(style.icon, size: 20, color: style.fg),
-                ),
-                const SizedBox(width: 12),
-
-                // From → To flow
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // From person
-                      _nameBlock(
-                        name: fromName,
-                        phone: fromPhone,
-                        sub: [fromCat, fromCadre].where((s) => s.isNotEmpty).join(' · '),
-                      ),
-
-                      // Arrow
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Row(
-                          children: [
-                            Icon(Icons.arrow_downward, size: 13, color: style.fg.withAlpha(130)),
-                            const SizedBox(width: 4),
-                            Text(
-                              'kwenda',
-                              style: TextStyle(fontSize: 10, color: style.fg.withAlpha(150)),
+                // ── Top row: type icon circle + from→to + badge ──────────────
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // From → To flow with vertical connector line
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Left: icon circle
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: style.bg,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: style.border),
                             ),
-                          ],
-                        ),
-                      ),
+                            child: Icon(style.icon, size: 20, color: style.fg),
+                          ),
+                          const SizedBox(width: 12),
 
-                      // To person
-                      _nameBlock(
-                        name: toName,
-                        phone: toPhone,
-                        sub: [toCat, toCadre].where((s) => s.isNotEmpty).join(' · '),
+                          // Center: from-person, connector, to-person
+                          Expanded(
+                            child: IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Thin vertical connector line with dotted appearance
+                                  Column(
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      Expanded(
+                                        child: Container(
+                                          width: 1,
+                                          decoration: BoxDecoration(
+                                            color: style.fg.withAlpha(60),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 10),
+
+                                  // Names column
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // From person
+                                        _nameBlock(
+                                          name: fromName,
+                                          phone: fromPhone,
+                                          sub: [fromCat, fromCadre].where((s) => s.isNotEmpty).join(' · '),
+                                        ),
+
+                                        // "kwenda" label between them
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 5),
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.arrow_downward, size: 12, color: style.fg.withAlpha(130)),
+                                              const SizedBox(width: 3),
+                                              Text(
+                                                'kwenda',
+                                                style: TextStyle(fontSize: 10, color: style.fg.withAlpha(150)),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        // To person
+                                        _nameBlock(
+                                          name: toName,
+                                          phone: toPhone,
+                                          sub: [toCat, toCadre].where((s) => s.isNotEmpty).join(' · '),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // Right column: type badge (top-right) + index
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _typeBadge(type, style),
+                        const SizedBox(height: 6),
+                        Text(
+                          '#$index',
+                          style: const TextStyle(fontSize: 10, color: _kGrey400),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                // ── Divider + bottom meta row ────────────────────────────────
+                const SizedBox(height: 10),
+                const Divider(height: 1, thickness: 1, color: _kGrey100),
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    // Date/time
+                    const Icon(Icons.access_time_outlined, size: 12, color: _kGrey400),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        timeStr,
+                        style: const TextStyle(fontSize: 11, color: _kGrey500),
+                      ),
+                    ),
+
+                    // Regions (when present)
+                    if (fromRegion.isNotEmpty || toRegion.isNotEmpty) ...[
+                      const Icon(Icons.location_on_outlined, size: 12, color: _kGrey400),
+                      const SizedBox(width: 3),
+                      Text(
+                        fromRegion.isNotEmpty ? fromRegion : '—',
+                        style: const TextStyle(fontSize: 11, color: _kGrey500),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(Icons.arrow_forward, size: 11, color: _kGrey300),
+                      ),
+                      Text(
+                        toRegion.isNotEmpty ? toRegion : '—',
+                        style: const TextStyle(fontSize: 11, color: _kGrey500),
                       ),
                     ],
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                // Right column: badge + index
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _typeBadge(type, style),
-                    const SizedBox(height: 6),
-                    Text(
-                      '#$index',
-                      style: const TextStyle(fontSize: 10, color: _kGrey400),
-                    ),
                   ],
                 ),
               ],
             ),
-
-            // ── Divider + bottom meta row ────────────────────────────────────
-            const SizedBox(height: 10),
-            const Divider(height: 1, thickness: 1, color: _kGrey100),
-            const SizedBox(height: 8),
-
-            Row(
-              children: [
-                // Date/time
-                const Icon(Icons.access_time_outlined, size: 12, color: _kGrey400),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    timeStr,
-                    style: const TextStyle(fontSize: 11, color: _kGrey500),
-                  ),
-                ),
-
-                // Regions (when present)
-                if (fromRegion.isNotEmpty || toRegion.isNotEmpty) ...[
-                  const Icon(Icons.location_on_outlined, size: 12, color: _kGrey400),
-                  const SizedBox(width: 3),
-                  Text(
-                    fromRegion.isNotEmpty ? fromRegion : '—',
-                    style: const TextStyle(fontSize: 11, color: _kGrey500),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Icon(Icons.arrow_forward, size: 11, color: _kGrey300),
-                  ),
-                  Text(
-                    toRegion.isNotEmpty ? toRegion : '—',
-                    style: const TextStyle(fontSize: 11, color: _kGrey500),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -594,10 +652,10 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
 
   Widget _typeBadge(
     String? type,
-    ({IconData icon, Color bg, Color border, Color fg}) style,
+    ({IconData icon, Color bg, Color border, Color fg, Color topBar}) style,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: style.bg,
         borderRadius: BorderRadius.circular(20),
@@ -606,7 +664,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(style.icon, size: 11, color: style.fg),
+          Icon(style.icon, size: 12, color: style.fg),
           const SizedBox(width: 4),
           Text(
             _typeName(type),
@@ -731,19 +789,26 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
   Widget _buildEmpty() {
     return ListView(
       children: [
-        const SizedBox(height: 60),
+        const SizedBox(height: 80),
         Center(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 56, height: 56,
-                decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
-                child: const Icon(Icons.phone_missed_outlined, size: 28, color: _kGrey400),
+                width: 64, height: 64,
+                decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+                child: const Icon(Icons.phone_missed_outlined, size: 32, color: _kGrey400),
               ),
-              const SizedBox(height: 12),
-              const Text('Hakuna mawasiliano', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _kGrey700)),
-              const SizedBox(height: 4),
-              const Text('Jaribu kubadilisha kichujio au utafutaji', style: TextStyle(fontSize: 12, color: _kGrey400)),
+              const SizedBox(height: 16),
+              const Text(
+                'Hakuna mawasiliano',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _kGrey700),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Jaribu kubadilisha kichujio au utafutaji',
+                style: TextStyle(fontSize: 12, color: _kGrey400),
+              ),
             ],
           ),
         ),
