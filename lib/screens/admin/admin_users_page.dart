@@ -506,16 +506,23 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         // ── HEADER ───────────────────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Row(children: [
-            Expanded(
-              child: Row(children: [
-                Text('Watumiaji', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _kGrey900)),
-                const SizedBox(width: 8),
-                _LiveBadge(live: _live),
-              ]),
-            ),
-            // Action buttons
-            Row(mainAxisSize: MainAxisSize.min, children: [
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Row 1: title + primary action
+            Row(children: [
+              Text('Watumiaji', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _kGrey900)),
+              const SizedBox(width: 8),
+              _LiveBadge(live: _live),
+              const Spacer(),
+              _PillBtn(
+                label: '+ Ongeza',
+                icon: Icons.person_add_outlined,
+                onTap: () => _showCreateDialog(),
+                primary: true,
+              ),
+            ]),
+            const SizedBox(height: 8),
+            // Row 2: secondary actions
+            Wrap(spacing: 6, runSpacing: 6, children: [
               _PillBtn(
                 label: 'Trash${_trashTotal > 0 ? ' ($_trashTotal)' : ''}',
                 icon: Icons.delete_outline,
@@ -523,20 +530,11 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 active: _showTrash,
                 danger: _showTrash,
               ),
-              const SizedBox(width: 6),
               _PillBtn(
                 label: '+ Admin',
                 icon: Icons.shield_outlined,
                 onTap: () => _showAddAdminDialog(),
               ),
-              const SizedBox(width: 6),
-              _PillBtn(
-                label: '+ Ongeza',
-                icon: Icons.person_add_outlined,
-                onTap: () => _showCreateDialog(),
-                primary: true,
-              ),
-              const SizedBox(width: 6),
               _PillBtn(
                 label: 'Import',
                 icon: Icons.download_outlined,
@@ -813,9 +811,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   _badge(isDisabled ? 'Imesimamishwa' : 'Hai',
                     isDisabled ? _kRed : _kGreenDk,
                     isDisabled ? _kRed50 : _kGreen50),
-                  _badge(isVerified ? '✓ PAID' : '✗ HAJALIPIA',
-                    Colors.white,
-                    isVerified ? _kEmerald : const Color(0xFFF87171)),
+                  _badge(isVerified ? 'Amelipa' : 'Hajalipa',
+                    isVerified ? _kGreenDk : _kRed,
+                    isVerified ? _kGreen50 : _kRed50),
                   if (isAdmin)
                     GestureDetector(
                       onTap: () => _toggleAdmin(u),
@@ -838,13 +836,11 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
               border: const Border(top: BorderSide(color: _kGrey100)),
             ),
-            child: Row(children: [
+            child: Wrap(spacing: 6, runSpacing: 6, children: [
               _ActBtn(label: 'Angalia', icon: Icons.visibility_outlined,
                 color: _kGrey500, bg: Colors.white, onTap: () => _showDetail(u)),
-              const SizedBox(width: 6),
               _ActBtn(label: 'Hariri', icon: Icons.edit_outlined,
                 color: _kBlue, bg: _kBlue50, onTap: () => _showEditDialog(u)),
-              const Spacer(),
               if (!isAdmin) ...[
                 _ActBtn(
                   label: isDisabled ? 'Fungua' : 'Simamisha',
@@ -853,8 +849,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   bg: isDisabled ? _kGreen50 : _kOrange50,
                   onTap: () => _toggleSuspend(u),
                 ),
-                const SizedBox(width: 6),
-                if (!isVerified) ...[
+                if (!isVerified)
                   _ActBtn(
                     label: contactEnabled ? 'Ruhusa ✓' : 'Ruhusu',
                     icon: Icons.phone_outlined,
@@ -862,8 +857,6 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                     bg: contactEnabled ? _kGreen50 : Colors.white,
                     onTap: () => _toggleContact(u),
                   ),
-                  const SizedBox(width: 6),
-                ],
                 _ActBtn(label: 'Futa', icon: Icons.delete_outline,
                   color: _kRed, bg: _kRed50, onTap: () => _delete(u)),
               ],
