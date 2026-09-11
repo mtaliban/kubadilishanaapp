@@ -523,20 +523,29 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   Widget _dialogField(String label, TextEditingController ctrl, {
     IconData? icon, TextInputType? type, bool obscure = false,
   }) {
-    return TextField(
-      controller: ctrl,
-      keyboardType: type,
-      obscureText: obscure,
-      style: const TextStyle(fontSize: 13),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(fontSize: 12, color: _kGrey500),
-        prefixIcon: icon != null ? Icon(icon, size: 18, color: _kGrey400) : null,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        isDense: true,
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kGrey500, letterSpacing: 0.3)),
+      const SizedBox(height: 5),
+      TextField(
+        controller: ctrl,
+        keyboardType: type,
+        obscureText: obscure,
+        style: const TextStyle(fontSize: 14, color: _kGrey900),
+        autocorrect: false,
+        enableSuggestions: false,
+        decoration: InputDecoration(
+          hintText: '',
+          prefixIcon: icon != null ? Icon(icon, size: 17, color: _kGrey400) : null,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          filled: true, fillColor: Colors.white,
+          isDense: true,
+          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+        ),
       ),
-    );
+    ]);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────────
@@ -775,22 +784,31 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
       return Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isDisabled
-                ? _kRed.withValues(alpha: 0.2)
+                ? _kRed.withValues(alpha: 0.25)
                 : isAdmin
-                    ? _kGold.withValues(alpha: 0.5)
-                    : _kGrey100,
+                    ? _kGold.withValues(alpha: 0.6)
+                    : _kGrey200,
           ),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3)),
           ],
         ),
-        child: Column(children: [
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              // Left accent stripe
+              Container(
+                width: 4,
+                color: isDisabled ? _kRed : isAdmin ? _kGold : (isEdu ? _kGreenDk : _kBlue),
+              ),
+              Expanded(child: Column(children: [
           // ── Main info ──
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
@@ -883,30 +901,29 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           // ── Action row ──
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: _kGrey50,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
-              border: const Border(top: BorderSide(color: _kGrey100)),
+              border: Border(top: BorderSide(color: _kGrey100)),
             ),
             child: Wrap(spacing: 6, runSpacing: 6, children: [
-              _ActBtn(label: 'Angalia', icon: Icons.visibility_outlined,
-                color: _kGrey500, bg: Colors.white, onTap: () => _showDetail(u)),
+              _ActBtn(label: 'Angalia', icon: Icons.open_in_new_rounded,
+                color: _kGrey700, bg: Colors.white, onTap: () => _showDetail(u)),
               _ActBtn(label: 'Hariri', icon: Icons.edit_outlined,
                 color: _kBlue, bg: _kBlue50, onTap: () => _showEditDialog(u)),
               if (!isAdmin) ...[
                 _ActBtn(
                   label: isDisabled ? 'Fungua' : 'Simamisha',
-                  icon: isDisabled ? Icons.check_circle_outline : Icons.pause_circle_outline,
+                  icon: isDisabled ? Icons.lock_open_outlined : Icons.block_outlined,
                   color: isDisabled ? _kGreenDk : _kOrangeTx,
                   bg: isDisabled ? _kGreen50 : _kOrange50,
                   onTap: () => _toggleSuspend(u),
                 ),
                 if (!isVerified)
                   _ActBtn(
-                    label: contactEnabled ? 'Ruhusa ✓' : 'Ruhusu',
-                    icon: Icons.phone_outlined,
+                    label: contactEnabled ? 'Ameruhusiwa' : 'Ruhusu',
+                    icon: contactEnabled ? Icons.phone_in_talk_outlined : Icons.phone_callback_outlined,
                     color: contactEnabled ? _kGreenDk : _kGrey500,
-                    bg: contactEnabled ? _kGreen50 : Colors.white,
+                    bg: contactEnabled ? _kGreen50 : _kGrey50,
                     onTap: () => _toggleContact(u),
                   ),
                 _ActBtn(label: 'Futa', icon: Icons.delete_outline,
@@ -914,16 +931,23 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               ],
             ]),
           ),
-        ]),
+        ])),
+            ]),
+          ),
+        ),
       );
     }).toList();
   }
 
   Widget _badge(String label, Color textColor, Color bg) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
-      child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textColor)),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: textColor.withValues(alpha: 0.18)),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: textColor, letterSpacing: 0.1)),
     );
   }
 
@@ -1198,12 +1222,12 @@ class _PillBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999), border: Border.all(color: border)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 12, color: fg),
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
+          Icon(icon, size: 13, color: fg),
+          const SizedBox(width: 5),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
         ]),
       ),
     );
@@ -1242,12 +1266,16 @@ class _ActBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 11, color: color),
-          const SizedBox(width: 3),
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color)),
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
         ]),
       ),
     );
