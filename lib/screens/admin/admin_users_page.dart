@@ -476,10 +476,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity, height: 50,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white,
-                        elevation: 0,
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _kBlue,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                       ),
@@ -1111,10 +1110,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     );
   }
 
-  // ── EDIT DIALOG ────────────────────────────────────────────────────────────
+  // ── EDIT SHEET ─────────────────────────────────────────────────────────────
   Future<void> _showEditDialog(Map<String, dynamic> u) async {
-    final changes = await showDialog<Map<String, dynamic>>(
+    final changes = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) => _EditUserDialog(user: u, regions: _regions),
     );
     if (changes == null || !mounted) return;
@@ -1610,12 +1611,20 @@ class _ViewUserSheetState extends State<_ViewUserSheet> {
             const SizedBox(height: 16),
             Row(children: [
               Expanded(child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Funga'),
               )),
               const SizedBox(width: 12),
-              Expanded(child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white),
+              Expanded(child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: _kBlue,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
                 onPressed: widget.onEdit,
                 icon: const Icon(Icons.edit_outlined, size: 16),
                 label: const Text('Hariri'),
@@ -1917,16 +1926,46 @@ class _EditUserDialogState extends State<_EditUserDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      insetPadding: const EdgeInsets.all(16),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Hariri Mtumiaji',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-          const SizedBox(height: 16),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.92,
+        minChildSize: 0.5,
+        maxChildSize: 0.97,
+        expand: false,
+        builder: (_, ctrl) => Column(children: [
+          Container(
+            margin: const EdgeInsets.only(top: 10, bottom: 4),
+            width: 36, height: 4,
+            decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 16, 12),
+            child: Row(children: [
+              const Icon(Icons.edit_outlined, size: 20, color: _kBlue),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Hariri Mtumiaji',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _kGrey900))),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.close, size: 16, color: _kGrey500),
+                ),
+              ),
+            ]),
+          ),
+          const Divider(height: 1),
+          Expanded(child: ListView(
+            controller: ctrl,
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            children: [
+          const SizedBox(height: 0),
 
           _fld('Jina Kamili', _nameCtrl),
           const SizedBox(height: 10),
@@ -2224,15 +2263,24 @@ class _EditUserDialogState extends State<_EditUserDialog> {
             ),
           ],
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Row(children: [
             Expanded(child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () => Navigator.pop(context),
               child: const Text('Ghairi'),
             )),
             const SizedBox(width: 12),
-            Expanded(child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white),
+            Expanded(child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _kBlue,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
               onPressed: () {
                 final changes = <String, dynamic>{
                   'full_name':    _nameCtrl.text.trim(),
@@ -2257,9 +2305,12 @@ class _EditUserDialogState extends State<_EditUserDialog> {
                 };
                 Navigator.pop(context, changes);
               },
-              child: const Text('Hifadhi'),
+              icon: const Icon(Icons.check_rounded, size: 18),
+              label: const Text('Hifadhi'),
             )),
           ]),
+          ],
+        )),
         ]),
       ),
     );
@@ -2271,18 +2322,21 @@ class _EditUserDialogState extends State<_EditUserDialog> {
   Widget _fld(String label, TextEditingController ctrl, {TextInputType? keyboard, bool obscure = false}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _lbl(label),
-      const SizedBox(height: 4),
+      const SizedBox(height: 5),
       TextField(
         controller: ctrl,
         keyboardType: keyboard,
         obscureText: obscure,
-        style: const TextStyle(fontSize: 13),
+        style: const TextStyle(fontSize: 14, color: _kGrey900),
+        autocorrect: false,
+        enableSuggestions: false,
         decoration: InputDecoration(
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 2)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          filled: true, fillColor: Colors.white,
+          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
         ),
       ),
     ]);
@@ -2857,13 +2911,11 @@ class _CreateUserSheetState extends State<_CreateUserSheet> {
               // ── Save button ─────────────────────────────────────────
               SizedBox(
                 width: double.infinity, height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
                     backgroundColor: _kBlue,
-                    disabledBackgroundColor: _kBlue.withValues(alpha: 0.6),
+                    disabledBackgroundColor: _kBlue.withValues(alpha: 0.5),
                     foregroundColor: Colors.white,
-                    disabledForegroundColor: Colors.white,
-                    elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                   ),
@@ -2904,9 +2956,9 @@ class _CreateUserSheetState extends State<_CreateUserSheet> {
                     }
                   },
                   child: _saving
-                    ? const SizedBox(width: 18, height: 18,
+                    ? const SizedBox(width: 20, height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    : const Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.person_add_outlined, size: 18),
                         SizedBox(width: 8),
                         Text('Ongeza Mtumiaji'),
