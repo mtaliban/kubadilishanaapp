@@ -1189,7 +1189,7 @@ class _FiltersBar extends StatelessWidget {
           const SizedBox(height: 12),
           const Divider(height: 1),
           const SizedBox(height: 10),
-          const Text('Masomo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+          const Text('Masomo:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
           const SizedBox(height: 6),
           Wrap(spacing: 6, runSpacing: 6, children: [
             for (final entry in [
@@ -1219,22 +1219,20 @@ class _FiltersBar extends StatelessWidget {
                 ),
               ),
           ]),
-          if (subjectFilter != 'off') ...[
-            const SizedBox(height: 8),
-            TextField(
-              controller: subjectQCtrl,
-              decoration: _searchDec('Tafuta masomo (MATH, KISWAHILI...)').copyWith(
-                suffixIcon: subjectQ.isNotEmpty
-                    ? IconButton(icon: const Icon(Icons.clear, size: 14, color: Color(0xFF9CA3AF)),
-                        onPressed: () { subjectQCtrl.clear(); onSubjectQChanged(''); onSubjectQSubmitted(''); })
-                    : null,
-              ),
-              style: const TextStyle(fontSize: 12),
-              onChanged: onSubjectQChanged,
-              onSubmitted: onSubjectQSubmitted,
-              textInputAction: TextInputAction.search,
+          const SizedBox(height: 8),
+          TextField(
+            controller: subjectQCtrl,
+            decoration: _searchDec('Tafuta masomo (k.m. MATH, KISWAHILI...)').copyWith(
+              suffixIcon: subjectQ.isNotEmpty
+                  ? IconButton(icon: const Icon(Icons.clear, size: 14, color: Color(0xFF9CA3AF)),
+                      onPressed: () { subjectQCtrl.clear(); onSubjectQChanged(''); onSubjectQSubmitted(''); })
+                  : null,
             ),
-          ],
+            style: const TextStyle(fontSize: 12),
+            onChanged: onSubjectQChanged,
+            onSubmitted: onSubjectQSubmitted,
+            textInputAction: TextInputAction.search,
+          ),
         ],
 
         // ── Kada (health + admin) ──
