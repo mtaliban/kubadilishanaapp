@@ -289,7 +289,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   // ── Avatar/profile dropdown ──
-  void _showProfileMenu(AuthUser? user) {
+  void _showProfileMenu() {
     _closeMenu();
     final rb = _avatarKey.currentContext?.findRenderObject() as RenderBox?;
     if (rb == null) return;
@@ -319,24 +319,6 @@ class _AppShellState extends State<AppShell> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              // User info
-              if (user != null) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(user.fullName,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-                            color: Color(0xFF111827)),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(user.phone,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                    if ((user.cadreDisplay ?? '').isNotEmpty)
-                      Text(user.cadreDisplay!,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF1E40AF))),
-                  ]),
-                ),
-                const Divider(height: 1, color: Color(0xFFF3F4F6)),
-              ],
               // Profile link
               GestureDetector(
                 onTap: () {
@@ -483,7 +465,7 @@ class _AppShellState extends State<AppShell> {
                   // ── RIGHT: Avatar + LangToggle (kama web) ──────────────────
                   // Avatar — w-8 h-8 rounded-full bg-brand-blue-50 border-blue-200 text-blue-700
                   GestureDetector(
-                    onTap: () => _showProfileMenu(user),
+                    onTap: () => _showProfileMenu(),
                     child: Container(
                       key: _avatarKey,
                       width: 32, height: 32,
