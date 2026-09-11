@@ -1346,7 +1346,7 @@ class _BoardCard extends StatelessWidget {
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Expanded(child: Text(name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                     overflow: TextOverflow.ellipsis)),
                 if (fresh)
                   Padding(padding: const EdgeInsets.only(left: 4),
@@ -1418,7 +1418,7 @@ class _BoardCard extends StatelessWidget {
                 if (activeDest != null && (activeDest['region_name'] ?? '').isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Row(children: [
-                    const Icon(Icons.flag, size: 11, color: Color(0xFF1E40AF)),
+                    const Icon(Icons.near_me, size: 11, color: Color(0xFF1E40AF)),
                     const SizedBox(width: 3),
                     const Text('Kwenda: ', style: TextStyle(fontSize: 11, color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600)),
                     Expanded(child: Text(
@@ -1582,7 +1582,7 @@ class _BoardCard extends StatelessWidget {
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         SvgPicture.string(_kWaSvg, width: 12, height: 12), // white SVG on green bg
         const SizedBox(width: 3),
-        const Text('WA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
+        const Text('WhatsApp', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
       ]),
     ),
   );

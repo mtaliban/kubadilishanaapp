@@ -673,19 +673,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
                     children: [
-                      // User rows
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _kGrey100),
-                          boxShadow: const [BoxShadow(color: Color(0x0F000000), blurRadius: 20, offset: Offset(0, 4))],
-                        ),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: _buildTable(),
-                        ),
-                      ),
+                      // User cards
+                      ..._buildUserList(),
                       const SizedBox(height: 12),
 
                       // Pagination
@@ -704,141 +693,185 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     );
   }
 
-  // ── TABLE ──────────────────────────────────────────────────────────────────
-  Widget _buildTable() {
+  // ── USER CARDS ─────────────────────────────────────────────────────────────
+  List<Widget> _buildUserList() {
     final items = _pageItems;
     if (items.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(32),
-        child: Center(child: Text('Hakuna watumiaji', style: TextStyle(color: _kGrey400, fontSize: 14))),
-      );
+      return [
+        const Padding(
+          padding: EdgeInsets.all(40),
+          child: Center(child: Text('Hakuna watumiaji', style: TextStyle(color: _kGrey400, fontSize: 14))),
+        ),
+      ];
     }
-    return DataTable(
-      headingRowHeight: 36,
-      dataRowMinHeight: 44,
-      dataRowMaxHeight: 48,
-      columnSpacing: 12,
-      horizontalMargin: 12,
-      headingRowColor: WidgetStateProperty.all(_kGrey50),
-      headingTextStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kGrey500),
-      dividerThickness: 1,
-      columns: const [
-        DataColumn(label: Text('#')),
-        DataColumn(label: Text('☑')),
-        DataColumn(label: Text('JINA')),
-        DataColumn(label: Text('SIMU')),
-        DataColumn(label: Text('KADA')),
-        DataColumn(label: Text('MKOA')),
-        DataColumn(label: Text('HALI')),
-        DataColumn(label: Text('MALIPO')),
-        DataColumn(label: Text('ADMIN')),
-        DataColumn(label: Text('VITENDO')),
-      ],
-      rows: items.asMap().entries.map((entry) {
-        final i = entry.key;
-        final u = entry.value as Map<String, dynamic>;
-        final id = _uid(u);
-        final isAdmin = u['is_admin'] == true;
-        final isVerified = u['is_verified'] == true;
-        final status = (u['status'] ?? 'active') as String;
-        final isDisabled = status == 'disabled';
-        final contactEnabled = u['contact_enabled'] == true;
-        final n = (_page - 1) * _pageSize + i + 1;
-        final name = '${u['full_name'] ?? ''}';
-        final st = (u['current_station'] as Map?) ?? {};
+    return items.asMap().entries.map((entry) {
+      final i = entry.key;
+      final u = entry.value as Map<String, dynamic>;
+      final id = _uid(u);
+      final isAdmin   = u['is_admin'] == true;
+      final isVerified = u['is_verified'] == true;
+      final status    = (u['status'] ?? 'active') as String;
+      final isDisabled = status == 'disabled';
+      final contactEnabled = u['contact_enabled'] == true;
+      final n    = (_page - 1) * _pageSize + i + 1;
+      final name = '${u['full_name'] ?? ''}';
+      final phone = '${u['phone_primary'] ?? ''}';
+      final cadre = '${u['cadre_code'] ?? ''}';
+      final category = '${u['category'] ?? ''}';
+      final isEdu = category == 'education';
+      final st = (u['current_station'] as Map?) ?? {};
+      final region = '${st['region_name'] ?? ''}';
+      final isSelected = _selected.contains(id);
+      final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
-        return DataRow(
-          color: WidgetStateProperty.resolveWith((states) {
-            if (isDisabled) return _kGrey50.withValues(alpha: 0.5);
-            return null;
-          }),
-          cells: [
-            // #
-            DataCell(Text('$n', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _kGrey400))),
-            // Checkbox
-            DataCell(SizedBox(
-              width: 16, height: 16,
-              child: Checkbox(
-                value: _selected.contains(id),
-                onChanged: isAdmin ? null : (_) => _toggleOne(id),
-                activeColor: _kBlue,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            )),
-            // Jina
-            DataCell(Row(children: [
-              Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _kGrey900)),
-              if (isAdmin) ...[const SizedBox(width: 4), const Icon(Icons.shield_outlined, size: 13, color: _kBlue)],
-            ])),
-            // Simu
-            DataCell(Text('${u['phone_primary'] ?? ''}', style: const TextStyle(fontSize: 12, color: _kBlue))),
-            // Kada
-            DataCell(Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: _kBlue50, borderRadius: BorderRadius.circular(6)),
-              child: Text('${u['cadre_code'] ?? ''}',
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _kBlue)),
-            )),
-            // Mkoa
-            DataCell(Text('${st['region_name'] ?? ''}', style: const TextStyle(fontSize: 12, color: _kGrey700))),
-            // Hali
-            DataCell(isDisabled
-              ? _badge('Imesimamishwa', const Color(0xFFDC2626), _kRed50)
-              : _badge('Hai', _kGreenDk, _kGreen50)),
-            // Malipo
-            DataCell(isVerified
-              ? _badge('✓ PAID', Colors.white, _kEmerald)
-              : _badge('✗ HAJALIPIA', Colors.white, const Color(0xFFF87171))),
-            // Admin
-            DataCell(
-              GestureDetector(
-                onTap: () => _toggleAdmin(u),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: isAdmin ? _kGold100 : _kGrey100,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(isAdmin ? 'Admin' : 'Mtumiaji',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-                      color: isAdmin ? _kGoldText : _kGrey500)),
-                ),
-              ),
-            ),
-            // Vitendo
-            DataCell(SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                _ActBtn(label: 'Angalia', icon: Icons.visibility_outlined, color: _kGrey500, bg: _kGrey100, onTap: () => _showDetail(u)),
-                const SizedBox(width: 4),
-                _ActBtn(label: 'Hariri', icon: Icons.edit_outlined, color: _kBlue, bg: _kBlue50, onTap: () => _showEditDialog(u)),
-                if (!isAdmin) ...[
-                  const SizedBox(width: 4),
-                  _ActBtn(
-                    label: isDisabled ? 'Fungua' : 'Simamisha',
-                    icon: isDisabled ? Icons.check_circle_outline : Icons.block_outlined,
-                    color: isDisabled ? _kGreenDk : _kOrangeTx,
-                    bg: isDisabled ? _kGreen50 : _kOrange50,
-                    onTap: () => _toggleSuspend(u),
-                  ),
-                  const SizedBox(width: 4),
-                  if (!isVerified)
-                    _ActBtn(
-                      label: contactEnabled ? 'Ame-Ruhusu' : 'Ruhusu',
-                      icon: Icons.phone_outlined,
-                      color: contactEnabled ? _kGreenDk : _kGrey500,
-                      bg: contactEnabled ? _kGreen50 : _kGrey100,
-                      onTap: () => _toggleContact(u),
-                    ),
-                  if (!isVerified) const SizedBox(width: 4),
-                  _ActBtn(label: 'Futa', icon: Icons.delete_outline, color: _kRed, bg: _kRed50, onTap: () => _delete(u)),
-                ],
-              ]),
-            )),
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDisabled
+                ? _kRed.withValues(alpha: 0.2)
+                : isAdmin
+                    ? _kGold.withValues(alpha: 0.5)
+                    : _kGrey100,
+          ),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
           ],
-        );
-      }).toList(),
-    );
+        ),
+        child: Column(children: [
+          // ── Main info ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // Checkbox (not for admins)
+              if (!isAdmin) ...[
+                SizedBox(width: 18, height: 18,
+                  child: Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => _toggleOne(id),
+                    activeColor: _kBlue,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    side: const BorderSide(color: _kGrey300),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              // Avatar
+              Stack(children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: isAdmin ? _kGold100
+                      : isEdu ? _kGreen50 : _kBlue50,
+                  child: Text(initial, style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold,
+                    color: isAdmin ? _kGoldText : isEdu ? _kGreenDk : _kBlue,
+                  )),
+                ),
+                if (isAdmin)
+                  Positioned(right: 0, bottom: 0,
+                    child: Container(
+                      width: 14, height: 14,
+                      decoration: BoxDecoration(
+                        color: _kGold, shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                      child: const Icon(Icons.shield, size: 8, color: Colors.white),
+                    ),
+                  ),
+              ]),
+              const SizedBox(width: 10),
+              // Info column
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Text('$n. ', style: const TextStyle(fontSize: 10, color: _kGrey400, fontWeight: FontWeight.bold)),
+                  Expanded(child: Text(name,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey900),
+                    overflow: TextOverflow.ellipsis)),
+                ]),
+                const SizedBox(height: 2),
+                Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 5),
+                // Category + Cadre + Region
+                Wrap(spacing: 4, runSpacing: 3, children: [
+                  _badge(isEdu ? 'Elimu' : 'Afya',
+                    isEdu ? _kGreenDk : _kBlue,
+                    isEdu ? _kGreen50 : _kBlue50),
+                  if (cadre.isNotEmpty)
+                    _badge(cadre, _kEmerald, _kEmerald.withValues(alpha: 0.1)),
+                  if (region.isNotEmpty)
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.location_on_outlined, size: 10, color: _kGrey400),
+                      const SizedBox(width: 2),
+                      Text(region, style: const TextStyle(fontSize: 10, color: _kGrey500)),
+                    ]),
+                ]),
+                const SizedBox(height: 5),
+                // Status + Payment + Admin role
+                Wrap(spacing: 4, runSpacing: 3, children: [
+                  _badge(isDisabled ? 'Imesimamishwa' : 'Hai',
+                    isDisabled ? _kRed : _kGreenDk,
+                    isDisabled ? _kRed50 : _kGreen50),
+                  _badge(isVerified ? '✓ PAID' : '✗ HAJALIPIA',
+                    Colors.white,
+                    isVerified ? _kEmerald : const Color(0xFFF87171)),
+                  if (isAdmin)
+                    GestureDetector(
+                      onTap: () => _toggleAdmin(u),
+                      child: _badge('★ Admin', _kGoldText, _kGold100),
+                    ),
+                  if (!isAdmin)
+                    GestureDetector(
+                      onTap: () => _toggleAdmin(u),
+                      child: _badge('Mtumiaji', _kGrey500, _kGrey100),
+                    ),
+                ]),
+              ])),
+            ]),
+          ),
+          // ── Action row ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _kGrey50,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
+              border: const Border(top: BorderSide(color: _kGrey100)),
+            ),
+            child: Row(children: [
+              _ActBtn(label: 'Angalia', icon: Icons.visibility_outlined,
+                color: _kGrey500, bg: Colors.white, onTap: () => _showDetail(u)),
+              const SizedBox(width: 6),
+              _ActBtn(label: 'Hariri', icon: Icons.edit_outlined,
+                color: _kBlue, bg: _kBlue50, onTap: () => _showEditDialog(u)),
+              const Spacer(),
+              if (!isAdmin) ...[
+                _ActBtn(
+                  label: isDisabled ? 'Fungua' : 'Simamisha',
+                  icon: isDisabled ? Icons.check_circle_outline : Icons.pause_circle_outline,
+                  color: isDisabled ? _kGreenDk : _kOrangeTx,
+                  bg: isDisabled ? _kGreen50 : _kOrange50,
+                  onTap: () => _toggleSuspend(u),
+                ),
+                const SizedBox(width: 6),
+                if (!isVerified) ...[
+                  _ActBtn(
+                    label: contactEnabled ? 'Ruhusa ✓' : 'Ruhusu',
+                    icon: Icons.phone_outlined,
+                    color: contactEnabled ? _kGreenDk : _kGrey500,
+                    bg: contactEnabled ? _kGreen50 : Colors.white,
+                    onTap: () => _toggleContact(u),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                _ActBtn(label: 'Futa', icon: Icons.delete_outline,
+                  color: _kRed, bg: _kRed50, onTap: () => _delete(u)),
+              ],
+            ]),
+          ),
+        ]),
+      );
+    }).toList();
   }
 
   Widget _badge(String label, Color textColor, Color bg) {
@@ -937,45 +970,44 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               child: Center(child: Text('Trash iko tupu', style: TextStyle(fontSize: 13, color: _kGrey400))),
             )
           else
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowHeight: 32,
-                dataRowMinHeight: 44,
-                dataRowMaxHeight: 56,
-                columnSpacing: 10,
-                horizontalMargin: 12,
-                headingRowColor: WidgetStateProperty.all(_kGrey50),
-                headingTextStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kGrey500),
-                dividerThickness: 1,
-                columns: const [
-                  DataColumn(label: Text('#')),
-                  DataColumn(label: Text('JINA')),
-                  DataColumn(label: Text('SIMU')),
-                  DataColumn(label: Text('KADA')),
-                  DataColumn(label: Text('MKOA')),
-                  DataColumn(label: Text('VITENDO')),
-                ],
-                rows: _trash.asMap().entries.map((entry) {
-                  final i = entry.key;
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Column(
+                children: _trash.asMap().entries.map((entry) {
                   final u = entry.value as Map<String, dynamic>;
                   final st = (u['current_station'] as Map?) ?? {};
-                  return DataRow(cells: [
-                    DataCell(Text('${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _kGrey400))),
-                    DataCell(Text('${u['full_name'] ?? ''}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _kGrey900))),
-                    DataCell(Text('${u['phone_primary'] ?? '—'}', style: const TextStyle(fontSize: 12, color: _kBlue))),
-                    DataCell(Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(6)),
-                      child: Text('${u['cadre_code'] ?? '—'}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _kGrey500)),
-                    )),
-                    DataCell(Text('${st['region_name'] ?? '—'}', style: const TextStyle(fontSize: 12, color: _kGrey700))),
-                    DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
-                      _ActBtn(label: 'Rudisha', icon: Icons.restore_outlined, color: _kGreenDk, bg: _kGreen50, onTap: () => _restoreTrash(u)),
-                      const SizedBox(width: 4),
-                      _ActBtn(label: 'Futa Kabisa', icon: Icons.delete_forever_outlined, color: _kRed, bg: _kRed50, onTap: () => _purgeTrash(u)),
-                    ])),
-                  ]);
+                  final name = '${u['full_name'] ?? ''}';
+                  final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+                  return Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _kRed.withValues(alpha: 0.15)),
+                    ),
+                    child: Row(children: [
+                      CircleAvatar(radius: 18, backgroundColor: _kRed50,
+                        child: Text(initial, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _kRed))),
+                      const SizedBox(width: 10),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey900)),
+                        const SizedBox(height: 2),
+                        Text('${u['phone_primary'] ?? '—'}',
+                          style: const TextStyle(fontSize: 11, color: _kBlue)),
+                        if ((st['region_name'] ?? '').isNotEmpty)
+                          Text('${st['region_name']}',
+                            style: const TextStyle(fontSize: 10, color: _kGrey500)),
+                      ])),
+                      Column(mainAxisSize: MainAxisSize.min, children: [
+                        _ActBtn(label: 'Rudisha', icon: Icons.restore_outlined,
+                          color: _kGreenDk, bg: _kGreen50, onTap: () => _restoreTrash(u)),
+                        const SizedBox(height: 4),
+                        _ActBtn(label: 'Futa Kabisa', icon: Icons.delete_forever_outlined,
+                          color: _kRed, bg: _kRed50, onTap: () => _purgeTrash(u)),
+                      ]),
+                    ]),
+                  );
                 }).toList(),
               ),
             ),

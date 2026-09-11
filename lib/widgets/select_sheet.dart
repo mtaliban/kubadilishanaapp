@@ -235,7 +235,7 @@ class SelectField extends StatelessWidget {
     return GestureDetector(
       onTap: disabled ? null : onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: disabled ? const Color(0xFFF3F4F6) : Colors.white,
           borderRadius: BorderRadius.circular(8),
@@ -250,7 +250,7 @@ class SelectField extends StatelessWidget {
             child: Text(
               hasValue ? value! : hint,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 color: hasValue
                     ? const Color(0xFF111827)
                     : disabled
