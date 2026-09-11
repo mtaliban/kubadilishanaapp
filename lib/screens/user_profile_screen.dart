@@ -47,6 +47,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final name = _user?['full_name']?.toString() ?? 'Mtumiaji';
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: Text(_loading ? 'Wasifu' : name),
       ),

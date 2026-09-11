@@ -179,6 +179,7 @@ class _AdminShellState extends State<AdminShell> {
     final initial = _initials(user?.fullName ?? 'A');
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
       body: SafeArea(
         child: Column(children: [
           // ── MOBILE TOP BAR — h-14=56px kama web ──

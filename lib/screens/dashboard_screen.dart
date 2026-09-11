@@ -1317,7 +1317,7 @@ class _BoardCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: fresh ? AppColors.primary
               : online ? Colors.green.shade300
@@ -1325,10 +1325,10 @@ class _BoardCard extends StatelessWidget {
         ),
         boxShadow: fresh
             ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.15), blurRadius: 0, spreadRadius: 2)]
-            : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
+            : [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: Offset(0, 2))],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.max, children: [
 
           // Row 1: Avatar + info
