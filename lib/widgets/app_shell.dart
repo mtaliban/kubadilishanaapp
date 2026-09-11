@@ -236,11 +236,11 @@ class _AppShellState extends State<AppShell> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              _dropLink(context, 'assets/icons/layout-dashboard.svg', 'Nyumbani', '/dashboard',
+              _dropLink(context, 'assets/icons/layout-dashboard.svg', 'Dashibodi', '/dashboard',
                   counts, widget.tabIndex == 0),
               _dropLink(context, 'assets/icons/hand-coins.svg', 'Changia', '/donate',
                   counts, widget.tabIndex == 1),
-              _dropLink(context, 'assets/icons/clipboard-list.svg', 'Maoni', '/feedback',
+              _dropLink(context, 'assets/icons/clipboard-list.svg', 'Maoni na Malalamiko', '/feedback',
                   counts, widget.tabIndex == 2),
               _dropLink(context, 'assets/icons/user.svg', 'Wasifu', '/profile',
                   counts, widget.tabIndex == 3),
@@ -541,7 +541,7 @@ class _AppShellState extends State<AppShell> {
               child: SizedBox(
                 height: 52,
                 child: Row(children: [
-                  _navItem(0, 'assets/icons/layout-dashboard.svg', 'Nyumbani',
+                  _navItem(0, 'assets/icons/layout-dashboard.svg', 'Dashibodi',
                       '/dashboard', counts['/dashboard'] ?? 0),
                   _navItem(1, 'assets/icons/hand-coins.svg', 'Changia',
                       '/donate', counts['/donate'] ?? 0),

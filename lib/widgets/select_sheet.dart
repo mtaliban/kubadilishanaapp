@@ -153,35 +153,14 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                         horizontal: 16, vertical: 13),
                     decoration: BoxDecoration(
                       color: isSel
-                          ? const Color(0xFFEFF6FF)
+                          ? const Color(0xFFF0FDF4)
                           : Colors.transparent,
                       border: const Border(
                           bottom: BorderSide(
                               color: Color(0xFFF3F4F6), width: 1)),
                     ),
                     child: Row(children: [
-                      // Radio circle
-                      Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isSel
-                              ? const Color(0xFF1E40AF)
-                              : Colors.transparent,
-                          border: Border.all(
-                            color: isSel
-                                ? const Color(0xFF1E40AF)
-                                : const Color(0xFFD1D5DB),
-                            width: isSel ? 0 : 2,
-                          ),
-                        ),
-                        child: isSel
-                            ? const Icon(Icons.check,
-                                size: 13, color: Colors.white)
-                            : null,
-                      ),
-                      const SizedBox(width: 12),
+                      // Text — left side
                       Expanded(
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,9 +171,7 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                                     fontWeight: isSel
                                         ? FontWeight.w600
                                         : FontWeight.normal,
-                                    color: isSel
-                                        ? const Color(0xFF1E40AF)
-                                        : const Color(0xFF111827),
+                                    color: const Color(0xFF111827),
                                   )),
                               if (item.subtitle != null)
                                 Text(item.subtitle!,
@@ -202,6 +179,28 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                                         fontSize: 12,
                                         color: Color(0xFF9CA3AF))),
                             ]),
+                      ),
+                      const SizedBox(width: 12),
+                      // Radio circle — RIGHT side, green when selected
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSel
+                              ? const Color(0xFF16A34A)
+                              : Colors.transparent,
+                          border: Border.all(
+                            color: isSel
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFFD1D5DB),
+                            width: 2,
+                          ),
+                        ),
+                        child: isSel
+                            ? const Icon(Icons.check,
+                                size: 13, color: Colors.white)
+                            : null,
                       ),
                     ]),
                   ),
