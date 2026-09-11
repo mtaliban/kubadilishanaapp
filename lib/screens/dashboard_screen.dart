@@ -847,13 +847,21 @@ class _TrueMatchCard extends StatelessWidget {
                     color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(8)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
-                    const Icon(Icons.location_on, size: 11, color: AppColors.textSecondary),
+                    const Icon(Icons.location_on, size: 11, color: Color(0xFFEF4444)),
                     const SizedBox(width: 3),
                     Text('Kutoka: ', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    Expanded(child: Text(
-                      [from['district_name'], from['region_name'], from['facility_name']]
-                          .where((v) => v != null && v.toString().isNotEmpty).join(', '),
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    Expanded(child: Text.rich(
+                      TextSpan(children: [
+                        TextSpan(
+                          text: from['region_name']?.toString() ?? '',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                        ),
+                        if ((from['district_name'] ?? '').toString().isNotEmpty)
+                          TextSpan(
+                            text: ', ${from['district_name']}',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
+                          ),
+                      ]),
                       overflow: TextOverflow.ellipsis,
                     )),
                   ]),
@@ -862,11 +870,19 @@ class _TrueMatchCard extends StatelessWidget {
                     Row(children: [
                       const Icon(Icons.adjust, size: 11, color: emerald),
                       const SizedBox(width: 3),
-                      Text('Anataka: ', style: const TextStyle(fontSize: 11, color: emerald, fontWeight: FontWeight.w600)),
-                      Expanded(child: Text(
-                        [to['region_name'], to['district_name']]
-                            .where((v) => v != null && v.toString().isNotEmpty).join(', '),
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      Text('→ Anataka: ', style: const TextStyle(fontSize: 11, color: emerald, fontWeight: FontWeight.w600)),
+                      Expanded(child: Text.rich(
+                        TextSpan(children: [
+                          TextSpan(
+                            text: to['region_name']?.toString() ?? '',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                          ),
+                          if ((to['district_name'] ?? '').toString().isNotEmpty)
+                            TextSpan(
+                              text: ', ${to['district_name']}',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
+                            ),
+                        ]),
                         overflow: TextOverflow.ellipsis,
                       )),
                     ]),
@@ -1121,10 +1137,6 @@ class _FiltersBar extends StatelessWidget {
         ),
 
         const SizedBox(height: 8),
-        Text('Wilaya / Halmashauri',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                color: singleRegionSelected ? const Color(0xFF374151) : const Color(0xFFD1D5DB))),
-        const SizedBox(height: 5),
 
         // Wilaya — disabled unless mkoa mmoja
         SelectField(
@@ -1144,10 +1156,6 @@ class _FiltersBar extends StatelessWidget {
         ),
 
         const SizedBox(height: 8),
-        Text('Kituo / Hospitali',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                color: districtSelected ? const Color(0xFF374151) : const Color(0xFFD1D5DB))),
-        const SizedBox(height: 5),
 
         // Kituo — disabled unless wilaya
         SelectField(
@@ -1399,13 +1407,21 @@ class _BoardCard extends StatelessWidget {
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  const Icon(Icons.location_on, size: 11, color: Color(0xFF9CA3AF)),
+                  const Icon(Icons.location_on, size: 11, color: Color(0xFFEF4444)),
                   const SizedBox(width: 3),
                   const Text('Kutoka: ', style: TextStyle(fontSize: 11, color: Color(0xFF4B5563), fontWeight: FontWeight.w500)),
-                  Expanded(child: Text(
-                    [station['region_name'], station['district_name']]
-                        .where((v) => v != null && v.toString().isNotEmpty).join(', '),
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                  Expanded(child: Text.rich(
+                    TextSpan(children: [
+                      TextSpan(
+                        text: station['region_name']?.toString() ?? '',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                      ),
+                      if ((station['district_name'] ?? '').toString().isNotEmpty)
+                        TextSpan(
+                          text: ', ${station['district_name']}',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
+                        ),
+                    ]),
                     overflow: TextOverflow.ellipsis,
                   )),
                 ]),
@@ -1414,16 +1430,24 @@ class _BoardCard extends StatelessWidget {
                   Row(children: [
                     const Icon(Icons.adjust, size: 11, color: Color(0xFF1E40AF)),
                     const SizedBox(width: 3),
-                    const Text('Anataka: ', style: TextStyle(fontSize: 11, color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600)),
-                    Expanded(child: Text(
-                      [activeDest['region_name'], activeDest['district_name']]
-                          .where((v) => v != null && v.toString().isNotEmpty).join(', '),
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                    const Text('→ Anataka: ', style: TextStyle(fontSize: 11, color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600)),
+                    Expanded(child: Text.rich(
+                      TextSpan(children: [
+                        TextSpan(
+                          text: activeDest['region_name']?.toString() ?? '',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                        ),
+                        if ((activeDest['district_name'] ?? '').toString().isNotEmpty)
+                          TextSpan(
+                            text: ', ${activeDest['district_name']}',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
+                          ),
+                      ]),
                       overflow: TextOverflow.ellipsis,
                     )),
                   ]),
                 ],
-                if (myRegionName.isNotEmpty) ...[
+                if (myRegionName.isNotEmpty && matchingDest != null) ...[
                   const SizedBox(height: 6),
                   const Divider(height: 1, color: Color(0xFFDBEAFE)),
                   const SizedBox(height: 6),
@@ -1474,7 +1498,7 @@ class _BoardCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: const Color(0xFF1E40AF).withValues(alpha: 0.2)),
                   ),
-                  child: const Text('✓ Masomo yanalingana',
+                  child: const Text('@ Masomo yanalingana',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1D4ED8))),
                 ),
             ]),
