@@ -30,9 +30,10 @@ String _timeAgo(String? isoDate) {
     final d = DateTime.parse(isoDate).toLocal();
     final diff = DateTime.now().difference(d);
     if (diff.inMinutes < 1) return 'Sasa hivi';
-    if (diff.inMinutes < 60) return 'dakika ${diff.inMinutes}';
-    if (diff.inHours < 24) return 'saa ${diff.inHours}';
-    return 'siku ${diff.inDays}';
+    if (diff.inMinutes < 60) return 'dakika ${diff.inMinutes} zilizopita';
+    if (diff.inHours < 24) return 'saa ${diff.inHours} zilizopita';
+    if (diff.inDays == 1) return 'jana';
+    return 'siku ${diff.inDays} zilizopita';
   } catch (_) { return ''; }
 }
 
@@ -47,7 +48,7 @@ String _fullDate(String? isoDate) {
   if (isoDate == null || isoDate.isEmpty) return '';
   try {
     final d = DateTime.parse(isoDate).toLocal();
-    const months = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ago','Sep','Okt','Nov','Des'];
+    const months = ['Januari','Februari','Machi','Aprili','Mei','Juni','Julai','Agosti','Septemba','Oktoba','Novemba','Desemba'];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   } catch (_) { return ''; }
 }
@@ -859,9 +860,9 @@ class _TrueMatchCard extends StatelessWidget {
                   if (to != null && (to['region_name'] ?? '').isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Row(children: [
-                      const Icon(Icons.compare_arrows, size: 11, color: emerald),
+                      const Icon(Icons.adjust, size: 11, color: emerald),
                       const SizedBox(width: 3),
-                      Text('Kuja: ', style: const TextStyle(fontSize: 11, color: emerald, fontWeight: FontWeight.w600)),
+                      Text('Anataka: ', style: const TextStyle(fontSize: 11, color: emerald, fontWeight: FontWeight.w600)),
                       Expanded(child: Text(
                         [to['region_name'], to['district_name']]
                             .where((v) => v != null && v.toString().isNotEmpty).join(', '),
@@ -1084,11 +1085,9 @@ class _FiltersBar extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-        // ── Header: title + clear ──
+        // ── Header ──
         Row(children: [
-          const Icon(Icons.tune_rounded, size: 14, color: AppColors.primary),
-          const SizedBox(width: 6),
-          const Text('Vichujio', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+          const Text('Wanakotoka (Mkoa)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
           const Spacer(),
           if (hasFilter)
             GestureDetector(
@@ -1099,13 +1098,10 @@ class _FiltersBar extends StatelessWidget {
                   color: AppColors.error.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Text('Futa', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.error)),
+                child: const Text('Futa chujio', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.error)),
               ),
             ),
         ]),
-
-        const SizedBox(height: 10),
-        const Text('Mkoa (Wanakotoka)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
         const SizedBox(height: 5),
 
         // Mkoa — bottom sheet picker
@@ -1418,9 +1414,9 @@ class _BoardCard extends StatelessWidget {
                 if (activeDest != null && (activeDest['region_name'] ?? '').isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Row(children: [
-                    const Icon(Icons.near_me, size: 11, color: Color(0xFF1E40AF)),
+                    const Icon(Icons.adjust, size: 11, color: Color(0xFF1E40AF)),
                     const SizedBox(width: 3),
-                    const Text('Kwenda: ', style: TextStyle(fontSize: 11, color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600)),
+                    const Text('Anataka: ', style: TextStyle(fontSize: 11, color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600)),
                     Expanded(child: Text(
                       [activeDest['region_name'], activeDest['district_name']]
                           .where((v) => v != null && v.toString().isNotEmpty).join(', '),
