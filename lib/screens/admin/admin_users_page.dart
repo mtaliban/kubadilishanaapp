@@ -406,7 +406,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     } catch (e) { _showMsg('Hitilafu: $e'); }
   }
 
-  // ── Add Admin Dialog ──────────────────────────────────────────────────────────
+  // ── Add Admin Bottom Sheet ────────────────────────────────────────────────────
   Future<void> _showAddAdminDialog() async {
     final emailCtrl = TextEditingController();
     final nameCtrl  = TextEditingController();
@@ -414,66 +414,110 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     final passCtrl  = TextEditingController();
     String? err;
 
-    await showDialog<void>(
+    await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSt) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(children: [
-            const Icon(Icons.shield_outlined, size: 20, color: _kBlue),
-            const SizedBox(width: 8),
-            const Text('Ongeza Admin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ]),
-          content: SizedBox(
-            width: 320,
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              if (err != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: const Color(0xFFFEE2E2), borderRadius: BorderRadius.circular(8)),
-                  child: Text(err!, style: const TextStyle(fontSize: 12, color: _kRed)),
-                ),
-                const SizedBox(height: 12),
-              ],
-              _dialogField('Jina Kamili', nameCtrl, icon: Icons.person_outline),
-              const SizedBox(height: 10),
-              _dialogField('Barua Pepe', emailCtrl, icon: Icons.email_outlined, type: TextInputType.emailAddress),
-              const SizedBox(height: 10),
-              _dialogField('Simu', phoneCtrl, icon: Icons.phone_outlined, type: TextInputType.phone),
-              const SizedBox(height: 10),
-              _dialogField('Nenosiri', passCtrl, icon: Icons.lock_outline, obscure: true),
-            ]),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Ghairi')),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white),
-              onPressed: () async {
-                if (nameCtrl.text.trim().isEmpty || emailCtrl.text.trim().isEmpty || passCtrl.text.isEmpty) {
-                  setSt(() => err = 'Jaza sehemu zote zinazohitajika');
-                  return;
-                }
-                try {
-                  await ApiService().post('/admin/users/create-admin', data: {
-                    'full_name': nameCtrl.text.trim(),
-                    'email': emailCtrl.text.trim(),
-                    'phone_primary': phoneCtrl.text.trim(),
-                    'password': passCtrl.text,
-                    'is_admin': true,
-                  });
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _showMsg('Admin ${nameCtrl.text.trim()} ameongezwa');
-                  _load();
-                } catch (e) {
-                  setSt(() => err = 'Hitilafu: $e');
-                }
-              },
-              child: const Text('Ongeza'),
+        builder: (ctx, setSt) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-          ],
-        ),
+            padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 4),
+                width: 36, height: 4,
+                decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 16, 12),
+                child: Row(children: [
+                  const Icon(Icons.shield_outlined, size: 20, color: _kBlue),
+                  const SizedBox(width: 10),
+                  const Expanded(child: Text('Ongeza Admin',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _kGrey900))),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(8)),
+                      child: const Icon(Icons.close, size: 16, color: _kGrey500),
+                    ),
+                  ),
+                ]),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                child: Column(children: [
+                  if (err != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: _kRed50, borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFECACA))),
+                      child: Row(children: [
+                        const Icon(Icons.error_outline, size: 16, color: _kRed),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(err!, style: const TextStyle(fontSize: 12, color: _kRed))),
+                      ]),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  _dialogField('Jina Kamili', nameCtrl, icon: Icons.person_outline),
+                  const SizedBox(height: 10),
+                  _dialogField('Barua Pepe', emailCtrl, icon: Icons.email_outlined, type: TextInputType.emailAddress),
+                  const SizedBox(height: 10),
+                  _dialogField('Simu', phoneCtrl, icon: Icons.phone_outlined, type: TextInputType.phone),
+                  const SizedBox(height: 10),
+                  _dialogField('Nenosiri', passCtrl, icon: Icons.lock_outline, obscure: true),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity, height: 50,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBlue, foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                      onPressed: () async {
+                        if (nameCtrl.text.trim().isEmpty || emailCtrl.text.trim().isEmpty || passCtrl.text.isEmpty) {
+                          setSt(() => err = 'Jaza sehemu zote zinazohitajika');
+                          return;
+                        }
+                        try {
+                          await ApiService().post('/admin/users/create-admin', data: {
+                            'full_name': nameCtrl.text.trim(),
+                            'email': emailCtrl.text.trim(),
+                            'phone_primary': phoneCtrl.text.trim(),
+                            'password': passCtrl.text,
+                            'is_admin': true,
+                          });
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          _showMsg('Admin ${nameCtrl.text.trim()} ameongezwa');
+                          _load();
+                        } catch (e) {
+                          setSt(() => err = 'Hitilafu: $e');
+                        }
+                      },
+                      icon: const Icon(Icons.shield_outlined, size: 18),
+                      label: const Text('Ongeza Admin'),
+                    ),
+                  ),
+                ]),
+              ),
+            ]),
+          );
+        },
       ),
     );
+    emailCtrl.dispose();
+    nameCtrl.dispose();
+    phoneCtrl.dispose();
+    passCtrl.dispose();
   }
 
   Widget _dialogField(String label, TextEditingController ctrl, {
@@ -622,19 +666,27 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              _SelectBox(
-                value: _category,
-                items: const [
-                  DropdownMenuItem(value: '', child: Text('Idara Zote', style: TextStyle(fontSize: 13))),
-                  DropdownMenuItem(value: 'health', child: Text('Afya', style: TextStyle(fontSize: 13))),
-                  DropdownMenuItem(value: 'education', child: Text('Elimu', style: TextStyle(fontSize: 13))),
-                ],
-                onChange: (v) {
-                  setState(() { _category = v; _page = 1; _subjectFilter = ''; _facilityId = ''; _facilities = []; });
-                  _loadSubjects();
-                  if (_districtId != null) { _onDistrictChange(_districtId); } else { _load(); }
-                },
+              SizedBox(
                 width: 110,
+                child: SelectField(
+                  hint: 'Idara Zote',
+                  value: _category.isEmpty ? null : (_category == 'health' ? 'Afya' : 'Elimu'),
+                  onTap: () async {
+                    final v = await showSelectSheet<String>(context,
+                      title: 'Chagua Idara',
+                      items: const [
+                        (value: '', label: 'Zote', subtitle: null as String?),
+                        (value: 'health', label: 'Afya', subtitle: null as String?),
+                        (value: 'education', label: 'Elimu', subtitle: null as String?),
+                      ],
+                      selected: _category);
+                    if (v != null && v != _category) {
+                      setState(() { _category = v; _page = 1; _subjectFilter = ''; _facilityId = ''; _facilities = []; });
+                      _loadSubjects();
+                      if (_districtId != null) { _onDistrictChange(_districtId); } else { _load(); }
+                    }
+                  },
+                ),
               ),
             ]),
             // Row 2: Region → District → Facility → Subject (cascading)
@@ -714,7 +766,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       final n    = (_page - 1) * _pageSize + i + 1;
       final name = '${u['full_name'] ?? ''}';
       final phone = '${u['phone_primary'] ?? ''}';
-      final cadre = '${u['cadre_code'] ?? ''}';
+      final cadre = '${u['cadre_display'] ?? u['cadre_code'] ?? ''}';
       final category = '${u['category'] ?? ''}';
       final isEdu = category == 'education';
       final st = (u['current_station'] as Map?) ?? {};
@@ -1262,37 +1314,6 @@ class _SearchBox extends StatelessWidget {
   }
 }
 
-class _SelectBox extends StatelessWidget {
-  final String value;
-  final List<DropdownMenuItem<String>> items;
-  final ValueChanged<String> onChange;
-  final double? width;
-  const _SelectBox({required this.value, required this.items, required this.onChange, this.width});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      width: width,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: value,
-          style: const TextStyle(fontSize: 12, color: _kGrey700),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: _kGrey400),
-          onChanged: (v) => onChange(v ?? ''),
-          items: items,
-        ),
-      ),
-    );
-  }
-}
-
 // ── LOCATION CASCADE FILTER ROW ───────────────────────────────────────────────
 class _LocationFiltersRow extends StatelessWidget {
   final List<dynamic> regions;
@@ -1323,103 +1344,118 @@ class _LocationFiltersRow extends StatelessWidget {
     required this.onSubject,
   });
 
+  String? _regionLabel() {
+    if (regionId == null) return null;
+    final r = regions.firstWhere(
+      (x) { final id = x['id'] is int ? x['id'] as int : int.tryParse('${x['id']}'); return id == regionId; },
+      orElse: () => null,
+    );
+    return r != null ? '${r['name'] ?? r['region_name'] ?? r['id']}' : null;
+  }
+
+  String? _districtLabel() {
+    if (districtId == null) return null;
+    final d = districts.firstWhere(
+      (x) { final id = x['id'] is int ? x['id'] as int : int.tryParse('${x['id']}'); return id == districtId; },
+      orElse: () => null,
+    );
+    return d != null ? '${d['name'] ?? d['district_name'] ?? d['id']}' : null;
+  }
+
+  String? _facilityLabel() {
+    if (facilityId.isEmpty) return null;
+    final f = facilities.firstWhere(
+      (x) => '${x['id'] ?? x['facility_id']}' == facilityId,
+      orElse: () => null,
+    );
+    return f != null ? '${f['name'] ?? f['facility_name'] ?? facilityId}' : null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(children: [
       Row(children: [
-        Expanded(child: _locDrop<int?>(
-          value: regionId,
+        Expanded(child: SelectField(
           hint: 'Mkoa wote',
-          items: [
-            const DropdownMenuItem<int?>(value: null, child: Text('Mkoa wote')),
-            ...regions.map((r) => DropdownMenuItem<int?>(
-              value: r['id'] is int ? r['id'] : int.tryParse('${r['id']}'),
-              child: Text('${r['name'] ?? r['region_name'] ?? r['id']}',
-                overflow: TextOverflow.ellipsis),
-            )),
-          ],
-          onChanged: (v) => onRegion(v),
+          value: _regionLabel(),
+          onTap: () async {
+            final items = [
+              (value: 0, label: 'Mkoa wote', subtitle: null as String?),
+              ...regions.map((r) {
+                final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                return (value: id, label: '${r['name'] ?? r['region_name'] ?? r['id']}', subtitle: null as String?);
+              }),
+            ];
+            final v = await showSelectSheet<int>(context,
+              title: 'Chagua Mkoa', items: items,
+              selected: regionId ?? 0, searchable: regions.length > 6);
+            if (v != null) onRegion(v == 0 ? null : v);
+          },
         )),
         const SizedBox(width: 6),
-        Expanded(child: _locDrop<int?>(
-          value: districtId,
+        Expanded(child: SelectField(
           hint: 'Wilaya zote',
-          enabled: regionId != null,
-          items: [
-            const DropdownMenuItem<int?>(value: null, child: Text('Wilaya zote')),
-            ...districts.map((d) => DropdownMenuItem<int?>(
-              value: d['id'] is int ? d['id'] : int.tryParse('${d['id']}'),
-              child: Text('${d['name'] ?? d['district_name'] ?? d['id']}',
-                overflow: TextOverflow.ellipsis),
-            )),
-          ],
-          onChanged: (v) => onDistrict(v),
+          value: _districtLabel(),
+          disabled: regionId == null,
+          onTap: regionId == null ? null : () async {
+            final items = [
+              (value: 0, label: 'Wilaya zote', subtitle: null as String?),
+              ...districts.map((d) {
+                final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                return (value: id, label: '${d['name'] ?? d['district_name'] ?? d['id']}', subtitle: null as String?);
+              }),
+            ];
+            final v = await showSelectSheet<int>(context,
+              title: 'Chagua Wilaya', items: items,
+              selected: districtId ?? 0, searchable: districts.length > 6);
+            if (v != null) onDistrict(v == 0 ? null : v);
+          },
         )),
       ]),
       if (facilities.isNotEmpty || subjects.isNotEmpty) ...[
         const SizedBox(height: 6),
         Row(children: [
           if (facilities.isNotEmpty)
-            Expanded(child: _locDrop<String>(
-              value: facilityId.isEmpty ? '' : facilityId,
+            Expanded(child: SelectField(
               hint: 'Vituo vyote',
-              items: [
-                const DropdownMenuItem<String>(value: '', child: Text('Vituo vyote')),
-                ...facilities.map((f) => DropdownMenuItem<String>(
-                  value: '${f['id'] ?? f['facility_id']}',
-                  child: Text('${f['name'] ?? f['facility_name'] ?? f['id']}',
-                    overflow: TextOverflow.ellipsis),
-                )),
-              ],
-              onChanged: (v) => onFacility(v ?? ''),
+              value: _facilityLabel(),
+              onTap: () async {
+                final items = [
+                  (value: '', label: 'Vituo vyote', subtitle: null as String?),
+                  ...facilities.map((f) {
+                    final id = '${f['id'] ?? f['facility_id']}';
+                    return (value: id, label: '${f['name'] ?? f['facility_name'] ?? id}', subtitle: null as String?);
+                  }),
+                ];
+                final v = await showSelectSheet<String>(context,
+                  title: 'Chagua Kituo', items: items,
+                  selected: facilityId, searchable: facilities.length > 6);
+                if (v != null) onFacility(v);
+              },
             )),
           if (facilities.isNotEmpty && subjects.isNotEmpty) const SizedBox(width: 6),
           if (subjects.isNotEmpty)
-            Expanded(child: _locDrop<String>(
-              value: subjectFilter.isEmpty ? '' : subjectFilter,
+            Expanded(child: SelectField(
               hint: 'Masomo yote',
-              items: [
-                const DropdownMenuItem<String>(value: '', child: Text('Masomo yote')),
-                ...subjects.map((s) {
-                  final label = s is String ? s : '${s['name'] ?? s}';
-                  final val   = s is String ? s : '${s['name'] ?? s}';
-                  return DropdownMenuItem<String>(value: val, child: Text(label, overflow: TextOverflow.ellipsis));
-                }),
-              ],
-              onChanged: (v) => onSubject(v ?? ''),
+              value: subjectFilter.isEmpty ? null : subjectFilter,
+              onTap: () async {
+                final items = [
+                  (value: '', label: 'Masomo yote', subtitle: null as String?),
+                  ...subjects.map((s) {
+                    final label = s is String ? s : '${s['name'] ?? s}';
+                    final val   = s is String ? s : '${s['name'] ?? s}';
+                    return (value: val, label: label, subtitle: null as String?);
+                  }),
+                ];
+                final v = await showSelectSheet<String>(context,
+                  title: 'Chagua Somo', items: items,
+                  selected: subjectFilter, searchable: subjects.length > 8);
+                if (v != null) onSubject(v);
+              },
             )),
         ]),
       ],
     ]);
-  }
-
-  Widget _locDrop<T>({
-    required T value,
-    required String hint,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-    bool enabled = true,
-  }) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: enabled ? Colors.white : const Color(0xFFF9FAFB),
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          isExpanded: true,
-          value: value,
-          style: TextStyle(fontSize: 12, color: enabled ? _kGrey700 : _kGrey400),
-          icon: Icon(Icons.keyboard_arrow_down, size: 16, color: enabled ? _kGrey400 : _kGrey300),
-          onChanged: enabled ? onChanged : null,
-          hint: Text(hint, style: const TextStyle(fontSize: 12, color: _kGrey400)),
-          items: items,
-        ),
-      ),
-    );
   }
 }
 
@@ -1689,6 +1725,10 @@ class _EditUserDialogState extends State<_EditUserDialog> {
   Set<String>   _selectedSubjects = {};
   bool _initLoading = true;
 
+  String _regionName   = '';
+  String _districtName = '';
+  String _facilityName = '';
+
   // Desired destinations: list of {regionId, districtId, regionName, districtName}
   List<Map<String, dynamic>> _destinations = [];
 
@@ -1710,10 +1750,13 @@ class _EditUserDialogState extends State<_EditUserDialog> {
     final st = (u['current_station'] as Map?) ?? {};
     final rId = st['region_id'];
     final dId = st['district_id'];
-    _regionId   = rId is int ? rId : (rId != null ? int.tryParse('$rId') : null);
-    _districtId = dId is int ? dId : (dId != null ? int.tryParse('$dId') : null);
-    _facilityId = '${st['facility_id'] ?? ''}';
+    _regionId    = rId is int ? rId : (rId != null ? int.tryParse('$rId') : null);
+    _districtId  = dId is int ? dId : (dId != null ? int.tryParse('$dId') : null);
+    _facilityId  = '${st['facility_id'] ?? ''}';
     if (_facilityId == 'null') _facilityId = '';
+    _regionName  = '${st['region_name'] ?? ''}';
+    _districtName = '${st['district_name'] ?? ''}';
+    _facilityName = '${st['facility_name'] ?? ''}';
 
     // Load desired_destinations
     final dests = (u['desired_destinations'] as List?) ?? [];
@@ -1795,8 +1838,13 @@ class _EditUserDialogState extends State<_EditUserDialog> {
     super.dispose();
   }
 
-  Future<void> _onRegion(int? id) async {
-    setState(() { _regionId = id; _districtId = null; _facilityId = ''; _districts = []; _facilities = []; });
+  Future<void> _onRegion(int? id, String name) async {
+    setState(() {
+      _regionId = id; _regionName = name;
+      _districtId = null; _districtName = '';
+      _facilityId = ''; _facilityName = '';
+      _districts = []; _facilities = [];
+    });
     if (id == null) return;
     try {
       final r = await ApiService().getDistricts(id);
@@ -1805,8 +1853,8 @@ class _EditUserDialogState extends State<_EditUserDialog> {
     } catch (_) {}
   }
 
-  Future<void> _onDistrict(int? id) async {
-    setState(() { _districtId = id; _facilityId = ''; _facilities = []; });
+  Future<void> _onDistrict(int? id, String name) async {
+    setState(() { _districtId = id; _districtName = name; _facilityId = ''; _facilityName = ''; _facilities = []; });
     if (id == null) return;
     try {
       final r = await ApiService().getFacilities(id, category: _category.isEmpty ? 'health' : _category);
@@ -1819,6 +1867,7 @@ class _EditUserDialogState extends State<_EditUserDialog> {
     setState(() {
       _destinations[index]['region_id'] = id;
       _destinations[index]['district_id'] = null;
+      _destinations[index]['district_name'] = '';
       _destinations[index]['districts'] = <dynamic>[];
     });
     if (id == null) return;
@@ -1867,14 +1916,20 @@ class _EditUserDialogState extends State<_EditUserDialog> {
           // Status
           _lbl('Hali'),
           const SizedBox(height: 4),
-          _drop<String>(
-            value: _status,
-            items: const [
-              DropdownMenuItem(value: 'active',   child: Text('Hai', style: TextStyle(fontSize: 13))),
-              DropdownMenuItem(value: 'inactive', child: Text('Haifanyi kazi', style: TextStyle(fontSize: 13))),
-              DropdownMenuItem(value: 'disabled', child: Text('Imesimamishwa', style: TextStyle(fontSize: 13))),
-            ],
-            onChange: (v) => setState(() => _status = v),
+          SelectField(
+            hint: 'Chagua Hali',
+            value: _status == 'active' ? 'Hai' : _status == 'inactive' ? 'Haifanyi kazi' : 'Imesimamishwa',
+            onTap: () async {
+              final v = await showSelectSheet<String>(context,
+                title: 'Chagua Hali',
+                items: const [
+                  (value: 'active',   label: 'Hai',            subtitle: null as String?),
+                  (value: 'inactive', label: 'Haifanyi kazi',  subtitle: null as String?),
+                  (value: 'disabled', label: 'Imesimamishwa',  subtitle: null as String?),
+                ],
+                selected: _status);
+              if (v != null) setState(() => _status = v);
+            },
           ),
           const SizedBox(height: 10),
 
@@ -1921,18 +1976,26 @@ class _EditUserDialogState extends State<_EditUserDialog> {
             if (_cadres.isNotEmpty) ...[
               _lbl('Kada'),
               const SizedBox(height: 4),
-              _drop<String>(
-                value: _cadres.any((c) => '${c['code']}' == _cadreCode) ? _cadreCode : '',
+              SelectField(
                 hint: 'Chagua Kada',
-                items: [
-                  const DropdownMenuItem(value: '', child: Text('— Bila mabadiliko —', style: TextStyle(fontSize: 12, color: _kGrey400))),
-                  ..._cadres.map((c) => DropdownMenuItem<String>(
-                    value: '${c['code']}',
-                    child: Text('${c['name'] ?? c['code']}',
-                      style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                  )),
-                ],
-                onChange: (v) => setState(() => _cadreCode = v),
+                value: _cadreCode.isEmpty ? null : (() {
+                  final c = _cadres.firstWhere((c) => '${c['code']}' == _cadreCode, orElse: () => null);
+                  return c != null ? '${c['name'] ?? c['code']}' : _cadreCode;
+                })(),
+                onTap: () async {
+                  final items = [
+                    (value: '', label: '— Bila mabadiliko —', subtitle: null as String?),
+                    ..._cadres.map((c) => (
+                      value: '${c['code']}',
+                      label: '${c['name'] ?? c['code']}',
+                      subtitle: null as String?,
+                    )),
+                  ];
+                  final v = await showSelectSheet<String>(context,
+                    title: 'Chagua Kada', items: items,
+                    selected: _cadreCode, searchable: _cadres.length > 6);
+                  if (v != null) setState(() => _cadreCode = v);
+                },
               ),
               const SizedBox(height: 10),
             ],
@@ -1972,43 +2035,58 @@ class _EditUserDialogState extends State<_EditUserDialog> {
             // Station: Region
             _lbl('Kituo — Mkoa'),
             const SizedBox(height: 4),
-            _locDrop<int?>(
-              value: _regionId,
+            SelectField(
               hint: 'Chagua Mkoa',
-              items: [
-                const DropdownMenuItem<int?>(value: null, child: Text('— Chagua Mkoa —')),
-                ...widget.regions.map((r) {
-                  final id = r['id'] is int ? r['id'] as int : int.tryParse('${r['id']}');
-                  return DropdownMenuItem<int?>(
-                    value: id,
-                    child: Text('${r['name'] ?? r['region_name'] ?? r['id']}',
-                      style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                  );
-                }),
-              ],
-              onChanged: _onRegion,
+              value: _regionName.isEmpty ? null : _regionName,
+              onTap: () async {
+                final items = [
+                  (value: 0, label: '— Chagua Mkoa —', subtitle: null as String?),
+                  ...widget.regions.map((r) {
+                    final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                    return (value: id, label: '${r['name'] ?? r['region_name'] ?? r['id']}', subtitle: null as String?);
+                  }),
+                ];
+                final v = await showSelectSheet<int>(context,
+                  title: 'Chagua Mkoa', items: items,
+                  selected: _regionId ?? 0, searchable: true);
+                if (v != null) {
+                  final name = v == 0 ? '' : '${widget.regions.firstWhere((r) {
+                    final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                    return id == v;
+                  }, orElse: () => {'name': ''})['name']}';
+                  _onRegion(v == 0 ? null : v, name);
+                }
+              },
             ),
 
             // District (shown after region selected)
-            if (_regionId != null && _districts.isNotEmpty) ...[
+            if (_regionId != null) ...[
               const SizedBox(height: 6),
               _lbl('Wilaya'),
               const SizedBox(height: 4),
-              _locDrop<int?>(
-                value: _districtId,
+              SelectField(
                 hint: 'Chagua Wilaya',
-                items: [
-                  const DropdownMenuItem<int?>(value: null, child: Text('— Chagua Wilaya —')),
-                  ..._districts.map((d) {
-                    final id = d['id'] is int ? d['id'] as int : int.tryParse('${d['id']}');
-                    return DropdownMenuItem<int?>(
-                      value: id,
-                      child: Text('${d['name'] ?? d['district_name'] ?? d['id']}',
-                        style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                    );
-                  }),
-                ],
-                onChanged: _onDistrict,
+                value: _districtName.isEmpty ? null : _districtName,
+                disabled: _districts.isEmpty,
+                onTap: _districts.isEmpty ? null : () async {
+                  final items = [
+                    (value: 0, label: '— Chagua Wilaya —', subtitle: null as String?),
+                    ..._districts.map((d) {
+                      final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                      return (value: id, label: '${d['name'] ?? d['district_name'] ?? d['id']}', subtitle: null as String?);
+                    }),
+                  ];
+                  final v = await showSelectSheet<int>(context,
+                    title: 'Chagua Wilaya', items: items,
+                    selected: _districtId ?? 0, searchable: true);
+                  if (v != null) {
+                    final name = v == 0 ? '' : '${_districts.firstWhere((d) {
+                      final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                      return id == v;
+                    }, orElse: () => {'name': ''})['name']}';
+                    _onDistrict(v == 0 ? null : v, name);
+                  }
+                },
               ),
             ],
 
@@ -2017,21 +2095,25 @@ class _EditUserDialogState extends State<_EditUserDialog> {
               const SizedBox(height: 6),
               _lbl('Kituo'),
               const SizedBox(height: 4),
-              _locDrop<String>(
-                value: _facilityId.isEmpty ? '' : _facilityId,
+              SelectField(
                 hint: 'Chagua Kituo',
-                items: [
-                  const DropdownMenuItem<String>(value: '', child: Text('— Chagua Kituo —')),
-                  ..._facilities.map((f) {
-                    final id = '${f['id'] ?? f['facility_id']}';
-                    return DropdownMenuItem<String>(
-                      value: id,
-                      child: Text('${f['name'] ?? f['facility_name'] ?? id}',
-                        style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                    );
-                  }),
-                ],
-                onChanged: (v) { if (v != null) setState(() => _facilityId = v); },
+                value: _facilityName.isEmpty ? null : _facilityName,
+                onTap: () async {
+                  final items = [
+                    (value: '', label: '— Chagua Kituo —', subtitle: null as String?),
+                    ..._facilities.map((f) {
+                      final id = '${f['id'] ?? f['facility_id']}';
+                      return (value: id, label: '${f['name'] ?? f['facility_name'] ?? id}', subtitle: null as String?);
+                    }),
+                  ];
+                  final v = await showSelectSheet<String>(context,
+                    title: 'Chagua Kituo', items: items,
+                    selected: _facilityId, searchable: _facilities.length > 6);
+                  if (v != null && v.isNotEmpty) {
+                    final name = '${_facilities.firstWhere((f) => '${f['id'] ?? f['facility_id']}' == v, orElse: () => {'name': ''})['name']}';
+                    setState(() { _facilityId = v; _facilityName = name; });
+                  }
+                },
               ),
             ],
 
@@ -2046,38 +2128,57 @@ class _EditUserDialogState extends State<_EditUserDialog> {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(children: [
-                  Expanded(child: _locDrop<int?>(
-                    value: dest['region_id'] as int?,
+                  Expanded(child: SelectField(
                     hint: 'Mkoa',
-                    items: [
-                      const DropdownMenuItem<int?>(value: null, child: Text('— Mkoa —')),
-                      ...widget.regions.map((r) {
-                        final id = r['id'] is int ? r['id'] as int : int.tryParse('${r['id']}');
-                        return DropdownMenuItem<int?>(
-                          value: id,
-                          child: Text('${r['name'] ?? r['region_name'] ?? r['id']}',
-                            style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis),
-                        );
-                      }),
-                    ],
-                    onChanged: (v) => _onDestRegion(i, v),
+                    value: (dest['region_name'] as String?)?.isNotEmpty == true ? dest['region_name'] as String : null,
+                    onTap: () async {
+                      final items = [
+                        (value: 0, label: '— Mkoa —', subtitle: null as String?),
+                        ...widget.regions.map((r) {
+                          final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                          return (value: id, label: '${r['name'] ?? r['region_name'] ?? r['id']}', subtitle: null as String?);
+                        }),
+                      ];
+                      final v = await showSelectSheet<int>(context,
+                        title: 'Mkoa wa Lengo', items: items,
+                        selected: (dest['region_id'] as int?) ?? 0, searchable: true);
+                      if (v != null) {
+                        final name = v == 0 ? '' : '${widget.regions.firstWhere((r) {
+                          final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                          return id == v;
+                        }, orElse: () => {'name': ''})['name']}';
+                        _onDestRegion(i, v == 0 ? null : v);
+                        setState(() => _destinations[i]['region_name'] = name);
+                      }
+                    },
                   )),
                   const SizedBox(width: 6),
-                  Expanded(child: _locDrop<int?>(
-                    value: dest['district_id'] as int?,
+                  Expanded(child: SelectField(
                     hint: 'Wilaya',
-                    items: [
-                      const DropdownMenuItem<int?>(value: null, child: Text('— Wilaya —')),
-                      ...destDistList.map((d) {
-                        final id = d['id'] is int ? d['id'] as int : int.tryParse('${d['id']}');
-                        return DropdownMenuItem<int?>(
-                          value: id,
-                          child: Text('${d['name'] ?? d['district_name'] ?? d['id']}',
-                            style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis),
-                        );
-                      }),
-                    ],
-                    onChanged: (v) => setState(() => _destinations[i]['district_id'] = v),
+                    value: (dest['district_name'] as String?)?.isNotEmpty == true ? dest['district_name'] as String : null,
+                    disabled: destDistList.isEmpty,
+                    onTap: destDistList.isEmpty ? null : () async {
+                      final items = [
+                        (value: 0, label: '— Wilaya —', subtitle: null as String?),
+                        ...destDistList.map((d) {
+                          final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                          return (value: id, label: '${d['name'] ?? d['district_name'] ?? d['id']}', subtitle: null as String?);
+                        }),
+                      ];
+                      final v = await showSelectSheet<int>(context,
+                        title: 'Wilaya ya Lengo', items: items,
+                        selected: (dest['district_id'] as int?) ?? 0, searchable: destDistList.length > 6);
+                      if (v != null) {
+                        final name = v == 0 ? '' : '${destDistList.firstWhere((d) {
+                          final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                          return id == v;
+                        }, orElse: () => {'name': ''})['name']}';
+                        setState(() {
+                          _destinations[i]['district_id'] = v == 0 ? null : v;
+                          _destinations[i]['district_name'] = name;
+                        });
+                      }
+                    },
                   )),
                   const SizedBox(width: 4),
                   GestureDetector(
@@ -2159,54 +2260,8 @@ class _EditUserDialogState extends State<_EditUserDialog> {
     ]);
   }
 
-  Widget _drop<T>({required T value, required List<DropdownMenuItem<T>> items,
-      required ValueChanged<T> onChange, String? hint}) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          isExpanded: true,
-          value: value,
-          hint: hint != null ? Text(hint, style: const TextStyle(fontSize: 12, color: _kGrey400)) : null,
-          style: const TextStyle(fontSize: 13, color: _kGrey700),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: _kGrey400),
-          onChanged: (v) { if (v != null) onChange(v); },
-          items: items,
-        ),
-      ),
-    );
-  }
-
-  Widget _locDrop<T>({required T value, required String hint,
-      required List<DropdownMenuItem<T>> items, required ValueChanged<T?> onChanged}) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          isExpanded: true,
-          value: value,
-          hint: Text(hint, style: const TextStyle(fontSize: 12, color: _kGrey400)),
-          style: const TextStyle(fontSize: 12, color: _kGrey700),
-          icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: _kGrey400),
-          onChanged: onChanged,
-          items: items,
-        ),
-      ),
-    );
-  }
 }
+
 
 // ── CREATE USER DIALOG ────────────────────────────────────────────────────────
 // ── CREATE USER BOTTOM SHEET ──────────────────────────────────────────────────
