@@ -109,6 +109,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadInit() async {
+    // Refresh user profile first to ensure currentStation is populated
+    if (mounted) {
+      await context.read<AuthProvider>().refreshUser();
+    }
     await Future.wait([
       _loadBoard(),
       _loadTrueMatches(),
@@ -1140,7 +1144,7 @@ class _FiltersBar extends StatelessWidget {
 
         // Wilaya — disabled unless mkoa mmoja
         SelectField(
-          hint: singleRegionSelected ? 'Wilaya Zote' : 'Chagua Mkoa kwanza',
+          hint: 'Wilaya zote',
           value: districtLabel,
           disabled: !singleRegionSelected,
           onTap: !singleRegionSelected ? null : () async {
@@ -1159,7 +1163,7 @@ class _FiltersBar extends StatelessWidget {
 
         // Kituo — disabled unless wilaya
         SelectField(
-          hint: districtSelected ? 'Vituo Vyote' : 'Chagua Wilaya kwanza',
+          hint: '-- Chagua Kituo --',
           value: facilityLabel,
           disabled: !districtSelected,
           onTap: !districtSelected ? null : () async {

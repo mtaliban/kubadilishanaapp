@@ -237,13 +237,9 @@ class SelectField extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: disabled ? const Color(0xFFF3F4F6) : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: disabled
-                ? const Color(0xFFE5E7EB)
-                : const Color(0xFFD1D5DB),
-          ),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
         child: Row(children: [
           Expanded(
@@ -253,21 +249,17 @@ class SelectField extends StatelessWidget {
                 fontSize: 12,
                 color: hasValue
                     ? const Color(0xFF111827)
-                    : disabled
-                        ? const Color(0xFFD1D5DB)
-                        : const Color(0xFF9CA3AF),
+                    : const Color(0xFF9CA3AF),
                 fontWeight:
                     hasValue ? FontWeight.w500 : FontWeight.normal,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Icon(
+          const Icon(
             Icons.keyboard_arrow_down_rounded,
             size: 18,
-            color: disabled
-                ? const Color(0xFFD1D5DB)
-                : const Color(0xFF6B7280),
+            color: Color(0xFF9CA3AF),
           ),
         ]),
       ),
