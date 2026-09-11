@@ -37,6 +37,18 @@ String _ago(String? iso) {
   }
 }
 
+String _fmtDate(String? iso) {
+  if (iso == null || iso.isEmpty) return '';
+  try {
+    final d = DateTime.parse(iso).toLocal();
+    final dd = d.day.toString().padLeft(2, '0');
+    final mm = d.month.toString().padLeft(2, '0');
+    return '$dd/$mm/${d.year}';
+  } catch (_) {
+    return iso.split('T').first;
+  }
+}
+
 InputDecoration _inp(String hint, {IconData? prefix}) => InputDecoration(
   hintText: hint,
   hintStyle: const TextStyle(fontSize: 14, color: _kGrey400),
@@ -253,36 +265,60 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   // ── Delete ────────────────────────────────────────────────────────
   Future<void> _delete(String id) async {
     if (id.isEmpty || _busyId.isNotEmpty) return;
-    final ok = await showDialog<bool>(
+    final ok = await showModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Futa Tangazo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-        content: const Text('Una uhakika wa kufuta tangazo hili?', style: TextStyle(fontSize: 14, color: _kGrey700)),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: _kGrey200),
-              foregroundColor: _kGrey700,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(color: _kRed50, shape: BoxShape.circle),
+              child: const Icon(Icons.delete_outline, color: _kRed, size: 20),
             ),
-            child: const Text('Hapana'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kRed,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            ),
-            child: const Text('Futa'),
-          ),
-        ],
+            const SizedBox(height: 12),
+            const Text('Futa Tangazo',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
+            const SizedBox(height: 6),
+            const Text('Una uhakika wa kufuta tangazo hili?',
+                style: TextStyle(fontSize: 13, color: _kGrey500), textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(_, false),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: _kGrey200),
+                    foregroundColor: _kGrey700,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hapana'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(_, true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _kRed,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Futa'),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 4),
+          ],
+        ),
       ),
     );
     if (ok != true || !mounted) return;
@@ -934,6 +970,11 @@ class _AnnTileState extends State<_AnnTile> {
     final recipients = widget.item['recipient_count'] ?? 0;
     final createdAt  = (widget.item['created_at'] ?? '').toString();
     final isBusy     = widget.busyId == id;
+    final senderName = (() {
+      final cb = widget.item['created_by'];
+      if (cb is Map) return (cb['full_name'] ?? cb['name'] ?? '').toString();
+      return (widget.item['sender_name'] ?? widget.item['admin_name'] ?? '').toString();
+    })();
 
     final accentColor = _audColor(widget.audRaw);
     final audIcon     = _audIcon(widget.audRaw);
@@ -1054,45 +1095,58 @@ class _AnnTileState extends State<_AnnTile> {
             ),
           ),
 
+          const SizedBox(height: 8),
+
+          // ── Meta: recipients + sender + date ─────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.people_outline, size: 13, color: _kGrey400),
+                  const SizedBox(width: 4),
+                  Text('kwa watu: $recipients',
+                      style: const TextStyle(fontSize: 12, color: _kGrey600)),
+                ]),
+                if (senderName.isNotEmpty)
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.person_outline, size: 13, color: _kGrey400),
+                    const SizedBox(width: 4),
+                    Text(senderName.toUpperCase(),
+                        style: const TextStyle(fontSize: 11, color: _kGrey600, fontWeight: FontWeight.w500)),
+                  ]),
+                if (createdAt.isNotEmpty)
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.schedule, size: 12, color: _kGrey400),
+                    const SizedBox(width: 4),
+                    Text(_fmtDate(createdAt),
+                        style: const TextStyle(fontSize: 11, color: _kGrey500)),
+                  ]),
+              ],
+            ),
+          ),
+
           const SizedBox(height: 10),
           const Divider(height: 1, color: _kGrey100),
 
-          // ── Bottom row: recipients + actions ─────────────────────
+          // ── Bottom row: actions ───────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
             child: Row(
               children: [
-                // Recipient count chip
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _kGrey100,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.people, size: 12, color: _kGrey500),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$recipients walengwa',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: _kGrey600),
-                      ),
-                    ],
-                  ),
-                ),
                 const Spacer(),
-                // Resend button
                 _ActionBtn(
                   label: 'Tuma Tena',
                   icon: Icons.refresh,
                   color: _kBlue,
-                  filled: true,
+                  filled: false,
                   busy: isBusy,
                   onTap: widget.onResend,
                 ),
-                const SizedBox(width: 6),
-                // Delete button
+                const SizedBox(width: 8),
                 _ActionBtn(
                   label: 'Futa',
                   icon: Icons.delete_outline,
