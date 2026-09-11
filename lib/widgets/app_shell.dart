@@ -201,8 +201,7 @@ class _AppShellState extends State<AppShell> {
   String _initials(String name) {
     final parts = name.trim().split(' ').where((w) => w.isNotEmpty).toList();
     if (parts.isEmpty) return 'M';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return parts[0][0].toUpperCase();
   }
 
   // ── Hamburger dropdown ──
@@ -428,8 +427,17 @@ class _AppShellState extends State<AppShell> {
         final counts = _badge.counts;
 
         return Scaffold(
-          backgroundColor: Colors.white,
-          body: SafeArea(
+          backgroundColor: Colors.transparent,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFEFF6FF), Color(0xFFFAFBFF), Colors.white],
+                stops: [0.0, 0.18, 0.5],
+              ),
+            ),
+          child: SafeArea(
             child: Column(children: [
 
               // ══ TOP BAR (h-14 = 56px) ══════════════════════════════════════
@@ -523,6 +531,7 @@ class _AppShellState extends State<AppShell> {
               // ══ CONTENT ══════════════════════════════════════════════════════
               Expanded(child: widget.child),
             ]),
+          ),
           ),
 
           // ══ BOTTOM NAV (min-h-[52px]) ═══════════════════════════════════════

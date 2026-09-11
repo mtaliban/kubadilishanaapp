@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.8
 
@@ -34,7 +36,7 @@ dependencies:
   flutter_local_notifications: ^18.0.1
 
   # --- Utils ---
-  intl: ^0.19.0
+  intl: ^0.20.2
   url_launcher: ^6.3.1
   share_plus: ^10.1.4
   connectivity_plus: ^6.1.1

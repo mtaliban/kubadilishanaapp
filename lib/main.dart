@@ -1,6 +1,7 @@
 /// Kubadilishana — main entry point with all routes.
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'config/theme.dart';
@@ -24,6 +25,7 @@ import 'screens/my_matches_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/call_history_screen.dart';
 import 'screens/settings_screen.dart';
+import 'widgets/app_shell.dart' show LanguageProvider;
 
 // Global error log — displayed in _ErrorApp if crash happens
 final List<String> _crashLog = [];
@@ -66,13 +68,33 @@ void main() {
   });
 }
 
-class KubadilishanaApp extends StatelessWidget {
+class KubadilishanaApp extends StatefulWidget {
   const KubadilishanaApp({super.key});
+  @override
+  State<KubadilishanaApp> createState() => _KubadilishanaAppState();
+}
+
+class _KubadilishanaAppState extends State<KubadilishanaApp> {
+  @override
+  void initState() {
+    super.initState();
+    LanguageProvider().addListener(_onLangChange);
+  }
+
+  @override
+  void dispose() {
+    LanguageProvider().removeListener(_onLangChange);
+    super.dispose();
+  }
+
+  void _onLangChange() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
     // Override error widget to show message instead of red screen
     ErrorWidget.builder = (details) => _ErrorWidget(details.exceptionAsString());
+
+    final locale = Locale(LanguageProvider().lang);
 
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
@@ -81,6 +103,13 @@ class KubadilishanaApp extends StatelessWidget {
         title: 'Kubadilishana',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        locale: locale,
+        supportedLocales: const [Locale('sw'), Locale('en')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         initialRoute: '/',
         onGenerateRoute: (settings) {
           if (settings.name == '/user-profile') {
