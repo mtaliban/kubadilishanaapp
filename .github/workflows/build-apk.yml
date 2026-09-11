@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,41 +32,53 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build Release APK (debug-signed if no keystore)
+      - name: Build Release APK
         run: flutter build apk --release
 
-      - name: Rename APK with version
+      - name: Prepare APK name
+        id: apk
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr '+' '-')
+          DATE=$(date +'%Y%m%d-%H%M')
+          TAG="build-${DATE}"
+          APK_NAME="kubadilishana-v${VERSION}-${DATE}.apk"
           cp build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/kubadilishana-v${VERSION}.apk
-          echo "APK_PATH=build/app/outputs/flutter-apk/kubadilishana-v${VERSION}.apk" >> $GITHUB_ENV
-          echo "APK_NAME=kubadilishana-v${VERSION}.apk" >> $GITHUB_ENV
+             build/app/outputs/flutter-apk/${APK_NAME}
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
 
-      - name: Upload APK as artifact (pakua hapa)
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kubadilishana-apk
           path: build/app/outputs/flutter-apk/kubadilishana-*.apk
           retention-days: 30
 
-      - name: Create GitHub Release
+      - name: Delete old latest release (if exists)
+        run: |
+          gh release delete latest --yes --repo ${{ github.repository }} 2>/dev/null || true
+          git push origin :refs/tags/latest 2>/dev/null || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release (latest)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
-          name: "Kubadilishana App — Build #${{ github.run_number }}"
+          tag_name: latest
+          name: "Kubadilishana App — Toleo Jipya"
           body: |
-            ## Kubadilishana Vituo APK
+            ## 📱 Pakua APK hapa chini
 
-            **Jinsi ya kupakua APK:**
-            1. Bonyeza jina la faili `.apk` hapo chini
-            2. Pakua kwenye simu yako
-            3. Sakinisha (kama inakataa, wezesha "Install unknown apps" kwenye Settings)
+            Bonyeza faili `.apk` hapo chini → pakua → sakinisha kwenye simu.
+
+            > Kama inakataa sakinishwa: Settings → Security → "Install unknown apps" → wezesha
 
             ---
-            Commit: `${{ github.sha }}`
+            🕐 Ilitengenezwa: ${{ steps.apk.outputs.tag }}
+            📦 Commit: `${{ github.sha }}`
           files: build/app/outputs/flutter-apk/kubadilishana-*.apk
           draft: false
           prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
