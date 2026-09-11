@@ -20,6 +20,7 @@ BoxDecoration _cardDec({Color? borderColor}) => BoxDecoration(
   color: Colors.white,
   borderRadius: BorderRadius.circular(12),
   border: Border.all(color: borderColor ?? _kGrey200),
+  boxShadow: [BoxShadow(color: const Color(0x0D000000), blurRadius: 2, offset: Offset(0, 1))],
 );
 
 // .input = rounded-md border-grey-300 px-2.5=10 py-1.5=6 text-xs=12

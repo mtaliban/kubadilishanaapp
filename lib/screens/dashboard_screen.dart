@@ -341,7 +341,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       },
                     ),
 
-                  if (_announcements.isNotEmpty) const SizedBox(height: 10),
+                  if (_announcements.isNotEmpty) const SizedBox(height: 16),
 
                   // ── HERO CARD ──
                   Container(
@@ -416,7 +416,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ]),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
                   // ── LIVE PANEL — "Wanaohamia [Mkoa] wakitokea [Chanzo]" ──
                   Container(
@@ -460,7 +460,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ]),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
                   // ── FILTERS ──
                   _FiltersBar(
@@ -512,7 +512,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     districtSelected: _districtId != null,
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
                   // ── TRUE MATCHES — kama web: baada ya filters ──
                   if (_trueMatches.isNotEmpty) ...[
@@ -527,7 +527,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       toastMsg: _toastMsg,
                       onToast: (msg, uid) => _showCardToast(msg, uid),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                   ],
 
                   // ── BOARD ──
@@ -1370,14 +1370,24 @@ class _BoardCard extends StatelessWidget {
                   ),
               ]),
               const SizedBox(height: 2),
-              Row(children: [
+              Wrap(spacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 if (category.isNotEmpty)
                   Text(isEdu ? 'Elimu' : 'Afya',
                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
                 if (cadre.isNotEmpty)
-                  Expanded(child: Text(' · $cadre',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                      overflow: TextOverflow.ellipsis)),
+                  Text(cadre,
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                // Health cadre code badge — kama web: bg-emerald-500 text-white rounded-full
+                if (!isEdu && card['cadre_code'] != null && (card['cadre_code'] as String).isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981), // emerald-500
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(card['cadre_code'] as String,
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
               ]),
             ])),
           ]),
@@ -1399,7 +1409,7 @@ class _BoardCard extends StatelessWidget {
                   const SizedBox(width: 3),
                   const Text('Kutoka: ', style: TextStyle(fontSize: 11, color: Color(0xFF4B5563), fontWeight: FontWeight.w500)),
                   Expanded(child: Text(
-                    [station['district_name'], station['region_name']]
+                    [station['region_name'], station['district_name']]
                         .where((v) => v != null && v.toString().isNotEmpty).join(', '),
                     style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
                     overflow: TextOverflow.ellipsis,
