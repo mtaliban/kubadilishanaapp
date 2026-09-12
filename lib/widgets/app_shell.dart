@@ -477,23 +477,18 @@ class _AppShellState extends State<AppShell> {
 
                   const Spacer(),
 
-                  // ── RIGHT: Avatar + LangToggle (kama web) ──────────────────
+                  // ── RIGHT: Avatar icon — sawa na bottom nav Wasifu icon ──
                   GestureDetector(
                     onTap: () => _showProfileMenu(),
-                    child: Container(
+                    child: SizedBox(
                       key: _avatarKey,
-                      width: 36, height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
-                      ),
+                      width: 40, height: 40,
                       child: Center(
                         child: SvgPicture.asset(
                           'assets/icons/user.svg',
-                          width: 18, height: 18,
+                          width: 22, height: 22,
                           colorFilter: const ColorFilter.mode(
-                            Color(0xFF1D4ED8), BlendMode.srcIn),
+                            Color(0xFF1E40AF), BlendMode.srcIn),
                         ),
                       ),
                     ),
