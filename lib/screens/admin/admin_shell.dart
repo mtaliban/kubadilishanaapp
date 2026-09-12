@@ -245,11 +245,11 @@ class _AdminShellState extends State<AdminShell> {
           child: SizedBox(
             height: 52,
             child: Row(children: [
-              _navItem(0, 'assets/icons/crown.svg',          'Admin',    '/admin',         0),
-              _navItem(1, 'assets/icons/users.svg',          'Watu',     '/admin/users',   1),
-              _navItem(2, 'assets/icons/git-merge.svg',      'Waliopata','/admin/real-matches', 11),
-              _navItem(3, 'assets/icons/wallet.svg',         'Malipo',   '/admin/payments', 3),
-              _navItem(4, 'assets/icons/clipboard-list.svg', 'Maoni',    '/admin/feedback', 5),
+              _navItem(0, 'assets/icons/crown.svg',          'Admin',    '/admin',              0),
+              _navItem(1, 'assets/icons/users.svg',          'Watu',     '/admin/users',        1),
+              _navItem(2, null,                              'Waliofanana', '/admin/real-matches', 11, matIcon: Icons.sync_alt),
+              _navItem(3, 'assets/icons/wallet.svg',         'Malipo',   '/admin/payments',     3),
+              _navItem(4, 'assets/icons/clipboard-list.svg', 'Maoni',    '/admin/feedback',     5),
             ]),
           ),
         ),
@@ -258,7 +258,7 @@ class _AdminShellState extends State<AdminShell> {
   }
 
   // ── NAV ITEM — kama web MobileBottomNav (SVG icon, badge, underline indicator) ──
-  Widget _navItem(int tabIdx, String svgAsset, String label, String route, int pageIdx) {
+  Widget _navItem(int tabIdx, String? svgAsset, String label, String route, int pageIdx, {IconData? matIcon}) {
     final active = _tabIndex == tabIdx;
     final badge  = _routeCounts[route] ?? 0;
     final color  = active ? _kBlue : _kGrey500;
@@ -271,8 +271,10 @@ class _AdminShellState extends State<AdminShell> {
         },
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Stack(clipBehavior: Clip.none, children: [
-            SvgPicture.asset(svgAsset, width: 20, height: 20,
-              colorFilter: ColorFilter.mode(color, BlendMode.srcIn)),
+            svgAsset != null
+              ? SvgPicture.asset(svgAsset, width: 20, height: 20,
+                  colorFilter: ColorFilter.mode(color, BlendMode.srcIn))
+              : Icon(matIcon ?? Icons.circle, size: 20, color: color),
             if (badge > 0)
               Positioned(
                 top: -4, right: -6,
@@ -324,16 +326,16 @@ class _AdminShellState extends State<AdminShell> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              _dropLink('Admin',            null,                0,   counts, active: _pageIndex == 0,  svg: 'assets/icons/crown.svg'),
-              _dropLink('Watumiaji',        '/admin/users',      1,   counts, active: _pageIndex == 1,  svg: 'assets/icons/users.svg'),
-              _dropLink('Waliopata Wenzao', null,                10,  counts, active: _pageIndex == 10, svg: 'assets/icons/git-merge.svg'),
-              _dropLink('Match za Kweli',   '/admin/real-matches', 11, counts, active: _pageIndex == 11, svg: 'assets/icons/git-merge.svg'),
-              _dropLink('Data',             null,                2,   counts, active: _pageIndex == 2,  icon: Icons.storage_outlined),
-              _dropLink('Matangazo',        null,                6,   counts, active: _pageIndex == 6,  icon: Icons.campaign_outlined),
-              _dropLink('Malipo',           '/admin/payments',   3,   counts, active: _pageIndex == 3,  svg: 'assets/icons/wallet.svg'),
-              _dropLink('Waliopigiana',     null,                4,   counts, active: _pageIndex == 4,  icon: Icons.phone_outlined),
-              _dropLink('Maoni',            '/admin/feedback',   5,   counts, active: _pageIndex == 5,  svg: 'assets/icons/clipboard-list.svg'),
-              _dropLink('Wasifu',           '/profile',          -1,  counts, icon: Icons.person_outline),
+              _dropLink('Admin',            null,                  0,  counts, active: _pageIndex == 0,  svg: 'assets/icons/crown.svg'),
+              _dropLink('Watumiaji',        '/admin/users',        1,  counts, active: _pageIndex == 1,  svg: 'assets/icons/users.svg'),
+              _dropLink('Waliopata Wenzao', null,                  10, counts, active: _pageIndex == 10, svg: 'assets/icons/git-merge.svg'),
+              _dropLink('Match za Kweli',   '/admin/real-matches', 11, counts, active: _pageIndex == 11, icon: Icons.sync_alt),
+              _dropLink('Data',             null,                  2,  counts, active: _pageIndex == 2,  icon: Icons.storage_outlined),
+              _dropLink('Matangazo',        null,                  6,  counts, active: _pageIndex == 6,  icon: Icons.campaign_outlined),
+              _dropLink('Malipo',           '/admin/payments',     3,  counts, active: _pageIndex == 3,  svg: 'assets/icons/wallet.svg'),
+              _dropLink('Waliopigiana',     null,                  4,  counts, active: _pageIndex == 4,  icon: Icons.phone_outlined),
+              _dropLink('Maoni',            '/admin/feedback',     5,  counts, active: _pageIndex == 5,  svg: 'assets/icons/clipboard-list.svg'),
+              _dropLink('Wasifu',           '/profile',            -1, counts, svg: 'assets/icons/user.svg'),
             ]),
           ),
         ),

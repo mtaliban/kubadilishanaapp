@@ -462,55 +462,35 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _pageBtn(
-            label: '← Rudi',
-            enabled: safePage > 1,
-            onTap: () => setState(() => _page = safePage - 1),
+          _pageBtn(icon: Icons.chevron_left,  enabled: safePage > 1,           onTap: () => setState(() => _page = safePage - 1)),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(999)),
+            child: Text('$safePage / $totalPages',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey700)),
           ),
           const SizedBox(width: 12),
-          Text(
-            '$safePage / $totalPages',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: _kGrey500,
-            ),
-          ),
-          const SizedBox(width: 12),
-          _pageBtn(
-            label: 'Endelea →',
-            enabled: safePage < totalPages,
-            onTap: () => setState(() => _page = safePage + 1),
-          ),
+          _pageBtn(icon: Icons.chevron_right, enabled: safePage < totalPages,  onTap: () => setState(() => _page = safePage + 1)),
         ],
       ),
     );
   }
 
-  Widget _pageBtn({
-    required String label,
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
+  Widget _pageBtn({required IconData icon, required bool enabled, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        width: 36, height: 36,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: enabled ? Colors.white : _kGrey100,
           border: Border.all(color: _kGrey200),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: enabled
+              ? [const BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1))]
+              : null,
         ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: enabled ? _kGrey700 : _kGrey400,
-          ),
-        ),
+        child: Icon(icon, size: 18, color: enabled ? _kGrey700 : _kGrey400),
       ),
     );
   }
