@@ -964,14 +964,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           ),
           // ── Action row — compact icon buttons ──
           Container(
-            padding: const EdgeInsets.fromLTRB(12, 7, 12, 7),
+            padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
             decoration: const BoxDecoration(
               color: _kGrey50,
               border: Border(top: BorderSide(color: _kGrey100)),
             ),
             child: Row(children: [
               _iBtn(Icons.open_in_new_rounded, 'Angalia', _kGrey700, Colors.white, () => _showDetail(u)),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               _iBtn(Icons.edit_outlined, 'Hariri', _kBlue, _kBlue50, () => _showEditDialog(u)),
               const Spacer(),
               if (!isAdmin) ...[
@@ -982,7 +982,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   isDisabled ? _kGreen50 : _kOrange50,
                   () => _toggleSuspend(u),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 if (!isVerified) ...[
                   _iBtn(
                     contactEnabled ? Icons.phone_in_talk_outlined : Icons.phone_callback_outlined,
@@ -991,7 +991,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                     contactEnabled ? _kGreen50 : _kGrey100,
                     () => _toggleContact(u),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                 ],
                 _iBtn(Icons.delete_outline, 'Futa', _kRed, _kRed50, () => _delete(u)),
               ],
@@ -1024,13 +1024,13 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 34, height: 34,
+          width: 28, height: 28,
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(color: color.withValues(alpha: 0.25)),
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: color.withValues(alpha: 0.22)),
           ),
-          child: Center(child: Icon(icon, size: 16, color: color)),
+          child: Center(child: Icon(icon, size: 13, color: color)),
         ),
       ),
     );
