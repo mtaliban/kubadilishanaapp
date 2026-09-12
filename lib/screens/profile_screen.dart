@@ -25,18 +25,17 @@ BoxDecoration _cardDec({Color? borderColor}) => BoxDecoration(
   boxShadow: [BoxShadow(color: const Color(0x14000000), blurRadius: 6, offset: Offset(0, 2))],
 );
 
-// .input = rounded-md border-grey-300 px-2.5=10 py-1.5=6 text-xs=12
 InputDecoration _inputDec({String? hint, bool disabled = false}) => InputDecoration(
   hintText: hint,
   isDense: true,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey300)),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey300)),
+  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue, width: 2)),
-  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: disabled ? _kGrey200 : _kGrey300)),
-  hintStyle: const TextStyle(fontSize: 13, color: _kGrey500),
+  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
+  hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
   filled: true,
-  fillColor: disabled ? _kGrey100 : Colors.white,
+  fillColor: disabled ? _kGrey100 : _kGrey50,
 );
 
 // .label = text-sm=14px font-semibold text-grey-700 mb-1.5=6px
@@ -190,113 +189,20 @@ class _ViewAdmin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = profile['full_name']?.toString() ?? '';
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'A';
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // ── Avatar circle with gold gradient ──
-        Center(
-          child: Column(
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [_kAmber, _kAmberLight],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _kAmber.withValues(alpha: 0.35),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              // small crown icon below avatar
-              const Icon(Icons.workspace_premium_rounded, size: 20, color: _kAmber),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // ── Name + subtitle ──
-        Text(
-          name,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _kGrey900),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Msimamizi',
-          style: TextStyle(fontSize: 13, color: _kGrey500),
-          textAlign: TextAlign.center,
-        ),
-
-        const SizedBox(height: 10),
-
-        // ── Admin badge pill ──
-        Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7), // amber-100
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: _kAmberLight),
-            ),
-            child: const Text(
-              'Admin',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF92400E), // amber-800
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // ── Divider ──
-        const Divider(color: _kGrey200, height: 1),
-
-        const SizedBox(height: 20),
-
-        // ── Info card ──
-        _InfoCard(
-          title: 'Utambulisho wa Admin',
-          borderColor: _kGold200,
-          rows: [
-            _InfoRow('Jina Kamili', profile['full_name']),
-            _InfoRow('Barua Pepe', profile['email']),
-            _InfoRow('Namba ya Simu', profile['phone_primary']),
-            _InfoRow('Email Imethibitishwa', profile['email_verified'] == true ? 'Ndiyo' : 'Hapana'),
-            _InfoRow('Wajibu', 'Administrator'),
-          ],
-        ),
-
-        const SizedBox(height: 60),
-      ],
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _InfoCard(
+        title: 'Utambulisho wa Admin',
+        borderColor: _kGold200,
+        rows: [
+          _InfoRow('Jina Kamili', profile['full_name']),
+          _InfoRow('Barua Pepe', profile['email']),
+          _InfoRow('Namba ya Simu', profile['phone_primary']),
+          _InfoRow('Email Imethibitishwa', profile['email_verified'] == true ? 'Ndiyo ✓' : 'Hapana'),
+          _InfoRow('Wajibu', 'Administrator'),
+        ],
+      ),
+      const SizedBox(height: 60),
+    ]);
   }
 }
 
@@ -472,24 +378,24 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
 
       const SizedBox(height: 24),
 
-      // ── Save button ──
-      Align(
-        alignment: Alignment.centerLeft,
+      // ── Save button — full width ──
+      SizedBox(
+        width: double.infinity,
+        height: 46,
         child: ElevatedButton(
           onPressed: _saving ? null : _save,
           style: ElevatedButton.styleFrom(
             backgroundColor: _kBlue,
             foregroundColor: Colors.white,
-            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            minimumSize: const Size(0, 0),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            disabledBackgroundColor: _kBlue,
+            disabledForegroundColor: Colors.white,
+            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             elevation: 0,
           ),
           child: _saving
-              ? const SizedBox(width: 16, height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              ? const SizedBox(width: 18, height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
               : const Text('Hifadhi Mabadiliko'),
         ),
       ),
@@ -846,24 +752,24 @@ class _EditProfileState extends State<_EditProfile> {
       ),
       const SizedBox(height: 24),
 
-      // ── Save button ──
-      Align(
-        alignment: Alignment.centerLeft,
+      // ── Save button — full width ──
+      SizedBox(
+        width: double.infinity,
+        height: 46,
         child: ElevatedButton(
           onPressed: _saving ? null : _save,
           style: ElevatedButton.styleFrom(
             backgroundColor: _kBlue,
             foregroundColor: Colors.white,
-            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            minimumSize: const Size(0, 0),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            disabledBackgroundColor: _kBlue,
+            disabledForegroundColor: Colors.white,
+            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             elevation: 0,
           ),
           child: _saving
-              ? const SizedBox(width: 16, height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              ? const SizedBox(width: 18, height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
               : const Text('Hifadhi Mabadiliko'),
         ),
       ),
@@ -1066,9 +972,9 @@ class _DropInput<T> extends StatelessWidget {
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue, width: 2)),
         disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _kGrey50,
       ),
-      hint: Text(hint, style: const TextStyle(fontSize: 13, color: _kGrey500)),
+      hint: Text(hint, style: const TextStyle(fontSize: 13, color: _kGrey400)),
       style: const TextStyle(fontSize: 13, color: _kGrey900),
       items: items,
       onChanged: onChanged,
