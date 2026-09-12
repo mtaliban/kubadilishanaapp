@@ -214,16 +214,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Disabled wakati wa 2FA (kama web: disabled={!!twoFA})
                           TextField(
                             controller: _identifierCtrl,
-                            keyboardType: TextInputType.text, // type="text" → '@' inawezekana
+                            keyboardType: TextInputType.text,
                             autocorrect: false,
                             enabled: _twoFAEmail == null,
                             textInputAction: TextInputAction.done,
                             onSubmitted: (_) => _twoFAEmail == null ? _submit() : null,
                             style: const TextStyle(
-                              fontSize: 12, // text-xs
-                              color: Color(0xFF111827), // text-brand-grey-900
+                              fontSize: 13,
+                              color: Color(0xFF111827),
                             ),
                             onChanged: (_) => setState(() {}),
+                            contextMenuBuilder: (ctx, state) =>
+                                AdaptiveTextSelectionToolbar.buttonItems(
+                              anchors: state.contextMenuAnchors,
+                              buttonItems: state.contextMenuButtonItems,
+                            ),
                             decoration: InputDecoration(
                               hintText: isAdminEmail ? 'admin@kubadilishana.go.tz' : '0712345678',
                               hintStyle: const TextStyle(
@@ -348,26 +353,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             // ── btn-primary w-full — bg-brand-blue rounded-md px-3 py-1 text-[11px] font-bold ──
                             SizedBox(
                               width: double.infinity,
-                              height: 28, // py-1(4px)+text-[11px](line-height 1rem=16px)+py-1(4px)=28px
+                              height: 34,
                               child: ElevatedButton(
                                 onPressed: loading ? null : _submit,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1E40AF), // bg-brand-blue
+                                  backgroundColor: const Color(0xFF1E40AF),
                                   foregroundColor: Colors.white,
-                                  disabledBackgroundColor: const Color(0xFF1E40AF).withValues(alpha: 0.5), // disabled:opacity-50
-                                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12), // py-1 px-3
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)), // rounded-md
-                                  textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold), // text-[11px] font-bold
+                                  disabledBackgroundColor: const Color(0xFF1E40AF),
+                                  disabledForegroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                                   elevation: 0,
                                 ),
                                 child: loading
-                                    // spinner + "Inaingia..." — flex items-center justify-center gap-2
-                                    ? const Row(mainAxisSize: MainAxisSize.min, children: [
-                                        SizedBox(width: 20, height: 20,
-                                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-                                        SizedBox(width: 8), // gap-2
-                                        Text('Inaingia...'),
-                                      ])
+                                    ? const SizedBox(width: 16, height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
                                     : const Text('Ingia'),
                               ),
                             )

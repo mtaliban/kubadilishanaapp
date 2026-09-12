@@ -1072,13 +1072,14 @@ class _FiltersBar extends StatelessWidget {
 
   static InputDecoration _searchDec(String hint) => InputDecoration(
     hintText: hint, isDense: true,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-    filled: true, fillColor: const Color(0xFFF9FAFB),
-    prefixIcon: const Icon(Icons.search, size: 16, color: Color(0xFF9CA3AF)),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-    hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    filled: true, fillColor: Colors.white,
+    prefixIcon: const Icon(Icons.search, size: 15, color: Color(0xFF9CA3AF)),
+    prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 0),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(7), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(7), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(7), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+    hintStyle: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
   );
 
   @override
@@ -1238,11 +1239,11 @@ class _FiltersBar extends StatelessWidget {
             controller: subjectQCtrl,
             decoration: _searchDec('Tafuta masomo (k.m. MATH, KISWAHILI...)').copyWith(
               suffixIcon: subjectQ.isNotEmpty
-                  ? IconButton(icon: const Icon(Icons.clear, size: 14, color: Color(0xFF9CA3AF)),
+                  ? IconButton(icon: const Icon(Icons.clear, size: 13, color: Color(0xFF9CA3AF)),
                       onPressed: () { subjectQCtrl.clear(); onSubjectQChanged(''); onSubjectQSubmitted(''); })
                   : null,
             ),
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(fontSize: 11),
             onChanged: onSubjectQChanged,
             onSubmitted: onSubjectQSubmitted,
             textInputAction: TextInputAction.search,

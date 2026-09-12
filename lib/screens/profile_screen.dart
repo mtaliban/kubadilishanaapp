@@ -312,56 +312,8 @@ class _ViewUser extends StatelessWidget {
     final cat = profile['category'] ?? '';
     final sector = profile['employment_sector'] ?? '';
     final name = profile['full_name']?.toString() ?? '';
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-
-      // ── Profile avatar ──
-      Center(
-        child: Column(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _kBlue,
-                boxShadow: [
-                  BoxShadow(
-                    color: _kBlue.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              name,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              cat == 'health' ? 'Sekta ya Afya' : cat == 'education' ? 'Sekta ya Elimu' : cat,
-              style: const TextStyle(fontSize: 13, color: _kGrey500),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-
-      const SizedBox(height: 20),
 
       // Card 1: Identity
       _InfoCard(title: 'Utambulisho', rows: [

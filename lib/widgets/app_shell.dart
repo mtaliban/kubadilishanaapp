@@ -436,7 +436,6 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
-    final initial = _initials(user?.fullName ?? 'M');
 
     return ListenableBuilder(
       listenable: _badge,
@@ -444,17 +443,8 @@ class _AppShellState extends State<AppShell> {
         final counts = _badge.counts;
 
         return Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFFEFF6FF), Color(0xFFFAFBFF), Colors.white],
-                stops: [0.0, 0.18, 0.5],
-              ),
-            ),
-          child: SafeArea(
+          backgroundColor: Colors.white,
+          body: SafeArea(
             child: Column(children: [
 
               // ══ TOP BAR (h-14 = 56px) ══════════════════════════════════════
@@ -488,22 +478,24 @@ class _AppShellState extends State<AppShell> {
                   const Spacer(),
 
                   // ── RIGHT: Avatar + LangToggle (kama web) ──────────────────
-                  // Avatar — w-8 h-8 rounded-full bg-brand-blue-50 border-blue-200 text-blue-700
                   GestureDetector(
                     onTap: () => _showProfileMenu(),
                     child: Container(
                       key: _avatarKey,
-                      width: 32, height: 32,
+                      width: 36, height: 36,
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFEFF6FF), // brand-blue-50
-                        border: Border.all(color: const Color(0xFFBFDBFE)), // brand-blue-200
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
                       ),
-                      child: Center(child: Text(initial,
-                          style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold,
-                            color: Color(0xFF1D4ED8), // brand-blue-700
-                          ))),
+                      child: Center(
+                        child: SvgPicture.asset(
+                          'assets/icons/user.svg',
+                          width: 18, height: 18,
+                          colorFilter: const ColorFilter.mode(
+                            Color(0xFF1D4ED8), BlendMode.srcIn),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -548,7 +540,6 @@ class _AppShellState extends State<AppShell> {
               // ══ CONTENT ══════════════════════════════════════════════════════
               Expanded(child: widget.child),
             ]),
-          ),
           ),
 
           // ══ BOTTOM NAV (min-h-[52px]) ═══════════════════════════════════════
