@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../services/app_cache.dart';
+import '../../services/app_navigator.dart';
 import '../../services/websocket_service.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_users_page.dart';
@@ -62,6 +64,11 @@ class _AdminShellState extends State<AdminShell> {
   final Map<String, List<String>> _routeNotifIds = {};
   Timer? _badgeTimer;
 
+  // In-app toast (kama web showToast)
+  String? _toastMsg;
+  bool _toastIsSuccess = true;
+  Timer? _toastTimer;
+
   final _hamburgerKey = GlobalKey();
   final _avatarKey    = GlobalKey();
   OverlayEntry? _menuOverlay;
@@ -72,13 +79,33 @@ class _AdminShellState extends State<AdminShell> {
     _refreshBadges();
     _setupRealtime();
     _badgeTimer = Timer.periodic(const Duration(seconds: 30), (_) => _refreshBadges());
+    adminPageNotifier.addListener(_onAdminPageNotified);
   }
 
   @override
   void dispose() {
     _closeMenu();
     _badgeTimer?.cancel();
+    _toastTimer?.cancel();
+    adminPageNotifier.removeListener(_onAdminPageNotified);
     super.dispose();
+  }
+
+  void _onAdminPageNotified() {
+    final idx = adminPageNotifier.value;
+    if (idx != null && mounted) {
+      adminPageNotifier.value = null;
+      _selectPage(idx, null);
+    }
+  }
+
+  void _showToast(String msg, {bool success = true}) {
+    if (!mounted) return;
+    setState(() { _toastMsg = msg; _toastIsSuccess = success; });
+    _toastTimer?.cancel();
+    _toastTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) setState(() => _toastMsg = null);
+    });
   }
 
   void _closeMenu() {
@@ -88,14 +115,63 @@ class _AdminShellState extends State<AdminShell> {
 
   void _setupRealtime() {
     final ws = WebSocketService();
+
     ws.on('notification', (payload) {
       final type = (payload['type'] as String?) ?? '';
       final id   = '${payload['notification_id'] ?? payload['id'] ?? ''}';
       _bumpRoute(type, id);
+      _toastForNotifType(type, payload);
     });
-    ws.on('user.registered',     (_) => _refreshBadges());
-    ws.on('payment.submitted',   (_) => _refreshBadges());
-    ws.on('feedback.new',        (_) => _refreshBadges());
+
+    ws.on('user.registered', (p) {
+      final name = (p['full_name'] as String?)?.split(' ').first ?? 'Mtumiaji';
+      _showToast('👤 $name amesajiliwa!');
+      _refreshBadges();
+    });
+    ws.on('payment.submitted', (p) {
+      _showToast('💳 Malipo mapya yamefika!');
+      _refreshBadges();
+    });
+    ws.on('feedback.new', (p) {
+      _showToast('📋 Maoni mapya yamefika!');
+      _refreshBadges();
+    });
+    ws.on('match.found', (p) {
+      _showToast('🤝 Match mpya imepatikana!');
+      _bumpRoute('match.found', '');
+    });
+    ws.on('password_reset.new', (p) {
+      _showToast('🔑 Ombi jipya la reset password!');
+      _bumpRoute('password_reset.new', '');
+    });
+
+    // Reference data changed on server → clear location/cadre caches
+    ws.on('data.changed', (_) {
+      AppCache().invalidatePrefix('/locations');
+      AppCache().invalidatePrefix('/cadres');
+      AppCache().invalidatePrefix('/admin/data');
+      AppCache().invalidatePrefix('/admin/departments');
+    });
+  }
+
+  void _toastForNotifType(String type, Map<String, dynamic> p) {
+    switch (type) {
+      case 'payment.submitted':
+        _showToast('💳 Malipo mapya yamefika!');
+      case 'feedback.new':
+        _showToast('📋 Maoni mapya yamefika!');
+      case 'user.registered':
+        final name = (p['full_name'] as String?)?.split(' ').first ?? 'Mtumiaji';
+        _showToast('👤 $name amesajiliwa!');
+      case 'match.found':
+        _showToast('🤝 Match mpya imepatikana!');
+      case 'password_reset.new':
+        _showToast('🔑 Ombi jipya la reset password!');
+      case 'payment.approved':
+        _showToast('✅ Malipo yamethibitishwa!');
+      case 'payment.rejected':
+        _showToast('❌ Malipo yamekataliwa.', success: false);
+    }
   }
 
   String _routeForType(String type) {
@@ -227,6 +303,29 @@ class _AdminShellState extends State<AdminShell> {
               ]),
             ]),
           ),
+
+          // ── TOAST (WS events — kama web showToast) ──
+          if (_toastMsg != null)
+            GestureDetector(
+              onTap: () => setState(() => _toastMsg = null),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                decoration: BoxDecoration(
+                  color: _toastIsSuccess ? const Color(0xFF065F46) : _kRed,
+                ),
+                child: Row(children: [
+                  Icon(
+                    _toastIsSuccess ? Icons.check_circle_outline : Icons.error_outline,
+                    size: 14, color: Colors.white,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(_toastMsg!,
+                      style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500))),
+                  const Icon(Icons.close, size: 14, color: Colors.white70),
+                ]),
+              ),
+            ),
 
           // ── PAGE CONTENT ──
           Expanded(child: _pages[_pageIndex]),

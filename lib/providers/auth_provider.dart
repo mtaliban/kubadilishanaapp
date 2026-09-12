@@ -256,6 +256,8 @@ class AuthProvider extends ChangeNotifier {
       if (t != null) _ws.connect(t);
     });
 
+    setAdminStatus(_user?.isAdmin ?? false);
+
     _ws.on('account.disabled', (_) => logout());
     _ws.on('account.deleted', (_) => logout());
 
