@@ -74,6 +74,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   List<dynamic> _facilities = [];
   List<dynamic> _subjects   = [];
 
+  // Store WS callback reference so we can remove it in dispose()
+  late final WsEventCallback _wsCallback;
+
   @override
   void initState() {
     super.initState();
@@ -86,13 +89,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   @override
   void dispose() {
+    WebSocketService().off('*', _wsCallback);
     _searchCtrl.dispose();
     _msgTimer?.cancel();
     super.dispose();
   }
 
   void _setupLive() {
-    WebSocketService().onAny((payload) {
+    _wsCallback = (payload) {
       if (!mounted) return;
       final type = (payload['event_type'] ?? payload['type'] ?? '') as String;
       if (type.startsWith('user.') || type.startsWith('data.')) {
@@ -103,7 +107,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           if (mounted) setState(() => _live = false);
         });
       }
-    });
+    };
+    WebSocketService().onAny(_wsCallback);
   }
 
   Future<void> _loadRegions() async {
@@ -153,6 +158,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   }
 
   Future<void> _load() async {
+    if (mounted) setState(() => _loading = true);
     try {
       final res = await ApiService().adminUsers(params: {
         if (_q.isNotEmpty) 'q': _q,
@@ -161,15 +167,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         if (_districtId != null) 'district_id': _districtId,
         if (_facilityId.isNotEmpty) 'facility_id': _facilityId,
         if (_subjectFilter.isNotEmpty) 'subject': _subjectFilter,
-        'limit': 200,
-      });
+        'limit': _pageSize,
+        'skip': (_page - 1) * _pageSize,
+      }, useCache: false);
       final data = res.data as Map<String, dynamic>;
       if (!mounted) return;
-      final all = (data['users'] as List?) ?? [];
-      // Client-side pagination
       setState(() {
-        _users = all;
-        _total = (data['total'] ?? all.length) as int;
+        _users = (data['users'] as List?) ?? [];
+        _total = (data['total'] ?? _users.length) as int;
         _loading = false;
       });
     } catch (_) {
@@ -200,10 +205,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   // ── Pagination ──
   int get _totalPages => (_total / _pageSize).ceil().clamp(1, 9999);
-  List<dynamic> get _pageItems {
-    final start = (_page - 1) * _pageSize;
-    return _users.skip(start).take(_pageSize).toList();
-  }
+  List<dynamic> get _pageItems => _users;
 
   String _uid(dynamic u) => (u['_id'] ?? u['id'] ?? '').toString();
 
@@ -960,36 +962,38 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               ])),
             ]),
           ),
-          // ── Action row ──
+          // ── Action row — compact icon buttons ──
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(12, 7, 12, 7),
             decoration: const BoxDecoration(
               color: _kGrey50,
               border: Border(top: BorderSide(color: _kGrey100)),
             ),
-            child: Wrap(spacing: 6, runSpacing: 6, children: [
-              _ActBtn(label: 'Angalia', icon: Icons.open_in_new_rounded,
-                color: _kGrey700, bg: Colors.white, onTap: () => _showDetail(u)),
-              _ActBtn(label: 'Hariri', icon: Icons.edit_outlined,
-                color: _kBlue, bg: _kBlue50, onTap: () => _showEditDialog(u)),
+            child: Row(children: [
+              _iBtn(Icons.open_in_new_rounded, 'Angalia', _kGrey700, Colors.white, () => _showDetail(u)),
+              const SizedBox(width: 6),
+              _iBtn(Icons.edit_outlined, 'Hariri', _kBlue, _kBlue50, () => _showEditDialog(u)),
+              const Spacer(),
               if (!isAdmin) ...[
-                _ActBtn(
-                  label: isDisabled ? 'Fungua' : 'Simamisha',
-                  icon: isDisabled ? Icons.lock_open_outlined : Icons.block_outlined,
-                  color: isDisabled ? _kGreenDk : _kOrangeTx,
-                  bg: isDisabled ? _kGreen50 : _kOrange50,
-                  onTap: () => _toggleSuspend(u),
+                _iBtn(
+                  isDisabled ? Icons.lock_open_outlined : Icons.block_outlined,
+                  isDisabled ? 'Fungua' : 'Simamisha',
+                  isDisabled ? _kGreenDk : _kOrangeTx,
+                  isDisabled ? _kGreen50 : _kOrange50,
+                  () => _toggleSuspend(u),
                 ),
-                if (!isVerified)
-                  _ActBtn(
-                    label: contactEnabled ? 'Ameruhusiwa' : 'Ruhusu',
-                    icon: contactEnabled ? Icons.phone_in_talk_outlined : Icons.phone_callback_outlined,
-                    color: contactEnabled ? _kGreenDk : _kGrey500,
-                    bg: contactEnabled ? _kGreen50 : _kGrey50,
-                    onTap: () => _toggleContact(u),
+                const SizedBox(width: 6),
+                if (!isVerified) ...[
+                  _iBtn(
+                    contactEnabled ? Icons.phone_in_talk_outlined : Icons.phone_callback_outlined,
+                    contactEnabled ? 'Chia Simu' : 'Ruhusu Simu',
+                    contactEnabled ? _kGreenDk : _kGrey500,
+                    contactEnabled ? _kGreen50 : _kGrey100,
+                    () => _toggleContact(u),
                   ),
-                _ActBtn(label: 'Futa', icon: Icons.delete_outline,
-                  color: _kRed, bg: _kRed50, onTap: () => _delete(u)),
+                  const SizedBox(width: 6),
+                ],
+                _iBtn(Icons.delete_outline, 'Futa', _kRed, _kRed50, () => _delete(u)),
               ],
             ]),
           ),
@@ -1013,12 +1017,31 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     );
   }
 
+  Widget _iBtn(IconData icon, String tooltip, Color color, Color bg, VoidCallback onTap) {
+    return Tooltip(
+      message: tooltip,
+      preferBelow: false,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 34, height: 34,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: color.withValues(alpha: 0.25)),
+          ),
+          child: Center(child: Icon(icon, size: 16, color: color)),
+        ),
+      ),
+    );
+  }
+
   // ── PAGINATION ─────────────────────────────────────────────────────────────
   Widget _buildPagination() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        _NavBtn(icon: Icons.chevron_left_rounded, enabled: _page > 1, onTap: () => setState(() => _page--)),
+        _NavBtn(icon: Icons.chevron_left_rounded, enabled: _page > 1, onTap: () { setState(() => _page--); _load(); }),
         const SizedBox(width: 8),
         // Page numbers
         for (int i = 1; i <= _totalPages; i++) ...[
@@ -1028,7 +1051,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               const SizedBox(width: 4),
             ],
             GestureDetector(
-              onTap: i == _page ? null : () => setState(() => _page = i),
+              onTap: i == _page ? null : () { setState(() => _page = i); _load(); },
               child: Container(
                 width: 30, height: 30,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -1049,7 +1072,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           ],
         ],
         const SizedBox(width: 8),
-        _NavBtn(icon: Icons.chevron_right_rounded, enabled: _page < _totalPages, onTap: () => setState(() => _page++)),
+        _NavBtn(icon: Icons.chevron_right_rounded, enabled: _page < _totalPages, onTap: () { setState(() => _page++); _load(); }),
       ]),
     );
   }

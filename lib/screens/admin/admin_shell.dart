@@ -59,6 +59,15 @@ class _AdminShellState extends State<AdminShell> {
     AdminCsvPage(),         // 13
   ];
 
+  // WS callback references for proper cleanup in dispose()
+  late final WsEventCallback _wsOnNotification;
+  late final WsEventCallback _wsOnUserReg;
+  late final WsEventCallback _wsOnPayment;
+  late final WsEventCallback _wsOnFeedback;
+  late final WsEventCallback _wsOnMatch;
+  late final WsEventCallback _wsOnReset;
+  late final WsEventCallback _wsOnDataChanged;
+
   // Badges per route (kama web unreadStore) — map route → count
   final Map<String, int> _routeCounts = {};
   final Map<String, List<String>> _routeNotifIds = {};
@@ -88,6 +97,14 @@ class _AdminShellState extends State<AdminShell> {
     _badgeTimer?.cancel();
     _toastTimer?.cancel();
     adminPageNotifier.removeListener(_onAdminPageNotified);
+    final ws = WebSocketService();
+    ws.off('notification',      _wsOnNotification);
+    ws.off('user.registered',   _wsOnUserReg);
+    ws.off('payment.submitted', _wsOnPayment);
+    ws.off('feedback.new',      _wsOnFeedback);
+    ws.off('match.found',       _wsOnMatch);
+    ws.off('password_reset.new', _wsOnReset);
+    ws.off('data.changed',      _wsOnDataChanged);
     super.dispose();
   }
 
@@ -116,42 +133,47 @@ class _AdminShellState extends State<AdminShell> {
   void _setupRealtime() {
     final ws = WebSocketService();
 
-    ws.on('notification', (payload) {
+    _wsOnNotification = (payload) {
       final type = (payload['type'] as String?) ?? '';
       final id   = '${payload['notification_id'] ?? payload['id'] ?? ''}';
       _bumpRoute(type, id);
       _toastForNotifType(type, payload);
-    });
-
-    ws.on('user.registered', (p) {
+    };
+    _wsOnUserReg = (p) {
       final name = (p['full_name'] as String?)?.split(' ').first ?? 'Mtumiaji';
       _showToast('👤 $name amesajiliwa!');
       _refreshBadges();
-    });
-    ws.on('payment.submitted', (p) {
+    };
+    _wsOnPayment = (p) {
       _showToast('💳 Malipo mapya yamefika!');
       _refreshBadges();
-    });
-    ws.on('feedback.new', (p) {
+    };
+    _wsOnFeedback = (p) {
       _showToast('📋 Maoni mapya yamefika!');
       _refreshBadges();
-    });
-    ws.on('match.found', (p) {
+    };
+    _wsOnMatch = (p) {
       _showToast('🤝 Match mpya imepatikana!');
       _bumpRoute('match.found', '');
-    });
-    ws.on('password_reset.new', (p) {
+    };
+    _wsOnReset = (p) {
       _showToast('🔑 Ombi jipya la reset password!');
       _bumpRoute('password_reset.new', '');
-    });
-
-    // Reference data changed on server → clear location/cadre caches
-    ws.on('data.changed', (_) {
+    };
+    _wsOnDataChanged = (_) {
       AppCache().invalidatePrefix('/locations');
       AppCache().invalidatePrefix('/cadres');
       AppCache().invalidatePrefix('/admin/data');
       AppCache().invalidatePrefix('/admin/departments');
-    });
+    };
+
+    ws.on('notification',      _wsOnNotification);
+    ws.on('user.registered',   _wsOnUserReg);
+    ws.on('payment.submitted', _wsOnPayment);
+    ws.on('feedback.new',      _wsOnFeedback);
+    ws.on('match.found',       _wsOnMatch);
+    ws.on('password_reset.new', _wsOnReset);
+    ws.on('data.changed',      _wsOnDataChanged);
   }
 
   void _toastForNotifType(String type, Map<String, dynamic> p) {

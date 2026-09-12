@@ -151,6 +151,9 @@ class _AppShellState extends State<AppShell> {
 
     // Sikiliza WS events kwa global toast
     WebSocketService().on('notification', _onWsNotification);
+    WebSocketService().on('match.found', _onMatchFound);
+    WebSocketService().on('announcement', _onAnnouncement);
+    WebSocketService().on('announcement.new', _onAnnouncement);
   }
 
   @override
@@ -158,20 +161,34 @@ class _AppShellState extends State<AppShell> {
     _closeMenu();
     _toastTimer?.cancel();
     WebSocketService().off('notification', _onWsNotification);
+    WebSocketService().off('match.found', _onMatchFound);
+    WebSocketService().off('announcement', _onAnnouncement);
+    WebSocketService().off('announcement.new', _onAnnouncement);
     super.dispose();
   }
 
   void _onWsNotification(Map<String, dynamic> payload) {
     final type = (payload['type'] as String?) ?? '';
     _badge.bump(type);
-    // Global toast kwa payment events
-    if (type == 'payment.approved') {
-      _showGlobalToast('✓ Malipo yamethibitishwa!', success: true);
-    } else if (type == 'payment.rejected') {
-      _showGlobalToast('✗ Malipo yamekataliwa. Piga: $_kAdminPhone', success: false);
-    } else if (type == 'feedback.replied') {
-      _showGlobalToast('📋 Admin amejibu maoni yako!', success: true);
+    switch (type) {
+      case 'payment.approved':
+        _showGlobalToast('✓ Malipo yamethibitishwa!', success: true);
+      case 'payment.rejected':
+        _showGlobalToast('✗ Malipo yamekataliwa. Piga: $_kAdminPhone', success: false);
+      case 'feedback.replied':
+        _showGlobalToast('📋 Admin amejibu maoni yako!', success: true);
+      case 'match.found':
+        _showGlobalToast('🤝 Umepata mwenzako! Angalia dashibodi.', success: true);
     }
+  }
+
+  void _onMatchFound(Map<String, dynamic> payload) {
+    _badge.bump('match.found');
+    _showGlobalToast('🤝 Umepata mwenzako! Angalia dashibodi.', success: true);
+  }
+
+  void _onAnnouncement(Map<String, dynamic> payload) {
+    _badge.bump('announcement');
   }
 
   void _showGlobalToast(String msg, {bool success = true}) {

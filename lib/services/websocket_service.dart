@@ -36,6 +36,7 @@ class WebSocketService {
     _channel?.sink.close();
     _channel = null;
     _connected = false;
+    _listeners.clear();
   }
 
   void _doConnect() {

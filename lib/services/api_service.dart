@@ -299,8 +299,8 @@ class ApiService {
   // ── Admin ──
   Future<Response> adminStats() =>
       get('/admin/stats', cacheTtl: _ttlShort);
-  Future<Response> adminUsers({Map<String, dynamic>? params}) =>
-      get('/admin/users', queryParameters: params, cacheTtl: _ttlShort);
+  Future<Response> adminUsers({Map<String, dynamic>? params, bool useCache = true}) =>
+      get('/admin/users', queryParameters: params, useCache: useCache, cacheTtl: _ttlShort);
   Future<Response> adminCreateUser(Map<String, dynamic> data) async {
     AppCache().invalidatePrefix('/admin/users');
     return post('/admin/users', data: data);
