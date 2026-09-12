@@ -273,8 +273,8 @@ class _AdminShellState extends State<AdminShell> {
   @override
   Widget build(BuildContext context) {
     final auth    = context.watch<AuthProvider>();
+    // ignore: unused_local_variable
     final user    = auth.user;
-    final initial = _initials(user?.fullName ?? 'A');
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -308,16 +308,12 @@ class _AdminShellState extends State<AdminShell> {
               Row(mainAxisSize: MainAxisSize.min, children: [
                 GestureDetector(
                   onTap: _showProfileDropdown,
-                  child: Container(
+                  child: SizedBox(
                     key: _avatarKey,
-                    width: 32, height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _kGrey100,
-                      border: Border.all(color: const Color(0xFFD1D5DB)),
+                    width: 36, height: 36,
+                    child: Center(
+                      child: Icon(Icons.person_rounded, size: 22, color: _kBlue),
                     ),
-                    child: Center(child: Text(initial,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _kGrey900))),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -451,8 +447,8 @@ class _AdminShellState extends State<AdminShell> {
               _dropLink('Watumiaji',        '/admin/users',        1,  counts, active: _pageIndex == 1,  svg: 'assets/icons/users.svg'),
               _dropLink('Waliopata Wenzao', null,                  10, counts, active: _pageIndex == 10, svg: 'assets/icons/git-merge.svg'),
               _dropLink('Match za Kweli',   '/admin/real-matches', 11, counts, active: _pageIndex == 11, icon: Icons.sync_alt),
-              _dropLink('Data',             null,                  2,  counts, active: _pageIndex == 2,  icon: Icons.storage_outlined),
-              _dropLink('Matangazo',        null,                  6,  counts, active: _pageIndex == 6,  icon: Icons.campaign_outlined),
+              _dropLink('Data',             null,                  2,  counts, active: _pageIndex == 2,  icon: Icons.analytics_rounded),
+              _dropLink('Matangazo',        null,                  6,  counts, active: _pageIndex == 6,  icon: Icons.notifications_active_rounded),
               _dropLink('Malipo',           '/admin/payments',     3,  counts, active: _pageIndex == 3,  svg: 'assets/icons/wallet.svg'),
               _dropLink('Waliopigiana',     null,                  4,  counts, active: _pageIndex == 4,  icon: Icons.phone_outlined),
               _dropLink('Maoni',            '/admin/feedback',     5,  counts, active: _pageIndex == 5,  svg: 'assets/icons/clipboard-list.svg'),

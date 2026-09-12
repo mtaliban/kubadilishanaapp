@@ -220,15 +220,19 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
           child: Row(children: [
             Container(
-              width: 38, height: 38,
-              decoration: BoxDecoration(color: _kBlue50, borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.mark_chat_unread_outlined, size: 20, color: _kBlue),
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: _kBlue50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
+              ),
+              child: const Icon(Icons.rate_review_rounded, size: 20, color: _kBlue),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
-                Text('Maoni na Malalamiko',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: _kGrey900)),
+                const Text('Maoni na Malalamiko',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _kGrey900)),
                 if (_live) ...[
                   const SizedBox(width: 6),
                   Container(
@@ -244,8 +248,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                 ],
               ]),
               const SizedBox(height: 1),
-              Text('Maoni ya watumiaji',
-                style: const TextStyle(fontSize: 11, color: _kGrey400)),
+              const Text('Maoni ya watumiaji',
+                style: TextStyle(fontSize: 12, color: _kGrey500)),
             ])),
           ]),
         ),

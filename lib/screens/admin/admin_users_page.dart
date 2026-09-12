@@ -543,7 +543,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   _dialogField('Nenosiri', passCtrl, icon: Icons.lock_outline, obscure: true),
                   const SizedBox(height: 20),
                   SizedBox(
-                    width: double.infinity, height: 50,
+                    width: double.infinity, height: 46,
                     child: FilledButton.icon(
                       style: FilledButton.styleFrom(
                         backgroundColor: _kBlue,
@@ -605,7 +605,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           hintText: '',
           prefixIcon: icon != null ? Icon(icon, size: 17, color: _kGrey400) : null,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          filled: true, fillColor: Colors.white,
+          filled: true, fillColor: const Color(0xFFF9FAFB),
           isDense: true,
           border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
@@ -624,15 +624,32 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── HEADER ───────────────────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Row 1: title + primary action
+            // Row 1: icon + title + live badge + primary action
             Row(children: [
-              Text('Watumiaji', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _kGrey900)),
-              const SizedBox(width: 8),
-              _LiveBadge(live: _live),
-              const Spacer(),
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: _kBlue50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
+                ),
+                child: const Icon(Icons.people_rounded, size: 20, color: _kBlue),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Text('Watumiaji',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _kGrey900)),
+                  const SizedBox(width: 8),
+                  _LiveBadge(live: _live),
+                ]),
+                Text('${_total} watumiaji wote',
+                  style: const TextStyle(fontSize: 12, color: _kGrey500)),
+              ])),
               _PillBtn(
                 label: '+ Ongeza',
                 icon: Icons.person_add_outlined,
@@ -2280,8 +2297,8 @@ class _EditUserDialogState extends State<_EditUserDialog> {
               Row(children: [
                 const Icon(Icons.swap_horiz_rounded, size: 14, color: _kGrey500),
                 const SizedBox(width: 6),
-                const Expanded(child: Text('MIKOA ANAYOTAKA KWENDA',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5))),
+                const Expanded(child: Text('Mikoa Anayotaka Kwenda',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGrey700))),
                 GestureDetector(
                   onTap: () => setState(() => _destinations.add({
                     'region_id': null, 'region_name': '', 'district_id': null,
@@ -2452,9 +2469,9 @@ class _EditUserDialogState extends State<_EditUserDialog> {
         Row(children: [
           Icon(icon, size: 14, color: _kGrey500),
           const SizedBox(width: 6),
-          Text(title.toUpperCase(),
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-              color: _kGrey500, letterSpacing: 0.5)),
+          Text(title,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+              color: _kGrey700)),
         ]),
         const SizedBox(height: 12),
         ...children,
@@ -2518,7 +2535,7 @@ class _EditUserDialogState extends State<_EditUserDialog> {
         decoration: InputDecoration(
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          filled: true, fillColor: Colors.white,
+          filled: true, fillColor: _kGrey50,
           border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
@@ -2662,7 +2679,7 @@ class _CreateUserSheetState extends State<_CreateUserSheet> {
     hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
     prefixIcon: icon != null ? Icon(icon, size: 17, color: _kGrey400) : null,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-    filled: true, fillColor: Colors.white,
+    filled: true, fillColor: _kGrey50,
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
@@ -2766,7 +2783,7 @@ class _CreateUserSheetState extends State<_CreateUserSheet> {
                   border: Border.all(color: _kGrey100)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   const Text('Maelezo ya Mtumiaji',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5)),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGrey700)),
                   const SizedBox(height: 12),
                   _field('Jina Kamili *', _nameCtrl, icon: Icons.person_outline),
                   const SizedBox(height: 10),
@@ -2786,7 +2803,7 @@ class _CreateUserSheetState extends State<_CreateUserSheet> {
                   border: Border.all(color: _kGrey100)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   const Text('Sekta na Kada',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5)),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGrey700)),
                   const SizedBox(height: 12),
                   Row(children: [
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -2923,7 +2940,7 @@ class _CreateUserSheetState extends State<_CreateUserSheet> {
                   border: Border.all(color: _kGrey100)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   const Text('Kituo cha Sasa',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5)),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGrey700)),
                   const SizedBox(height: 12),
                   _lbl('Mkoa'),
                   const SizedBox(height: 5),
@@ -2997,7 +3014,7 @@ class _CreateUserSheetState extends State<_CreateUserSheet> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     const Expanded(child: Text('Mikoa Anayotaka Kwenda',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.5))),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGrey700))),
                     GestureDetector(
                       onTap: () => setState(() => _destinations.add({'region_id': null, 'region_name': '', 'district_id': null, 'district_name': '', 'districts': <dynamic>[]})),
                       child: Container(
@@ -3095,11 +3112,12 @@ class _CreateUserSheetState extends State<_CreateUserSheet> {
 
               // ── Save button ─────────────────────────────────────────
               SizedBox(
-                width: double.infinity, height: 50,
+                width: double.infinity, height: 46,
                 child: FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: _kBlue,
-                    disabledBackgroundColor: _kBlue.withValues(alpha: 0.5),
+                    disabledBackgroundColor: _kBlue,
+                    disabledForegroundColor: Colors.white,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),

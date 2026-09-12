@@ -24,7 +24,7 @@ const _kGoldBorder   = Color(0xFFFBBF24);
 // ── Shared helpers ─────────────────────────────────────────────────────────
 
 const _labelStyle = TextStyle(
-  fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: _kGrey500,
+  fontSize: 11.5, fontWeight: FontWeight.w600, color: _kGrey700,
 );
 
 InputDecoration _inp(String hint, {bool enabled = true}) => InputDecoration(
@@ -32,7 +32,7 @@ InputDecoration _inp(String hint, {bool enabled = true}) => InputDecoration(
   hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
   filled: true,
-  fillColor: enabled ? Colors.white : _kGrey50,
+  fillColor: enabled ? _kGrey50 : _kGrey100,
   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
   disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey100)),
@@ -191,7 +191,8 @@ Widget _sheetWrap({
               onPressed: saving ? null : onSave,
               style: FilledButton.styleFrom(
                 backgroundColor: _kBlue,
-                disabledBackgroundColor: _kBlue.withValues(alpha: 0.4),
+                disabledBackgroundColor: _kBlue,
+                disabledForegroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: saving
@@ -338,13 +339,15 @@ Widget _countBadge(int n) => Container(
 
 Widget _addButton(String label, VoidCallback onPressed) => FilledButton.icon(
   onPressed: onPressed,
-  icon: const Icon(Icons.add, size: 16),
-  label: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+  icon: const Icon(Icons.add_rounded, size: 14),
+  label: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
   style: FilledButton.styleFrom(
     backgroundColor: _kBlue,
     foregroundColor: Colors.white,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    minimumSize: Size.zero,
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
   ),
 );
 
@@ -367,7 +370,7 @@ InputDecoration _dropInp(String hint) => InputDecoration(
   hintText: hint,
   hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-  filled: true, fillColor: Colors.white,
+  filled: true, fillColor: _kGrey50,
   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
@@ -453,12 +456,12 @@ class _AdminDataPageState extends State<AdminDataPage> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(children: [
-              _TabBtn(label: 'Idara',  icon: Icons.business_outlined,      active: _tab == 'departments', onTap: () => setState(() => _tab = 'departments')),
-              _TabBtn(label: 'Masomo', icon: Icons.menu_book_outlined,     active: _tab == 'subjects',    onTap: () => setState(() => _tab = 'subjects')),
-              _TabBtn(label: 'Kada',   icon: Icons.badge_outlined,         active: _tab == 'cadres',      onTap: () => setState(() => _tab = 'cadres')),
-              _TabBtn(label: 'Mikoa',  icon: Icons.map_outlined,           active: _tab == 'regions',     onTap: () => setState(() => _tab = 'regions')),
-              _TabBtn(label: 'Wilaya', icon: Icons.location_city_outlined,  active: _tab == 'districts',   onTap: () => setState(() => _tab = 'districts')),
-              _TabBtn(label: 'Vituo',  icon: Icons.local_hospital_outlined, active: _tab == 'facilities',  onTap: () => setState(() => _tab = 'facilities')),
+              _TabBtn(label: 'Idara',  icon: Icons.domain_rounded,             active: _tab == 'departments', onTap: () => setState(() => _tab = 'departments')),
+              _TabBtn(label: 'Masomo', icon: Icons.auto_stories_rounded,     active: _tab == 'subjects',    onTap: () => setState(() => _tab = 'subjects')),
+              _TabBtn(label: 'Kada',   icon: Icons.work_outline,     active: _tab == 'cadres',      onTap: () => setState(() => _tab = 'cadres')),
+              _TabBtn(label: 'Mikoa',  icon: Icons.terrain,        active: _tab == 'regions',     onTap: () => setState(() => _tab = 'regions')),
+              _TabBtn(label: 'Wilaya', icon: Icons.apartment_rounded,        active: _tab == 'districts',   onTap: () => setState(() => _tab = 'districts')),
+              _TabBtn(label: 'Vituo',  icon: Icons.medical_services, active: _tab == 'facilities', onTap: () => setState(() => _tab = 'facilities')),
             ]),
           ),
         ),
@@ -580,7 +583,7 @@ class _DepsTabState extends State<_DepsTab> {
                         return _ItemCard(
                           title: x['name'] ?? '',
                           subtitle: x['code'] ?? '',
-                          icon: Icons.business_outlined,
+                          icon: Icons.domain_rounded,
                           badge: _statusBadge(x['status'] ?? 'active'),
                           onEdit: () => _showModal(item: x),
                           onDelete: () => _delete(x),
@@ -652,20 +655,16 @@ class _DeptSheetState extends State<_DeptSheet> {
     saving: _saving,
     onSave: _save,
     fields: [
-      _sectionLabel('MSIMBO'),
+      _sectionLabel('Msimbo'),
       const SizedBox(height: 4),
       _formField(_isEdit ? (_code.text.isEmpty ? '—' : _code.text) : 'Mfano: elimu',
           controller: _code, enabled: !_isEdit, cap: TextCapitalization.none),
       const SizedBox(height: 14),
-      _sectionLabel('JINA'),
+      _sectionLabel('Jina'),
       const SizedBox(height: 4),
       _formField('Jina la idara', controller: _name),
       const SizedBox(height: 14),
-      _sectionLabel('AIKONI (Hiari)'),
-      const SizedBox(height: 4),
-      _formField('🏢', controller: _icon),
-      const SizedBox(height: 14),
-      _sectionLabel('HALI'),
+      _sectionLabel('Hali'),
       const SizedBox(height: 4),
       DropdownButtonFormField<String>(
         value: _status,
@@ -800,7 +799,7 @@ class _SubjectsTabState extends State<_SubjectsTab> {
                         return _ItemCard(
                           title: x['name'] ?? '',
                           subtitle: x['code'] ?? '',
-                          icon: Icons.menu_book_outlined,
+                          icon: Icons.auto_stories_rounded,
                           iconColor: _kGold600,
                           badge: lvl.isNotEmpty ? _levelBadge(lvl) : null,
                           onEdit: () => _showModal(item: x),
@@ -867,16 +866,16 @@ class _SubjectSheetState extends State<_SubjectSheet> {
     saving: _saving,
     onSave: _save,
     fields: [
-      _sectionLabel('MSIMBO'),
+      _sectionLabel('Msimbo'),
       const SizedBox(height: 4),
       _formField(_isEdit ? _code.text : 'Mfano: MATH',
           controller: _code, enabled: !_isEdit, cap: TextCapitalization.characters),
       const SizedBox(height: 14),
-      _sectionLabel('JINA'),
+      _sectionLabel('Jina'),
       const SizedBox(height: 4),
       _formField('Jina la somo', controller: _name),
       const SizedBox(height: 14),
-      _sectionLabel('KIWANGO'),
+      _sectionLabel('Kiwango'),
       const SizedBox(height: 4),
       DropdownButtonFormField<String>(
         value: _level,
@@ -994,7 +993,7 @@ class _CadresTabState extends State<_CadresTab> {
                         return _ItemCard(
                           title: x['display_name'] ?? '',
                           subtitle: x['code'] ?? '',
-                          icon: Icons.badge_outlined,
+                          icon: Icons.work_outline,
                           iconColor: _kGreen600,
                           badge: cat.isNotEmpty
                               ? Text(cat, style: const TextStyle(fontSize: 11, color: _kGrey500))
@@ -1103,16 +1102,16 @@ class _CadreSheetState extends State<_CadreSheet> {
       saving: _saving,
       onSave: _save,
       fields: [
-        _sectionLabel('MSIMBO'),
+        _sectionLabel('Msimbo'),
         const SizedBox(height: 4),
         _formField(_isEdit ? _code.text : 'Mfano: TCH_PRI',
             controller: _code, enabled: !_isEdit, cap: TextCapitalization.characters),
         const SizedBox(height: 14),
-        _sectionLabel('JINA LA KUONYESHA'),
+        _sectionLabel('Jina la Kuonyesha'),
         const SizedBox(height: 4),
         _formField('Jina kamili la kada', controller: _displayName),
         const SizedBox(height: 14),
-        _sectionLabel('IDARA'),
+        _sectionLabel('Idara'),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
           value: _category.isEmpty ? null : _category,
@@ -1125,7 +1124,7 @@ class _CadreSheetState extends State<_CadreSheet> {
           onChanged: (v) => setState(() => _category = v ?? ''),
         ),
         const SizedBox(height: 14),
-        _sectionLabel('KIWANGO'),
+        _sectionLabel('Kiwango'),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
           value: _level.isEmpty ? '' : _level,
@@ -1148,7 +1147,7 @@ class _CadreSheetState extends State<_CadreSheet> {
             border: Border.all(color: _kGrey200),
           ),
           child: Row(children: [
-            const Icon(Icons.menu_book_outlined, size: 16, color: _kGrey500),
+            const Icon(Icons.auto_stories_rounded, size: 16, color: _kGrey500),
             const SizedBox(width: 8),
             const Expanded(child: Text('Inahitaji masomo',
                 style: TextStyle(fontSize: 13, color: _kGrey700))),
@@ -1262,7 +1261,7 @@ class _RegionsTabState extends State<_RegionsTab> {
                         return _ItemCard(
                           title: x['name'] ?? '',
                           subtitle: 'ID: ${x['id'] ?? ''}',
-                          icon: Icons.map_outlined,
+                          icon: Icons.terrain,
                           iconColor: _kGreen600,
                           onEdit: () => _showModal(item: x),
                           onDelete: () => _delete(x),
@@ -1326,7 +1325,7 @@ class _RegionSheetState extends State<_RegionSheet> {
         _formField('${widget.item['id'] ?? ''}', enabled: false),
         const SizedBox(height: 14),
       ],
-      _sectionLabel('JINA LA MKOA'),
+      _sectionLabel('Jina la Mkoa'),
       const SizedBox(height: 4),
       _formField('Jina la mkoa', controller: _name),
       const SizedBox(height: 4),
@@ -1470,7 +1469,7 @@ class _DistrictsTabState extends State<_DistrictsTab> {
                         return _ItemCard(
                           title: x['name'] ?? '',
                           subtitle: regionInfo,
-                          icon: Icons.location_city_outlined,
+                          icon: Icons.apartment_rounded,
                           iconColor: _kBlue,
                           onEdit: () => _showModal(item: x),
                           onDelete: () => _delete(x),
@@ -1543,11 +1542,11 @@ class _DistrictSheetState extends State<_DistrictSheet> {
         _formField('${widget.item['id'] ?? ''}', enabled: false),
         const SizedBox(height: 14),
       ],
-      _sectionLabel('JINA LA WILAYA'),
+      _sectionLabel('Jina la Wilaya'),
       const SizedBox(height: 4),
       _formField('Jina la wilaya', controller: _name),
       const SizedBox(height: 14),
-      _sectionLabel('MKOA'),
+      _sectionLabel('Mkoa'),
       const SizedBox(height: 4),
       DropdownButtonFormField<int?>(
         value: _regionId,
@@ -1760,7 +1759,7 @@ class _FacilitiesTabState extends State<_FacilitiesTab> {
                           title: x['name'] ?? '',
                           subtitle: '${x['code'] ?? x['school_code'] ?? x['id'] ?? ''}'
                               '${regionDistrict.isNotEmpty ? '  ·  $regionDistrict' : ''}',
-                          icon: isEdu ? Icons.school_outlined : Icons.local_hospital_outlined,
+                          icon: isEdu ? Icons.school_rounded : Icons.medical_services,
                           iconColor: isEdu ? _kGold600 : _kRed,
                           badge: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             if (cat.isNotEmpty) _categoryBadge(cat),
@@ -1881,20 +1880,20 @@ class _FacilitySheetState extends State<_FacilitySheet> {
       saving: _saving,
       onSave: _save,
       fields: [
-        _sectionLabel('AINA YA KITUO'),
+        _sectionLabel('Aina ya Kituo'),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
           value: _category,
           decoration: _dropInp('Aina'),
           style: const TextStyle(fontSize: 13, color: _kGrey900),
           items: const [
-            DropdownMenuItem(value: 'health',    child: Text('🏥 Afya')),
-            DropdownMenuItem(value: 'education', child: Text('📚 Elimu')),
+            DropdownMenuItem(value: 'health',    child: Text('Afya')),
+            DropdownMenuItem(value: 'education', child: Text('Elimu')),
           ],
           onChanged: (v) => setState(() { _category = v ?? 'health'; _typeOrLevel = ''; }),
         ),
         const SizedBox(height: 14),
-        _sectionLabel('MKOA'),
+        _sectionLabel('Mkoa'),
         const SizedBox(height: 4),
         DropdownButtonFormField<int?>(
           value: _regionId,
@@ -1910,7 +1909,7 @@ class _FacilitySheetState extends State<_FacilitySheet> {
           },
         ),
         const SizedBox(height: 14),
-        _sectionLabel('WILAYA'),
+        _sectionLabel('Wilaya'),
         const SizedBox(height: 4),
         _loadingDistricts
             ? const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: LinearProgressIndicator(color: _kBlue))
@@ -1925,11 +1924,11 @@ class _FacilitySheetState extends State<_FacilitySheet> {
                 onChanged: (v) => setState(() => _districtId = v),
               ),
         const SizedBox(height: 14),
-        _sectionLabel('JINA LA KITUO'),
+        _sectionLabel('Jina la Kituo'),
         const SizedBox(height: 4),
         _formField('Jina la kituo', controller: _name),
         const SizedBox(height: 14),
-        _sectionLabel(_category == 'health' ? 'AINA (NGAZI)' : 'KIWANGO'),
+        _sectionLabel(_category == 'health' ? 'Aina (Ngazi)' : 'Kiwango'),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
           value: validTypeOrLevel,

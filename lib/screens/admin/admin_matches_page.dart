@@ -204,12 +204,21 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Header ──────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Row(
             children: [
-              const Icon(Icons.swap_horiz, size: 22, color: _kBlue),
-              const SizedBox(width: 8),
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: _kBlue50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
+                ),
+                child: const Icon(Icons.hub_rounded, size: 20, color: _kBlue),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,12 +226,11 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
                     const Text(
                       'Wanaohamia Mkoa',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
                         color: _kGrey900,
                       ),
                     ),
-                    const SizedBox(height: 1),
                     Text(
                       _regionId != null
                           ? '${filtered.length} ${filtered.length == 1 ? 'mtu' : 'watu'} wanataka kuhamia $regionName'
@@ -234,9 +242,14 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
               ),
               GestureDetector(
                 onTap: _load,
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.refresh, size: 20, color: _kGrey500),
+                child: Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(
+                    color: _kGrey50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: _kGrey200),
+                  ),
+                  child: const Center(child: Icon(Icons.refresh_rounded, size: 18, color: _kGrey700)),
                 ),
               ),
             ],
@@ -327,7 +340,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
                     prefixIcon: const Icon(Icons.search, size: 18, color: _kGrey400),
                     contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: const Color(0xFFF9FAFB),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: _kGrey200),
@@ -338,7 +351,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kBlue),
+                      borderSide: const BorderSide(color: _kBlue, width: 1.5),
                     ),
                   ),
                 ),

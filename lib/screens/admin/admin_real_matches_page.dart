@@ -191,35 +191,35 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Header ────────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.swap_horiz, size: 20, color: _kGreen600),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Match za Kweli',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: _kGrey900,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '${filtered.length} ${filtered.length == 1 ? 'match' : 'matches'}',
-                    style: const TextStyle(fontSize: 12, color: _kGrey500),
-                  ),
-                ],
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: _kBlue50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
+                ),
+                child: const Icon(Icons.handshake_rounded, size: 20, color: _kBlue),
               ),
-              const SizedBox(height: 2),
-              const Text(
-                'Watu wawili wanaoweza kubadilishana vikazi vya serikali',
-                style: TextStyle(fontSize: 12, color: _kGrey500),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Match za Kweli',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _kGrey900),
+                    ),
+                    Text(
+                      '${filtered.length} ${filtered.length == 1 ? 'match' : 'matches'} — watu wanaobadilishana',
+                      style: const TextStyle(fontSize: 12, color: _kGrey500),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -399,7 +399,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
           prefixIcon: Icon(icon, size: 16, color: _kGrey400),
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: const Color(0xFFF9FAFB),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: _kGrey200),
@@ -410,7 +410,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: _kBlue),
+            borderSide: const BorderSide(color: _kBlue, width: 1.5),
           ),
         ),
       ),

@@ -295,14 +295,18 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
           color: Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
           child: Row(children: [
-            Container(width: 38, height: 38,
-              decoration: BoxDecoration(color: _kBlue50, borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.account_balance_wallet_outlined, size: 20, color: _kBlue)),
-            const SizedBox(width: 10),
+            Container(width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: _kBlue50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
+              ),
+              child: const Icon(Icons.receipt_long_rounded, size: 20, color: _kBlue)),
+            const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 const Text('Malipo',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: _kGrey900)),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _kGrey900)),
                 if (_live) ...[
                   const SizedBox(width: 6),
                   Container(
@@ -318,7 +322,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                 ],
               ]),
               const Text('Simamia michango ya watumiaji',
-                style: TextStyle(fontSize: 11, color: _kGrey400)),
+                style: TextStyle(fontSize: 12, color: _kGrey500)),
             ])),
           ]),
         ),
@@ -484,7 +488,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   Widget _empty() => Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
     Container(width: 56, height: 56,
       decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(28)),
-      child: const Icon(Icons.receipt_long_outlined, size: 28, color: _kGrey400)),
+      child: const Icon(Icons.receipt_long, size: 28, color: _kGrey400)),
     const SizedBox(height: 10),
     Text(_filter == 'verifying' ? 'Hakuna malipo yanayosubiri' : 'Hakuna malipo',
       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey500)),
@@ -807,9 +811,8 @@ class _PayCard extends StatelessWidget {
                       const Row(children: [
                         Icon(Icons.sms_outlined, size: 11, color: _kGrey400),
                         SizedBox(width: 5),
-                        Text('SMS YA MTOA MCHANGO',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700,
-                            color: _kGrey400, letterSpacing: 0.8)),
+                        Text('SMS ya Mtoa Mchango',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _kGrey500)),
                       ]),
                       const SizedBox(height: 8),
                       Container(
@@ -844,8 +847,7 @@ class _PayCard extends StatelessWidget {
                         child: Row(children: [
                           Icon(Icons.chat_bubble_outline_rounded, size: 11, color: _kGrey400),
                           SizedBox(width: 5),
-                          Text('MAZUNGUMZO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700,
-                            color: _kGrey400, letterSpacing: 0.8)),
+                          Text('Mazungumzo', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _kGrey500)),
                         ])),
                       const SizedBox(height: 8),
                       _ChatMessages(msgs: chatMsgs),

@@ -12,6 +12,7 @@ const _kGrey300 = Color(0xFFD1D5DB); // brand-grey-300
 const _kGrey200 = Color(0xFFE5E7EB); // border-grey-200
 const _kGrey50  = Color(0xFFF9FAFB); // brand-grey-50
 const _kGrey100 = Color(0xFFF3F4F6); // brand-grey-100
+const _kGrey400 = Color(0xFF9CA3AF); // brand-grey-400
 const _kRed     = Color(0xFFDC2626); // brand-red
 const _kGold200 = Color(0xFFFDE68A); // brand-gold-200 (amber-200)
 const _kAmber   = Color(0xFFF59E0B); // amber-500

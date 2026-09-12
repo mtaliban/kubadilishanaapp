@@ -55,7 +55,7 @@ InputDecoration _inp(String hint, {IconData? prefix}) => InputDecoration(
   prefixIcon: prefix != null ? Icon(prefix, size: 18, color: _kGrey400) : null,
   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
   filled: true,
-  fillColor: Colors.white,
+  fillColor: const Color(0xFFF9FAFB),
   border: OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),
     borderSide: const BorderSide(color: _kGrey200),
@@ -511,8 +511,8 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
               children: [
                 // ── Title field ─────────────────────────────────────
                 const Text(
-                  'KICHWA CHA HABARI',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: _kGrey500),
+                  'Kichwa cha Habari',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: _kGrey700),
                 ),
                 const SizedBox(height: 6),
                 TextField(
@@ -532,8 +532,8 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
 
                 // ── Message field ───────────────────────────────────
                 const Text(
-                  'UJUMBE',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: _kGrey500),
+                  'Ujumbe',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: _kGrey700),
                 ),
                 const SizedBox(height: 6),
                 TextField(
@@ -555,8 +555,8 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
 
                 // ── Audience pills ──────────────────────────────────
                 const Text(
-                  'WALENGWA',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: _kGrey500),
+                  'Walengwa',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: _kGrey700),
                 ),
                 const SizedBox(height: 8),
                 _buildAudiencePills(),
@@ -576,8 +576,9 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                     onPressed: canSend ? _send : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _kBlue,
-                      disabledBackgroundColor: _kBlue.withValues(alpha: 0.4),
+                      disabledBackgroundColor: _kBlue,
                       foregroundColor: Colors.white,
+                      disabledForegroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),

@@ -1,17 +1,22 @@
 // Admin events page — system event log with filtering and pagination.
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
-import '../../config/theme.dart';
 
 // ── Local colour aliases ───────────────────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
+const _kBlue200 = Color(0xFFBFDBFE);
+const _kGrey50  = Color(0xFFF9FAFB);
 const _kGrey100 = Color(0xFFF3F4F6);
 const _kGrey200 = Color(0xFFE5E7EB);
+const _kGrey300 = Color(0xFFD1D5DB);
 const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey700 = Color(0xFF374151);
 const _kGrey900 = Color(0xFF111827);
+const _kGreenDk = Color(0xFF16A34A);
+const _kRed     = Color(0xFFDC2626);
+const _kAmber   = Color(0xFFF59E0B);
 
 class AdminEventsPage extends StatefulWidget {
   const AdminEventsPage({super.key});
@@ -62,26 +67,25 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
     return Column(
       children: [
         // ── PAGE HEADER ──
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Row(children: [
             Container(
               width: 40, height: 40,
               decoration: BoxDecoration(
                 color: _kBlue50,
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
               ),
-              child: const Center(
-                  child: Icon(Icons.list_alt_outlined, size: 20, color: _kBlue)),
+              child: const Center(child: Icon(Icons.event_note_rounded, size: 20, color: _kBlue)),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(
                   'Matukio${_total > 0 ? " ($_total)" : ""}',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold,
-                      color: _kGrey900),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _kGrey900),
                 ),
                 const Text('Kumbukumbu ya matukio ya mfumo',
                     style: TextStyle(fontSize: 12, color: _kGrey500)),
@@ -93,7 +97,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
               child: Container(
                 width: 36, height: 36,
                 decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _kGrey50,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: _kGrey200)),
                 child: const Center(
@@ -102,6 +106,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
             ),
           ]),
         ),
+        const Divider(height: 1, color: _kGrey100),
 
         // ── Daily stats cards ──
         if (_dailyStats.isNotEmpty) ...[
@@ -114,7 +119,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
                   label: 'Wapya Leo',
                   value: '${_dailyStats['users_today'] ?? 0}',
                   icon: Icons.person_add_outlined,
-                  color: AppColors.success,
+                  color: _kGreenDk,
                 ),
               ),
               const SizedBox(width: 8),
@@ -122,8 +127,8 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
                 child: _StatCard(
                   label: 'Jana',
                   value: '${_dailyStats['users_yesterday'] ?? 0}',
-                  icon: Icons.history,
-                  color: AppColors.primary,
+                  icon: Icons.history_rounded,
+                  color: _kBlue,
                 ),
               ),
               const SizedBox(width: 8),
@@ -132,7 +137,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
                   label: 'Views Leo',
                   value: '${_dailyStats['views_today'] ?? 0}',
                   icon: Icons.visibility_outlined,
-                  color: AppColors.warning,
+                  color: _kAmber,
                 ),
               ),
             ]),
@@ -578,41 +583,41 @@ class _EventCard extends StatelessWidget {
   // ── Map event type → icon + color ───────────────────────────────────────
   ({IconData icon, Color color}) _eventMeta(String type) {
     if (type.contains('registered')) {
-      return (icon: Icons.person_add_outlined, color: AppColors.success);
+      return (icon: Icons.person_add_outlined, color: _kGreenDk);
     }
     if (type.contains('match')) {
-      return (icon: Icons.people_outline, color: const Color(0xFF7C3AED));
+      return (icon: Icons.handshake_rounded, color: const Color(0xFF7C3AED));
     }
     if (type.contains('payment')) {
-      return (icon: Icons.payment_outlined, color: AppColors.warning);
+      return (icon: Icons.receipt_long_rounded, color: _kAmber);
     }
     if (type.contains('verified')) {
-      return (icon: Icons.verified_outlined, color: AppColors.success);
+      return (icon: Icons.verified_outlined, color: _kGreenDk);
     }
     if (type.contains('call')) {
-      return (icon: Icons.phone_outlined, color: const Color(0xFF059669));
+      return (icon: Icons.call_rounded, color: const Color(0xFF059669));
     }
     if (type.contains('message')) {
-      return (icon: Icons.chat_bubble_outline, color: AppColors.primary);
+      return (icon: Icons.chat_bubble_outline, color: _kBlue);
     }
     if (type.contains('deleted')) {
-      return (icon: Icons.delete_outline, color: AppColors.error);
+      return (icon: Icons.delete_outline, color: _kRed);
     }
     if (type.contains('admin') || type.contains('updated')) {
       return (icon: Icons.admin_panel_settings_outlined, color: const Color(0xFF0369A1));
     }
     if (type.contains('login')) {
-      return (icon: Icons.login_outlined, color: AppColors.primary);
+      return (icon: Icons.login_outlined, color: _kBlue);
     }
     if (type.contains('logout')) {
       return (icon: Icons.logout_outlined, color: _kGrey500);
     }
     if (type.contains('password')) {
-      return (icon: Icons.lock_outline, color: const Color(0xFFC2410C));
+      return (icon: Icons.key_rounded, color: const Color(0xFFC2410C));
     }
     if (type.contains('data')) {
-      return (icon: Icons.storage_outlined, color: const Color(0xFF0891B2));
+      return (icon: Icons.analytics_rounded, color: const Color(0xFF0891B2));
     }
-    return (icon: Icons.info_outline, color: AppColors.primary);
+    return (icon: Icons.info_outline, color: _kBlue);
   }
 }

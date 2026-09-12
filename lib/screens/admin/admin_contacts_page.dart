@@ -186,9 +186,10 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
             decoration: BoxDecoration(
               color: _kBlue50,
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
             ),
             child: const Center(
-              child: Icon(Icons.phone_outlined, size: 20, color: _kBlue),
+              child: Icon(Icons.call_rounded, size: 20, color: _kBlue),
             ),
           ),
           const SizedBox(width: 12),
@@ -199,10 +200,10 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
               children: [
                 const Text(
                   'Waliopigiana',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _kGrey900),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _kGrey900),
                 ),
                 Text(
-                  '$visibleCount / ${_contacts.length}',
+                  '$visibleCount / ${_contacts.length} mawasiliano',
                   style: const TextStyle(fontSize: 12, color: _kGrey500),
                 ),
               ],
@@ -376,7 +377,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                 )
               : null,
           filled: true,
-          fillColor: _kGrey50,
+          fillColor: const Color(0xFFF9FAFB),
           contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
