@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 
@@ -242,21 +243,19 @@ class _MyMatchCard extends StatelessWidget {
           ]),
         ),
 
-        // ── Users: A ↔ B ─────────────────────────────────────────────────
+        // ── Users: A ↕ B ─────────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(child: _UserPill(user: a)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-              child: Container(
-                width: 28, height: 28,
-                decoration: BoxDecoration(
-                  color: _kBlue50, shape: BoxShape.circle,
-                  border: Border.all(color: _kBlue200)),
-                child: const Icon(Icons.swap_horiz, size: 14, color: _kBlue)),
-            ),
-            Expanded(child: _UserPill(user: b)),
+          padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
+          child: Column(children: [
+            _UserPill(user: a),
+            Row(children: [
+              const Expanded(child: Divider(color: _kGrey200, thickness: 1)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(Icons.swap_vert_rounded, size: 16, color: _kBlue)),
+              const Expanded(child: Divider(color: _kGrey200, thickness: 1)),
+            ]),
+            _UserPill(user: b),
           ]),
         ),
 
@@ -281,6 +280,7 @@ class _MyMatchCard extends StatelessWidget {
                 )).toList()),
             ]),
           ),
+        if (subs.isEmpty) const SizedBox(height: 6),
       ]),
     );
   }
@@ -481,21 +481,19 @@ class _RealMatchCard extends StatelessWidget {
           ]),
         ),
 
-        // ── Users: A ↔ B ─────────────────────────────────────────────────
+        // ── Users: A ↕ B ─────────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(child: _UserPill(user: a)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-              child: Container(
-                width: 28, height: 28,
-                decoration: BoxDecoration(
-                  color: _kGreen50, shape: BoxShape.circle,
-                  border: Border.all(color: _kGreen300)),
-                child: const Icon(Icons.compare_arrows_rounded, size: 14, color: _kGreen600)),
-            ),
-            Expanded(child: _UserPill(user: b)),
+          padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
+          child: Column(children: [
+            _UserPill(user: a),
+            Row(children: [
+              const Expanded(child: Divider(color: _kGrey200, thickness: 1)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(Icons.swap_vert_rounded, size: 16, color: _kGreen600)),
+              const Expanded(child: Divider(color: _kGrey200, thickness: 1)),
+            ]),
+            _UserPill(user: b),
           ]),
         ),
 
@@ -530,7 +528,7 @@ class _RealMatchCard extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  SHARED: User pill card
+//  SHARED: User row (full-width)
 // ══════════════════════════════════════════════════════════════════════════════
 class _UserPill extends StatelessWidget {
   final Map<dynamic, dynamic> user;
@@ -545,65 +543,55 @@ class _UserPill extends StatelessWidget {
     final online = user['online'] == true;
     final init   = _initials(name);
 
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: _kGrey50, borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _kGrey100)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Stack(children: [
-            Container(
-              width: 36, height: 36,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Stack(children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _kBlue50,
+              border: Border.all(color: _kBlue200, width: 1.5)),
+            child: Center(child: Text(init,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kBlue)))),
+          if (online) Positioned(right: 0, bottom: 0,
+            child: Container(width: 10, height: 10,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _kBlue50,
-                border: Border.all(color: _kBlue200, width: 1.5)),
-              child: Center(child: Text(init,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _kBlue)))),
-            if (online) Positioned(right: 0, bottom: 0,
-              child: Container(width: 10, height: 10,
-                decoration: BoxDecoration(
-                  color: _kGreen600, shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5)))),
-          ]),
-          const SizedBox(width: 8),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(name,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _kGrey900),
-              overflow: TextOverflow.ellipsis, maxLines: 2),
-            if (cadre.isNotEmpty)
-              Text(cadre,
-                style: const TextStyle(fontSize: 10, color: _kBlue, fontWeight: FontWeight.w500),
-                overflow: TextOverflow.ellipsis),
-          ])),
+                color: _kGreen600, shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.5)))),
         ]),
-        if (region.isNotEmpty) ...[
-          const SizedBox(height: 5),
-          Row(children: [
-            const Icon(Icons.location_on_outlined, size: 10, color: _kGrey400),
-            const SizedBox(width: 3),
-            Expanded(child: Text(region,
-              style: const TextStyle(fontSize: 10, color: _kGrey500),
-              overflow: TextOverflow.ellipsis)),
-          ]),
-        ],
-        if (phone.isNotEmpty) ...[
-          const SizedBox(height: 5),
+        const SizedBox(width: 10),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(name,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey900),
+            overflow: TextOverflow.ellipsis, maxLines: 1),
+          if (cadre.isNotEmpty)
+            Text(cadre,
+              style: const TextStyle(fontSize: 11, color: _kBlue, fontWeight: FontWeight.w500),
+              overflow: TextOverflow.ellipsis),
+          if (region.isNotEmpty)
+            Row(children: [
+              const Icon(Icons.location_on_outlined, size: 11, color: _kGrey400),
+              const SizedBox(width: 2),
+              Expanded(child: Text(region,
+                style: const TextStyle(fontSize: 11, color: _kGrey500),
+                overflow: TextOverflow.ellipsis)),
+            ]),
+        ])),
+        if (phone.isNotEmpty)
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
-              // open dialer
+              launchUrl(Uri.parse('tel:$phone'), mode: LaunchMode.externalApplication);
             },
-            child: Row(children: [
-              const Icon(Icons.phone_outlined, size: 10, color: _kBlue),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.phone_outlined, size: 12, color: _kBlue),
               const SizedBox(width: 3),
-              Expanded(child: Text(phone,
-                style: const TextStyle(fontSize: 10, color: _kBlue, fontWeight: FontWeight.w500),
-                overflow: TextOverflow.ellipsis)),
+              Text(phone,
+                style: const TextStyle(fontSize: 11, color: _kBlue, fontWeight: FontWeight.w500)),
             ]),
           ),
-        ],
       ]),
     );
   }

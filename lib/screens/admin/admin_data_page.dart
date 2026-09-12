@@ -432,11 +432,11 @@ class _AdminDataPageState extends State<AdminDataPage> {
             Container(
               width: 40, height: 40,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [_kBlue, Color(0xFF1D4ED8)],
-                    begin: Alignment.topLeft, end: Alignment.bottomRight),
+                color: _kBlue50,
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
               ),
-              child: const Icon(Icons.storage_outlined, size: 20, color: Colors.white),
+              child: const Icon(Icons.analytics_rounded, size: 20, color: _kBlue),
             ),
             const SizedBox(width: 12),
             const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

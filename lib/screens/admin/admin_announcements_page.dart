@@ -375,14 +375,11 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [_kBlue, _kBlue700],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: _kBlue50,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _kBlue700.withValues(alpha: 0.2)),
                 ),
-                child: const Icon(Icons.campaign, size: 20, color: Colors.white),
+                child: const Icon(Icons.notifications_active_rounded, size: 20, color: _kBlue),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -463,35 +460,43 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kGrey200),
         boxShadow: const [
-          BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, 4)),
+          BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Blue gradient banner
+          // Clean header with left border stripe
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_kBlue, _kBlue700],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+              color: Colors.white,
+              border: Border(
+                left: BorderSide(color: _kBlue, width: 4),
+                bottom: BorderSide(color: _kGrey200, width: 0.8),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.campaign, size: 22, color: Colors.white),
-                SizedBox(width: 10),
-                Text(
+                Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(
+                    color: _kBlue50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.notifications_active_rounded, size: 17, color: _kBlue),
+                ),
+                const SizedBox(width: 10),
+                const Text(
                   'Tuma Tangazo',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.2,
+                    color: _kGrey900,
+                    letterSpacing: 0.1,
                   ),
                 ),
               ],
@@ -585,7 +590,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                         : const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.send, size: 17),
+                              Icon(Icons.send_rounded, size: 17),
                               SizedBox(width: 8),
                               Text('Tuma Tangazo'),
                             ],
@@ -640,7 +645,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       ),
       child: const Column(
         children: [
-          Icon(Icons.campaign_outlined, size: 36, color: _kGrey400),
+          Icon(Icons.notifications_outlined, size: 36, color: _kGrey400),
           SizedBox(height: 10),
           Text(
             'Hakuna matangazo bado',
@@ -1010,7 +1015,7 @@ class _AnnTileState extends State<_AnnTile> {
                     color: accentColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.campaign, size: 18, color: accentColor),
+                  child: Icon(Icons.notifications_rounded, size: 18, color: accentColor),
                 ),
                 const SizedBox(width: 10),
                 // Title + audience badge
