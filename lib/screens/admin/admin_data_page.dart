@@ -54,7 +54,7 @@ Future<bool> _confirmDialog(BuildContext context, String name) async {
   final result = await showModalBottomSheet<bool>(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (_) => Container(
+    builder: (ctx) => Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
@@ -77,7 +77,7 @@ Future<bool> _confirmDialog(BuildContext context, String name) async {
         const SizedBox(height: 20),
         Row(children: [
           Expanded(child: OutlinedButton(
-            onPressed: () => Navigator.pop(_, false),
+            onPressed: () => Navigator.pop(ctx, false),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: _kGrey200), foregroundColor: _kGrey700,
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -86,7 +86,7 @@ Future<bool> _confirmDialog(BuildContext context, String name) async {
           )),
           const SizedBox(width: 10),
           Expanded(child: FilledButton(
-            onPressed: () => Navigator.pop(_, true),
+            onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: _kRed,
               padding: const EdgeInsets.symmetric(vertical: 12),
