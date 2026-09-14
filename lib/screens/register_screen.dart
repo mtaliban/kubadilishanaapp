@@ -681,29 +681,10 @@ class _Step2IdaraState extends State<_Step2Idara> {
 
   Future<void> _load() async {
     try {
-      final results = await Future.wait([
-        ApiService().getDepartments(),
-        ApiService().getCadres(),
-      ]);
-      final list = (results[0].data as List?)
-              ?.where((d) => d['status'] != 'disabled')
-              .toList() ??
-          [];
-      final cadres = results[1].data as List? ?? [];
-      // Idara isiyo na kada haionyeshwi — mtumiaji asikwame kwenye hatua ya
-      // Kada (orodha tupu). Idara ikipata kada, inarudi automatically.
-      final withCadres = cadres.isEmpty
-          ? list
-          : list.where((d) => cadres.any((c) => c['category'] == d['code'])).toList();
-      if (!mounted) return;
-      setState(() {
-        _departments = withCadres;
-        if (_selected.isNotEmpty &&
-            !withCadres.any((d) => d['code'] == _selected)) {
-          _selected = '';
-        }
-        _loading = false;
-      });
+      final res = await ApiService().getDepartments();
+      final list =
+          (res.data as List?)?.where((d) => d['status'] != 'disabled').toList() ?? [];
+      if (mounted) setState(() { _departments = list; _loading = false; });
     } catch (_) {
       if (mounted) setState(() { _loading = false; _error = 'Imeshindikana kupata idara'; });
     }
@@ -883,10 +864,7 @@ class _Step4KadaState extends State<_Step4Kada> {
 
       if (_loading)
         Center(child: _loadingRow())
-      else if (_cadres.isEmpty) ...[
-        // Idara haina kada — mtumiaji asikwame hapa, arudi nyuma tu.
-        _ErrorBox('Idara uliyochagua haijawekwa kada bado. Tafadhali rudi nyuma na uchague idara nyingine.'),
-      ] else ...[
+      else ...[
         const Text('Kada *',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 6),
