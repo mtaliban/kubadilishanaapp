@@ -24,6 +24,18 @@ String _initials(String name) {
   return parts[0][0].toUpperCase();
 }
 
+/// Tambua kama jina ni default/placeholder (mfano 'CO — 5', 'Mwana Afya 3') — kama web isDefaultName.
+bool isDefaultName(String name) {
+  final n = name.trim().toLowerCase();
+  if (RegExp(r'\d+$').hasMatch(n)) {
+    final base = n.replaceAll(RegExp(r'\d+$'), '').trim();
+    const prefixes = ['mwana afya', 'mwanafunzi', 'mwuguzi', 'mwalimu', 'mganga', 'mpgasii', 'mlinzii', 'mhudumu', 'mtumishi', 'afya mwananchi', 'afya ya jamii'];
+    for (final p in prefixes) { if (base.startsWith(p) || base == p) return true; }
+  }
+  if (RegExp(r'^[a-z]+\s*[—-–]\s*\d+$').hasMatch(n)) return true;
+  return false;
+}
+
 String _timeAgo(String? isoDate) {
   if (isoDate == null || isoDate.isEmpty) return '';
   try {
@@ -142,7 +154,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final data = res.data as Map<String, dynamic>;
       if (mounted) {
         setState(() {
-          _candidates = data['candidates'] ?? [];
+          // Sort: wapya (fresh) juu, kisha online, kama web sortFreshToTop
+          final raw = data['candidates'] ?? [];
+          _candidates = [...raw]..sort((a, b) {
+            final fa = _isFresh(a['created_at'] ?? a['joined_at']);
+            final fb = _isFresh(b['created_at'] ?? b['joined_at']);
+            if (fa != fb) return fa ? -1 : 1;
+            final oa = a['online'] == true, ob = b['online'] == true;
+            if (oa != ob) return oa ? -1 : 1;
+            return 0;
+          });
           _boardTotal = data['total'] ?? _candidates.length;
           _page = 1;
           _loading = false;
@@ -316,7 +337,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final user = auth.user;
     final station = user?.currentStation ?? {};
     final initial = _initials(user?.fullName ?? 'M');
-    final isPaid = auth.isVerified || (user?.contactEnabled ?? false);
+    final isPaid = auth.isVerified || (user?.contactEnabled ?? false) || isDefaultName(user?.fullName ?? '');
     final mySubjects = user?.subjects ?? [];
     final myRegionName = station['region_name'] as String? ?? '';
     final isEdu = auth.isAdmin || (user?.category != 'health');
@@ -354,7 +375,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16), // rounded-2xl kama web
                       border: Border.all(color: AppColors.border),
                       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 4))], // shadow-soft
                     ),
@@ -377,8 +398,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 2),
                         Wrap(spacing: 2, runSpacing: 2, children: [
                           if (auth.isAdmin)
-                            const Text('Admin',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary))
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: const Color(0xFFBFDBFE)),
+                              ),
+                              child: const Text('Admin',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
+                            )
                           else if ((user?.category ?? '').isNotEmpty)
                             Text(user!.category == 'health' ? 'Afya' : 'Elimu',
                                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
@@ -429,7 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16), // rounded-2xl
                       border: Border.all(color: AppColors.border),
                     ),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -452,16 +481,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Row(children: [
                         const SizedBox(width: 16),
                         // Total
-                        _statChip('$_boardTotal', Icons.people, AppColors.primary),
+                        _statChip('$_boardTotal', Icons.people, const Color(0xFF1D4ED8), bg: const Color(0xFFEFF6FF)), // bg-brand-blue-50
                         const SizedBox(width: 6),
                         // Online
                         if (_onlineCount > 0) ...[
-                          _statChip('$_onlineCount', Icons.circle, Colors.green),
+                          _statChip('$_onlineCount', Icons.circle, const Color(0xFF15803D), bg: const Color(0xFFF0FDF4)), // bg-green-50
                           const SizedBox(width: 6),
                         ],
                         // Wapya
                         if (_freshCount > 0)
-                          _statChip('+$_freshCount', Icons.bolt, AppColors.primary),
+                          _statChip('+$_freshCount', Icons.bolt, const Color(0xFFD97706), bg: const Color(0xFFFEF3C7)), // bg-gold-100
                       ]),
                     ]),
                   ),
@@ -653,9 +682,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
 
-  Widget _statChip(String text, IconData icon, Color color) => Container(
+  Widget _statChip(String text, IconData icon, Color color, {Color? bg}) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-    decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+    decoration: BoxDecoration(color: bg ?? color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 12, color: color),
       const SizedBox(width: 3),
@@ -713,7 +742,7 @@ class _TrueMatchesSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
             child: _TrueMatchGrid(
-              matches: matches.take(10).toList(),
+              matches: matches, // zote kama web (sio tu 10)
               isPaid: isPaid,
               mySubjects: mySubjects,
               myRegionName: myRegionName,
@@ -804,7 +833,7 @@ class _TrueMatchCard extends StatelessWidget {
     final isEdu = c['category'] != 'health';
     final cadre = c['cadre_display'] ?? c['cadre_code'] ?? '';
     final years = c['years_of_service'];
-    final targetPaid = c['is_verified'] == true || contactEnabled(c);
+    final targetPaid = c['is_verified'] == true || contactEnabled(c) || isDefaultName('${c['full_name'] ?? ''}');
     final phone = c['phone_primary'] ?? '';
     final phoneAlt = c['phone_alt'] ?? '';
 
@@ -821,12 +850,19 @@ class _TrueMatchCard extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Header: avatar + name + score badge
             Row(children: [
-              CircleAvatar(radius: 20, backgroundColor: emerald,
-                  child: Text(initial, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white))),
+              Stack(children: [
+                CircleAvatar(radius: 18, backgroundColor: const Color(0xFF059669), // emerald-600 kama web
+                    child: Text(initial, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white))),
+                if (c['online'] == true)
+                  Positioned(right: 0, bottom: 0,
+                    child: Container(width: 9, height: 9,
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.green,
+                          border: Border.all(color: Colors.white, width: 1.5)))),
+              ]),
               const SizedBox(width: 10),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                       overflow: TextOverflow.ellipsis)),
                   if (targetPaid)
                     Container(margin: const EdgeInsets.only(left: 4),
@@ -853,7 +889,7 @@ class _TrueMatchCard extends StatelessWidget {
                     color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(8)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
-                    const Icon(Icons.location_on, size: 11, color: Color(0xFFEF4444)),
+                    const Icon(Icons.location_on, size: 11, color: Color(0xFF9CA3AF)), // grey-400 kama web
                     const SizedBox(width: 3),
                     Text('Kutoka: ', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                     Expanded(child: Text.rich(
@@ -910,7 +946,8 @@ class _TrueMatchCard extends StatelessWidget {
                 if (anyMatch)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: const Color(0xFF059669), // emerald-500 kama web
+                        borderRadius: BorderRadius.circular(10)),
                     child: const Text('✓ Match', style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ...subjects.take(4).map((s) {
@@ -918,7 +955,7 @@ class _TrueMatchCard extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: matched ? AppColors.primary : Colors.grey.shade100,
+                      color: matched ? const Color(0xFF10B981) : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text('$s${matched ? ' ✓' : ''}',
@@ -926,6 +963,18 @@ class _TrueMatchCard extends StatelessWidget {
                             color: matched ? Colors.white : Colors.grey.shade700)),
                   );
                 }),
+                // +N overflow chip kama web
+                if (subjects.length > 4)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFD1D5DB)),
+                    ),
+                    child: Text('+${subjects.length - 4}',
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF374151))),
+                  ),
               ]),
             ],
 
@@ -1102,9 +1151,9 @@ class _FiltersBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16), // rounded-2xl
         border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 4))], // shadow-soft
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
@@ -1121,7 +1170,7 @@ class _FiltersBar extends StatelessWidget {
                   color: AppColors.error.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Text('Futa chujio', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.error)),
+                child: const Text('Futa kichujio', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.error)),
               ),
             ),
         ]),
@@ -1129,7 +1178,7 @@ class _FiltersBar extends StatelessWidget {
 
         // Mkoa — bottom sheet picker
         SelectField(
-          hint: 'Mikoa Yote',
+          hint: 'Mikoa yote',
           value: regionLabel,
           onTap: () async {
             final items = [
@@ -1145,9 +1194,9 @@ class _FiltersBar extends StatelessWidget {
 
         const SizedBox(height: 8),
 
-        // Wilaya — disabled unless mkoa mmoja
+        // Wilaya — disabled unless mkoa mmoja (hint inabadilika kama web)
         SelectField(
-          hint: 'Wilaya zote',
+          hint: !singleRegionSelected ? '-- Chagua Wilaya / Halmashauri --' : 'Wilaya zote',
           value: districtLabel,
           disabled: !singleRegionSelected,
           onTap: !singleRegionSelected ? null : () async {
@@ -1164,9 +1213,9 @@ class _FiltersBar extends StatelessWidget {
 
         const SizedBox(height: 8),
 
-        // Kituo — disabled unless wilaya
+        // Kituo — disabled unless wilaya (hint inabadilika kama web)
         SelectField(
-          hint: '-- Chagua Kituo --',
+          hint: !districtSelected ? '-- Chagua Kituo --' : 'Vituo vyote',
           value: facilityLabel,
           disabled: !districtSelected,
           onTap: !districtSelected ? null : () async {
@@ -1174,7 +1223,7 @@ class _FiltersBar extends StatelessWidget {
               (value: null as String?, label: 'Vituo Vyote', subtitle: null),
               ...facilities.map((f) => (
                 value: '${f['id'] ?? f['code']}' as String?,
-                label: '${f['name']}',
+                label: '${f['name']}${(f['type'] as String?)?.isNotEmpty == true ? ' (${f['type']})' : ''}',
                 subtitle: null,
               )),
             ];
@@ -1237,7 +1286,7 @@ class _FiltersBar extends StatelessWidget {
           const SizedBox(height: 8),
           TextField(
             controller: subjectQCtrl,
-            decoration: _searchDec('Tafuta masomo (k.m. MATH, KISWAHILI...)').copyWith(
+            decoration: _searchDec('Tafuta masomo (k.m. MATH, KISWAHILI — unaweza kuweka mawili au zaidi)...').copyWith(
               suffixIcon: subjectQ.isNotEmpty
                   ? IconButton(icon: const Icon(Icons.clear, size: 13, color: Color(0xFF9CA3AF)),
                       onPressed: () { subjectQCtrl.clear(); onSubjectQChanged(''); onSubjectQSubmitted(''); })
@@ -1318,7 +1367,7 @@ class _BoardCard extends StatelessWidget {
     final years = card['years_of_service'];
     final isEdu = category != 'health';
     final isMe = myUserId.isNotEmpty && (card['user_id'] ?? '') == myUserId;
-    final targetPaid = card['is_verified'] == true || card['contact_enabled'] == true;
+    final targetPaid = card['is_verified'] == true || card['contact_enabled'] == true || isDefaultName('${card['full_name'] ?? ''}');
 
     // Destination inayokuja mkoa wako
     final activeDest = matchingDest ?? (dests.isNotEmpty ? dests[0] : null);
@@ -1343,8 +1392,8 @@ class _BoardCard extends StatelessWidget {
           // Row 1: Avatar + info
           Row(children: [
             Stack(children: [
-              CircleAvatar(radius: 22, backgroundColor: const Color(0xFFEFF6FF), // brand-blue-50
-                  child: Text(initial, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)))), // brand-blue-700
+              CircleAvatar(radius: 18, backgroundColor: const Color(0xFFEFF6FF), // brand-blue-50 (36px kama web)
+                  child: Text(initial, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)))), // brand-blue-700
               if (online)
                 Positioned(right: 0, bottom: 0,
                   child: Container(width: 9, height: 9,
@@ -1355,14 +1404,22 @@ class _BoardCard extends StatelessWidget {
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Expanded(child: Text(name,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                     overflow: TextOverflow.ellipsis)),
                 if (fresh)
                   Padding(padding: const EdgeInsets.only(left: 4),
-                    child: _PulseBadge(label: 'Mpya', bg: AppColors.primary, textColor: Colors.white)),
+                    child: _PulseBadge(label: 'MPYA', bg: AppColors.primary, textColor: Colors.white)),
                 if (online && !fresh)
                   Padding(padding: const EdgeInsets.only(left: 4),
-                    child: Text('● Live', style: TextStyle(fontSize: 9, color: Colors.green.shade600, fontWeight: FontWeight.bold))),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4), // bg-green-50
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Text('● Live',
+                          style: TextStyle(fontSize: 9, color: Color(0xFF15803D), fontWeight: FontWeight.bold)), // text-green-700
+                    )),
                 // isMe: PAID/HAJALIPIA badge — kama web (kwa mtumiaji mwenyewe tu)
                 if (isMe)
                   Container(
@@ -1382,10 +1439,10 @@ class _BoardCard extends StatelessWidget {
               Wrap(spacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 if (category.isNotEmpty)
                   Text(isEdu ? 'Elimu' : 'Afya',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF2563EB))), // text-[10px] text-brand-blue-600
                 if (cadre.isNotEmpty)
                   Text(cadre,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                 // Health cadre code badge — kama web: bg-emerald-500 text-white rounded-full
                 if (!isEdu && card['cadre_code'] != null && (card['cadre_code'] as String).isNotEmpty)
                   Container(
@@ -1414,9 +1471,9 @@ class _BoardCard extends StatelessWidget {
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  const Icon(Icons.location_on, size: 13, color: Color(0xFFEF4444)),
+                  const Icon(Icons.location_on, size: 11, color: Color(0xFF9CA3AF)), // grey-400 kama web
                   const SizedBox(width: 4),
-                  const Text('Kutoka: ', style: TextStyle(fontSize: 12, color: Color(0xFF4B5563), fontWeight: FontWeight.w500)),
+                  const Text('Kutoka: ', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
                   Expanded(child: Text.rich(
                     TextSpan(children: [
                       TextSpan(
@@ -1454,7 +1511,8 @@ class _BoardCard extends StatelessWidget {
                     )),
                   ]),
                 ],
-                if (myRegionName.isNotEmpty && matchingDest != null) ...[
+                // "Anakuja" — inayojitokeza kila wakati kama web (board ni incoming tayari)
+                if (myRegionName.isNotEmpty) ...[
                   const SizedBox(height: 7),
                   const Divider(height: 1, color: Color(0xFFDBEAFE)),
                   const SizedBox(height: 7),
@@ -1496,6 +1554,18 @@ class _BoardCard extends StatelessWidget {
                           color: matched ? Colors.white : const Color(0xFF374151))),
                 );
               }),
+              // +N overflow chip kama web
+              if (subjects.length > 4)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0xFFD1D5DB)),
+                  ),
+                  child: Text('+${subjects.length - 4}',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF374151))),
+                ),
               // Match badge — kama web: bg-blue-50 text-blue-700 border-blue/20
               if (anySubjectMatch)
                 Container(
@@ -1629,13 +1699,13 @@ class _Pagination extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         OutlinedButton(onPressed: onPrev,
-            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            child: const Text('← Iliyopita', style: TextStyle(fontSize: 12))),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 40), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+            child: const Text('← Iliyopita', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
         Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('$page / $total', style: const TextStyle(fontWeight: FontWeight.bold))),
+            child: Text('$page / $total', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
         OutlinedButton(onPressed: onNext,
-            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            child: const Text('Inayofuata →', style: TextStyle(fontSize: 12))),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 40), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+            child: const Text('Inayofuata →', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
       ]),
     );
   }
@@ -1665,7 +1735,7 @@ class _EmptyBoard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(title,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF374151)), // text-base text-grey-700 kama web
             textAlign: TextAlign.center),
         const SizedBox(height: 4),
         const Text('Jisajili na uchague mkoa wako ili uanze.',

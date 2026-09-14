@@ -16,8 +16,11 @@ const _kRed = Color(0xFFDC2626);
 
 BoxDecoration _cardDec() => BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(12), // rounded-xl=12
-      border: Border.all(color: _kGrey200), // border-grey-200
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFF3F4F6)), // border-brand-grey-100
+      boxShadow: const [
+        BoxShadow(color: Color(0x0F000000), blurRadius: 20, offset: Offset(0, 4)), // shadow-soft
+      ],
     );
 
 class FeedbackScreen extends StatefulWidget {
@@ -124,12 +127,19 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header: icon + title + subtitle
+              // Header: back arrow + icon + title + subtitle (kama web)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pushReplacementNamed('/dashboard'),
+                        child: const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(Icons.arrow_back, size: 18, color: _kGrey700),
+                        ),
+                      ),
                       SvgPicture.asset('assets/icons/clipboard-list.svg', width: 20, height: 20, colorFilter: const ColorFilter.mode(_kBlue, BlendMode.srcIn)),
                       const SizedBox(width: 8),
                       const Text(
@@ -138,7 +148,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   const Text(
                     'Tuma maoni au malalamiko yako moja kwa moja kwa admin — utajibiwa hapa.',
                     style: TextStyle(fontSize: 12, color: _kGrey500),
@@ -147,9 +157,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               ),
               const SizedBox(height: 16), // space-y-4
 
-                // Form card (.card = rounded-xl p-4 border-grey-200)
+                // Form card (.card = bg-white rounded-2xl p-6 border-grey-100 shadow-soft)
                 Container(
-                  padding: const EdgeInsets.all(16), // p-4=16px
+                  padding: const EdgeInsets.all(24), // p-6=24px
                   decoration: _cardDec(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -191,7 +201,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       ),
                       // Error: bg-red-50 text-red text-sm=14 rounded-lg=8 p-3=12
                       if (_error.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12), // space-y-3=12px
                         Container(
                           padding: const EdgeInsets.all(12), // p-3=12px
                           decoration: BoxDecoration(
@@ -204,7 +214,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       ],
                       // Ok: bg-green-50 text-green-700 text-sm=14 rounded-lg=8 p-3=12
                       if (_ok.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12), // space-y-3=12px
                         Container(
                           padding: const EdgeInsets.all(12), // p-3=12px
                           decoration: BoxDecoration(
@@ -218,7 +228,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         ),
                       ],
                       const SizedBox(height: 12),
-                      // Submit button: justify-end, text-xs=12 px-4=16 py-1.5=6 rounded-lg=8 bg-brand-blue
+                      // Submit button: kama web .btn-primary (text-[11px] font-bold rounded-md=6)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -232,20 +242,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               minimumSize: Size.zero, // iwe ndogo kama web
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               textStyle: const TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w600),
+                                  fontSize: 11, fontWeight: FontWeight.bold),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 6), // px-4=16 py-1.5=6
+                                  horizontal: 16, vertical: 6),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)), // rounded-lg=8
+                                  borderRadius: BorderRadius.circular(6)), // rounded-md=6
                               elevation: 0,
                             ),
-                            child: _sending
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: Colors.white))
-                                : Text(_sent ? 'Imetumwa ✓' : 'Tuma'),
+                            child: Text(
+                              _sending
+                                  ? 'Inatuma...'
+                                  : (_sent ? 'Imetumwa ✓' : 'Tuma'),
+                            ),
                           ),
                         ],
                       ),
@@ -335,18 +343,18 @@ class _PageBtn extends StatelessWidget {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        constraints: const BoxConstraints(minWidth: 44, minHeight: 44), // min-w/h-[44px]
+        constraints: const BoxConstraints(minWidth: 44, minHeight: 40),
         padding: const EdgeInsets.symmetric(horizontal: 12), // px-3=12
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12), // rounded-xl=12
-          border: Border.all(color: _kGrey200), // border-grey-200
+          borderRadius: BorderRadius.circular(6), // rounded-md=6
+          border: Border.all(color: _kGrey300), // border-grey-300
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 14, // text-sm
-            fontWeight: FontWeight.w600,
+            fontSize: 11, // text-[11px]
+            fontWeight: FontWeight.bold,
             color: enabled ? _kGrey700 : _kGrey400,
           ),
         ),
@@ -382,9 +390,9 @@ class _FbCard extends StatelessWidget {
       }
     } catch (_) {}
 
-    // .card = rounded-xl=12 p-4=16 border-grey-200 bg-white
+    // .card = bg-white rounded-2xl p-6 border-grey-100 shadow-soft
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24), // p-6=24px
       decoration: _cardDec(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,10 +429,10 @@ class _FbCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4), // mb-1=4px
-          // Message: text-sm=14 text-grey-700 whitespace-pre-wrap
+          // Message: text-sm=14 text-grey-700 whitespace-pre-wrap (hlinea hazionekani)
           Text(
             message,
-            style: const TextStyle(fontSize: 14, color: _kGrey700),
+            style: const TextStyle(fontSize: 14, color: _kGrey700, height: 1.4),
           ),
           // Admin reply block
           if (reply.isNotEmpty) ...[
@@ -444,14 +452,14 @@ class _FbCard extends StatelessWidget {
                       fontSize: 10, // text-[10px]
                       fontWeight: FontWeight.bold,
                       color: _kBlue,
-                      letterSpacing: 0.8, // tracking-wide
+                      letterSpacing: 0.3, // tracking-wide kidogo
                     ),
                   ),
                   const SizedBox(height: 2), // mb-0.5=2px
                   Text(
                     reply,
                     style: const TextStyle(
-                        fontSize: 14, color: _kGrey800), // text-sm text-grey-800
+                        fontSize: 14, color: _kGrey800, height: 1.4), // text-sm text-grey-800
                   ),
                 ],
               ),

@@ -282,13 +282,13 @@ class SelectField extends StatelessWidget {
       onTap: disabled ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        constraints: const BoxConstraints(minHeight: 50),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        constraints: const BoxConstraints(minHeight: 44),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: disabled ? AppColors.grey100 : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: hasValue ? AppColors.blue200 : AppColors.grey300,
+            color: disabled ? AppColors.grey200 : AppColors.grey300,
           ),
         ),
         child: Row(children: [
@@ -299,7 +299,7 @@ class SelectField extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: hasValue ? FontWeight.w600 : FontWeight.w500,
                 color: hasValue
                     ? AppColors.textPrimary
@@ -308,19 +308,10 @@ class SelectField extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          // Chevron ndani ya boksi dogo — muonekano wa kisasa
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: hasValue ? AppColors.blue50 : AppColors.grey100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 19,
-              color: hasValue ? AppColors.primary : AppColors.textLight,
-            ),
+          Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 18,
+            color: hasValue ? AppColors.primary : AppColors.textLight,
           ),
         ]),
       ),

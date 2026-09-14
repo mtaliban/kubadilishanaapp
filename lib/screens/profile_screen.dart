@@ -18,25 +18,28 @@ const _kGold200 = Color(0xFFFDE68A); // brand-gold-200 (amber-200)
 const _kAmber   = Color(0xFFF59E0B); // amber-500
 const _kAmberLight = Color(0xFFFBBF24); // amber-400
 
-// .card = rounded-xl p-4 border border-grey-200 bg-white
+// .card = bg-white rounded-2xl(16px) p-6(24) border-grey-100 shadow-soft
 BoxDecoration _cardDec({Color? borderColor}) => BoxDecoration(
   color: Colors.white,
-  borderRadius: BorderRadius.circular(14),
-  border: Border.all(color: borderColor ?? _kGrey200),
-  boxShadow: [BoxShadow(color: const Color(0x14000000), blurRadius: 6, offset: Offset(0, 2))],
+  borderRadius: BorderRadius.circular(16),
+  border: Border.all(color: borderColor ?? _kGrey100),
+  boxShadow: const [
+    BoxShadow(color: Color(0x0F000000), blurRadius: 20, offset: Offset(0, 4)), // shadow-soft
+  ],
 );
 
+// .input = rounded-md(6) border-grey-300 px-2.5=10 py-1.5=6 text-xs=12 bg-white
 InputDecoration _inputDec({String? hint, bool disabled = false}) => InputDecoration(
   hintText: hint,
   isDense: true,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey300)),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue, width: 2)),
-  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
-  hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 2)),
+  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+  hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
   filled: true,
-  fillColor: disabled ? _kGrey100 : _kGrey50,
+  fillColor: disabled ? _kGrey100 : Colors.white,
 );
 
 // .label = text-sm=14px font-semibold text-grey-700 mb-1.5=6px
@@ -134,12 +137,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-                // ── Header: title + edit/cancel button ──
+                // ── Header: title + admin badge + edit/cancel button ──
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Expanded(child: Text(
-                    isAdmin ? 'Wasifu wa Admin' : 'Wasifu Wangu',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _kGrey900),
-                  )),
+                  Expanded(child: Row(children: [
+                    Text(
+                      isAdmin ? 'Wasifu wa Admin' : 'Wasifu Wangu',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _kGrey900),
+                    ),
+                    if (isAdmin) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF), // brand-blue-50
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: const Color(0xFFBFDBFE)), // brand-blue-200
+                        ),
+                        child: const Text('Admin',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kBlue)),
+                      ),
+                    ],
+                  ])),
                   const SizedBox(width: 8),
                   if (!_editing)
                     ElevatedButton(
@@ -328,9 +346,9 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       if (_error != null) _ErrBox(_error!),
 
-      // ── Form card ──
+      // ── Form card (.card p-6) ──
       Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: _cardDec(borderColor: _kGold200),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           // Card header
@@ -346,7 +364,7 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
           _label('Jina Kamili'),
           TextField(
             controller: _nameCtrl,
-            style: const TextStyle(fontSize: 14),
+            style: const TextStyle(fontSize: 12),
             decoration: _inputDec(hint: 'Jina lako kamili'),
           ),
           const SizedBox(height: 20),
@@ -356,7 +374,7 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
           TextField(
             controller: _altCtrl,
             keyboardType: TextInputType.phone,
-            style: const TextStyle(fontSize: 14),
+            style: const TextStyle(fontSize: 12),
             decoration: _inputDec(hint: 'Hiari'),
           ),
           const SizedBox(height: 20),
@@ -366,7 +384,7 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
           TextField(
             controller: TextEditingController(text: widget.profile['email'] ?? ''),
             enabled: false,
-            style: const TextStyle(fontSize: 14),
+            style: const TextStyle(fontSize: 12),
             decoration: _inputDec(disabled: true),
           ),
           const SizedBox(height: 8),
@@ -379,26 +397,30 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
 
       const SizedBox(height: 24),
 
-      // ── Save button — full width ──
-      SizedBox(
-        width: double.infinity,
-        height: 46,
-        child: ElevatedButton(
-          onPressed: _saving ? null : _save,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _kBlue,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: _kBlue,
-            disabledForegroundColor: Colors.white,
-            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            elevation: 0,
+      // ── Save button — kama web: flex justify-end + btn-primary ──
+      Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          ElevatedButton(
+            onPressed: _saving ? null : _save,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kBlue,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: _kBlue,
+              disabledForegroundColor: Colors.white,
+              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), // px-4 py-1.5
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              elevation: 0,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: _saving
+                ? const SizedBox(width: 18, height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                : const Text('Hifadhi Mabadiliko'),
           ),
-          child: _saving
-              ? const SizedBox(width: 18, height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-              : const Text('Hifadhi Mabadiliko'),
-        ),
+        ],
       ),
 
       const SizedBox(height: 60),
@@ -437,6 +459,31 @@ class _EditProfileState extends State<_EditProfile> {
 
   bool _saving = false;
   String? _error;
+
+  final _curPwdCtrl = TextEditingController();
+  final _newPwdCtrl = TextEditingController();
+  bool _changingPwd = false;
+  String? _pwdMsg;
+
+  Future<void> _changePassword() async {
+    setState(() { _error = null; _pwdMsg = null; _changingPwd = true; });
+    try {
+      await ApiService().changePassword(_curPwdCtrl.text, _newPwdCtrl.text);
+      if (!mounted) return;
+      setState(() {
+        _pwdMsg = 'Password imebadilishwa kikamilifu ✓';
+        _curPwdCtrl.clear();
+        _newPwdCtrl.clear();
+      });
+      Future.delayed(const Duration(seconds: 4), () {
+        if (mounted) setState(() => _pwdMsg = null);
+      });
+    } catch (e) {
+      if (mounted) setState(() { _error = _parseErr(e); });
+    } finally {
+      if (mounted) setState(() => _changingPwd = false);
+    }
+  }
 
   String get _category => widget.profile['category'] as String? ?? '';
 
@@ -529,6 +576,7 @@ class _EditProfileState extends State<_EditProfile> {
   @override
   void dispose() {
     _nameCtrl.dispose(); _phoneCtrl.dispose(); _altCtrl.dispose();
+    _curPwdCtrl.dispose(); _newPwdCtrl.dispose();
     super.dispose();
   }
 
@@ -620,19 +668,19 @@ class _EditProfileState extends State<_EditProfile> {
       _InfoCard(title: 'Utambulisho', children: [
         // Jina
         _label('Jina Kamili'),
-        TextField(controller: _nameCtrl, style: const TextStyle(fontSize: 14), decoration: _inputDec()),
+        TextField(controller: _nameCtrl, style: const TextStyle(fontSize: 12), decoration: _inputDec()),
         const SizedBox(height: 20),
 
         // Simu ya kawaida
         _label('Namba ya Simu (Normal)'),
         TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone,
-            style: const TextStyle(fontSize: 14), decoration: _inputDec()),
+            style: const TextStyle(fontSize: 12), decoration: _inputDec()),
         const SizedBox(height: 20),
 
         // WhatsApp
-        _label('Namba ya WhatsApp *'),
+        _label('🟢 Namba ya WhatsApp *'),
         TextField(controller: _altCtrl, keyboardType: TextInputType.phone,
-            style: const TextStyle(fontSize: 14), decoration: _inputDec(hint: '0623456789')),
+            style: const TextStyle(fontSize: 12), decoration: _inputDec(hint: '0623456789')),
 
         // Kada
         if (_cadres.isNotEmpty) ...[
@@ -654,7 +702,7 @@ class _EditProfileState extends State<_EditProfile> {
         // Masomo (kama kada ina level)
         if (_subjectLevel != null) ...[
           const SizedBox(height: 20),
-          _label('Masomo ($_subjectLevel)'),
+          _label('Masomo (${_subjectLevel == 'Primary' ? 'Elimu ya Msingi' : 'Elimu ya Sekondari'})'),
           if (_loadingSubjects)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -680,7 +728,7 @@ class _EditProfileState extends State<_EditProfile> {
                     border: Border.all(color: selected ? _kBlue : _kGrey300),
                   ),
                   child: Text(name, style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12, // text-xs
                     fontWeight: FontWeight.w500,
                     color: selected ? Colors.white : _kGrey700,
                   )),
@@ -753,26 +801,97 @@ class _EditProfileState extends State<_EditProfile> {
       ),
       const SizedBox(height: 24),
 
-      // ── Save button — full width ──
-      SizedBox(
-        width: double.infinity,
-        height: 46,
-        child: ElevatedButton(
-          onPressed: _saving ? null : _save,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _kBlue,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: _kBlue,
-            disabledForegroundColor: Colors.white,
-            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            elevation: 0,
+      // ── Password change card (kama web) ──
+      Container(
+        padding: const EdgeInsets.all(24), // p-6
+        decoration: _cardDec(),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('🔑 Badilisha Password',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kGrey900)),
+          if (_pwdMsg != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4), // green-50
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(_pwdMsg!,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF15803D))), // green-700
+            ),
+          ],
+          const SizedBox(height: 12),
+          _label('Password ya sasa'),
+          TextField(
+            controller: _curPwdCtrl,
+            obscureText: true,
+            style: const TextStyle(fontSize: 12),
+            decoration: _inputDec(hint: 'Password ya sasa'),
           ),
-          child: _saving
-              ? const SizedBox(width: 18, height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-              : const Text('Hifadhi Mabadiliko'),
-        ),
+          const SizedBox(height: 16),
+          _label('Password mpya (angalau herufi 6)'),
+          TextField(
+            controller: _newPwdCtrl,
+            obscureText: true,
+            style: const TextStyle(fontSize: 12),
+            decoration: _inputDec(hint: 'Password mpya'),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 42,
+            child: OutlinedButton(
+              onPressed: (_changingPwd || _curPwdCtrl.text.isEmpty || _newPwdCtrl.text.length < 6)
+                  ? null
+                  : _changePassword,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _kBlue,
+                disabledForegroundColor: _kGrey400,
+                side: const BorderSide(color: _kBlue),
+                textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), // rounded-full
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: _changingPwd
+                  ? const SizedBox(width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue))
+                  : const Text('Badilisha Password'),
+            ),
+          ),
+        ]),
+      ),
+
+      const SizedBox(height: 24),
+
+      // ── Save button — kama web: flex justify-end + btn-primary ──
+      Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          ElevatedButton(
+            onPressed: _saving ? null : _save,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kBlue,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: _kBlue,
+              disabledForegroundColor: Colors.white,
+              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6), // px-6 py-1.5
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              elevation: 0,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: _saving
+                ? const Row(mainAxisSize: MainAxisSize.min, children: [
+                    SizedBox(width: 14, height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                    SizedBox(width: 8),
+                    Text('Inatuma...', style: TextStyle(fontSize: 12)),
+                  ])
+                : const Text('Hifadhi Mabadiliko'),
+          ),
+        ],
       ),
       const SizedBox(height: 60),
     ]);
@@ -868,7 +987,7 @@ class _EditProfileState extends State<_EditProfile> {
 
 // ── Shared Widgets ────────────────────────────────────────────────────────────
 
-// .card = rounded-xl p-4 border-grey-200 bg-white
+// .card = bg-white rounded-2xl p-6 border-grey-100 shadow-soft
 class _InfoCard extends StatelessWidget {
   final String title;
   final Widget? trailing;
@@ -880,12 +999,12 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24), // p-6=24px
       decoration: _cardDec(borderColor: borderColor),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(child: Text(title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kGrey900))),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _kGrey900))),
           ?trailing,
         ]),
         const SizedBox(height: 12),
@@ -899,7 +1018,7 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-// Row widget: label=grey-500 12px, value=grey-900 14px, divider between rows
+// Row: label=grey-500 text-sm=14, value=font-semibold(600) grey-900 text-sm, hakuna divider (kama web)
 class _InfoRow extends StatelessWidget {
   final String label;
   final dynamic value;
@@ -909,27 +1028,21 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = value?.toString() ?? '';
     if (v.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(
-              flex: 2,
-              child: Text('$label:', style: const TextStyle(fontSize: 12, color: _kGrey500)),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 3,
-              child: Text(v,
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _kGrey900)),
-            ),
-          ]),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6), // py-0.5 kidogo
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+          flex: 2,
+          child: Text('$label:', style: const TextStyle(fontSize: 14, color: _kGrey500)),
         ),
-        const Divider(color: _kGrey200, height: 1),
-      ],
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 3,
+          child: Text(v,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey900)),
+        ),
+      ]),
     );
   }
 }
@@ -952,7 +1065,7 @@ class _ErrBox extends StatelessWidget {
   }
 }
 
-// Dropdown styled like .input
+// Dropdown styled like .input (rounded-md=6 border-grey-300 bg-white text-xs=12)
 class _DropInput<T> extends StatelessWidget {
   final T? value;
   final String hint;
@@ -967,16 +1080,16 @@ class _DropInput<T> extends StatelessWidget {
       isExpanded: true,
       decoration: InputDecoration(
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey300)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue, width: 2)),
-        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 2)),
+        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
         filled: true,
-        fillColor: _kGrey50,
+        fillColor: Colors.white,
       ),
-      hint: Text(hint, style: const TextStyle(fontSize: 13, color: _kGrey400)),
-      style: const TextStyle(fontSize: 13, color: _kGrey900),
+      hint: Text(hint, style: const TextStyle(fontSize: 12, color: _kGrey400)),
+      style: const TextStyle(fontSize: 12, color: _kGrey900),
       items: items,
       onChanged: onChanged,
     );

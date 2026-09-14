@@ -31,11 +31,14 @@ const _kGold100   = Color(0xFFFEF3C7); // brand-gold-100
 const _kGold600   = Color(0xFFD97706); // brand-gold-600
 const _kGold500   = Color(0xFFF59E0B); // brand-gold-500
 
-// .card = rounded-xl p-4 border-grey-200 bg-white
+// .card = bg-white rounded-2xl(16px) shadow-soft border-grey-100 p-6
 BoxDecoration _cardDec() => BoxDecoration(
   color: Colors.white,
-  borderRadius: BorderRadius.circular(12),
-  border: Border.all(color: _kGrey200),
+  borderRadius: BorderRadius.circular(16),
+  border: Border.all(color: _kGrey100),
+  boxShadow: const [
+    BoxShadow(color: Color(0x0F000000), blurRadius: 20, offset: Offset(0, 4)), // shadow-soft
+  ],
 );
 
 // .input = rounded-md=6 border-grey-300 px-2.5=10 py-1.5=6 text-xs=12
@@ -208,17 +211,24 @@ class _DonateScreenState extends State<DonateScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // p-4 md:p-6
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-            // ── Header: HandCoins title + subtitle ──
+            // ── Header: back arrow + HandCoins title + subtitle (kama web) ──
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pushReplacementNamed('/dashboard'),
+                  child: const Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Icon(Icons.arrow_back, size: 18, color: _kGrey700),
+                  ),
+                ),
                 SvgPicture.asset('assets/icons/hand-coins.svg', width: 20, height: 20, colorFilter: const ColorFilter.mode(_kRed, BlendMode.srcIn)),
                 const SizedBox(width: 8),
                 const Text('Changia Huduma',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _kGrey900)),
               ]),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               const Text(
-                'Lipa kwa namba hapa chini, kisha nakili SMS ya kuthibitisha.',
+                'Lipa kwa namba hapa chini (M-Pesa, Tigo Pesa, Airtel Money, Halopesa), kisha nakili SMS ya kuthibitisha.',
                 style: TextStyle(fontSize: 12, color: _kGrey500),
               ),
             ]),
@@ -278,7 +288,7 @@ class _DonateScreenState extends State<DonateScreen> {
                   GestureDetector(
                     onTap: _copyPhone,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
                         color: _copied ? _kBlue : Colors.white,
                         borderRadius: BorderRadius.circular(6),
@@ -287,14 +297,14 @@ class _DonateScreenState extends State<DonateScreen> {
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(
                           _copied ? Icons.check : Icons.copy_outlined,
-                          size: 13,
+                          size: 12,
                           color: _copied ? Colors.white : _kGrey700,
                         ),
                         const SizedBox(width: 6), // gap-1.5=6px
                         Text(
-                          _copied ? 'Imenakiliwa' : 'Nakili',
+                          _copied ? 'Imenakiliwa' : 'Nakili Namba',
                           style: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold,
+                            fontSize: 11, fontWeight: FontWeight.bold,
                             color: _copied ? Colors.white : _kGrey700,
                           ),
                         ),
@@ -389,9 +399,10 @@ class _DonateScreenState extends State<DonateScreen> {
                               SizedBox(width: 14, height: 14,
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
                               SizedBox(width: 8),
-                              Text('Inatuma...'),
+                              Text('Inatuma...', style: TextStyle(fontSize: 11)),
                             ])
-                          : Text(_sent ? '✓ Imetumwa' : 'Thibitisha Malipo'),
+                          : Text(_sent ? 'Imetumwa' : 'Thibitisha',
+                              style: const TextStyle(fontSize: 11)),
                     ),
                   ),
                 ]),
@@ -428,7 +439,7 @@ class _DonateScreenState extends State<DonateScreen> {
                       Icon(Icons.phone, size: 14, color: _kBlue), // Phone size=14 text-brand-blue
                       SizedBox(width: 8), // gap-2
                       Text(_kAdminCall,
-                          style: TextStyle(fontSize: 14, color: _kGrey700, fontWeight: FontWeight.w500)),
+                          style: TextStyle(fontSize: 14, color: _kGrey700)),
                     ]),
                   ),
                   const SizedBox(height: 8), // gap-2=8px
@@ -438,7 +449,7 @@ class _DonateScreenState extends State<DonateScreen> {
                       Icon(Icons.chat, size: 14, color: Color(0xFF059669)), // MessageCircle text-emerald-600
                       SizedBox(width: 8),
                       Text('+255 625 607 088',
-                          style: TextStyle(fontSize: 14, color: _kGrey700, fontWeight: FontWeight.w500)),
+                          style: TextStyle(fontSize: 14, color: _kGrey700)),
                     ]),
                   ),
                 ]),
@@ -509,7 +520,7 @@ class _DonateScreenState extends State<DonateScreen> {
               color: _kGrey50,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: const Row(children: [
-                SizedBox(width: 24,
+                SizedBox(width: 40,
                     child: Text('#', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
                         color: _kGrey500, letterSpacing: 0.8))),
                 SizedBox(width: 8),
@@ -591,9 +602,9 @@ class _HistoryRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-        // # column — text-xs=12? actually web text-xs font-bold text-grey-400 w-10=40px
+        // # column — text-xs font-bold text-grey-400 w-10=40px (kama web)
         SizedBox(
-          width: 24,
+          width: 40,
           child: Text('${index + 1}',
               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _kGrey400)),
         ),
@@ -650,8 +661,6 @@ class _HistoryRow extends StatelessWidget {
             // text-[10px] text-brand-red
             Text('$note', textAlign: TextAlign.right,
                 style: const TextStyle(fontSize: 10, color: _kRed)),
-          ],
-          if (status == 'rejected') ...[
             const SizedBox(height: 2),
             // text-[10px] text-brand-blue font-semibold "Wasiliana na Admin →"
             GestureDetector(

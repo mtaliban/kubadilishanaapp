@@ -8,8 +8,9 @@ class AppColors {
   static const Color primaryLight = Color(0xFFEFF6FF); // brand-blue-50
   static const Color accent = Color(0xFF3B82F6);       // blue-500
 
-  // Backgrounds
-  static const Color bg = Color(0xFFF9FAFB);           // brand-grey-50
+  // Backgrounds — web body ni NYEUPE (#ffffff), siyo grey-50.
+  static const Color bg = Color(0xFFFFFFFF);           // #ffffff (kama web)
+  static const Color bgGrey = Color(0xFFF9FAFB);       // brand-grey-50 (admin/other)
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFFF3F4F6);  // brand-grey-100
 
@@ -37,6 +38,7 @@ class AppColors {
   static const Color navy = Color(0xFF172554);     // brand-navy (header ya kisomi)
   static const Color grey50 = Color(0xFFF9FAFB);   // brand-grey-50
   static const Color grey100 = Color(0xFFF3F4F6);  // brand-grey-100
+  static const Color grey200 = Color(0xFFE5E7EB);  // brand-grey-200
   static const Color grey300 = Color(0xFFD1D5DB);  // brand-grey-300
   static const Color grey700 = Color(0xFF374151);  // brand-grey-700
 
@@ -47,6 +49,37 @@ class AppColors {
   static const List<BoxShadow> shadowCard = [
     BoxShadow(color: Color(0x0A000000), blurRadius: 12, offset: Offset(0, 2)),
   ];
+
+  /// `.card` ya web: bg-white, rounded-2xl(16px), shadow-soft,
+  /// border grey-100(#F3F4F6), padding p-6(24px).
+  static BoxDecoration cardDecoration({Color borderColor = grey100}) => BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+        boxShadow: shadowSoft,
+      );
+
+  /// `.input` ya web: rounded-md(6px), border grey-300, bg-white, text-xs.
+  static InputDecoration inputDecoration(String hint) => InputDecoration(
+        hintText: hint,
+        isDense: true,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: grey300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: grey300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: primary, width: 1.6),
+        ),
+        hintStyle: const TextStyle(fontSize: 12, color: textLight),
+      );
 
   // Category
   static const Color education = Color(0xFF1E40AF);   // brand-blue
@@ -62,7 +95,7 @@ class AppTheme {
       surface: Colors.white,
       onSurface: AppColors.textPrimary,
     ),
-    // Grey-50 badala ya nyeupe tupu — cards nyeupe zinajitokeza (haipauki).
+    // Nyeupe (kama web body background:#ffffff) — siyo grey-50.
     scaffoldBackgroundColor: AppColors.bg,
     // AppBar NYEUPE yenye title nyeusi — kama web (na kama screens za
     // my_matches/announcements zilivyoanza). Inafanana na web ambayo haina
@@ -94,21 +127,21 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
-      isDense: false,
+      isDense: true,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderRadius: BorderRadius.circular(6),
+        borderSide: const BorderSide(color: AppColors.grey300),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderRadius: BorderRadius.circular(6),
+        borderSide: const BorderSide(color: AppColors.grey300),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(6),
         borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      hintStyle: const TextStyle(fontSize: 12, color: AppColors.textLight),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
