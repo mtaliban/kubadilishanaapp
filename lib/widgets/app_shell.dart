@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
+import '../config/theme.dart';
 
 const _kAdminPhone = '0763795801';
 
@@ -203,6 +204,49 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
+  /// Toast ya KUELEA — kama toast ya web: card ndogo yenye rangi ya maana,
+  /// inaonekana juu ya content (hai-sukumi layout), inabofyika kufunga.
+  Widget _floatingToast() {
+    final ok = _toastIsSuccess;
+    final bg = ok ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2);
+    final border = ok ? const Color(0xFFA7F3D0) : const Color(0xFFFECACA);
+    final fg = ok ? const Color(0xFF047857) : const Color(0xFFB91C1C);
+    return GestureDetector(
+      onTap: () {
+        if (!ok) Navigator.pushReplacementNamed(context, '/donate');
+        setState(() => _toastMsg = null);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: border),
+          boxShadow: [BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 18, offset: const Offset(0, 6))],
+        ),
+        child: Row(children: [
+          Icon(ok ? Icons.check_circle_rounded : Icons.error_rounded,
+              size: 17, color: fg),
+          const SizedBox(width: 9),
+          Expanded(child: Text(_toastMsg!,
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: fg))),
+          GestureDetector(
+            onTap: () => setState(() => _toastMsg = null),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Icon(Icons.close_rounded,
+                  size: 16, color: fg.withValues(alpha: 0.65)),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
   Future<void> _clearCurrentBadge() async {
     const routes = ['/dashboard', '/donate', '/feedback', '/profile'];
     if (widget.tabIndex < routes.length) {
@@ -215,6 +259,7 @@ class _AppShellState extends State<AppShell> {
     _menuOverlay = null;
   }
 
+  /// Herufi ya kwanza ya jina — kama web getInitial().
   String _initials(String name) {
     final parts = name.trim().split(' ').where((w) => w.isNotEmpty).toList();
     if (parts.isEmpty) return 'M';
@@ -443,9 +488,12 @@ class _AppShellState extends State<AppShell> {
         final counts = _badge.counts;
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.bg,
           body: SafeArea(
-            child: Column(children: [
+            child: Stack(children: [
+              // Positioned.fill inahakikisha Column inapata constraints zenye
+              // kikomo (Expanded inahitaji hilo ndani ya Stack).
+              Positioned.fill(child: Column(children: [
 
               // ══ TOP BAR (h-14 = 56px) ══════════════════════════════════════
               // Kama web: fixed top-0 bg-white border-b shadow-sm
@@ -477,18 +525,31 @@ class _AppShellState extends State<AppShell> {
 
                   const Spacer(),
 
-                  // ── RIGHT: Avatar icon — sawa na bottom nav Wasifu icon ──
+                  // ── RIGHT: DUARA la initials — sawa na web (MobileTopBar) ──
+                  // web: w-8 h-8 rounded-full bg-brand-blue-50 border border-brand-blue-200
                   GestureDetector(
                     onTap: () => _showProfileMenu(),
-                    child: SizedBox(
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
                       key: _avatarKey,
                       width: 40, height: 40,
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/icons/user.svg',
-                          width: 22, height: 22,
-                          colorFilter: const ColorFilter.mode(
-                            Color(0xFF1E40AF), BlendMode.srcIn),
+                      alignment: Alignment.center,
+                      child: Container(
+                        width: 32, height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.blue50,
+                          border: Border.all(color: AppColors.blue200),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _initials(user?.fullName ?? ''),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.blue700,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -498,42 +559,16 @@ class _AppShellState extends State<AppShell> {
                 ]),
               ),
 
-              // ══ GLOBAL TOAST (WS payment events) ════════════════════════════
-              // Inaonekana kila page pale WS event inafika
-              if (_toastMsg != null)
-                GestureDetector(
-                  onTap: () {
-                    if (!_toastIsSuccess) {
-                      // Namba inapobonyezwa — wazi dialer
-                      Navigator.pushReplacementNamed(context, '/donate');
-                    }
-                    setState(() => _toastMsg = null);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _toastIsSuccess
-                          ? const Color(0xFF065F46) // emerald-800
-                          : const Color(0xFF1E40AF), // brand-blue
-                    ),
-                    child: Row(children: [
-                      Icon(
-                        _toastIsSuccess ? Icons.check_circle_outline : Icons.info_outline,
-                        size: 14, color: Colors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(_toastMsg!,
-                          style: const TextStyle(
-                            fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500,
-                          ))),
-                      const Icon(Icons.close, size: 14, color: Colors.white70),
-                    ]),
-                  ),
-                ),
-
               // ══ CONTENT ══════════════════════════════════════════════════════
               Expanded(child: widget.child),
+              ])),
+
+              // ══ GLOBAL TOAST — inaelea juu ya content (kama web toast) ══════
+              if (_toastMsg != null)
+                Positioned(
+                  left: 12, right: 12, bottom: 12,
+                  child: _floatingToast(),
+                ),
             ]),
           ),
 

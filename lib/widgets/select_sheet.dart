@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-// ── Generic select bottom sheet — radio-circle picker ─────────────────────────
+import '../config/theme.dart';
+
+const double _kItemH = 56;
+
+// ── Generic select bottom sheet — modern picker (web parity) ──────────────────
 Future<T?> showSelectSheet<T>(
   BuildContext context, {
   required String title,
@@ -11,6 +15,7 @@ Future<T?> showSelectSheet<T>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.45),
     builder: (_) => SelectSheet<T>(
       title: title,
       items: items,
@@ -39,6 +44,7 @@ class SelectSheet<T> extends StatefulWidget {
 class _SelectSheetState<T> extends State<SelectSheet<T>> {
   String _q = '';
   final _ctrl = TextEditingController();
+  bool _jumped = false;
 
   @override
   void dispose() {
@@ -46,186 +52,227 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
     super.dispose();
   }
 
+  List<({T value, String label, String? subtitle})> get _filtered {
+    if (_q.trim().isEmpty) return widget.items;
+    final q = _q.trim().toLowerCase();
+    return widget.items
+        .where((e) =>
+            e.label.toLowerCase().contains(q) ||
+            (e.subtitle ?? '').toLowerCase().contains(q))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filtered = _q.isEmpty
-        ? widget.items
-        : widget.items
-            .where((e) => e.label.toLowerCase().contains(_q.toLowerCase()))
-            .toList();
+    final list = _filtered;
+    final selIdx = list.indexWhere((e) => e.value == widget.selected);
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.35,
-      maxChildSize: 0.92,
+      initialChildSize: 0.62,
+      minChildSize: 0.4,
+      maxChildSize: 0.94,
       expand: false,
-      builder: (_, scrollCtrl) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 10, bottom: 4),
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-                color: const Color(0xFFD1D5DB),
-                borderRadius: BorderRadius.circular(2)),
-          ),
+      builder: (_, scrollCtrl) {
+        // Ruka moja kwa moja kwenye kitu kilichochaguliwa (orodha ndefu).
+        if (!_jumped && selIdx > 2 && scrollCtrl.hasClients) {
+          _jumped = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!scrollCtrl.hasClients) return;
+            final target = ((selIdx - 1) * _kItemH)
+                .clamp(0.0, scrollCtrl.position.maxScrollExtent);
+            scrollCtrl.jumpTo(target);
+          });
+        }
 
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
-            child: Row(children: [
-              Text(widget.title,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827))),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.close, size: 16, color: Color(0xFF6B7280)),
-                ),
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 6),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey300,
+                borderRadius: BorderRadius.circular(2),
               ),
-            ]),
-          ),
+            ),
 
-          // Search
-          if (widget.searchable && widget.items.length > 5)
+            // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              child: TextField(
-                controller: _ctrl,
-                autofocus: false,
-                decoration: InputDecoration(
-                  hintText: 'Tafuta...',
-                  hintStyle:
-                      const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-                  isDense: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  filled: true,
-                  fillColor: const Color(0xFFF9FAFB),
-                  prefixIcon: const Icon(Icons.search,
-                      size: 16, color: Color(0xFF9CA3AF)),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: Color(0xFFE5E7EB))),
-                  enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: Color(0xFFE5E7EB))),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                          color: Color(0xFF1E40AF), width: 1.5)),
+              padding: const EdgeInsets.fromLTRB(18, 4, 12, 10),
+              child: Row(children: [
+                Expanded(
+                  child: Text(widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary)),
                 ),
-                style: const TextStyle(fontSize: 13),
-                onChanged: (v) => setState(() => _q = v),
-              ),
-            ),
-
-          const Divider(height: 1),
-
-          // Items list
-          Expanded(
-            child: ListView.builder(
-              controller: scrollCtrl,
-              itemCount: filtered.length,
-              itemBuilder: (_, i) {
-                final item = filtered[i];
-                final isSel = item.value == widget.selected;
-                return InkWell(
-                  onTap: () => Navigator.pop(context, item.value),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  behavior: HitTestBehavior.opaque,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 13),
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
-                      color: isSel
-                          ? const Color(0xFFF0FDF4)
-                          : Colors.transparent,
-                      border: const Border(
-                          bottom: BorderSide(
-                              color: Color(0xFFF3F4F6), width: 1)),
+                      color: AppColors.grey100,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Row(children: [
-                      // Text — left side
-                      Expanded(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(item.label,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: isSel
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                    color: const Color(0xFF111827),
-                                  )),
-                              if (item.subtitle != null)
-                                Text(item.subtitle!,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF9CA3AF))),
-                            ]),
-                      ),
-                      const SizedBox(width: 12),
-                      // Radio circle — RIGHT side, green when selected
-                      Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isSel
-                              ? const Color(0xFF16A34A)
-                              : Colors.transparent,
-                          border: Border.all(
-                            color: isSel
-                                ? const Color(0xFF16A34A)
-                                : const Color(0xFFD1D5DB),
-                            width: 2,
-                          ),
-                        ),
-                        child: isSel
-                            ? const Icon(Icons.check,
-                                size: 13, color: Colors.white)
-                            : null,
-                      ),
-                    ]),
+                    child: const Icon(Icons.close_rounded,
+                        size: 17, color: AppColors.grey700),
                   ),
-                );
-              },
+                ),
+              ]),
             ),
-          ),
-        ]),
-      ),
+
+            // Search — kama web (rounded, grey-50, icon ya kutafuta)
+            if (widget.searchable)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: TextField(
+                  controller: _ctrl,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: 'Tafuta...',
+                    isDense: true,
+                    filled: true,
+                    fillColor: AppColors.grey50,
+                    prefixIcon: const Icon(Icons.search_rounded,
+                        size: 18, color: AppColors.textLight),
+                    prefixIconConstraints:
+                        const BoxConstraints(minWidth: 40, minHeight: 0),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.border)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.border)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: AppColors.primary, width: 1.6)),
+                  ),
+                  style: const TextStyle(fontSize: 14),
+                  onChanged: (v) => setState(() => _q = v),
+                ),
+              ),
+
+            Container(height: 1, color: AppColors.borderLight),
+
+            // Items
+            Expanded(
+              child: list.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text('Hakuna kilichopatikana',
+                            style: TextStyle(
+                                fontSize: 13, color: AppColors.textLight)),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: scrollCtrl,
+                      padding: const EdgeInsets.only(bottom: 12),
+                      itemCount: list.length,
+                      itemBuilder: (_, i) {
+                        final item = list[i];
+                        final isSel = item.value == widget.selected;
+                        return InkWell(
+                          onTap: () => Navigator.pop(context, item.value),
+                          child: Container(
+                            height: _kItemH,
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            decoration: BoxDecoration(
+                              color: isSel ? AppColors.blue50 : Colors.transparent,
+                              border: const Border(
+                                  bottom: BorderSide(
+                                      color: AppColors.borderLight, width: 1)),
+                            ),
+                            child: Row(children: [
+                              Expanded(
+                                child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(item.label,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: isSel
+                                                ? FontWeight.w700
+                                                : FontWeight.w500,
+                                            color: isSel
+                                                ? AppColors.primary
+                                                : AppColors.textPrimary,
+                                          )),
+                                      if (item.subtitle != null &&
+                                          item.subtitle!.isNotEmpty)
+                                        Text(item.subtitle!,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.textLight)),
+                                    ]),
+                              ),
+                              const SizedBox(width: 12),
+                              // Duara la kuchagua — bluu ikichaguliwa (kama web)
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isSel
+                                      ? AppColors.primary
+                                      : Colors.transparent,
+                                  border: Border.all(
+                                    color: isSel
+                                        ? AppColors.primary
+                                        : AppColors.grey300,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: isSel
+                                    ? const Icon(Icons.check_rounded,
+                                        size: 14, color: Colors.white)
+                                    : null,
+                              ),
+                            ]),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ]),
+        );
+      },
     );
   }
 }
 
-// ── Tappable select field (fake dropdown) ─────────────────────────────────────
+// ── Tappable select field (fake dropdown) — kisasa, rounded-xl ───────────────
 class SelectField extends StatelessWidget {
   final String hint;
   final String? value;
   final bool disabled;
   final VoidCallback? onTap;
+  final Widget? leading;
   const SelectField({
     super.key,
     required this.hint,
     this.value,
     this.disabled = false,
     this.onTap,
+    this.leading,
   });
 
   @override
@@ -233,32 +280,47 @@ class SelectField extends StatelessWidget {
     final hasValue = value != null && value!.isNotEmpty;
     return GestureDetector(
       onTap: disabled ? null : onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        constraints: const BoxConstraints(minHeight: 50),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          color: disabled ? AppColors.grey100 : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasValue ? AppColors.blue200 : AppColors.grey300,
+          ),
         ),
         child: Row(children: [
+          if (leading != null) ...[leading!, const SizedBox(width: 10)],
           Expanded(
             child: Text(
               hasValue ? value! : hint,
-              style: TextStyle(
-                fontSize: 12,
-                color: hasValue
-                    ? const Color(0xFF111827)
-                    : const Color(0xFF9CA3AF),
-                fontWeight:
-                    hasValue ? FontWeight.w500 : FontWeight.normal,
-              ),
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: hasValue ? FontWeight.w600 : FontWeight.w500,
+                color: hasValue
+                    ? AppColors.textPrimary
+                    : AppColors.textLight,
+              ),
             ),
           ),
-          const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 18,
-            color: Color(0xFF9CA3AF),
+          const SizedBox(width: 10),
+          // Chevron ndani ya boksi dogo — muonekano wa kisasa
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: hasValue ? AppColors.blue50 : AppColors.grey100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 19,
+              color: hasValue ? AppColors.primary : AppColors.textLight,
+            ),
           ),
         ]),
       ),

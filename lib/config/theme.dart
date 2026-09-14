@@ -28,6 +28,26 @@ class AppColors {
   static const Color border = Color(0xFFE5E7EB);      // brand-grey-200
   static const Color borderLight = Color(0xFFF3F4F6); // brand-grey-100
 
+  // ── Design tokens za kisasa (web parity) ─────────────────────────────
+  static const Color blue50 = Color(0xFFEFF6FF);   // brand-blue-50
+  static const Color blue100 = Color(0xFFDBEAFE);  // brand-blue-100
+  static const Color blue200 = Color(0xFFBFDBFE);  // brand-blue-200
+  static const Color blue500 = Color(0xFF3B82F6);  // brand-blue-500
+  static const Color blue700 = Color(0xFF1D4ED8);  // brand-blue-700
+  static const Color navy = Color(0xFF172554);     // brand-navy (header ya kisomi)
+  static const Color grey50 = Color(0xFFF9FAFB);   // brand-grey-50
+  static const Color grey100 = Color(0xFFF3F4F6);  // brand-grey-100
+  static const Color grey300 = Color(0xFFD1D5DB);  // brand-grey-300
+  static const Color grey700 = Color(0xFF374151);  // brand-grey-700
+
+  /// Kivuli laini (shadow-soft) — kinaonekana kwenye Android na iOS.
+  static const List<BoxShadow> shadowSoft = [
+    BoxShadow(color: Color(0x0F000000), blurRadius: 20, offset: Offset(0, 4)),
+  ];
+  static const List<BoxShadow> shadowCard = [
+    BoxShadow(color: Color(0x0A000000), blurRadius: 12, offset: Offset(0, 2)),
+  ];
+
   // Category
   static const Color education = Color(0xFF1E40AF);   // brand-blue
   static const Color health = Color(0xFFDC2626);      // brand-red
@@ -42,45 +62,81 @@ class AppTheme {
       surface: Colors.white,
       onSurface: AppColors.textPrimary,
     ),
-    scaffoldBackgroundColor: Colors.white,
+    // Grey-50 badala ya nyeupe tupu — cards nyeupe zinajitokeza (haipauki).
+    scaffoldBackgroundColor: AppColors.bg,
+    // AppBar NYEUPE yenye title nyeusi — kama web (na kama screens za
+    // my_matches/announcements zilivyoanza). Inafanana na web ambayo haina
+    // bar ya rangi juu; ina mstari mwembamba chini.
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
+      backgroundColor: Colors.white,
+      foregroundColor: AppColors.textPrimary,
+      surfaceTintColor: Colors.white,
       elevation: 0,
-      centerTitle: true,
+      scrolledUnderElevation: 0,
+      centerTitle: false,
+      iconTheme: IconThemeData(color: AppColors.textPrimary, size: 22),
+      titleTextStyle: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
+        color: AppColors.textPrimary,
+      ),
+      shape: Border(bottom: BorderSide(color: AppColors.borderLight)),
     ),
     cardTheme: CardThemeData(
       color: AppColors.surface,
-      elevation: 1,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.borderLight),
       ),
+      margin: EdgeInsets.zero,
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
+      isDense: false,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, 44),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        minimumSize: const Size(double.infinity, 48),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.grey700,
+        minimumSize: const Size(0, 46),
+        side: const BorderSide(color: AppColors.grey300),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
       ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.grey700,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      contentTextStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: AppColors.borderLight, thickness: 1, space: 1,
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(

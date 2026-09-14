@@ -83,8 +83,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (unread > 0)
             TextButton(
               onPressed: _markAll,
+              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
               child: Text('✓ Soma Zote ($unread)',
-                  style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600)),
             ),
         ],
       ),
