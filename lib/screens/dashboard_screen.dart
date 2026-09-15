@@ -372,31 +372,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // ── HERO CARD ──
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16), // rounded-2xl kama web
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.border),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 4))], // shadow-soft
+                      boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 20, offset: Offset(0, 4))],
                     ),
-                    child: Row(children: [
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      // Avatar kubwa — 56x56
                       Container(
-                        width: 40, height: 40,
+                        width: 56, height: 56,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFEFF6FF), // brand-blue-50
-                          border: Border.all(color: const Color(0xFFBFDBFE)), // brand-blue-200
+                          color: const Color(0xFFEFF6FF),
+                          border: Border.all(color: const Color(0xFFBFDBFE), width: 2),
                         ),
                         child: Center(child: Text(initial,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1D4ED8)))), // brand-blue-700
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF1D4ED8)))),
                       ),
                       const SizedBox(width: 12),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('Karibu, ${user?.fullName ?? ''}',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF111827)),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 2),
-                        Wrap(spacing: 2, runSpacing: 2, children: [
+                        const SizedBox(height: 4),
+                        // Category + cadre chips
+                        Wrap(spacing: 4, runSpacing: 4, children: [
                           if (auth.isAdmin)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -405,68 +407,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(color: const Color(0xFFBFDBFE)),
                               ),
-                              child: const Text('Admin',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
+                              child: const Text('Admin', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF1D4ED8))),
                             )
                           else if ((user?.category ?? '').isNotEmpty)
-                            Text(user!.category == 'health' ? 'Afya' : 'Elimu',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: const Color(0xFFBFDBFE)),
+                              ),
+                              child: Text(
+                                user!.category == 'health' ? 'Afya' : 'Elimu',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF1D4ED8)),
+                              ),
+                            ),
                           if (!auth.isAdmin && (user?.cadreDisplay ?? '').isNotEmpty)
-                            Text('· ${user!.cadreDisplay}',
+                            Text(user!.cadreDisplay!,
                                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
-                          if (myRegionName.isNotEmpty)
-                            Row(mainAxisSize: MainAxisSize.min, children: [
-                              const Icon(Icons.location_on, size: 10, color: Color(0xFF3B82F6)), // brand-blue-500
+                        ]),
+                        if (myRegionName.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.location_on, size: 11, color: Color(0xFF3B82F6)),
+                            const SizedBox(width: 2),
+                            Flexible(child: Text(
+                              [station['district_name'], myRegionName]
+                                  .where((v) => v != null && v.toString().isNotEmpty).join(', '),
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                            )),
+                          ]),
+                        ],
+                      ])),
+                      // Right: payment badge + phone
+                      if (!auth.isAdmin)
+                        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isPaid ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: isPaid ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
+                              ),
+                            ),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Container(
+                                width: 6, height: 6,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isPaid ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
                               Text(
-                                [station['district_name'], myRegionName]
-                                    .where((v) => v != null && v.toString().isNotEmpty).join(', '),
-                                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                isPaid ? 'Amelipa' : 'Hajalipa',
+                                style: TextStyle(
+                                  fontSize: 10, fontWeight: FontWeight.w800,
+                                  color: isPaid ? const Color(0xFF15803D) : const Color(0xFFDC2626),
+                                ),
                               ),
                             ]),
-                        ]),
-                      ])),
-                      Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                        if (!auth.isAdmin)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isPaid ? Colors.green.shade50 : Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(999), // rounded-full
-                            ),
-                            child: Text(isPaid ? 'AMELIIPIA' : 'HAJALIPIA',
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold,
-                                    color: isPaid ? Colors.green.shade700 : Colors.red.shade700)),
                           ),
-                        const SizedBox(height: 4),
-                        GestureDetector(
-                          onTap: () {
-                            Clipboard.setData(const ClipboardData(text: _kAdminPhone));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Namba imenakiliwa'), duration: Duration(seconds: 1)));
-                          },
-                          child: const Text(_kAdminPhone,
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
-                        ),
-                      ]),
+                          const SizedBox(height: 6),
+                          const Text(_kAdminPhone,
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFF111827))),
+                        ]),
                     ]),
                   ),
 
                   const SizedBox(height: 16),
 
-                  // ── LIVE PANEL — "Wanaohamia [Mkoa] wakitokea [Chanzo]" ──
+                  // ── LIVE PANEL ──
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16), // rounded-2xl
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.border),
+                      boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
                     ),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(children: [
                         const _PulseDot(),
                         const SizedBox(width: 8),
                         Expanded(child: RichText(text: TextSpan(
-                          style: const TextStyle(fontSize: 13, color: Colors.black87, fontFamily: ''),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.black87, fontFamily: ''), // font-bold kama web
                           children: [
                             TextSpan(text: 'Wanaohamia ', style: TextStyle(color: AppColors.primary)),
                             TextSpan(text: myRegionName.isNotEmpty ? myRegionName : 'Mkoa Wako',
@@ -480,17 +507,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 6),
                       Row(children: [
                         const SizedBox(width: 16),
-                        // Total
-                        _statChip('$_boardTotal', Icons.people, const Color(0xFF1D4ED8), bg: const Color(0xFFEFF6FF)), // bg-brand-blue-50
+                        // Total — bg-brand-blue-50 text-brand-blue (kama web)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                          decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(20)),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.people, size: 12, color: Color(0xFF1D4ED8)),
+                            const SizedBox(width: 3),
+                            Text('$_boardTotal', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF1D4ED8))),
+                          ]),
+                        ),
                         const SizedBox(width: 6),
-                        // Online
-                        if (_onlineCount > 0) ...[
-                          _statChip('$_onlineCount', Icons.circle, const Color(0xFF15803D), bg: const Color(0xFFF0FDF4)), // bg-green-50
-                          const SizedBox(width: 6),
-                        ],
-                        // Wapya
+                        // Online — dot ya kijani inayopulsesha + namba (kama web)
+                        if (_onlineCount > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(20)),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Container(width: 6, height: 6,
+                                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF22C55E))),
+                              const SizedBox(width: 4),
+                              Text('$_onlineCount', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15803D))),
+                            ]),
+                          ),
+                        const SizedBox(width: 6),
+                        // Wapya (+N) — bg-brand-blue-50 text-brand-blue, hakuna icon (kama web)
                         if (_freshCount > 0)
-                          _statChip('+$_freshCount', Icons.bolt, const Color(0xFFD97706), bg: const Color(0xFFFEF3C7)), // bg-gold-100
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(20)),
+                            child: Text('+$_freshCount', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1D4ED8))),
+                          ),
                       ]),
                     ]),
                   ),
@@ -680,17 +727,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
     launchUrl(uri, mode: LaunchMode.externalApplication);
   }
-
-
-  Widget _statChip(String text, IconData icon, Color color, {Color? bg}) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-    decoration: BoxDecoration(color: bg ?? color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, size: 12, color: color),
-      const SizedBox(width: 3),
-      Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: color)),
-    ]),
-  );
 }
 
 // ── LIVE: True Matches Section ────────────────────────────────────────────────
@@ -713,7 +749,8 @@ class _TrueMatchesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const emerald = Color(0xFF10B981);
+    const emerald800 = Color(0xFF065F46); // text-emerald-800 kama web
+    const emerald600 = Color(0xFF059669); // text-emerald-600 kama web
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF0FDF4), // emerald-50
@@ -727,13 +764,13 @@ class _TrueMatchesSection extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(children: [
-              Container(width: 9, height: 9, decoration: const BoxDecoration(shape: BoxShape.circle, color: emerald)),
+              Container(width: 9, height: 9, decoration: const BoxDecoration(shape: BoxShape.circle, color: emerald600)),
               const SizedBox(width: 8),
               Text('Match za Kweli (${matches.length})',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: emerald)),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: emerald800)),
               const Spacer(),
               Text(expanded ? 'Ficha' : 'Onyesha',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: emerald)),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: emerald600)),
             ]),
           ),
         ),
@@ -775,31 +812,23 @@ class _TrueMatchGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final contentW = MediaQuery.of(context).size.width - 32;
+    final cols = contentW >= 568 ? 2 : 1; // grid-cols-1 sm:grid-cols-2 kama web
     final rows = <Widget>[];
-    for (int i = 0; i < matches.length; i += 2) {
-      final a = matches[i];
-      final b = i + 1 < matches.length ? matches[i + 1] : null;
-      final uidA = (a['candidate'] ?? a)['user_id'] as String? ?? '';
-      final uidB = b != null ? ((b['candidate'] ?? b)['user_id'] as String? ?? '') : '';
-      rows.add(IntrinsicHeight(
-        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Expanded(child: _TrueMatchCard(
-            match: a, isPaid: isPaid, mySubjects: mySubjects, myRegionName: myRegionName,
-            toast: toastUserId == uidA ? toastMsg : null,
-            onToast: onToast,
-          )),
-          const SizedBox(width: 10), // gap-2.5
-          if (b != null)
-            Expanded(child: _TrueMatchCard(
-              match: b, isPaid: isPaid, mySubjects: mySubjects, myRegionName: myRegionName,
-              toast: toastUserId == uidB ? toastMsg : null,
-              onToast: onToast,
-            ))
-          else
-            const Expanded(child: SizedBox()),
-        ]),
-      ));
-      if (i + 2 < matches.length) rows.add(const SizedBox(height: 10));
+    for (int i = 0; i < matches.length; i += cols) {
+      final items = <Widget>[];
+      for (int j = 0; j < cols && i + j < matches.length; j++) {
+        final mm = matches[i + j];
+        final uid = (mm['candidate'] ?? mm)['user_id'] as String? ?? '';
+        items.add(Expanded(child: _TrueMatchCard(
+          match: mm, isPaid: isPaid, mySubjects: mySubjects, myRegionName: myRegionName,
+          toast: toastUserId == uid ? toastMsg : null,
+          onToast: onToast,
+        )));
+        if (j < cols - 1 && i + j + 1 < matches.length) items.add(const SizedBox(width: 10)); // gap-2.5
+      }
+      rows.add(IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: items)));
+      if (i + cols < matches.length) rows.add(const SizedBox(height: 10));
     }
     return Column(children: rows);
   }
@@ -840,97 +869,108 @@ class _TrueMatchCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF6EE7B7), width: 2), // emerald-300
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF6EE7B7), width: 1.5),
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
       child: Stack(children: [
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Header: avatar + name + score badge
-            Row(children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Stack(children: [
-                CircleAvatar(radius: 18, backgroundColor: const Color(0xFF059669), // emerald-600 kama web
-                    child: Text(initial, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white))),
+                Container(
+                  width: 44, height: 44,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF059669),
+                  ),
+                  child: Center(child: Text(initial,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)))),
                 if (c['online'] == true)
-                  Positioned(right: 0, bottom: 0,
-                    child: Container(width: 9, height: 9,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.green,
-                          border: Border.all(color: Colors.white, width: 1.5)))),
+                  Positioned(right: 1, bottom: 1,
+                    child: Container(width: 12, height: 12,
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF16A34A),
+                          border: Border.all(color: Colors.white, width: 2)))),
               ]),
               const SizedBox(width: 10),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF111827)),
                       overflow: TextOverflow.ellipsis)),
                   if (targetPaid)
                     Container(margin: const EdgeInsets.only(left: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(color: emeraldBg, borderRadius: BorderRadius.circular(10)),
-                        child: const Text('✓ PAID', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: emerald))),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: emeraldBg, borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: const Color(0xFF6EE7B7))),
+                        child: const Text('✓ PAID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF047857)))),
                 ]),
-                Row(children: [
-                  Text(isEdu ? 'Elimu' : 'Afya',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: emerald)),
-                  if (cadre.isNotEmpty) Text(' · $cadre',
-                      style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-                ]),
+                const SizedBox(height: 2),
+                Text(
+                  [isEdu ? 'Elimu' : 'Afya', if (cadre.isNotEmpty) cadre].join(' · '),
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF059669), fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ])),
             ]),
 
             const SizedBox(height: 8),
 
-            // Location box (px-2.5=10px, py-1.5=6px kama web)
-            if ((from['region_name'] ?? '').isNotEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                    color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(8)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    const Icon(Icons.location_on, size: 11, color: Color(0xFF9CA3AF)), // grey-400 kama web
-                    const SizedBox(width: 3),
-                    Text('Kutoka: ', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    Expanded(child: Text.rich(
-                      TextSpan(children: [
-                        TextSpan(
-                          text: from['region_name']?.toString() ?? '',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
-                        ),
-                        if ((from['district_name'] ?? '').toString().isNotEmpty)
-                          TextSpan(
-                            text: ', ${from['district_name']}',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
-                          ),
-                      ]),
-                      overflow: TextOverflow.ellipsis,
-                    )),
+            // Location rows — plain style
+            if ((from['region_name'] ?? '').isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Row(children: [
+                const Icon(Icons.location_on, size: 13, color: Color(0xFFEF4444)),
+                const SizedBox(width: 5),
+                const Text('Kutoka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+                Expanded(child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(
+                      text: from['region_name']?.toString() ?? '',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
+                    ),
+                    if ((from['district_name'] ?? '').toString().isNotEmpty)
+                      TextSpan(
+                        text: ', ${from['district_name']}',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF374151)),
+                      ),
                   ]),
-                  if (to != null && (to['region_name'] ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Row(children: [
-                      const Icon(Icons.adjust, size: 11, color: emerald),
-                      const SizedBox(width: 3),
-                      Text('→ Anataka: ', style: const TextStyle(fontSize: 11, color: emerald, fontWeight: FontWeight.w600)),
-                      Expanded(child: Text.rich(
-                        TextSpan(children: [
-                          TextSpan(
-                            text: to['region_name']?.toString() ?? '',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
-                          ),
-                          if ((to['district_name'] ?? '').toString().isNotEmpty)
-                            TextSpan(
-                              text: ', ${to['district_name']}',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
-                            ),
-                        ]),
-                        overflow: TextOverflow.ellipsis,
-                      )),
+                  overflow: TextOverflow.ellipsis,
+                )),
+              ]),
+              if (to != null && (to['region_name'] ?? '').isNotEmpty) ...[
+                const SizedBox(height: 5),
+                Row(children: [
+                  const Icon(Icons.gps_fixed, size: 13, color: Color(0xFF1E40AF)),
+                  const SizedBox(width: 5),
+                  const Text('Anataka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+                  Expanded(child: Text.rich(
+                    TextSpan(children: [
+                      TextSpan(
+                        text: to['region_name']?.toString() ?? '',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+                      ),
+                      if ((to['district_name'] ?? '').toString().isNotEmpty)
+                        TextSpan(
+                          text: ', ${to['district_name']}',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF1E40AF)),
+                        ),
                     ]),
-                  ],
+                    overflow: TextOverflow.ellipsis,
+                  )),
                 ]),
-              ),
+                const SizedBox(height: 5),
+                Row(children: [
+                  const Text('↓ ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF16A34A))),
+                  Expanded(child: Text(
+                    'Anakuja ${to['region_name'] ?? ''} — inalingana!',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF16A34A)),
+                    overflow: TextOverflow.ellipsis,
+                  )),
+                ]),
+              ],
+            ],
 
             // Miaka ya kazi
             if (years != null) ...[
@@ -1072,16 +1112,16 @@ class _TrueMatchCard extends StatelessWidget {
   Widget _tmBtn(IconData icon, String label, VoidCallback onTap, bool enabled) => GestureDetector(
     onTap: enabled ? onTap : null,
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10), // px-2.5=10px py-1.5=6px kama web
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFD1D5DB)), // border-grey-300
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFD1D5DB)),
       ),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(icon, size: 11, color: enabled ? const Color(0xFF111827) : const Color(0xFF9CA3AF)),
-        const SizedBox(width: 3),
-        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+        Icon(icon, size: 14, color: enabled ? const Color(0xFF111827) : const Color(0xFF9CA3AF)),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
             color: enabled ? const Color(0xFF111827) : const Color(0xFF9CA3AF))),
       ]),
     ),
@@ -1148,33 +1188,17 @@ class _FiltersBar extends StatelessWidget {
         : cadres.cast<dynamic>().firstWhere((c) => '${c['code']}' == cadreCode, orElse: () => null)?['display_name'] as String? ?? cadreCode;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12), // px-3 pt-2.5 pb-3
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16), // rounded-2xl
+        borderRadius: BorderRadius.circular(8), // rounded-lg kama web (HAKUNA shadow)
         border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 4))], // shadow-soft
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-        // ── Header ──
-        Row(children: [
-          const Text('Wanakotoka (Mkoa)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
-          const Spacer(),
-          if (hasFilter)
-            GestureDetector(
-              onTap: onClear,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Text('Futa kichujio', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.error)),
-              ),
-            ),
-        ]),
-        const SizedBox(height: 5),
+        // ── Header: label tu (Futa kichujio iko footer chini kama web) ──
+        const Text('Wanakotoka (Mkoa)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF374151))),
+        const SizedBox(height: 8),
 
         // Mkoa — bottom sheet picker
         SelectField(
@@ -1234,19 +1258,22 @@ class _FiltersBar extends StatelessWidget {
           },
         ),
 
-        // Active location label
-        if (regionLabel != null || districtLabel != null || facilityLabel != null) ...[
-          const SizedBox(height: 8),
-          Row(children: [
-            const Icon(Icons.location_on_rounded, size: 12, color: AppColors.primary),
-            const SizedBox(width: 3),
-            Expanded(child: Text(
-              facilityLabel ?? districtLabel ?? regionLabel ?? '',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.primary),
-              overflow: TextOverflow.ellipsis,
-            )),
-          ]),
-        ],
+        // ── Footer: MapPin + label (kushoto) · Futa kichujio (kulia) kama web ──
+        const SizedBox(height: 8),
+        Row(children: [
+          const Icon(Icons.location_on, size: 12, color: Color(0xFF6B7280)), // grey-600 kama web
+          const SizedBox(width: 3),
+          Expanded(child: Text(
+            facilityLabel ?? districtLabel ?? regionLabel ?? 'Mikoa yote',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF6B7280)),
+            overflow: TextOverflow.ellipsis,
+          )),
+          if (hasFilter)
+            GestureDetector(
+              onTap: onClear,
+              child: const Text('Futa kichujio', style: TextStyle(fontSize: 11, color: AppColors.error, fontWeight: FontWeight.w600)),
+            ),
+        ]),
 
         // ── Subject filter chips (edu + admin) ──
         if (isEdu) ...[
@@ -1304,7 +1331,7 @@ class _FiltersBar extends StatelessWidget {
           const SizedBox(height: 12),
           const Divider(height: 1),
           const SizedBox(height: 10),
-          const Text('Idara / Kada', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+          const Text('Idara:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
           const SizedBox(height: 6),
           SelectField(
             hint: 'Idara Zote',
@@ -1390,37 +1417,37 @@ class _BoardCard extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.max, children: [
 
           // Row 1: Avatar + info
-          Row(children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Stack(children: [
-              CircleAvatar(radius: 18, backgroundColor: const Color(0xFFEFF6FF), // brand-blue-50 (36px kama web)
-                  child: Text(initial, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)))), // brand-blue-700
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFDBEAFE), // blue-100
+                  border: Border.all(color: const Color(0xFFBFDBFE)), // blue-200
+                ),
+                child: Center(child: Text(initial,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1E40AF)))),
+              ),
               if (online)
-                Positioned(right: 0, bottom: 0,
-                  child: Container(width: 9, height: 9,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.green,
-                        border: Border.all(color: Colors.white, width: 1.5)))),
+                Positioned(right: 1, bottom: 1,
+                  child: Container(width: 11, height: 11,
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF16A34A),
+                        border: Border.all(color: Colors.white, width: 2)))),
             ]),
             const SizedBox(width: 10),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Expanded(child: Text(name,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF111827)),
                     overflow: TextOverflow.ellipsis)),
                 if (fresh)
                   Padding(padding: const EdgeInsets.only(left: 4),
-                    child: _PulseBadge(label: 'MPYA', bg: AppColors.primary, textColor: Colors.white)),
+                    child: _PulseBadge(label: 'Mpya', bg: AppColors.primary, textColor: Colors.white)),
                 if (online && !fresh)
                   Padding(padding: const EdgeInsets.only(left: 4),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4), // bg-green-50
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text('● Live',
-                          style: TextStyle(fontSize: 9, color: Color(0xFF15803D), fontWeight: FontWeight.bold)), // text-green-700
-                    )),
-                // isMe: PAID/HAJALIPIA badge — kama web (kwa mtumiaji mwenyewe tu)
+                    child: const Text('● Live',
+                        style: TextStyle(fontSize: 10, color: Color(0xFF16A34A), fontWeight: FontWeight.w700))),
                 if (isMe)
                   Container(
                     margin: const EdgeInsets.only(left: 4),
@@ -1435,97 +1462,74 @@ class _BoardCard extends StatelessWidget {
                     ),
                   ),
               ]),
-              const SizedBox(height: 2),
-              Wrap(spacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                if (category.isNotEmpty)
-                  Text(isEdu ? 'Elimu' : 'Afya',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF2563EB))), // text-[10px] text-brand-blue-600
-                if (cadre.isNotEmpty)
-                  Text(cadre,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                // Health cadre code badge — kama web: bg-emerald-500 text-white rounded-full
-                if (!isEdu && card['cadre_code'] != null && (card['cadre_code'] as String).isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981), // emerald-500
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(card['cadre_code'] as String,
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
-              ]),
+              const SizedBox(height: 3),
+              Text(
+                [if (category.isNotEmpty) (isEdu ? 'Elimu' : 'Afya'), if (cadre.isNotEmpty) cadre]
+                    .join(' · '),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF1E40AF), fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis,
+              ),
             ])),
           ]),
 
           const SizedBox(height: 8),
 
-          // Location box — web: bg-brand-blue-50 rounded-xl px-2.5 py-2 border-brand-blue-100
-          if ((station['region_name'] ?? '').isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF), // brand-blue-50
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFDBEAFE)), // brand-blue-100
-              ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  const Icon(Icons.location_on, size: 11, color: Color(0xFF9CA3AF)), // grey-400 kama web
-                  const SizedBox(width: 4),
-                  const Text('Kutoka: ', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
-                  Expanded(child: Text.rich(
-                    TextSpan(children: [
-                      TextSpan(
-                        text: station['region_name']?.toString() ?? '',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
-                      ),
-                      if ((station['district_name'] ?? '').toString().isNotEmpty)
-                        TextSpan(
-                          text: ', ${station['district_name']}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
-                        ),
-                    ]),
-                    overflow: TextOverflow.ellipsis,
-                  )),
+          // Location rows — plain, no background box
+          if ((station['region_name'] ?? '').isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Row(children: [
+              const Icon(Icons.location_on, size: 13, color: Color(0xFFEF4444)),
+              const SizedBox(width: 5),
+              const Text('Kutoka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+              Expanded(child: Text.rich(
+                TextSpan(children: [
+                  TextSpan(
+                    text: station['region_name']?.toString() ?? '',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
+                  ),
+                  if ((station['district_name'] ?? '').toString().isNotEmpty)
+                    TextSpan(
+                      text: ', ${station['district_name']}',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF374151)),
+                    ),
                 ]),
-                if (activeDest != null && (activeDest['region_name'] ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 7),
-                  Row(children: [
-                    const Icon(Icons.adjust, size: 13, color: Color(0xFF1E40AF)),
-                    const SizedBox(width: 4),
-                    const Text('→ Anataka: ', style: TextStyle(fontSize: 12, color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600)),
-                    Expanded(child: Text.rich(
-                      TextSpan(children: [
-                        TextSpan(
-                          text: activeDest['region_name']?.toString() ?? '',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
-                        ),
-                        if ((activeDest['district_name'] ?? '').toString().isNotEmpty)
-                          TextSpan(
-                            text: ', ${activeDest['district_name']}',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF1F2937)),
-                          ),
-                      ]),
-                      overflow: TextOverflow.ellipsis,
-                    )),
+                overflow: TextOverflow.ellipsis,
+              )),
+            ]),
+            if (activeDest != null && (activeDest['region_name'] ?? '').isNotEmpty) ...[
+              const SizedBox(height: 5),
+              Row(children: [
+                const Icon(Icons.gps_fixed, size: 13, color: Color(0xFF1E40AF)),
+                const SizedBox(width: 5),
+                const Text('Anataka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+                Expanded(child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(
+                      text: activeDest['region_name']?.toString() ?? '',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+                    ),
+                    if ((activeDest['district_name'] ?? '').toString().isNotEmpty)
+                      TextSpan(
+                        text: ', ${activeDest['district_name']}',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF1E40AF)),
+                      ),
                   ]),
-                ],
-                // "Anakuja" — inayojitokeza kila wakati kama web (board ni incoming tayari)
-                if (myRegionName.isNotEmpty) ...[
-                  const SizedBox(height: 7),
-                  const Divider(height: 1, color: Color(0xFFDBEAFE)),
-                  const SizedBox(height: 7),
-                  Row(children: [
-                    const Text('↓ Anakuja: ',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF))),
-                    Expanded(child: Text(myRegionName,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF1F2937)),
-                        overflow: TextOverflow.ellipsis)),
-                  ]),
-                ],
+                  overflow: TextOverflow.ellipsis,
+                )),
               ]),
-            ),
+            ],
+            if (myRegionName.isNotEmpty) ...[
+              const SizedBox(height: 5),
+              Row(children: [
+                const Text('↓ ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF16A34A))),
+                Expanded(child: Text(
+                  'Anakuja $myRegionName — inalingana!',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF16A34A)),
+                  overflow: TextOverflow.ellipsis,
+                )),
+              ]),
+            ],
+          ],
 
           // Miaka ya kazi
           if (years != null) ...[
@@ -1534,16 +1538,16 @@ class _BoardCard extends StatelessWidget {
                 style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
           ],
 
-          // Masomo (kwa walimu) — web: label "Masomo:" full-width juu, kisha chips
+          // Masomo
           if (subjects.isNotEmpty) ...[
             const SizedBox(height: 10),
-            const Text('Masomo:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+            const Text('Masomo:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
             const SizedBox(height: 4),
             Wrap(spacing: 4, runSpacing: 4, children: [
-              ...subjects.take(4).map((s) {
+              ...subjects.map((s) {
                 final matched = mySubjects.contains(s);
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // px-2 py-0.5 kama web
                   decoration: BoxDecoration(
                     color: matched ? AppColors.primary : Colors.white,
                     borderRadius: BorderRadius.circular(999),
@@ -1554,18 +1558,6 @@ class _BoardCard extends StatelessWidget {
                           color: matched ? Colors.white : const Color(0xFF374151))),
                 );
               }),
-              // +N overflow chip kama web
-              if (subjects.length > 4)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: const Color(0xFFD1D5DB)),
-                  ),
-                  child: Text('+${subjects.length - 4}',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF374151))),
-                ),
               // Match badge — kama web: bg-blue-50 text-blue-700 border-blue/20
               if (anySubjectMatch)
                 Container(
@@ -1650,22 +1642,20 @@ class _BoardCard extends StatelessWidget {
     );
   }
 
-  // Buttons ndogo kama web: py-1.5=6px, px-1.5=6px, text-[10px], icon 12px
-  // web: bg-white border-grey-300 text-grey-900 — wote rangi sawa
   Widget _contactBtn(IconData icon, String label, VoidCallback? onTap) => GestureDetector(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6), // py-1.5 px-1.5
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFD1D5DB)), // border-grey-300
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFD1D5DB)),
       ),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(icon, size: 12, color: onTap != null ? const Color(0xFF111827) : const Color(0xFF9CA3AF)), // grey-900 / grey-400
-        const SizedBox(width: 3),
-        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-            color: onTap != null ? const Color(0xFF111827) : const Color(0xFF9CA3AF))), // grey-900 / grey-400
+        Icon(icon, size: 14, color: onTap != null ? const Color(0xFF111827) : const Color(0xFF9CA3AF)),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+            color: onTap != null ? const Color(0xFF111827) : const Color(0xFF9CA3AF))),
       ]),
     ),
   );
@@ -1673,15 +1663,15 @@ class _BoardCard extends StatelessWidget {
   Widget _contactBtnWa(VoidCallback onTap) => GestureDetector(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF25D366), // WhatsApp green — kama web
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFF25D366),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        SvgPicture.string(_kWaSvg, width: 12, height: 12), // white SVG on green bg
-        const SizedBox(width: 3),
-        const Text('WhatsApp', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
+        SvgPicture.string(_kWaSvg, width: 14, height: 14),
+        const SizedBox(width: 4),
+        const Text('WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
       ]),
     ),
   );
@@ -1699,13 +1689,13 @@ class _Pagination extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         OutlinedButton(onPressed: onPrev,
-            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 40), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
-            child: const Text('← Iliyopita', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), padding: const EdgeInsets.symmetric(horizontal: 12)),
+            child: const Text('← Iliyopita', textAlign: TextAlign.center)),
         Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text('$page / $total', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
         OutlinedButton(onPressed: onNext,
-            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 40), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
-            child: const Text('Inayofuata →', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(44, 44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), padding: const EdgeInsets.symmetric(horizontal: 12)),
+            child: const Text('Inayofuata →', textAlign: TextAlign.center)),
       ]),
     );
   }

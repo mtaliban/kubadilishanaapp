@@ -3,6 +3,15 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../config/theme.dart';
 
+const _kBlue    = Color(0xFF1E40AF);
+const _kBlue50  = Color(0xFFEFF6FF);
+const _kGrey900 = Color(0xFF111827);
+const _kGrey700 = Color(0xFF374151);
+const _kGrey500 = Color(0xFF6B7280);
+const _kGrey400 = Color(0xFF9CA3AF);
+const _kGrey200 = Color(0xFFE5E7EB);
+const _kGrey100 = Color(0xFFF3F4F6);
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -159,178 +168,175 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: const Text('Mipangilio'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: GestureDetector(
+            onTap: () => Navigator.maybePop(context),
+            child: Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: _kGrey100,
+                borderRadius: BorderRadius.circular(10)),
+              child: const Center(child: Icon(Icons.arrow_back, size: 18, color: _kGrey900))),
+          ),
+        ),
+        title: Row(children: [
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: _kBlue50,
+              borderRadius: BorderRadius.circular(12)),
+            child: const Center(child: Icon(Icons.settings_outlined, size: 22, color: _kBlue)),
+          ),
+          const SizedBox(width: 12),
+          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Mipangilio',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2)),
+            Text('Arifa na mikoa inayofuatwa', style: TextStyle(fontSize: 11, color: _kGrey500)),
+          ]),
+        ]),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _kGrey200),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
         children: [
           // ── Section 1: Notification Preferences ──
-          _sectionHeader(
-            icon: Icons.notifications_outlined,
-            title: 'Mipangilio ya Arifa',
-          ),
-          const SizedBox(height: 8),
-          Card(
+          _sectionHeader(icon: Icons.notifications_outlined, title: 'Mipangilio ya Arifa'),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _kGrey200),
+              boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
+            ),
             child: _notifLoading
                 ? const Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator(color: _kBlue)),
                   )
-                : Column(
-                    children: [
-                      _buildNotifSwitch(
-                        key: 'match_found',
-                        title: 'Mechi Zimepatikana',
-                        subtitle: 'Pokea arifa unapopata mechi mpya',
-                      ),
-                      const Divider(height: 1),
-                      _buildNotifSwitch(
-                        key: 'payment_status',
-                        title: 'Hali ya Malipo',
-                        subtitle: 'Arifa za malipo yaliyoidhinishwa au kukataliwa',
-                      ),
-                      const Divider(height: 1),
-                      _buildNotifSwitch(
-                        key: 'announcements',
-                        title: 'Matangazo',
-                        subtitle: 'Matangazo mapya kutoka kwa admin',
-                      ),
-                      const Divider(height: 1),
-                      _buildNotifSwitch(
-                        key: 'messages',
-                        title: 'Ujumbe',
-                        subtitle: 'Arifa za ujumbe mpya',
-                      ),
-                      const Divider(height: 1),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _notifSaving ? null : _saveNotifPrefs,
-                            child: _notifSaving
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white),
-                                  )
-                                : const Text('Hifadhi Arifa'),
-                          ),
+                : Column(children: [
+                    _buildNotifSwitch(key: 'match_found', title: 'Mechi Zimepatikana', subtitle: 'Pokea arifa unapopata mechi mpya'),
+                    Container(height: 1, color: _kGrey200),
+                    _buildNotifSwitch(key: 'payment_status', title: 'Hali ya Malipo', subtitle: 'Arifa za malipo yaliyoidhinishwa au kukataliwa'),
+                    Container(height: 1, color: _kGrey200),
+                    _buildNotifSwitch(key: 'announcements', title: 'Matangazo', subtitle: 'Matangazo mapya kutoka kwa admin'),
+                    Container(height: 1, color: _kGrey200),
+                    _buildNotifSwitch(key: 'messages', title: 'Ujumbe', subtitle: 'Arifa za ujumbe mpya'),
+                    Container(height: 1, color: _kGrey200),
+                    Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _notifSaving ? null : _saveNotifPrefs,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kBlue, foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 48),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          child: _notifSaving
+                              ? const SizedBox(width: 18, height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Text('Hifadhi Arifa', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ]),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
           // ── Section 2: Followed Regions ──
-          _sectionHeader(
-            icon: Icons.map_outlined,
-            title: 'Mikoa Inayofuatwa',
-          ),
-          const SizedBox(height: 8),
-          Card(
+          _sectionHeader(icon: Icons.map_outlined, title: 'Mikoa Inayofuatwa'),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _kGrey200),
+              boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
+            ),
             child: _regionsLoading
                 ? const Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator(color: _kBlue)),
                   )
-                : Column(
-                    children: [
-                      if (_allRegions.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text('Hakuna mikoa',
-                              style: TextStyle(color: AppColors.textSecondary)),
-                        )
-                      else
-                        ..._allRegions.map((r) {
-                          final id = r['id'] ?? r['region_id'];
-                          final name =
-                              r['name']?.toString() ?? r['region_name']?.toString() ?? '';
-                          final isFollowed = _followedRegionIds.contains(id);
-                          return CheckboxListTile(
-                            title: Text(name,
-                                style: const TextStyle(fontSize: 14)),
-                            value: isFollowed,
-                            activeColor: AppColors.primary,
-                            onChanged: (checked) {
-                              setState(() {
-                                if (checked == true) {
-                                  _followedRegionIds.add(id);
-                                } else {
-                                  _followedRegionIds.remove(id);
-                                }
-                              });
-                            },
-                          );
-                        }),
-                      const Divider(height: 1),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed:
-                                _regionsSaving ? null : _saveFollowedRegions,
-                            child: _regionsSaving
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white),
-                                  )
-                                : const Text('Hifadhi Mikoa'),
-                          ),
+                : Column(children: [
+                    if (_allRegions.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Text('Hakuna mikoa', style: TextStyle(color: _kGrey400)),
+                      )
+                    else
+                      ..._allRegions.map((r) {
+                        final id = r['id'] ?? r['region_id'];
+                        final name = r['name']?.toString() ?? r['region_name']?.toString() ?? '';
+                        final isFollowed = _followedRegionIds.contains(id);
+                        return CheckboxListTile(
+                          title: Text(name, style: const TextStyle(fontSize: 14, color: _kGrey700)),
+                          value: isFollowed,
+                          activeColor: _kBlue,
+                          checkColor: Colors.white,
+                          onChanged: (checked) {
+                            setState(() {
+                              if (checked == true) { _followedRegionIds.add(id); }
+                              else { _followedRegionIds.remove(id); }
+                            });
+                          },
+                        );
+                      }),
+                    Container(height: 1, color: _kGrey200),
+                    Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _regionsSaving ? null : _saveFollowedRegions,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kBlue, foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 48),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          child: _regionsSaving
+                              ? const SizedBox(width: 18, height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Text('Hifadhi Mikoa', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ]),
           ),
-
-          const SizedBox(height: 32),
         ],
       ),
     );
   }
 
   Widget _sectionHeader({required IconData icon, required String title}) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.primary),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary),
-        ),
-      ],
-    );
+    return Row(children: [
+      Container(
+        width: 28, height: 28,
+        decoration: BoxDecoration(color: _kBlue50, borderRadius: BorderRadius.circular(8)),
+        child: Center(child: Icon(icon, size: 14, color: _kBlue)),
+      ),
+      const SizedBox(width: 8),
+      Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _kGrey700, letterSpacing: 0.2)),
+    ]);
   }
 
-  Widget _buildNotifSwitch({
-    required String key,
-    required String title,
-    required String subtitle,
-  }) {
+  Widget _buildNotifSwitch({required String key, required String title, required String subtitle}) {
     return SwitchListTile(
-      title: Text(title, style: const TextStyle(fontSize: 14)),
-      subtitle: Text(subtitle,
-          style:
-              const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+      title: Text(title, style: const TextStyle(fontSize: 14, color: _kGrey700, fontWeight: FontWeight.w500)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: _kGrey400)),
       value: _notifPrefs[key] ?? false,
-      activeColor: AppColors.primary,
-      onChanged: (val) {
-        setState(() {
-          _notifPrefs = Map.from(_notifPrefs)..[key] = val;
-        });
-      },
+      activeColor: _kBlue,
+      onChanged: (val) => setState(() { _notifPrefs = Map.from(_notifPrefs)..[key] = val; }),
     );
   }
 }

@@ -469,13 +469,12 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Clean header with left border stripe
+          // Card header
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(
-                left: BorderSide(color: _kBlue, width: 4),
                 bottom: BorderSide(color: _kGrey200, width: 0.8),
               ),
             ),
@@ -990,14 +989,9 @@ class _AnnTileState extends State<_AnnTile> {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border(
-          left: BorderSide(color: accentColor, width: 4),
-          top: BorderSide(color: _kGrey200, width: 0.8),
-          right: BorderSide(color: _kGrey200, width: 0.8),
-          bottom: BorderSide(color: _kGrey200, width: 0.8),
-        ),
-        boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2))],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kGrey200),
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1010,13 +1004,13 @@ class _AnnTileState extends State<_AnnTile> {
               children: [
                 // Colored icon circle
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.notifications_rounded, size: 18, color: accentColor),
+                  child: Center(child: Icon(Icons.notifications_rounded, size: 20, color: accentColor)),
                 ),
                 const SizedBox(width: 10),
                 // Title + audience badge

@@ -262,68 +262,49 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
           child: Column(
             children: [
               // Target region
-              _buildDropdown<int?>(
+              _filterField<int?>(
+                title: 'Chagua Mkoa wa Lengo',
                 value: _regionId,
-                hint: '— Chagua Mkoa wa Lengo —',
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('— Chagua Mkoa wa Lengo —')),
-                  ..._regions.map((r) => DropdownMenuItem(
-                    value: r['id'] as int,
-                    child: Text(r['name'] as String),
-                  )),
+                opts: [
+                  (null, '— Mkoa Wote —'),
+                  ..._regions.map((r) => (r['id'] as int, r['name'] as String)),
                 ],
-                onChanged: (v) {
-                  setState(() { _regionId = v; _page = 1; });
-                  _load();
-                },
+                onChanged: (v) { setState(() { _regionId = v; _page = 1; }); _load(); },
               ),
               const SizedBox(height: 8),
               // Category
-              _buildDropdown<String>(
+              _filterField<String>(
+                title: 'Idara Zote',
                 value: _category,
-                hint: 'Idara Zote',
-                items: const [
-                  DropdownMenuItem(value: '', child: Text('Idara Zote')),
-                  DropdownMenuItem(value: 'education', child: Text('Elimu')),
-                  DropdownMenuItem(value: 'health',    child: Text('Afya')),
+                opts: const [
+                  ('', 'Idara Zote'),
+                  ('education', 'Elimu'),
+                  ('health', 'Afya'),
                 ],
                 onChanged: (v) {
-                  setState(() {
-                    _category  = v ?? '';
-                    _cadreCode = '';
-                    _page      = 1;
-                  });
+                  setState(() { _category = v; _cadreCode = ''; _page = 1; });
                   _load();
                 },
               ),
               const SizedBox(height: 8),
               // Cadre
-              _buildDropdown<String>(
+              _filterField<String>(
+                title: 'Kada Zote',
                 value: _cadreCode,
-                hint: 'Kada Zote',
-                items: [
-                  const DropdownMenuItem(value: '', child: Text('Kada Zote')),
-                  ..._getCadreOptions(_category).map((c) => DropdownMenuItem(
-                    value: c['code'],
-                    child: Text(c['label']!),
-                  )),
+                opts: [
+                  ('', 'Kada Zote'),
+                  ..._getCadreOptions(_category).map((c) => (c['code']!, c['label']!)),
                 ],
-                onChanged: (v) {
-                  setState(() { _cadreCode = v ?? ''; _page = 1; });
-                  _load();
-                },
+                onChanged: (v) { setState(() { _cadreCode = v; _page = 1; }); _load(); },
               ),
               const SizedBox(height: 8),
               // Source region (client-side)
-              _buildDropdown<int?>(
+              _filterField<int?>(
+                title: 'Kutoka: Mikoa yote',
                 value: _sourceRegion,
-                hint: 'Kutoka: Mikoa yote',
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('Kutoka: Mikoa yote')),
-                  ..._regions.map((r) => DropdownMenuItem(
-                    value: r['id'] as int,
-                    child: Text('Kutoka: ${r['name']}'),
-                  )),
+                opts: [
+                  (null, 'Kutoka: Mikoa yote'),
+                  ..._regions.map((r) => (r['id'] as int, 'Kutoka: ${r['name']}')),
                 ],
                 onChanged: (v) => setState(() { _sourceRegion = v; _page = 1; }),
               ),
@@ -409,30 +390,107 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
     );
   }
 
-  // ── Dropdown builder ──────────────────────────────────────────
-  Widget _buildDropdown<T>({
+  // ── Filter field + bottom-sheet picker ───────────────────────
+  Widget _filterField<T>({
+    required String title,
     required T value,
-    required String hint,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
+    required List<(T, String)> opts,
+    required void Function(T) onChanged,
   }) {
-    return Container(
-      height: 44,
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(12),
+    final label = opts.where((o) => o.$1 == value).firstOrNull?.$2;
+    final isDefault = opts.isNotEmpty && opts.first.$1 == value;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _showFilterPicker<T>(title: title, opts: opts, selected: value, onChanged: onChanged),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: _kGrey200),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(children: [
+          Expanded(child: Text(
+            label ?? title,
+            style: TextStyle(fontSize: 13, color: isDefault ? _kGrey400 : _kGrey900),
+            overflow: TextOverflow.ellipsis,
+          )),
+          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _kGrey400),
+        ]),
       ),
-      child: DropdownButton<T>(
-        value: value,
-        isExpanded: true,
-        underline: const SizedBox(),
-        icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: _kGrey400),
-        style: const TextStyle(fontSize: 13, color: _kGrey900),
-        items: items,
-        onChanged: onChanged,
+    );
+  }
+
+  void _showFilterPicker<T>({
+    required String title,
+    required List<(T, String)> opts,
+    required T selected,
+    required void Function(T) onChanged,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (_, ctrl) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(children: [
+            Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 8),
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD1D5DB),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Row(children: [
+                Expanded(child: Text(title, style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: _kGrey900,
+                ))),
+                GestureDetector(
+                  onTap: () => Navigator.pop(sheetCtx),
+                  child: Container(
+                    width: 32, height: 32,
+                    decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.close_rounded, size: 16, color: _kGrey500),
+                  ),
+                ),
+              ]),
+            ),
+            const Divider(height: 1, color: _kGrey100),
+            Expanded(
+              child: ListView.builder(
+                controller: ctrl,
+                padding: const EdgeInsets.only(bottom: 20),
+                itemCount: opts.length,
+                itemBuilder: (_, i) {
+                  final (val, lbl) = opts[i];
+                  final isSel = val == selected;
+                  return ListTile(
+                    title: Text(lbl, style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w400,
+                      color: isSel ? _kBlue : _kGrey900,
+                    )),
+                    tileColor: isSel ? _kBlue50 : Colors.transparent,
+                    trailing: isSel ? const Icon(Icons.check_rounded, size: 18, color: _kBlue) : null,
+                    onTap: () { onChanged(val); Navigator.pop(sheetCtx); },
+                  );
+                },
+              ),
+            ),
+          ]),
+        ),
       ),
     );
   }
@@ -576,16 +634,17 @@ class _UserCard extends StatelessWidget {
     final years        = u['years_of_service'];
     final subjects     = (u['subjects'] as List?)?.cast<String>() ?? <String>[];
 
+    final isEdu = category == 'education';
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kGrey200),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
+            color: Color(0x08000000),
+            blurRadius: 12,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -602,17 +661,17 @@ class _UserCard extends StatelessWidget {
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: const BoxDecoration(
-                      color: _kBlue,
+                    decoration: BoxDecoration(
+                      color: isEdu ? const Color(0xFFBBF7D0) : const Color(0xFFDBEAFE),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       initials.isEmpty ? '?' : initials,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        color: isEdu ? const Color(0xFF15803D) : const Color(0xFF1E40AF),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
@@ -700,70 +759,28 @@ class _UserCard extends StatelessWidget {
           const SizedBox(height: 10),
 
           // ── Kutoka → Kuja ──────────────────────────────────────
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: _kGrey50,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 11, color: _kGrey500),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: RichText(
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(
-                          style: const TextStyle(fontSize: 12, color: _kGrey500),
-                          children: [
-                            const TextSpan(text: 'Kutoka: '),
-                            TextSpan(
-                              text: currentReg +
-                                  (currentDist.isNotEmpty ? ', $currentDist' : ''),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _kGrey700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.swap_horiz, size: 11, color: _kBlue),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: RichText(
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(
-                          style: const TextStyle(fontSize: 12, color: _kBlue),
-                          children: [
-                            const TextSpan(
-                              text: 'Kuja: ',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            TextSpan(
-                              text: destRegion +
-                                  (destDistrict.isNotEmpty ? ', $destDistrict' : ''),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 2),
+          Row(children: [
+            const Icon(Icons.location_on, size: 13, color: Color(0xFFEF4444)),
+            const SizedBox(width: 5),
+            const Text('Kutoka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+            Expanded(child: Text(
+              currentReg + (currentDist.isNotEmpty ? ', $currentDist' : ''),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
+              overflow: TextOverflow.ellipsis,
+            )),
+          ]),
+          const SizedBox(height: 4),
+          Row(children: [
+            const Icon(Icons.gps_fixed, size: 13, color: Color(0xFF1E40AF)),
+            const SizedBox(width: 5),
+            const Text('Kuja: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+            Expanded(child: Text(
+              destRegion + (destDistrict.isNotEmpty ? ', $destDistrict' : ''),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+              overflow: TextOverflow.ellipsis,
+            )),
+          ]),
 
           // ── Years of service ───────────────────────────────────
           if (years != null) ...[

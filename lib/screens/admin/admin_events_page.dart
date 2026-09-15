@@ -360,28 +360,18 @@ class _FilterChip extends StatelessWidget {
       onTap: () => onTap(filter),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
           color: active ? _kBlue : Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: active ? _kBlue : _kGrey200),
-          boxShadow: active
-              ? [
-                  BoxShadow(
-                      color: _kBlue.withValues(alpha: 0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2))
-                ]
-              : [],
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: active ? _kBlue.withValues(alpha: 0.5) : _kGrey200),
+          boxShadow: active ? [] : [const BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 1))],
         ),
-        child: Center(
-          child: Text(label,
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: active ? Colors.white : _kGrey500)),
-        ),
+        child: Text(label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: active ? Colors.white : _kGrey500)),
       ),
     );
   }

@@ -50,6 +50,112 @@ void _toast(BuildContext context, String msg, {bool ok = true}) {
   ));
 }
 
+void _showPicker<T>({
+  required BuildContext context,
+  required String title,
+  required List<(T, String)> opts,
+  required T selected,
+  required void Function(T) onChanged,
+}) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetCtx) => DraggableScrollableSheet(
+      initialChildSize: 0.55,
+      maxChildSize: 0.9,
+      minChildSize: 0.3,
+      expand: false,
+      builder: (_, ctrl) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(children: [
+          Container(
+            margin: const EdgeInsets.only(top: 10, bottom: 8),
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1D5DB),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Row(children: [
+              Expanded(child: Text(title, style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w700, color: _kGrey900,
+              ))),
+              GestureDetector(
+                onTap: () => Navigator.pop(sheetCtx),
+                child: Container(
+                  width: 32, height: 32,
+                  decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.close_rounded, size: 16, color: _kGrey500),
+                ),
+              ),
+            ]),
+          ),
+          const Divider(height: 1, color: _kGrey100),
+          Expanded(
+            child: ListView.builder(
+              controller: ctrl,
+              padding: const EdgeInsets.only(bottom: 20),
+              itemCount: opts.length,
+              itemBuilder: (_, i) {
+                final (val, lbl) = opts[i];
+                final isSel = val == selected;
+                return ListTile(
+                  title: Text(lbl, style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSel ? FontWeight.w700 : FontWeight.w400,
+                    color: isSel ? _kBlue : _kGrey900,
+                  )),
+                  tileColor: isSel ? _kBlue50 : Colors.transparent,
+                  trailing: isSel ? const Icon(Icons.check_rounded, size: 18, color: _kBlue) : null,
+                  onTap: () { onChanged(val); Navigator.pop(sheetCtx); },
+                );
+              },
+            ),
+          ),
+        ]),
+      ),
+    ),
+  );
+}
+
+Widget _pickerField<T>({
+  required BuildContext context,
+  required String hint,
+  required T value,
+  required List<(T, String)> opts,
+  required void Function(T) onChanged,
+}) {
+  final label = opts.where((o) => o.$1 == value).firstOrNull?.$2;
+  final isDefault = opts.isNotEmpty && opts.first.$1 == value;
+  return GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: () => _showPicker<T>(context: context, title: hint, opts: opts, selected: value, onChanged: onChanged),
+    child: Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: _kGrey50,
+        border: Border.all(color: _kGrey200),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(children: [
+        Expanded(child: Text(
+          label ?? hint,
+          style: TextStyle(fontSize: 13, color: isDefault ? _kGrey400 : _kGrey900),
+          overflow: TextOverflow.ellipsis,
+        )),
+        const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _kGrey400),
+      ]),
+    ),
+  );
+}
+
 Future<bool> _confirmDialog(BuildContext context, String name) async {
   final result = await showModalBottomSheet<bool>(
     context: context,
@@ -366,16 +472,6 @@ Widget _searchField(TextEditingController ctrl, String hint) => TextField(
   ),
 );
 
-InputDecoration _dropInp(String hint) => InputDecoration(
-  hintText: hint,
-  hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
-  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-  filled: true, fillColor: _kGrey50,
-  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
-);
-
 // ── Tab button ─────────────────────────────────────────────────────────────
 
 class _TabBtn extends StatelessWidget {
@@ -666,15 +762,15 @@ class _DeptSheetState extends State<_DeptSheet> {
       const SizedBox(height: 14),
       _sectionLabel('Hali'),
       const SizedBox(height: 4),
-      DropdownButtonFormField<String>(
+      _pickerField<String>(
+        context: context,
+        hint: 'Hali',
         value: _status,
-        decoration: _dropInp('Hali'),
-        style: const TextStyle(fontSize: 13, color: _kGrey900),
-        items: const [
-          DropdownMenuItem(value: 'active',   child: Text('Hai (active)')),
-          DropdownMenuItem(value: 'disabled', child: Text('Imezimwa (disabled)')),
+        opts: const [
+          ('active',   'Hai (active)'),
+          ('disabled', 'Imezimwa (disabled)'),
         ],
-        onChanged: (v) => setState(() => _status = v ?? 'active'),
+        onChanged: (v) => setState(() => _status = v),
       ),
       const SizedBox(height: 4),
     ],
@@ -762,16 +858,16 @@ class _SubjectsTabState extends State<_SubjectsTab> {
       // Level filter
       Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-        child: DropdownButtonFormField<String>(
+        child: _pickerField<String>(
+          context: context,
+          hint: 'Kichujio: Viwango Vyote',
           value: _level,
-          decoration: _dropInp('Kichujio: Viwango Vyote'),
-          style: const TextStyle(fontSize: 13, color: _kGrey900),
-          items: const [
-            DropdownMenuItem(value: '',          child: Text('Viwango Vyote')),
-            DropdownMenuItem(value: 'Primary',   child: Text('Primary (Msingi)')),
-            DropdownMenuItem(value: 'Secondary', child: Text('Secondary (Sekondari)')),
+          opts: const [
+            ('',          'Viwango Vyote'),
+            ('Primary',   'Primary (Msingi)'),
+            ('Secondary', 'Secondary (Sekondari)'),
           ],
-          onChanged: (v) { setState(() => _level = v ?? ''); _load(); },
+          onChanged: (v) { setState(() => _level = v); _load(); },
         ),
       ),
       Padding(
@@ -877,15 +973,15 @@ class _SubjectSheetState extends State<_SubjectSheet> {
       const SizedBox(height: 14),
       _sectionLabel('Kiwango'),
       const SizedBox(height: 4),
-      DropdownButtonFormField<String>(
+      _pickerField<String>(
+        context: context,
+        hint: 'Kiwango',
         value: _level,
-        decoration: _dropInp('Kiwango'),
-        style: const TextStyle(fontSize: 13, color: _kGrey900),
-        items: const [
-          DropdownMenuItem(value: 'Primary',   child: Text('Primary (Msingi)')),
-          DropdownMenuItem(value: 'Secondary', child: Text('Secondary (Sekondari)')),
+        opts: const [
+          ('Primary',   'Primary (Msingi)'),
+          ('Secondary', 'Secondary (Sekondari)'),
         ],
-        onChanged: (v) => setState(() => _level = v ?? 'Primary'),
+        onChanged: (v) => setState(() => _level = v),
       ),
       const SizedBox(height: 4),
     ],
@@ -1113,29 +1209,28 @@ class _CadreSheetState extends State<_CadreSheet> {
         const SizedBox(height: 14),
         _sectionLabel('Idara'),
         const SizedBox(height: 4),
-        DropdownButtonFormField<String>(
-          value: _category.isEmpty ? null : _category,
-          decoration: _dropInp('Chagua idara'),
-          style: const TextStyle(fontSize: 13, color: _kGrey900),
-          items: _departments.map((d) => DropdownMenuItem<String>(
-            value: (d['code'] ?? '').toString(),
-            child: Text(d['name'] ?? d['code'] ?? ''),
-          )).toList(),
-          onChanged: (v) => setState(() => _category = v ?? ''),
+        _pickerField<String>(
+          context: context,
+          hint: 'Chagua idara',
+          value: _category,
+          opts: _departments.map<(String, String)>((d) =>
+            ((d['code'] ?? '').toString(), (d['name'] ?? d['code'] ?? '').toString())
+          ).toList(),
+          onChanged: (v) => setState(() => _category = v),
         ),
         const SizedBox(height: 14),
         _sectionLabel('Kiwango'),
         const SizedBox(height: 4),
-        DropdownButtonFormField<String>(
+        _pickerField<String>(
+          context: context,
+          hint: 'Kiwango (hiari)',
           value: _level.isEmpty ? '' : _level,
-          decoration: _dropInp('Kiwango (hiari)'),
-          style: const TextStyle(fontSize: 13, color: _kGrey900),
-          items: const [
-            DropdownMenuItem(value: '',          child: Text('—')),
-            DropdownMenuItem(value: 'Primary',   child: Text('Primary (Msingi)')),
-            DropdownMenuItem(value: 'Secondary', child: Text('Secondary (Sekondari)')),
+          opts: const [
+            ('',          '—'),
+            ('Primary',   'Primary (Msingi)'),
+            ('Secondary', 'Secondary (Sekondari)'),
           ],
-          onChanged: (v) => setState(() => _level = v ?? ''),
+          onChanged: (v) => setState(() => _level = v),
         ),
         const SizedBox(height: 12),
         // Requires subjects toggle
@@ -1428,16 +1523,16 @@ class _DistrictsTabState extends State<_DistrictsTab> {
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
         child: _loadingRegions
             ? const SizedBox(height: 44)
-            : DropdownButtonFormField<int?>(
+            : _pickerField<int?>(
+                context: context,
+                hint: 'Kichujio: Mikoa Yote',
                 value: _regionFilter,
-                decoration: _dropInp('Kichujio: Mikoa Yote'),
-                style: const TextStyle(fontSize: 13, color: _kGrey900),
-                items: [
-                  const DropdownMenuItem<int?>(value: null, child: Text('Mikoa Yote')),
-                  ..._regions.map((r) => DropdownMenuItem<int?>(
-                    value: r['id'] as int?,
-                    child: Text(r['name'] ?? ''),
-                  )),
+                opts: [
+                  (null, 'Mikoa Yote'),
+                  ..._regions.map<(int?, String)>((r) {
+                    final id = r['id'] is int ? r['id'] as int : int.tryParse(r['id'].toString());
+                    return (id, (r['name'] ?? '').toString());
+                  }),
                 ],
                 onChanged: (v) { setState(() => _regionFilter = v); _load(); },
               ),
@@ -1548,13 +1643,13 @@ class _DistrictSheetState extends State<_DistrictSheet> {
       const SizedBox(height: 14),
       _sectionLabel('Mkoa'),
       const SizedBox(height: 4),
-      DropdownButtonFormField<int?>(
+      _pickerField<int?>(
+        context: context,
+        hint: 'Chagua mkoa',
         value: _regionId,
-        decoration: _dropInp('Chagua mkoa'),
-        style: const TextStyle(fontSize: 13, color: _kGrey900),
-        items: widget.regions.map((r) {
+        opts: widget.regions.map<(int?, String)>((r) {
           final id = r['id'] is int ? r['id'] as int : int.tryParse(r['id'].toString());
-          return DropdownMenuItem<int?>(value: id, child: Text(r['name'] ?? ''));
+          return (id, (r['name'] ?? '').toString());
         }).toList(),
         onChanged: (v) => setState(() => _regionId = v),
       ),
@@ -1675,29 +1770,29 @@ class _FacilitiesTabState extends State<_FacilitiesTab> {
       Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
         child: Row(children: [
-          Expanded(child: DropdownButtonFormField<String>(
+          Expanded(child: _pickerField<String>(
+            context: context,
+            hint: 'Aina: Zote',
             value: _category.isEmpty ? '' : _category,
-            decoration: _dropInp('Aina: Zote'),
-            style: const TextStyle(fontSize: 12, color: _kGrey900),
-            items: const [
-              DropdownMenuItem(value: '',          child: Text('Zote')),
-              DropdownMenuItem(value: 'health',    child: Text('Afya')),
-              DropdownMenuItem(value: 'education', child: Text('Elimu')),
+            opts: const [
+              ('',          'Zote'),
+              ('health',    'Afya'),
+              ('education', 'Elimu'),
             ],
-            onChanged: (v) { setState(() => _category = v ?? ''); _load(); },
+            onChanged: (v) { setState(() => _category = v); _load(); },
           )),
           const SizedBox(width: 8),
           Expanded(child: _loadingRegions
               ? const SizedBox(height: 44)
-              : DropdownButtonFormField<int?>(
+              : _pickerField<int?>(
+                  context: context,
+                  hint: 'Mkoa: Yote',
                   value: _regionId,
-                  decoration: _dropInp('Mkoa: Yote'),
-                  style: const TextStyle(fontSize: 12, color: _kGrey900),
-                  items: [
-                    const DropdownMenuItem<int?>(value: null, child: Text('Yote')),
-                    ..._regions.map((r) {
+                  opts: [
+                    (null, 'Yote'),
+                    ..._regions.map<(int?, String)>((r) {
                       final id = r['id'] is int ? r['id'] as int : int.tryParse(r['id'].toString());
-                      return DropdownMenuItem<int?>(value: id, child: Text(r['name'] ?? '', overflow: TextOverflow.ellipsis));
+                      return (id, (r['name'] ?? '').toString());
                     }),
                   ],
                   onChanged: (v) {
@@ -1714,15 +1809,15 @@ class _FacilitiesTabState extends State<_FacilitiesTab> {
           padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
           child: _loadingDistricts
               ? const LinearProgressIndicator(color: _kBlue)
-              : DropdownButtonFormField<int?>(
+              : _pickerField<int?>(
+                  context: context,
+                  hint: 'Wilaya Zote',
                   value: _districtId,
-                  decoration: _dropInp('Wilaya Zote'),
-                  style: const TextStyle(fontSize: 13, color: _kGrey900),
-                  items: [
-                    const DropdownMenuItem<int?>(value: null, child: Text('Wilaya Zote')),
-                    ..._districts.map((d) {
+                  opts: [
+                    (null, 'Wilaya Zote'),
+                    ..._districts.map<(int?, String)>((d) {
                       final id = d['id'] is int ? d['id'] as int : int.tryParse(d['id'].toString());
-                      return DropdownMenuItem<int?>(value: id, child: Text(d['name'] ?? ''));
+                      return (id, (d['name'] ?? '').toString());
                     }),
                   ],
                   onChanged: (v) { setState(() => _districtId = v); _load(); },
@@ -1882,26 +1977,26 @@ class _FacilitySheetState extends State<_FacilitySheet> {
       fields: [
         _sectionLabel('Aina ya Kituo'),
         const SizedBox(height: 4),
-        DropdownButtonFormField<String>(
+        _pickerField<String>(
+          context: context,
+          hint: 'Aina',
           value: _category,
-          decoration: _dropInp('Aina'),
-          style: const TextStyle(fontSize: 13, color: _kGrey900),
-          items: const [
-            DropdownMenuItem(value: 'health',    child: Text('Afya')),
-            DropdownMenuItem(value: 'education', child: Text('Elimu')),
+          opts: const [
+            ('health',    'Afya'),
+            ('education', 'Elimu'),
           ],
-          onChanged: (v) => setState(() { _category = v ?? 'health'; _typeOrLevel = ''; }),
+          onChanged: (v) => setState(() { _category = v; _typeOrLevel = ''; }),
         ),
         const SizedBox(height: 14),
         _sectionLabel('Mkoa'),
         const SizedBox(height: 4),
-        DropdownButtonFormField<int?>(
+        _pickerField<int?>(
+          context: context,
+          hint: 'Chagua mkoa',
           value: _regionId,
-          decoration: _dropInp('Chagua mkoa'),
-          style: const TextStyle(fontSize: 13, color: _kGrey900),
-          items: widget.regions.map((r) {
+          opts: widget.regions.map<(int?, String)>((r) {
             final id = r['id'] is int ? r['id'] as int : int.tryParse(r['id'].toString());
-            return DropdownMenuItem<int?>(value: id, child: Text(r['name'] ?? '', overflow: TextOverflow.ellipsis));
+            return (id, (r['name'] ?? '').toString());
           }).toList(),
           onChanged: (v) {
             setState(() { _regionId = v; _districtId = null; _districts = []; });
@@ -1913,13 +2008,13 @@ class _FacilitySheetState extends State<_FacilitySheet> {
         const SizedBox(height: 4),
         _loadingDistricts
             ? const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: LinearProgressIndicator(color: _kBlue))
-            : DropdownButtonFormField<int?>(
+            : _pickerField<int?>(
+                context: context,
+                hint: 'Chagua wilaya',
                 value: _districtId,
-                decoration: _dropInp('Chagua wilaya'),
-                style: const TextStyle(fontSize: 13, color: _kGrey900),
-                items: _districts.map((d) {
+                opts: _districts.map<(int?, String)>((d) {
                   final id = d['id'] is int ? d['id'] as int : int.tryParse(d['id'].toString());
-                  return DropdownMenuItem<int?>(value: id, child: Text(d['name'] ?? ''));
+                  return (id, (d['name'] ?? '').toString());
                 }).toList(),
                 onChanged: (v) => setState(() => _districtId = v),
               ),
@@ -1930,12 +2025,12 @@ class _FacilitySheetState extends State<_FacilitySheet> {
         const SizedBox(height: 14),
         _sectionLabel(_category == 'health' ? 'Aina (Ngazi)' : 'Kiwango'),
         const SizedBox(height: 4),
-        DropdownButtonFormField<String>(
-          value: validTypeOrLevel,
-          decoration: _dropInp(_category == 'health' ? 'Aina ya kituo' : 'Kiwango'),
-          style: const TextStyle(fontSize: 13, color: _kGrey900),
-          items: typeOptions.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-          onChanged: (v) => setState(() => _typeOrLevel = v ?? ''),
+        _pickerField<String>(
+          context: context,
+          hint: _category == 'health' ? 'Aina ya kituo' : 'Kiwango',
+          value: validTypeOrLevel ?? '',
+          opts: typeOptions.map<(String, String)>((t) => (t, t)).toList(),
+          onChanged: (v) => setState(() => _typeOrLevel = v),
         ),
         const SizedBox(height: 4),
       ],

@@ -28,18 +28,18 @@ BoxDecoration _cardDec({Color? borderColor}) => BoxDecoration(
   ],
 );
 
-// .input = rounded-md(6) border-grey-300 px-2.5=10 py-1.5=6 text-xs=12 bg-white
+// .input — rounded-xl(12), grey-50 bg, better padding
 InputDecoration _inputDec({String? hint, bool disabled = false}) => InputDecoration(
   hintText: hint,
   isDense: true,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 2)),
-  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-  hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+  hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
   filled: true,
-  fillColor: disabled ? _kGrey100 : Colors.white,
+  fillColor: disabled ? _kGrey100 : _kGrey50,
 );
 
 // .label = text-sm=14px font-semibold text-grey-700 mb-1.5=6px
@@ -137,39 +137,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-                // ── Header: title + admin badge + edit/cancel button ──
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Expanded(child: Row(children: [
-                    Text(
-                      isAdmin ? 'Wasifu wa Admin' : 'Wasifu Wangu',
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _kGrey900),
+                // ── PAGE HEADER ──────────────────────────────────────────────
+                Row(children: [
+                  Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    if (isAdmin) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF), // brand-blue-50
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFBFDBFE)), // brand-blue-200
-                        ),
-                        child: const Text('Admin',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kBlue)),
+                    child: const Center(child: Icon(Icons.person_outline_rounded, size: 22, color: _kBlue)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Text(
+                        isAdmin ? 'Wasifu wa Admin' : 'Wasifu Wangu',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2),
                       ),
-                    ],
+                      if (isAdmin) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                          ),
+                          child: const Text('Admin',
+                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: _kBlue)),
+                        ),
+                      ],
+                    ]),
+                    const Text('Taarifa za akaunti yako', style: TextStyle(fontSize: 11, color: _kGrey500)),
                   ])),
                   const SizedBox(width: 8),
                   if (!_editing)
-                    ElevatedButton(
-                      onPressed: () => setState(() => _editing = true),
-                      style: _btnPrimarySmall(),
-                      child: const Text('Hariri'),
+                    GestureDetector(
+                      onTap: () => setState(() => _editing = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _kBlue,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text('Hariri', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                      ),
                     )
                   else
-                    OutlinedButton(
-                      onPressed: () => setState(() => _editing = false),
-                      style: _btnOutline(),
-                      child: const Text('Ghairi'),
+                    GestureDetector(
+                      onTap: () => setState(() => _editing = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: _kGrey300),
+                        ),
+                        child: const Text('Ghairi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey700)),
+                      ),
                     ),
                 ]),
 
@@ -686,12 +711,13 @@ class _EditProfileState extends State<_EditProfile> {
         if (_cadres.isNotEmpty) ...[
           const SizedBox(height: 20),
           _label('Kada'),
-          _DropInput<String>(
+          _PickerField<String>(
+            title: 'Chagua Kada',
             value: _cadres.any((c) => c['code'] == _cadreCode) ? _cadreCode : null,
             hint: '— Chagua Kada —',
-            items: _cadres.map((c) => DropdownMenuItem<String>(
+            items: _cadres.map((c) => _PickItem<String>(
               value: c['code'] as String,
-              child: Text(c['display_name'] ?? c['code'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
+              label: (c['display_name'] ?? c['code'] ?? '').toString())).toList(),
             onChanged: (v) {
               setState(() { _cadreCode = v ?? ''; _subjects = []; _availSubjects = []; });
               if (_subjectLevel != null) _loadSubjects(_subjectLevel!);
@@ -742,12 +768,13 @@ class _EditProfileState extends State<_EditProfile> {
       // ── Card 2: Station ──
       _InfoCard(title: 'Kituo cha Sasa', children: [
         _label('Mkoa'),
-        _DropInput<int>(
+        _PickerField<int>(
+          title: 'Chagua Mkoa',
           value: _regions.any((r) => r['id'] == _stationRegionId) ? _stationRegionId : null,
           hint: '— Chagua Mkoa —',
-          items: _regions.map((r) => DropdownMenuItem<int>(
+          items: _regions.map((r) => _PickItem<int>(
             value: r['id'] as int,
-            child: Text(r['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
+            label: (r['name'] ?? '').toString())).toList(),
           onChanged: (v) {
             setState(() { _stationRegionId = v; _stationDistrictId = null; _stationFacilityId = null; _stationDistricts = []; _stationFacilities = []; });
             if (v != null) ApiService().getDistricts(v).then((r) { if (mounted) setState(() => _stationDistricts = _asList(r.data)); }).catchError((_) {});
@@ -756,12 +783,13 @@ class _EditProfileState extends State<_EditProfile> {
         const SizedBox(height: 20),
 
         _label('Wilaya'),
-        _DropInput<int>(
+        _PickerField<int>(
+          title: 'Chagua Wilaya',
           value: _stationDistricts.any((d) => d['id'] == _stationDistrictId) ? _stationDistrictId : null,
           hint: '— Chagua Wilaya —',
-          items: _stationDistricts.map((d) => DropdownMenuItem<int>(
+          items: _stationDistricts.map((d) => _PickItem<int>(
             value: d['id'] as int,
-            child: Text(d['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
+            label: (d['name'] ?? '').toString())).toList(),
           onChanged: (v) {
             setState(() { _stationDistrictId = v; _stationFacilityId = null; _stationFacilities = []; });
             if (v != null) ApiService().getFacilities(v, category: _category).then((r) { if (mounted) setState(() => _stationFacilities = _asList(r.data)); }).catchError((_) {});
@@ -770,14 +798,16 @@ class _EditProfileState extends State<_EditProfile> {
         const SizedBox(height: 20),
 
         _label(_category == 'health' ? 'Hospitali/Kituo (hiari)' : 'Shule (hiari)'),
-        _DropInput<String>(
+        _PickerField<String>(
+          title: _category == 'health' ? 'Chagua Hospitali/Kituo' : 'Chagua Shule',
           value: (_stationFacilityId?.isNotEmpty == true && _stationFacilities.any((f) => (f['id'] ?? f['code']).toString() == _stationFacilityId)) ? _stationFacilityId : null,
           hint: _category == 'health' ? 'Hospitali/Kituo chote cha wilaya hii' : 'Shule zote za wilaya hii',
+          enabled: _stationDistrictId != null,
           items: _stationFacilities.map((f) {
             final id = (f['id'] ?? f['code']).toString();
             final name = f['name'] as String? ?? id;
             final type = f['type'] as String? ?? '';
-            return DropdownMenuItem<String>(value: id, child: Text(type.isNotEmpty ? '$name ($type)' : name, style: const TextStyle(fontSize: 13)));
+            return _PickItem<String>(value: id, label: type.isNotEmpty ? '$name ($type)' : name);
           }).toList(),
           onChanged: _stationDistrictId == null ? null : (v) => setState(() => _stationFacilityId = v),
         ),
@@ -917,12 +947,13 @@ class _EditProfileState extends State<_EditProfile> {
         // Region select + delete button
         Row(children: [
           Expanded(
-            child: _DropInput<int>(
+            child: _PickerField<int>(
+              title: 'Chagua Mkoa wa Lengo',
               value: regionId == 0 ? null : (_regions.any((r) => r['id'] == regionId) ? regionId : null),
               hint: '— Chagua Mkoa —',
-              items: _regions.map((r) => DropdownMenuItem<int>(
+              items: _regions.map((r) => _PickItem<int>(
                 value: r['id'] as int,
-                child: Text(r['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
+                label: (r['name'] ?? '').toString())).toList(),
               onChanged: (v) {
                 if (v == null) return;
                 final r = _regions.firstWhere((r) => r['id'] == v, orElse: () => null);
@@ -947,12 +978,13 @@ class _EditProfileState extends State<_EditProfile> {
         // Wilaya select
         if (regionId > 0) ...[
           const SizedBox(height: 10),
-          _DropInput<int>(
+          _PickerField<int>(
+            title: 'Chagua Wilaya ya Lengo',
             value: districtId != null && districtList.any((x) => x['id'] == districtId) ? districtId : null,
             hint: 'Wilaya yoyote',
-            items: districtList.map((x) => DropdownMenuItem<int>(
+            items: districtList.map((x) => _PickItem<int>(
               value: x['id'] as int,
-              child: Text(x['name'] ?? '', style: const TextStyle(fontSize: 13)))).toList(),
+              label: (x['name'] ?? '').toString())).toList(),
             onChanged: (v) => _updateDest(i, {
               'district_id': v,
               'district_name': v != null ? (districtList.firstWhere((x) => x['id'] == v, orElse: () => null)?['name']) : null,
@@ -965,14 +997,15 @@ class _EditProfileState extends State<_EditProfile> {
         // Facility select
         if (districtId != null && facilityList.isNotEmpty) ...[
           const SizedBox(height: 10),
-          _DropInput<String>(
+          _PickerField<String>(
+            title: _category == 'health' ? 'Chagua Hospitali/Kituo' : 'Chagua Shule',
             value: facilityId != null && facilityList.any((f) => (f['id'] ?? f['code']).toString() == facilityId) ? facilityId : null,
             hint: _category == 'health' ? 'Hospitali/Kituo chote' : 'Shule zote',
             items: facilityList.map((f) {
               final fid = (f['id'] ?? f['code']).toString();
               final fname = f['name'] as String? ?? fid;
               final ftype = f['type'] as String? ?? '';
-              return DropdownMenuItem<String>(value: fid, child: Text(ftype.isNotEmpty ? '$fname ($ftype)' : fname, style: const TextStyle(fontSize: 13)));
+              return _PickItem<String>(value: fid, label: ftype.isNotEmpty ? '$fname ($ftype)' : fname);
             }).toList(),
             onChanged: (v) {
               final fac = v != null ? facilityList.firstWhere((f) => (f['id'] ?? f['code']).toString() == v, orElse: () => null) : null;
@@ -1065,33 +1098,194 @@ class _ErrBox extends StatelessWidget {
   }
 }
 
-// Dropdown styled like .input (rounded-md=6 border-grey-300 bg-white text-xs=12)
-class _DropInput<T> extends StatelessWidget {
+// ── Custom bottom-sheet picker — replaces old DropdownButtonFormField ─────────
+
+class _PickItem<T> {
+  final T value;
+  final String label;
+  const _PickItem({required this.value, required this.label});
+}
+
+class _PickerField<T> extends StatelessWidget {
   final T? value;
   final String hint;
-  final List<DropdownMenuItem<T>> items;
+  final String title;
+  final List<_PickItem<T>> items;
   final void Function(T?)? onChanged;
-  const _DropInput({required this.hint, required this.items, this.value, this.onChanged});
+  final bool enabled;
+
+  const _PickerField({
+    required this.hint,
+    required this.title,
+    required this.items,
+    this.value,
+    this.onChanged,
+    this.enabled = true,
+  });
+
+  String get _label {
+    if (value == null) return '';
+    try { return items.firstWhere((i) => i.value == value).label; } catch (_) { return ''; }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<T>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: InputDecoration(
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 2)),
-        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-        filled: true,
-        fillColor: Colors.white,
+    final lbl = _label;
+    final has = lbl.isNotEmpty;
+    return GestureDetector(
+      onTap: (enabled && onChanged != null) ? () => _open(context) : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: enabled ? _kGrey50 : _kGrey100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _kGrey200),
+        ),
+        child: Row(children: [
+          Expanded(child: Text(
+            has ? lbl : hint,
+            style: TextStyle(
+              fontSize: 13,
+              color: has ? _kGrey900 : _kGrey400,
+              fontWeight: has ? FontWeight.w500 : FontWeight.normal,
+            ),
+            overflow: TextOverflow.ellipsis,
+          )),
+          if (has && enabled && onChanged != null)
+            GestureDetector(
+              onTap: () => onChanged!(null),
+              child: const Padding(
+                padding: EdgeInsets.only(left: 6),
+                child: Icon(Icons.close_rounded, size: 16, color: _kGrey400),
+              ),
+            )
+          else
+            Icon(Icons.keyboard_arrow_down_rounded, size: 20,
+              color: enabled ? _kGrey500 : _kGrey300),
+        ]),
       ),
-      hint: Text(hint, style: const TextStyle(fontSize: 12, color: _kGrey400)),
-      style: const TextStyle(fontSize: 12, color: _kGrey900),
-      items: items,
-      onChanged: onChanged,
+    );
+  }
+
+  Future<void> _open(BuildContext context) async {
+    final result = await showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _PickerSheet<T>(title: title, items: items, selected: value),
+    );
+    if (result != null) onChanged!(result);
+  }
+}
+
+class _PickerSheet<T> extends StatefulWidget {
+  final String title;
+  final List<_PickItem<T>> items;
+  final T? selected;
+  const _PickerSheet({required this.title, required this.items, this.selected});
+  @override
+  State<_PickerSheet<T>> createState() => _PickerSheetState<T>();
+}
+
+class _PickerSheetState<T> extends State<_PickerSheet<T>> {
+  final _ctrl = TextEditingController();
+  String _q = '';
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _q.isEmpty
+        ? widget.items
+        : widget.items.where((i) => i.label.toLowerCase().contains(_q.toLowerCase())).toList();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.72,
+      maxChildSize: 0.95,
+      minChildSize: 0.4,
+      builder: (ctx, sc) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(children: [
+          // Drag handle
+          Container(
+            width: 40, height: 4,
+            margin: const EdgeInsets.only(top: 12, bottom: 16),
+            decoration: BoxDecoration(color: _kGrey300, borderRadius: BorderRadius.circular(2)),
+          ),
+          // Title + close
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
+            child: Row(children: [
+              Expanded(child: Text(widget.title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kGrey900))),
+              GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+                  child: const Center(child: Icon(Icons.close_rounded, size: 18, color: _kGrey700)),
+                ),
+              ),
+            ]),
+          ),
+          // Search
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: TextField(
+              controller: _ctrl,
+              onChanged: (v) => setState(() => _q = v),
+              style: const TextStyle(fontSize: 14, color: _kGrey900),
+              decoration: InputDecoration(
+                hintText: 'Tafuta...',
+                hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
+                prefixIcon: const Icon(Icons.search_rounded, size: 18, color: _kGrey400),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                filled: true, fillColor: _kGrey50,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+              ),
+            ),
+          ),
+          // Items list
+          Expanded(
+            child: ListView.builder(
+              controller: sc,
+              itemCount: filtered.length,
+              itemBuilder: (_, i) {
+                final item = filtered[i];
+                final sel = item.value == widget.selected;
+                return GestureDetector(
+                  onTap: () => Navigator.pop(ctx, item.value),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: sel ? const Color(0xFFEFF6FF) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(children: [
+                      Expanded(child: Text(item.label,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+                          color: sel ? _kBlue : _kGrey900,
+                        ))),
+                      if (sel) const Icon(Icons.check_rounded, size: 18, color: _kBlue),
+                    ]),
+                  ),
+                );
+              },
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+        ]),
+      ),
     );
   }
 }

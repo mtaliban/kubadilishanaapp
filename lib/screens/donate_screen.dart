@@ -41,18 +41,18 @@ BoxDecoration _cardDec() => BoxDecoration(
   ],
 );
 
-// .input = rounded-md=6 border-grey-300 px-2.5=10 py-1.5=6 text-xs=12
+// .input — rounded-xl(12), filled grey-50, better padding
 InputDecoration _inputDec({String? hint}) => InputDecoration(
   hintText: hint,
-  hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
+  hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
   isDense: true,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey300)),
-  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 2)),
-  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
   filled: true,
-  fillColor: Colors.white,
+  fillColor: _kGrey50,
 );
 
 // .label = text-sm=14 font-semibold text-grey-700 mb-1.5=6px
@@ -211,26 +211,39 @@ class _DonateScreenState extends State<DonateScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // p-4 md:p-6
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-            // ── Header: back arrow + HandCoins title + subtitle (kama web) ──
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pushReplacementNamed('/dashboard'),
-                  child: const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Icon(Icons.arrow_back, size: 18, color: _kGrey700),
+            // ── PAGE HEADER ──────────────────────────────────────────────────
+            Row(children: [
+              GestureDetector(
+                onTap: () => Navigator.of(context).pushReplacementNamed('/dashboard'),
+                child: Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(
+                    color: _kGrey100,
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  child: const Center(child: Icon(Icons.arrow_back, size: 18, color: _kGrey700)),
                 ),
-                SvgPicture.asset('assets/icons/hand-coins.svg', width: 20, height: 20, colorFilter: const ColorFilter.mode(_kRed, BlendMode.srcIn)),
-                const SizedBox(width: 8),
-                const Text('Changia Huduma',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _kGrey900)),
-              ]),
-              const SizedBox(height: 4),
-              const Text(
-                'Lipa kwa namba hapa chini (M-Pesa, Tigo Pesa, Airtel Money, Halopesa), kisha nakili SMS ya kuthibitisha.',
-                style: TextStyle(fontSize: 12, color: _kGrey500),
               ),
+              const SizedBox(width: 10),
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: _kGold100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(child: SvgPicture.asset(
+                  'assets/icons/hand-coins.svg', width: 22, height: 22,
+                  colorFilter: const ColorFilter.mode(_kGold600, BlendMode.srcIn),
+                )),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Changia Huduma',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2)),
+                SizedBox(height: 2),
+                Text('Lipa M-Pesa/Tigo/Airtel, kisha tuma SMS ya kuthibitisha.',
+                    style: TextStyle(fontSize: 11, color: _kGrey500)),
+              ])),
             ]),
 
               const SizedBox(height: 16), // space-y-4
@@ -263,50 +276,40 @@ class _DonateScreenState extends State<DonateScreen> {
               ],
 
               // ── Admin phone card ──
-              // web: .card flex items-center justify-between gap-3 px-4=16 py-3=12
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: _cardDec(),
                 child: Row(children: [
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    // text-[10px] uppercase tracking-wide text-grey-500 font-semibold
                     const Text('LIPA KWA NAMBA HII',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-                            color: _kGrey500, letterSpacing: 0.8)),
-                    const SizedBox(height: 4),
-                    // text-xl=20px font-bold text-brand-blue tracking-wide
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800,
+                            color: _kGrey400, letterSpacing: 1.2)),
+                    const SizedBox(height: 6),
                     Text(
                       _adminPhone.isEmpty ? '...' : _adminPhone,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold,
+                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900,
                           color: _kBlue, letterSpacing: 0.5),
                     ),
                   ])),
-                  const SizedBox(width: 12), // gap-3=12px
-
-                  // btn-outline when not copied, btn-primary-like when copied
-                  // web: px-3=12 py-1.5=6 text-xs=12 font-bold rounded-md=6 gap-1.5=6
+                  const SizedBox(width: 12),
                   GestureDetector(
                     onTap: _copyPhone,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: _copied ? _kBlue : Colors.white,
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: _copied ? _kBlue : _kGrey300),
+                        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4, offset: Offset(0, 1))],
                       ),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(
-                          _copied ? Icons.check : Icons.copy_outlined,
-                          size: 12,
-                          color: _copied ? Colors.white : _kGrey700,
-                        ),
-                        const SizedBox(width: 6), // gap-1.5=6px
+                        Icon(_copied ? Icons.check : Icons.copy_outlined,
+                            size: 14, color: _copied ? Colors.white : _kGrey700),
+                        const SizedBox(width: 6),
                         Text(
-                          _copied ? 'Imenakiliwa' : 'Nakili Namba',
-                          style: TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.bold,
-                            color: _copied ? Colors.white : _kGrey700,
-                          ),
+                          _copied ? 'Imenakiliwa' : 'Nakili',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                              color: _copied ? Colors.white : _kGrey700),
                         ),
                       ]),
                     ),
@@ -375,34 +378,30 @@ class _DonateScreenState extends State<DonateScreen> {
 
                   const SizedBox(height: 12), // space-y-3
 
-                  // Submit button — btn-primary w-full justify-center
-                  // web: btn-primary = bg-brand-blue rounded-md=6 px-3=12 py-1.5=6 text-xs=12 font-bold w-full
+                  // Submit — full-width, tall, rounded-xl
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _busy ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _kBlue,
-                        disabledBackgroundColor: _kBlue.withValues(alpha: 0.7),
+                        disabledBackgroundColor: _kBlue.withValues(alpha: 0.5),
                         foregroundColor: Colors.white,
                         disabledForegroundColor: Colors.white,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), // text-xs=12 font-bold
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // px-3=12 py-1.5=6
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)), // rounded-md=6
+                        minimumSize: const Size(double.infinity, 48),
+                        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
                       child: _sending
                           ? const Row(mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min, children: [
-                              SizedBox(width: 14, height: 14,
+                              SizedBox(width: 16, height: 16,
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
                               SizedBox(width: 8),
-                              Text('Inatuma...', style: TextStyle(fontSize: 11)),
+                              Text('Inatuma...'),
                             ])
-                          : Text(_sent ? 'Imetumwa' : 'Thibitisha',
-                              style: const TextStyle(fontSize: 11)),
+                          : Text(_sent ? '✓ Imetumwa' : 'Thibitisha Malipo'),
                     ),
                   ),
                 ]),

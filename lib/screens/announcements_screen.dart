@@ -141,16 +141,33 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _kGrey900),
-          onPressed: () => Navigator.maybePop(context),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: GestureDetector(
+            onTap: () => Navigator.maybePop(context),
+            child: Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(10)),
+              child: const Center(child: Icon(Icons.arrow_back, size: 18, color: _kGrey900))),
+          ),
         ),
-        title: const Row(children: [
-          Icon(Icons.campaign_outlined, size: 20, color: _kBlue),
-          SizedBox(width: 8),
-          Text('Matangazo',
-              style: TextStyle(
-                  fontSize: 17, fontWeight: FontWeight.bold, color: _kGrey900)),
+        title: Row(children: [
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(12)),
+            child: const Center(child: Icon(Icons.campaign_outlined, size: 22, color: _kBlue)),
+          ),
+          const SizedBox(width: 12),
+          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Matangazo',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2)),
+            Text('Matangazo rasmi kutoka kwa admin',
+                style: TextStyle(fontSize: 11, color: _kGrey500)),
+          ]),
         ]),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -200,8 +217,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 40),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: _kGrey200),
+                      boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2))],
                     ),
                     child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -317,8 +335,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kGrey200),
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -406,8 +425,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kGrey200),
+        boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
       clipBehavior: Clip.hardEdge,
       child: Column(children: [

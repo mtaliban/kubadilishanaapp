@@ -26,7 +26,6 @@ const _kAmber50  = Color(0xFFFFFBEB);
 const _kAmber200 = Color(0xFFFDE68A);
 const _kAmber700 = Color(0xFFB45309);
 const _kOrange   = Color(0xFFF97316);
-const _kOrange700 = Color(0xFFC2410C);
 
 const _kPageSize = 8;
 
@@ -51,12 +50,6 @@ String _errDetail(Object e) {
     final d = (e as dynamic).response?.data?['detail'];
     return d is String ? d : 'Imeshindikana';
   } catch (_) { return 'Imeshindikana'; }
-}
-
-Color _avatarColor(String name) {
-  const colors = [Color(0xFF1E40AF), Color(0xFF6D28D9), Color(0xFF065F46),
-                  Color(0xFF92400E), Color(0xFF991B1B), Color(0xFF0E7490)];
-  return name.isEmpty ? colors[0] : colors[name.codeUnitAt(0) % colors.length];
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────
@@ -540,16 +533,16 @@ class _FilterChip extends StatelessWidget {
       onTap: () => onTap(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        height: 30,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
           color: active ? activeBg : Colors.white,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: active ? activeColor.withValues(alpha: 0.5) : _kGrey200),
+          boxShadow: active ? [] : [const BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 1))],
         ),
-        child: Center(child: Text(label,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-            color: active ? activeColor : _kGrey500))),
+        child: Text(label,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+            color: active ? activeColor : _kGrey500)),
       ),
     );
   }
@@ -646,14 +639,6 @@ class _PayCard extends StatelessWidget {
     required this.onSendReply,
   });
 
-  Color _stripeColor(String status) {
-    switch (status) {
-      case 'approved': return _kGreenDk;
-      case 'rejected': return _kRed;
-      default:         return _kAmber700;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final status     = (p['status'] ?? 'verifying').toString();
@@ -668,32 +653,22 @@ class _PayCard extends StatelessWidget {
     final isExpired  = p['expired'] == true;
     final hasMessages = (p['messages'] as List?)?.isNotEmpty == true;
     final initial    = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final avatarBg   = _stripeColor(status) == _kGreenDk
-        ? const Color(0xFF065F46) : _avatarColor(name);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kGrey200),
-        boxShadow: const [BoxShadow(color: Color(0x07000000), blurRadius: 8, offset: Offset(0, 2))],
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: IntrinsicHeight(
-          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-
-            // Left stripe
-            Container(width: 4, color: _stripeColor(status)),
-
-            // Body
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        borderRadius: BorderRadius.circular(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                 // ── Top: amount + status + method ─────────────────────────
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(
@@ -712,13 +687,13 @@ class _PayCard extends StatelessWidget {
 
                 // ── User info ─────────────────────────────────────────────
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
                   child: Row(children: [
                     Container(
-                      width: 34, height: 34,
-                      decoration: BoxDecoration(color: avatarBg, shape: BoxShape.circle),
+                      width: 38, height: 38,
+                      decoration: const BoxDecoration(color: Color(0xFFBBF7D0), shape: BoxShape.circle),
                       child: Center(child: Text(initial,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white))),
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF15803D)))),
                     ),
                     const SizedBox(width: 8),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -892,10 +867,7 @@ class _PayCard extends StatelessWidget {
                     ]),
                   ),
                 ],
-              ]),
-            ),
-          ]),
-        ),
+        ]),
       ),
     );
   }

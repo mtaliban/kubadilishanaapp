@@ -882,41 +882,24 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(14),
-          child: IntrinsicHeight(
-            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              // Left accent stripe
-              Container(
-                width: 4,
-                color: isDisabled ? _kRed : isAdmin ? _kGold : (isEdu ? _kGreenDk : _kBlue),
-              ),
-              Expanded(child: Column(children: [
+          child: Column(children: [
           // ── Main info ──
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // Checkbox (not for admins)
-              if (!isAdmin) ...[
-                SizedBox(width: 18, height: 18,
-                  child: Checkbox(
-                    value: isSelected,
-                    onChanged: (_) => _toggleOne(id),
-                    activeColor: _kBlue,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    side: const BorderSide(color: _kGrey300),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
               // Avatar
               Stack(children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: isAdmin ? _kGold100
-                      : isEdu ? _kGreen50 : _kBlue50,
-                  child: Text(initial, style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold,
-                    color: isAdmin ? _kGoldText : isEdu ? _kGreenDk : _kBlue,
-                  )),
+                Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isAdmin ? _kGold100
+                        : isEdu ? const Color(0xFFBBF7D0) : const Color(0xFFDBEAFE),
+                  ),
+                  child: Center(child: Text(initial, style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w800,
+                    color: isAdmin ? _kGoldText : isEdu ? const Color(0xFF15803D) : _kBlue,
+                  ))),
                 ),
                 if (isAdmin)
                   Positioned(right: 0, bottom: 0,
@@ -981,12 +964,24 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           ),
           // ── Action row — compact icon buttons ──
           Container(
-            padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
             decoration: const BoxDecoration(
               color: _kGrey50,
-              border: Border(top: BorderSide(color: _kGrey100)),
+              border: Border(top: BorderSide(color: _kGrey200)),
             ),
             child: Row(children: [
+              if (!isAdmin) ...[
+                SizedBox(width: 18, height: 18,
+                  child: Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => _toggleOne(id),
+                    activeColor: _kBlue,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    side: const BorderSide(color: _kGrey300),
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
               _iBtn(Icons.open_in_new_rounded, 'Angalia', _kGrey700, Colors.white, () => _showDetail(u)),
               const SizedBox(width: 4),
               _iBtn(Icons.edit_outlined, 'Hariri', _kBlue, _kBlue50, () => _showEditDialog(u)),
@@ -1014,10 +1009,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               ],
             ]),
           ),
-        ])),
-            ]),
-          ),
-        ),
+        ]),
+      ),
       );
     }).toList();
   }

@@ -464,16 +464,16 @@ class _FilterChip extends StatelessWidget {
       onTap: () => onTap(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        height: 30,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
           color: active ? _kBlue : Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: active ? _kBlue : _kGrey200),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: active ? _kBlue.withValues(alpha: 0.5) : _kGrey200),
+          boxShadow: active ? [] : [const BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 1))],
         ),
-        child: Center(child: Text(label,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-            color: active ? Colors.white : _kGrey500))),
+        child: Text(label,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+            color: active ? Colors.white : _kGrey500)),
       ),
     );
   }
@@ -613,12 +613,6 @@ class _FeedbackCardState extends State<_FeedbackCard> {
     return   (stripe: _kBlue,      bg: _kBlue50,   fg: _kBlue,     border: _kBlue200,   label: 'Maoni',      icon: Icons.chat_bubble_outline_rounded);
   }
 
-  Color _avatarBg(String n) {
-    const c = [Color(0xFF1E40AF), Color(0xFF6D28D9), Color(0xFF065F46),
-                Color(0xFF92400E), Color(0xFF991B1B)];
-    return n.isEmpty ? c[0] : c[n.codeUnitAt(0) % c.length];
-  }
-
   @override
   Widget build(BuildContext context) {
     final f         = widget.f;
@@ -635,40 +629,31 @@ class _FeedbackCardState extends State<_FeedbackCard> {
 
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     final tp      = _type(rawType.isNotEmpty ? rawType : subject);
-    final stripe  = hasReply ? _kGreenDk : tp.stripe;
     final isLong  = message.length > 130;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: hasReply ? _kGreen200 : _kGrey200),
-        boxShadow: const [BoxShadow(color: Color(0x07000000), blurRadius: 8, offset: Offset(0, 2))],
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: IntrinsicHeight(
-          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-            // Left stripe
-            Container(width: 4, color: stripe),
-
-            // Body
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-                  // ── Top row: avatar + name + badges + delete ──
-                  Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                    // Avatar
-                    Container(
-                      width: 36, height: 36,
-                      decoration: BoxDecoration(color: _avatarBg(name), shape: BoxShape.circle),
-                      child: Center(child: Text(initial,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white))),
-                    ),
+            // ── Top row: avatar + name + badges + delete ──
+            Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              // Avatar
+              Container(
+                width: 44, height: 44,
+                decoration: const BoxDecoration(color: Color(0xFFBBF7D0), shape: BoxShape.circle),
+                child: Center(child: Text(initial,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF15803D)))),
+              ),
                     const SizedBox(width: 8),
 
                     // Name + phone
@@ -863,9 +848,6 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                     ]),
                   ],
 
-                ]),
-              ),
-            ),
           ]),
         ),
       ),

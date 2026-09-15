@@ -105,14 +105,21 @@ class _MyMatchesScreenState extends State<MyMatchesScreen>
         foregroundColor: _kGrey900,
         elevation: 0,
         centerTitle: false,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        title: Row(children: [
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: _kBlue50,
+              borderRadius: BorderRadius.circular(12)),
+            child: const Center(child: Icon(Icons.people_outline, size: 22, color: _kBlue)),
+          ),
+          const SizedBox(width: 12),
+          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Mechi Zangu',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _kGrey900)),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2)),
             Text('Watu wanaofanana nawe', style: TextStyle(fontSize: 11, color: _kGrey500)),
-          ],
-        ),
+          ]),
+        ]),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(44),
           child: Container(
@@ -613,7 +620,7 @@ class _EmptyState extends StatelessWidget {
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Container(
             width: 64, height: 64,
-            decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(18)),
             child: Icon(icon, size: 28, color: _kGrey400)),
           const SizedBox(height: 14),
           Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _kGrey700)),
@@ -644,7 +651,9 @@ class _ErrorState extends StatelessWidget {
         label: const Text('Jaribu Tena'),
         style: ElevatedButton.styleFrom(
           backgroundColor: _kBlue, foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          minimumSize: const Size(140, 44),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
       ),
     ]));
   }

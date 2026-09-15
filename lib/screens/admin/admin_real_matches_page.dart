@@ -233,36 +233,31 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildDropdown<String>(
+                    child: _filterField<String>(
+                      title: 'Idara Zote',
                       value: _category,
-                      items: const [
-                        DropdownMenuItem(value: '', child: Text('Idara Zote')),
-                        DropdownMenuItem(value: 'education', child: Text('Elimu')),
-                        DropdownMenuItem(value: 'health',    child: Text('Afya')),
+                      opts: const [
+                        ('', 'Idara Zote'),
+                        ('education', 'Elimu'),
+                        ('health', 'Afya'),
                       ],
                       onChanged: (v) {
-                        setState(() {
-                          _category  = v ?? '';
-                          _cadreCode = '';
-                          _page      = 1;
-                        });
+                        setState(() { _category = v; _cadreCode = ''; _page = 1; });
                         _load();
                       },
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: _buildDropdown<String>(
+                    child: _filterField<String>(
+                      title: 'Kada Zote',
                       value: _cadreCode,
-                      items: [
-                        const DropdownMenuItem(value: '', child: Text('Kada Zote')),
-                        ..._getCadreOptions(_category).map((c) => DropdownMenuItem(
-                          value: c['code'],
-                          child: Text(c['label']!, overflow: TextOverflow.ellipsis),
-                        )),
+                      opts: [
+                        ('', 'Kada Zote'),
+                        ..._getCadreOptions(_category).map((c) => (c['code']!, c['label']!)),
                       ],
                       onChanged: (v) {
-                        setState(() { _cadreCode = v ?? ''; _page = 1; });
+                        setState(() { _cadreCode = v; _page = 1; });
                         _load();
                       },
                     ),
@@ -355,28 +350,106 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   }
 
   // ── Helpers ────────────────────────────────────────────────────
-  Widget _buildDropdown<T>({
+  Widget _filterField<T>({
+    required String title,
     required T value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
+    required List<(T, String)> opts,
+    required void Function(T) onChanged,
   }) {
-    return Container(
-      height: 44,
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(10),
+    final label = opts.where((o) => o.$1 == value).firstOrNull?.$2;
+    final isDefault = opts.isNotEmpty && opts.first.$1 == value;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _showFilterPicker<T>(title: title, opts: opts, selected: value, onChanged: onChanged),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: _kGrey200),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(children: [
+          Expanded(child: Text(
+            label ?? title,
+            style: TextStyle(fontSize: 13, color: isDefault ? _kGrey400 : _kGrey900),
+            overflow: TextOverflow.ellipsis,
+          )),
+          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _kGrey400),
+        ]),
       ),
-      child: DropdownButton<T>(
-        value: value,
-        isExpanded: true,
-        underline: const SizedBox(),
-        icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: _kGrey400),
-        style: const TextStyle(fontSize: 13, color: _kGrey900),
-        items: items,
-        onChanged: onChanged,
+    );
+  }
+
+  void _showFilterPicker<T>({
+    required String title,
+    required List<(T, String)> opts,
+    required T selected,
+    required void Function(T) onChanged,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (_, ctrl) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(children: [
+            Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 8),
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD1D5DB),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Row(children: [
+                Expanded(child: Text(title, style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: _kGrey900,
+                ))),
+                GestureDetector(
+                  onTap: () => Navigator.pop(sheetCtx),
+                  child: Container(
+                    width: 32, height: 32,
+                    decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.close_rounded, size: 16, color: _kGrey500),
+                  ),
+                ),
+              ]),
+            ),
+            const Divider(height: 1, color: _kGrey100),
+            Expanded(
+              child: ListView.builder(
+                controller: ctrl,
+                padding: const EdgeInsets.only(bottom: 20),
+                itemCount: opts.length,
+                itemBuilder: (_, i) {
+                  final (val, lbl) = opts[i];
+                  final isSel = val == selected;
+                  return ListTile(
+                    title: Text(lbl, style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w400,
+                      color: isSel ? _kBlue : _kGrey900,
+                    )),
+                    tileColor: isSel ? _kBlue50 : Colors.transparent,
+                    trailing: isSel ? const Icon(Icons.check_rounded, size: 18, color: _kBlue) : null,
+                    onTap: () { onChanged(val); Navigator.pop(sheetCtx); },
+                  );
+                },
+              ),
+            ),
+          ]),
+        ),
       ),
     );
   }
@@ -522,10 +595,10 @@ class _MatchCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kGrey200),
         boxShadow: const [
-          BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
+          BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2)),
         ],
       ),
       child: Column(

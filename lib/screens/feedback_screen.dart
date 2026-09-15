@@ -11,6 +11,7 @@ const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey300 = Color(0xFFD1D5DB);
+const _kGrey100 = Color(0xFFF3F4F6);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kRed = Color(0xFFDC2626);
 
@@ -127,34 +128,40 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header: back arrow + icon + title + subtitle (kama web)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.of(context).pushReplacementNamed('/dashboard'),
-                        child: const Padding(
-                          padding: EdgeInsets.only(right: 8),
-                          child: Icon(Icons.arrow_back, size: 18, color: _kGrey700),
-                        ),
-                      ),
-                      SvgPicture.asset('assets/icons/clipboard-list.svg', width: 20, height: 20, colorFilter: const ColorFilter.mode(_kBlue, BlendMode.srcIn)),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Maoni na Malalamiko',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _kGrey900),
-                      ),
-                    ],
+              // ── PAGE HEADER ─────────────────────────────────────────────────
+              Row(children: [
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pushReplacementNamed('/dashboard'),
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: _kGrey100,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(child: Icon(Icons.arrow_back, size: 18, color: _kGrey700)),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Tuma maoni au malalamiko yako moja kwa moja kwa admin — utajibiwa hapa.',
-                    style: TextStyle(fontSize: 12, color: _kGrey500),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF), // brand-blue-50
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
+                  child: Center(child: SvgPicture.asset(
+                    'assets/icons/clipboard-list.svg', width: 22, height: 22,
+                    colorFilter: const ColorFilter.mode(_kBlue, BlendMode.srcIn),
+                  )),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Maoni na Malalamiko',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2)),
+                  SizedBox(height: 2),
+                  Text('Tuma maoni yako kwa admin — utajibiwa hapa.',
+                      style: TextStyle(fontSize: 11, color: _kGrey500)),
+                ])),
+              ]),
               const SizedBox(height: 16), // space-y-4
 
                 // Form card (.card = bg-white rounded-2xl p-6 border-grey-100 shadow-soft)
@@ -228,50 +235,44 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         ),
                       ],
                       const SizedBox(height: 12),
-                      // Submit button: kama web .btn-primary (text-[11px] font-bold rounded-md=6)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ElevatedButton(
-                            onPressed: _sending ? null : _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _kBlue,
-                              disabledBackgroundColor:
-                                  _kBlue.withValues(alpha: 0.4),
-                              foregroundColor: Colors.white,
-                              minimumSize: Size.zero, // iwe ndogo kama web
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              textStyle: const TextStyle(
-                                  fontSize: 11, fontWeight: FontWeight.bold),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6)), // rounded-md=6
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              _sending
-                                  ? 'Inatuma...'
-                                  : (_sent ? 'Imetumwa ✓' : 'Tuma'),
-                            ),
+                      // Submit — full-width, tall, rounded-xl
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _sending ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kBlue,
+                            disabledBackgroundColor: _kBlue.withValues(alpha: 0.4),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 48),
+                            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
                           ),
-                        ],
+                          child: _sending
+                              ? const Row(mainAxisSize: MainAxisSize.min, children: [
+                                  SizedBox(width: 16, height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                                  SizedBox(width: 8),
+                                  Text('Inatuma...'),
+                                ])
+                              : Text(_sent ? '✓ Imetumwa' : 'Tuma Maoni'),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16), // space-y-4
 
-                // History header: font-semibold text-sm=14 text-grey-700 mb-2=8px
+                // History header — uppercase tracking-widest
                 Text(
-                  'Maoni yangu (${_items.length})',
+                  'MAONI YANGU (${_items.length})',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: _kGrey700,
+                    fontSize: 10, fontWeight: FontWeight.w800,
+                    color: _kGrey400, letterSpacing: 1.2,
                   ),
                 ),
-                const SizedBox(height: 8), // mb-2=8px
+                const SizedBox(height: 10),
 
                 if (_loading)
                   const Center(
@@ -343,18 +344,20 @@ class _PageBtn extends StatelessWidget {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        constraints: const BoxConstraints(minWidth: 44, minHeight: 40),
-        padding: const EdgeInsets.symmetric(horizontal: 12), // px-3=12
+        constraints: const BoxConstraints(minWidth: 80, minHeight: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6), // rounded-md=6
-          border: Border.all(color: _kGrey300), // border-grey-300
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: enabled ? _kGrey300 : const Color(0xFFE5E7EB)),
+          boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4, offset: Offset(0, 1))],
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 11, // text-[11px]
-            fontWeight: FontWeight.bold,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
             color: enabled ? _kGrey700 : _kGrey400,
           ),
         ),
@@ -401,23 +404,19 @@ class _FbCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 2), // px-2=8 py-0.5=2
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  // green-100 / amber-100 (brand-gold-100)
-                  color: isReplied
-                      ? const Color(0xFFDCFCE7)
-                      : const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(999), // rounded-full
+                  color: isReplied ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: isReplied ? const Color(0xFFBBF7D0) : const Color(0xFFFDE68A),
+                  ),
                 ),
                 child: Text(
-                  isReplied ? '✓ Yamejibiwa' : 'Hakuna jibu',
+                  isReplied ? '✓ Yamejibiwa' : 'Inasubiri',
                   style: TextStyle(
-                    fontSize: 10, // text-[10px]
-                    fontWeight: FontWeight.bold,
-                    color: isReplied
-                        ? const Color(0xFF15803D) // green-700
-                        : const Color(0xFFD97706), // brand-gold-600
+                    fontSize: 10, fontWeight: FontWeight.w800,
+                    color: isReplied ? const Color(0xFF15803D) : const Color(0xFFD97706),
                   ),
                 ),
               ),

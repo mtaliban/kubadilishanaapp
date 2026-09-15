@@ -5,11 +5,9 @@ import '../../services/api_service.dart';
 // ── Brand colours ──────────────────────────────────────────────────────────
 const _kBlue      = Color(0xFF1E40AF);
 const _kBlue50    = Color(0xFFEFF6FF);
-const _kBlue200   = Color(0xFFBFDBFE);
 const _kGrey50    = Color(0xFFF9FAFB);
 const _kGrey100   = Color(0xFFF3F4F6);
 const _kGrey200   = Color(0xFFE5E7EB);
-const _kGrey300   = Color(0xFFD1D5DB);
 const _kGrey400   = Color(0xFF9CA3AF);
 const _kGrey500   = Color(0xFF6B7280);
 const _kGrey700   = Color(0xFF374151);
@@ -260,19 +258,19 @@ class _ResetCard extends StatelessWidget {
     final isPending = status == 'pending';
     final initial  = name.isNotEmpty ? name[0].toUpperCase() : (phone.isNotEmpty ? phone[0] : '?');
 
-    Color stripeColor, badgeBg, badgeFg, badgeBorder;
+    Color badgeBg, badgeFg, badgeBorder;
     String statusLabel;
     IconData statusIcon;
 
     switch (status) {
       case 'approved':
-        stripeColor = _kGreenDk; badgeBg = _kGreen50; badgeFg = _kGreen700;
+        badgeBg = _kGreen50; badgeFg = _kGreen700;
         badgeBorder = _kGreen200; statusLabel = 'Imekubaliwa'; statusIcon = Icons.check_circle_outline_rounded;
       case 'rejected':
-        stripeColor = _kRed; badgeBg = _kRed50; badgeFg = _kRed;
+        badgeBg = _kRed50; badgeFg = _kRed;
         badgeBorder = _kRed200; statusLabel = 'Imekataliwa'; statusIcon = Icons.cancel_outlined;
       default:
-        stripeColor = _kAmber700; badgeBg = _kAmber50; badgeFg = _kAmber700;
+        badgeBg = _kAmber50; badgeFg = _kAmber700;
         badgeBorder = _kAmber200; statusLabel = 'Inasubiri'; statusIcon = Icons.hourglass_top_rounded;
     }
 
@@ -280,33 +278,26 @@ class _ResetCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
-        boxShadow: const [BoxShadow(color: Color(0x07000000), blurRadius: 4, offset: Offset(0, 1))],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kGrey200),
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: IntrinsicHeight(
-          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            // Left stripe
-            Container(width: 4, color: stripeColor),
-
-            // Body
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  // Top row: avatar + info + status badge
-                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Container(
-                      width: 36, height: 36,
-                      decoration: BoxDecoration(
-                        color: stripeColor.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(child: Text(initial,
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: stripeColor))),
-                    ),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Top row: avatar + info + status badge
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                width: 44, height: 44,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFBBF7D0),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(child: Text(initial,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _kGreen700))),
+              ),
                     const SizedBox(width: 10),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(name.isNotEmpty ? name : 'Mtumiaji',
@@ -384,9 +375,6 @@ class _ResetCard extends StatelessWidget {
                       )),
                     ]),
                   ],
-                ]),
-              ),
-            ),
           ]),
         ),
       ),

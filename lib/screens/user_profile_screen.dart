@@ -1,7 +1,19 @@
 /// User profile public view — shows identity, station, destinations, subjects.
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../config/theme.dart';
+
+const _kBlue    = Color(0xFF1E40AF);
+const _kBlue50  = Color(0xFFEFF6FF);
+const _kBlue200 = Color(0xFFBFDBFE);
+const _kGrey900 = Color(0xFF111827);
+const _kGrey700 = Color(0xFF374151);
+const _kGrey500 = Color(0xFF6B7280);
+const _kGrey400 = Color(0xFF9CA3AF);
+const _kGrey200 = Color(0xFFE5E7EB);
+const _kGrey100 = Color(0xFFF3F4F6);
+const _kGreen50 = Color(0xFFF0FDF4);
+const _kGreen200 = Color(0xFFBBF7D0);
+const _kGreenDk = Color(0xFF16A34A);
 
 class UserProfileScreen extends StatefulWidget {
   final String userId;
@@ -49,26 +61,73 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: Text(_loading ? 'Wasifu' : name),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: GestureDetector(
+            onTap: () => Navigator.maybePop(context),
+            child: Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: _kGrey100,
+                borderRadius: BorderRadius.circular(10)),
+              child: const Center(child: Icon(Icons.arrow_back, size: 18, color: _kGrey900))),
+          ),
+        ),
+        title: Row(children: [
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: _kBlue50,
+              borderRadius: BorderRadius.circular(12)),
+            child: const Center(child: Icon(Icons.person_outline_rounded, size: 22, color: _kBlue)),
+          ),
+          const SizedBox(width: 12),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(_loading ? 'Wasifu' : name,
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2),
+                overflow: TextOverflow.ellipsis),
+            const Text('Taarifa za mtumiaji', style: TextStyle(fontSize: 11, color: _kGrey500)),
+          ]),
+        ]),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _kGrey200),
+        ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: _kBlue))
           : _error != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: AppColors.error),
-                      const SizedBox(height: 12),
-                      Text('Hitilafu: $_error',
-                          style:
-                              const TextStyle(color: AppColors.textSecondary),
+                      Container(
+                        width: 56, height: 56,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(16)),
+                        child: const Center(child: Icon(Icons.error_outline, size: 26, color: Color(0xFFDC2626))),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text('Hitilafu ya kupakia wasifu',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+                      const SizedBox(height: 4),
+                      Text(_error!,
+                          style: const TextStyle(fontSize: 11, color: _kGrey400),
                           textAlign: TextAlign.center),
                       const SizedBox(height: 16),
-                      ElevatedButton(
-                          onPressed: _load,
-                          child: const Text('Jaribu Tena')),
+                      ElevatedButton.icon(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Jaribu Tena'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kBlue, foregroundColor: Colors.white,
+                          minimumSize: const Size(140, 44),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
                     ],
                   ),
                 )
@@ -106,69 +165,55 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           Center(
             child: Column(
               children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: AppColors.primaryLight,
-                      child: Text(
-                        initials,
-                        style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary),
-                      ),
-                    ),
-                    if (online)
-                      Positioned(
-                        right: 2,
-                        bottom: 2,
-                        child: Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: AppColors.success,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  fullName,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                if (isVerified) ...[
-                  const SizedBox(height: 4),
+                Stack(children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 3),
+                    width: 80, height: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.verified,
-                            size: 14, color: AppColors.success),
-                        SizedBox(width: 4),
-                        Text('Amethibitishwa',
-                            style: TextStyle(
-                                fontSize: 12, color: AppColors.success)),
-                      ],
-                    ),
+                      shape: BoxShape.circle,
+                      color: _kBlue50,
+                      border: Border.all(color: _kBlue200, width: 2)),
+                    child: Center(child: Text(initials,
+                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: _kBlue))),
                   ),
-                ],
-                if (online) ...[
-                  const SizedBox(height: 4),
-                  const Text('• Mtandaoni',
-                      style: TextStyle(
-                          fontSize: 12, color: AppColors.success)),
-                ],
+                  if (online) Positioned(right: 2, bottom: 2,
+                    child: Container(
+                      width: 16, height: 16,
+                      decoration: BoxDecoration(
+                        color: _kGreenDk, shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2)))),
+                ]),
+                const SizedBox(height: 12),
+                Text(fullName,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kGrey900)),
+                const SizedBox(height: 6),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  if (isVerified) Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _kGreen50, borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: _kGreen200)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.verified_rounded, size: 12, color: _kGreenDk),
+                      const SizedBox(width: 4),
+                      const Text('Amethibitishwa',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kGreenDk)),
+                    ]),
+                  ),
+                  if (isVerified && online) const SizedBox(width: 6),
+                  if (online) Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _kGreen50, borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: _kGreen200)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Container(width: 6, height: 6,
+                        decoration: const BoxDecoration(color: _kGreenDk, shape: BoxShape.circle)),
+                      const SizedBox(width: 5),
+                      const Text('Mtandaoni',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kGreenDk)),
+                    ]),
+                  ),
+                ]),
               ],
             ),
           ),
@@ -213,8 +258,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   (station['region_name'] == null &&
                       station['district_name'] == null))
                 const Text('Hakuna taarifa za kituo',
-                    style: TextStyle(
-                        color: AppColors.textLight, fontSize: 13)),
+                    style: TextStyle(color: _kGrey400, fontSize: 13)),
             ],
           ),
           const SizedBox(height: 12),
@@ -226,8 +270,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             children: [
               if (destinations.isEmpty)
                 const Text('Hakuna maeneo yaliyochaguliwa',
-                    style: TextStyle(
-                        color: AppColors.textLight, fontSize: 13))
+                    style: TextStyle(color: _kGrey400, fontSize: 13))
               else
                 Wrap(
                   spacing: 6,
@@ -237,17 +280,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         (d as Map<String, dynamic>)['region_name']
                                 ?.toString() ??
                             d.toString();
-                    return Chip(
-                      label: Text(regionName,
-                          style: const TextStyle(fontSize: 12)),
-                      backgroundColor: AppColors.primaryLight,
-                      labelStyle:
-                          const TextStyle(color: AppColors.primary),
-                      materialTapTargetSize:
-                          MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 4),
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: _kBlue50,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: _kBlue200)),
+                      child: Text(regionName,
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kBlue)),
                     );
                   }).toList(),
                 ),
@@ -264,18 +304,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children: subjects
-                      .map((s) => Chip(
-                            label: Text(s.toString(),
-                                style: const TextStyle(fontSize: 12)),
-                            backgroundColor: AppColors.surfaceDark,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 4),
-                          ))
-                      .toList(),
+                  children: subjects.map((s) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _kGrey100,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: _kGrey200)),
+                    child: Text(s.toString(),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kGrey700)),
+                  )).toList(),
                 ),
               ],
             ),
@@ -303,28 +340,28 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary)),
-              ],
-            ),
-            const Divider(height: 16),
-            ...children,
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kGrey200),
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            width: 30, height: 30,
+            decoration: BoxDecoration(color: _kBlue50, borderRadius: BorderRadius.circular(8)),
+            child: Center(child: Icon(icon, size: 15, color: _kBlue)),
+          ),
+          const SizedBox(width: 10),
+          Text(title,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900)),
+        ]),
+        Container(margin: const EdgeInsets.symmetric(vertical: 12), height: 1, color: _kGrey200),
+        ...children,
+      ]),
     );
   }
 }
@@ -339,23 +376,16 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (value.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary)),
-          ),
-          Expanded(
-            child: Text(value,
-                style: const TextStyle(
-                    fontSize: 13, color: AppColors.textPrimary)),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(
+          width: 100,
+          child: Text(label, style: const TextStyle(fontSize: 12, color: _kGrey400, fontWeight: FontWeight.w500)),
+        ),
+        Expanded(
+          child: Text(value, style: const TextStyle(fontSize: 13, color: _kGrey700, fontWeight: FontWeight.w600)),
+        ),
+      ]),
     );
   }
 }
