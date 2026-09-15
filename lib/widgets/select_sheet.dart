@@ -282,14 +282,17 @@ class SelectField extends StatelessWidget {
       onTap: disabled ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        constraints: const BoxConstraints(minHeight: 44),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: disabled ? AppColors.grey100 : Colors.white,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: disabled ? AppColors.grey200 : AppColors.grey300,
+            color: disabled ? AppColors.grey200 : AppColors.border,
           ),
+          boxShadow: disabled ? null : const [
+            BoxShadow(color: Color(0x07000000), blurRadius: 6, offset: Offset(0, 2)),
+          ],
         ),
         child: Row(children: [
           if (leading != null) ...[leading!, const SizedBox(width: 10)],
@@ -299,18 +302,16 @@ class SelectField extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: hasValue ? FontWeight.w600 : FontWeight.w500,
-                color: hasValue
-                    ? AppColors.textPrimary
-                    : AppColors.textLight,
+                fontSize: 14,
+                fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
+                color: hasValue ? AppColors.textPrimary : AppColors.textLight,
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Icon(
             Icons.keyboard_arrow_down_rounded,
-            size: 18,
+            size: 20,
             color: hasValue ? AppColors.primary : AppColors.textLight,
           ),
         ]),
