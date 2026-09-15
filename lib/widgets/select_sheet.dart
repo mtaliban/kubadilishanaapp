@@ -90,27 +90,26 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(children: [
-            // Handle bar
+            // Drag handle
             Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
-              width: 40,
-              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 4),
+              width: 44, height: 4,
               decoration: BoxDecoration(
                 color: AppColors.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
 
-            // Header
+            // Header — title kubwa + X mviringo
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 4, 12, 10),
+              padding: const EdgeInsets.fromLTRB(20, 10, 16, 12),
               child: Row(children: [
                 Expanded(
                   child: Text(widget.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary)),
                 ),
@@ -118,23 +117,22 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                   onTap: () => Navigator.pop(context),
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
+                    width: 42, height: 42,
+                    decoration: const BoxDecoration(
                       color: AppColors.grey100,
-                      borderRadius: BorderRadius.circular(10),
+                      shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.close_rounded,
-                        size: 17, color: AppColors.grey700),
+                        size: 20, color: AppColors.grey700),
                   ),
                 ),
               ]),
             ),
 
-            // Search — kama web (rounded, grey-50, icon ya kutafuta)
+            // Search
             if (widget.searchable)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
                 child: TextField(
                   controller: _ctrl,
                   textInputAction: TextInputAction.search,
@@ -146,9 +144,9 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                     prefixIcon: const Icon(Icons.search_rounded,
                         size: 18, color: AppColors.textLight),
                     prefixIconConstraints:
-                        const BoxConstraints(minWidth: 40, minHeight: 0),
+                        const BoxConstraints(minWidth: 44, minHeight: 0),
                     contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: AppColors.border)),
@@ -165,9 +163,7 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                 ),
               ),
 
-            Container(height: 1, color: AppColors.borderLight),
-
-            // Items
+            // Items — kila moja kadi yake (kama picha)
             Expanded(
               child: list.isEmpty
                   ? const Center(
@@ -175,38 +171,47 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                         padding: EdgeInsets.all(24),
                         child: Text('Hakuna kilichopatikana',
                             style: TextStyle(
-                                fontSize: 13, color: AppColors.textLight)),
+                                fontSize: 14, color: AppColors.textLight)),
                       ),
                     )
                   : ListView.builder(
                       controller: scrollCtrl,
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                       itemCount: list.length,
                       itemBuilder: (_, i) {
                         final item = list[i];
                         final isSel = item.value == widget.selected;
-                        return InkWell(
-                          onTap: () => Navigator.pop(context, item.value),
-                          child: Container(
-                            height: _kItemH,
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                            decoration: BoxDecoration(
-                              color: isSel ? AppColors.blue50 : Colors.transparent,
-                              border: const Border(
-                                  bottom: BorderSide(
-                                      color: AppColors.borderLight, width: 1)),
-                            ),
-                            child: Row(children: [
-                              Expanded(
-                                child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context, item.value),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 18, vertical: 16),
+                              decoration: BoxDecoration(
+                                color: isSel
+                                    ? const Color(0xFFEFF6FF)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSel
+                                      ? const Color(0xFFBFDBFE)
+                                      : AppColors.border,
+                                  width: isSel ? 1.5 : 1,
+                                ),
+                              ),
+                              child: Row(children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(item.label,
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
-                                            fontSize: 14,
+                                            fontSize: 15,
                                             fontWeight: isSel
                                                 ? FontWeight.w700
                                                 : FontWeight.w500,
@@ -215,38 +220,26 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                                                 : AppColors.textPrimary,
                                           )),
                                       if (item.subtitle != null &&
-                                          item.subtitle!.isNotEmpty)
+                                          item.subtitle!.isNotEmpty) ...[
+                                        const SizedBox(height: 2),
                                         Text(item.subtitle!,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
                                                 fontSize: 12,
                                                 color: AppColors.textLight)),
-                                    ]),
-                              ),
-                              const SizedBox(width: 12),
-                              // Duara la kuchagua — bluu ikichaguliwa (kama web)
-                              Container(
-                                width: 22,
-                                height: 22,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: isSel
-                                      ? AppColors.primary
-                                      : Colors.transparent,
-                                  border: Border.all(
-                                    color: isSel
-                                        ? AppColors.primary
-                                        : AppColors.grey300,
-                                    width: 2,
+                                      ],
+                                    ],
                                   ),
                                 ),
-                                child: isSel
-                                    ? const Icon(Icons.check_rounded,
-                                        size: 14, color: Colors.white)
-                                    : null,
-                              ),
-                            ]),
+                                if (isSel) ...[
+                                  const SizedBox(width: 12),
+                                  const Icon(Icons.check_rounded,
+                                      size: 22,
+                                      color: AppColors.primary),
+                                ],
+                              ]),
+                            ),
                           ),
                         );
                       },
