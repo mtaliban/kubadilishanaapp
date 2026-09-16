@@ -472,7 +472,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
           prefixIcon: Icon(icon, size: 16, color: _kGrey400),
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
           filled: true,
-          fillColor: const Color(0xFFF9FAFB),
+          fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: _kGrey200),

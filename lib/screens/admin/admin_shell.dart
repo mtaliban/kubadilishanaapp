@@ -277,7 +277,7 @@ class _AdminShellState extends State<AdminShell> {
     final user    = auth.user;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(children: [
           // ── MOBILE TOP BAR — h-14=56px kama web ──

@@ -306,7 +306,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                             hintText: 'Tafuta jina au ujumbe...',
                             hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
                             prefixIcon: const Icon(Icons.search_rounded, size: 18, color: _kGrey400),
-                            filled: true, fillColor: _kGrey50,
+                            filled: true, fillColor: Colors.white,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
@@ -807,7 +807,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                           decoration: InputDecoration(
                             hintText: hasReply ? 'Badilisha jibu...' : 'Andika jibu...',
                             hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
-                            filled: true, fillColor: _kGrey50,
+                            filled: true, fillColor: Colors.white,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),

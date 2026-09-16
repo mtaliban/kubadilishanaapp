@@ -32,7 +32,7 @@ bool isDefaultName(String name) {
     const prefixes = ['mwana afya', 'mwanafunzi', 'mwuguzi', 'mwalimu', 'mganga', 'mpgasii', 'mlinzii', 'mhudumu', 'mtumishi', 'afya mwananchi', 'afya ya jamii'];
     for (final p in prefixes) { if (base.startsWith(p) || base == p) return true; }
   }
-  if (RegExp(r'^[a-z]+\s*[—-–]\s*\d+$').hasMatch(n)) return true;
+  if (RegExp(r'^[a-z]+\s*[-—–]\s*\d+$').hasMatch(n)) return true;
   return false;
 }
 

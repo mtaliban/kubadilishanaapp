@@ -377,7 +377,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                 )
               : null,
           filled: true,
-          fillColor: const Color(0xFFF9FAFB),
+          fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),

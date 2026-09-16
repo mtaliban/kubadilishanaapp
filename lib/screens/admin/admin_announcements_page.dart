@@ -55,7 +55,7 @@ InputDecoration _inp(String hint, {IconData? prefix}) => InputDecoration(
   prefixIcon: prefix != null ? Icon(prefix, size: 18, color: _kGrey400) : null,
   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
   filled: true,
-  fillColor: const Color(0xFFF9FAFB),
+  fillColor: Colors.white,
   border: OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),
     borderSide: const BorderSide(color: _kGrey200),

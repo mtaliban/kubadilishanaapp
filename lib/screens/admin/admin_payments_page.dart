@@ -196,7 +196,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
               decoration: InputDecoration(
                 hintText: 'Mfano: SMS ya uongo, kiasi hakikubaliani...',
                 hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
-                filled: true, fillColor: _kGrey50,
+                filled: true, fillColor: Colors.white,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
@@ -876,7 +876,7 @@ class _PayCard extends StatelessWidget {
                             decoration: InputDecoration(
                               hintText: 'Andika jibu...',
                               hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
-                              filled: true, fillColor: _kGrey50,
+                              filled: true, fillColor: Colors.white,
                               isDense: true,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),

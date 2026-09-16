@@ -32,7 +32,7 @@ InputDecoration _inp(String hint, {bool enabled = true}) => InputDecoration(
   hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
   filled: true,
-  fillColor: enabled ? _kGrey50 : _kGrey100,
+  fillColor: enabled ? Colors.white : _kGrey100,
   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
   disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey100)),
