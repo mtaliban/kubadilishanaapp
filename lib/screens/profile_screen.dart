@@ -485,31 +485,6 @@ class _EditProfileState extends State<_EditProfile> {
   bool _saving = false;
   String? _error;
 
-  final _curPwdCtrl = TextEditingController();
-  final _newPwdCtrl = TextEditingController();
-  bool _changingPwd = false;
-  String? _pwdMsg;
-
-  Future<void> _changePassword() async {
-    setState(() { _error = null; _pwdMsg = null; _changingPwd = true; });
-    try {
-      await ApiService().changePassword(_curPwdCtrl.text, _newPwdCtrl.text);
-      if (!mounted) return;
-      setState(() {
-        _pwdMsg = 'Password imebadilishwa kikamilifu ✓';
-        _curPwdCtrl.clear();
-        _newPwdCtrl.clear();
-      });
-      Future.delayed(const Duration(seconds: 4), () {
-        if (mounted) setState(() => _pwdMsg = null);
-      });
-    } catch (e) {
-      if (mounted) setState(() { _error = _parseErr(e); });
-    } finally {
-      if (mounted) setState(() => _changingPwd = false);
-    }
-  }
-
   String get _category => widget.profile['category'] as String? ?? '';
 
   String? get _subjectLevel {
@@ -601,7 +576,6 @@ class _EditProfileState extends State<_EditProfile> {
   @override
   void dispose() {
     _nameCtrl.dispose(); _phoneCtrl.dispose(); _altCtrl.dispose();
-    _curPwdCtrl.dispose(); _newPwdCtrl.dispose();
     super.dispose();
   }
 
@@ -829,69 +803,6 @@ class _EditProfileState extends State<_EditProfile> {
             for (int i = 0; i < _destinations.length; i++) _buildDestRow(i),
         ],
       ),
-      const SizedBox(height: 24),
-
-      // ── Password change card (kama web) ──
-      Container(
-        padding: const EdgeInsets.all(24), // p-6
-        decoration: _cardDec(),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('🔑 Badilisha Password',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kGrey900)),
-          if (_pwdMsg != null) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4), // green-50
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(_pwdMsg!,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF15803D))), // green-700
-            ),
-          ],
-          const SizedBox(height: 12),
-          _label('Password ya sasa'),
-          TextField(
-            controller: _curPwdCtrl,
-            obscureText: true,
-            style: const TextStyle(fontSize: 12),
-            decoration: _inputDec(hint: 'Password ya sasa'),
-          ),
-          const SizedBox(height: 16),
-          _label('Password mpya (angalau herufi 6)'),
-          TextField(
-            controller: _newPwdCtrl,
-            obscureText: true,
-            style: const TextStyle(fontSize: 12),
-            decoration: _inputDec(hint: 'Password mpya'),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 42,
-            child: OutlinedButton(
-              onPressed: (_changingPwd || _curPwdCtrl.text.isEmpty || _newPwdCtrl.text.length < 6)
-                  ? null
-                  : _changePassword,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _kBlue,
-                disabledForegroundColor: _kGrey400,
-                side: const BorderSide(color: _kBlue),
-                textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), // rounded-full
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: _changingPwd
-                  ? const SizedBox(width: 16, height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue))
-                  : const Text('Badilisha Password'),
-            ),
-          ),
-        ]),
-      ),
-
       const SizedBox(height: 24),
 
       // ── Save button — kama web: flex justify-end + btn-primary ──

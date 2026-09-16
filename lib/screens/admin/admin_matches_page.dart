@@ -388,7 +388,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _copyPhone(phone),
-                    icon: Icon(Icons.phone_outlined, size: 15),
+                    icon: Icon(Icons.call_rounded, size: 15),
                     label: Text('Piga', style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _kGrey700,
@@ -402,7 +402,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _copyPhone(phone),
-                    icon: Icon(Icons.sms_outlined, size: 15),
+                    icon: Icon(Icons.textsms_rounded, size: 15),
                     label: Text('SMS', style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _kGrey700,
@@ -416,7 +416,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _copyPhone(phone),
-                    icon: Icon(Icons.chat_rounded, size: 15),
+                    icon: Icon(Icons.forum_rounded, size: 15),
                     label: Text('WhatsApp', style: TextStyle(fontSize: 12)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _kGreen,

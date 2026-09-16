@@ -501,7 +501,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   hintText: hint,
                   hintStyle: const TextStyle(color: _kGrey400, fontSize: 13),
                   prefixIcon: const Icon(Icons.search_rounded, color: _kGrey400, size: 18),
-                  fillColor: _kGrey100, filled: true,
+                  fillColor: Colors.white, filled: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),

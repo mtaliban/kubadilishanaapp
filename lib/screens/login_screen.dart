@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final isAdminEmail = _identifierCtrl.text.contains('@');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB), // body bg-grey-50
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Stack(
           children: [

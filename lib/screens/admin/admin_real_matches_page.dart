@@ -457,7 +457,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => _copyPhone(phoneA),
-              icon: Icon(Icons.phone_outlined, size: 14),
+              icon: Icon(Icons.call_rounded, size: 14),
               label: Text('Piga', style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(foregroundColor: _kGrey700, side: BorderSide(color: _kGrey200), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 8)),
             ),
@@ -466,7 +466,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () => _copyPhone(phoneA),
-              icon: Icon(Icons.chat_rounded, size: 14),
+              icon: Icon(Icons.forum_rounded, size: 14),
               label: Text('WhatsApp', style: TextStyle(fontSize: 12)),
               style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 8)),
             ),
@@ -485,14 +485,14 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
               SizedBox(height: 4),
               OutlinedButton.icon(
                 onPressed: () => _copyPhone(phoneA),
-                icon: Icon(Icons.phone_outlined, size: 13),
+                icon: Icon(Icons.call_rounded, size: 13),
                 label: Text('Piga', style: TextStyle(fontSize: 12)),
                 style: OutlinedButton.styleFrom(foregroundColor: _kGrey700, side: BorderSide(color: _kGrey200), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 7)),
               ),
               SizedBox(height: 4),
               ElevatedButton.icon(
                 onPressed: () => _copyPhone(phoneA),
-                icon: Icon(Icons.chat_rounded, size: 13),
+                icon: Icon(Icons.forum_rounded, size: 13),
                 label: Text('WhatsApp', style: TextStyle(fontSize: 11)),
                 style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 7)),
               ),
@@ -510,14 +510,14 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
               SizedBox(height: 4),
               OutlinedButton.icon(
                 onPressed: () => _copyPhone(phoneB),
-                icon: Icon(Icons.phone_outlined, size: 13),
+                icon: Icon(Icons.call_rounded, size: 13),
                 label: Text('Piga', style: TextStyle(fontSize: 12)),
                 style: OutlinedButton.styleFrom(foregroundColor: _kGrey700, side: BorderSide(color: _kGrey200), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 7)),
               ),
               SizedBox(height: 4),
               ElevatedButton.icon(
                 onPressed: () => _copyPhone(phoneB),
-                icon: Icon(Icons.chat_rounded, size: 13),
+                icon: Icon(Icons.forum_rounded, size: 13),
                 label: Text('WhatsApp', style: TextStyle(fontSize: 11)),
                 style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 7)),
               ),
