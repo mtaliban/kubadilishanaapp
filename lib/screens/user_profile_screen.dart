@@ -60,78 +60,72 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: GestureDetector(
-            onTap: () => Navigator.maybePop(context),
-            child: Container(
-              width: 36, height: 36,
+      body: Column(children: [
+        Container(
+          color: Colors.white,
+          padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 12),
+          child: Row(children: [
+            GestureDetector(
+              onTap: () => Navigator.maybePop(context),
+              child: Container(
+                width: 38, height: 38,
+                decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _kGrey700)),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 40, height: 40,
               decoration: BoxDecoration(
-                color: _kGrey100,
-                borderRadius: BorderRadius.circular(10)),
-              child: const Center(child: Icon(Icons.arrow_back, size: 18, color: _kGrey900))),
-          ),
-        ),
-        title: Row(children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              color: _kBlue50,
-              borderRadius: BorderRadius.circular(12)),
-            child: const Center(child: Icon(Icons.person_outline_rounded, size: 22, color: _kBlue)),
-          ),
-          const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(_loading ? 'Wasifu' : name,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2),
-                overflow: TextOverflow.ellipsis),
-            const Text('Taarifa za mtumiaji', style: TextStyle(fontSize: 11, color: _kGrey500)),
+                color: _kBlue50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _kBlue.withValues(alpha: 0.2))),
+              child: const Icon(Icons.person_outline_rounded, size: 20, color: _kBlue)),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(_loading ? 'Wasifu' : name,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900)),
+              const Text('Taarifa za mtumiaji',
+                  style: TextStyle(fontSize: 12, color: _kGrey500)),
+            ])),
           ]),
-        ]),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: _kGrey200),
         ),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _kBlue))
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 56, height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEE2E2),
-                          borderRadius: BorderRadius.circular(16)),
-                        child: const Center(child: Icon(Icons.error_outline, size: 26, color: Color(0xFFDC2626))),
-                      ),
-                      const SizedBox(height: 14),
-                      const Text('Hitilafu ya kupakia wasifu',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-                      const SizedBox(height: 4),
-                      Text(_error!,
-                          style: const TextStyle(fontSize: 11, color: _kGrey400),
-                          textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: _load,
-                        icon: const Icon(Icons.refresh, size: 16),
-                        label: const Text('Jaribu Tena'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _kBlue, foregroundColor: Colors.white,
-                          minimumSize: const Size(140, 44),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
-                    ],
-                  ),
-                )
-              : _buildBody(),
+        Container(height: 1, color: _kGrey200),
+        Expanded(child: _loading
+            ? const Center(child: CircularProgressIndicator(color: _kBlue))
+            : _error != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 56, height: 56,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEE2E2),
+                            borderRadius: BorderRadius.circular(16)),
+                          child: const Center(child: Icon(Icons.error_outline, size: 26, color: Color(0xFFDC2626))),
+                        ),
+                        const SizedBox(height: 14),
+                        const Text('Hitilafu ya kupakia wasifu',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+                        const SizedBox(height: 4),
+                        Text(_error!,
+                            style: const TextStyle(fontSize: 11, color: _kGrey400),
+                            textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: _load,
+                          icon: const Icon(Icons.refresh, size: 16),
+                          label: const Text('Jaribu Tena'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kBlue, foregroundColor: Colors.white,
+                            minimumSize: const Size(140, 44),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
+                      ],
+                    ),
+                  )
+                : _buildBody()),
+      ]),
     );
   }
 

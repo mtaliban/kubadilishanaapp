@@ -711,6 +711,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 ]),
               ),
               const SizedBox(width: 12),
+              const Spacer(),
               if (_selected.isNotEmpty) ...[
                 _SmallBtn(label: 'Fungua', color: _kGreenDk, bg: _kGreen50, border: _kGreen200,
                   onTap: _bulkBusy ? null : () => _bulkAction('enable')),
@@ -720,7 +721,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 const SizedBox(width: 6),
                 _SmallBtn(label: 'Futa', color: _kRed, bg: _kRed50, border: _kRed200,
                   onTap: _bulkBusy ? null : () => _bulkAction('delete')),
-              ],
+              ] else
+                Text('Jumla $_total',
+                  style: const TextStyle(fontSize: 11, color: _kGrey500)),
             ]),
           ),
         ),
@@ -746,62 +749,103 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(children: [
-            // Row 1: Search + Category
-            Row(children: [
-              Expanded(
-                child: _SearchBox(
-                  controller: _searchCtrl,
-                  onSubmit: (v) { setState(() { _q = v; _page = 1; }); _load(); },
-                  onClear: () { _searchCtrl.clear(); setState(() { _q = ''; _page = 1; }); _load(); },
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 110,
-                child: SelectField(
-                  hint: 'Idara Zote',
-                  value: _category.isEmpty ? null : (_category == 'health' ? 'Afya' : 'Elimu'),
-                  onTap: () async {
-                    final v = await showSelectSheet<String>(context,
-                      title: 'Chagua Idara',
-                      items: const [
-                        (value: '', label: 'Zote', subtitle: null as String?),
-                        (value: 'health', label: 'Afya', subtitle: null as String?),
-                        (value: 'education', label: 'Elimu', subtitle: null as String?),
-                      ],
-                      selected: _category);
-                    if (v != null && v != _category) {
-                      setState(() { _category = v; _page = 1; _subjectFilter = ''; _facilityId = ''; _facilities = []; });
-                      _loadSubjects();
-                      if (_districtId != null) { _onDistrictChange(_districtId); } else { _load(); }
-                    }
-                  },
-                ),
-              ),
-            ]),
-            // Row 2: Region → District → Facility → Subject (cascading)
-            const SizedBox(height: 8),
-            _LocationFiltersRow(
-              regions: _regions, districts: _districts,
-              facilities: _facilities, subjects: _subjects,
-              regionId: _regionId, districtId: _districtId,
-              facilityId: _facilityId, subjectFilter: _subjectFilter,
-              onRegion: _onRegionChange,
-              onDistrict: _onDistrictChange,
-              onFacility: (v) { setState(() { _facilityId = v; _page = 1; }); _load(); },
-              onSubject: (v) { setState(() { _subjectFilter = v; _page = 1; }); _load(); },
+            // Search — full width
+            _SearchBox(
+              controller: _searchCtrl,
+              onSubmit: (v) { setState(() { _q = v; _page = 1; }); _load(); },
+              onClear: () { _searchCtrl.clear(); setState(() { _q = ''; _page = 1; }); _load(); },
             ),
+            const SizedBox(height: 8),
+            // Row 1: Idara | Mkoa
+            Row(children: [
+              Expanded(child: SelectField(
+                hint: 'Idara zote',
+                value: _category.isEmpty ? null : (_category == 'health' ? 'Afya' : 'Elimu'),
+                onTap: () async {
+                  final v = await showSelectSheet<String>(context,
+                    title: 'Chagua Idara',
+                    items: const [
+                      (value: '', label: 'Zote', subtitle: null as String?),
+                      (value: 'health', label: 'Afya', subtitle: null as String?),
+                      (value: 'education', label: 'Elimu', subtitle: null as String?),
+                    ],
+                    selected: _category);
+                  if (v != null && v != _category) {
+                    setState(() { _category = v; _page = 1; _subjectFilter = ''; _facilityId = ''; _facilities = []; });
+                    _loadSubjects();
+                    if (_districtId != null) { _onDistrictChange(_districtId); } else { _load(); }
+                  }
+                },
+              )),
+              const SizedBox(width: 8),
+              Expanded(child: SelectField(
+                hint: 'Mkoa wote',
+                value: _regionId == null ? null : (_regions.cast<dynamic>().firstWhere(
+                  (r) { final id = r['id'] is int ? r['id'] as int : int.tryParse('${r['id']}'); return id == _regionId; },
+                  orElse: () => null,
+                )?['name'] as String?),
+                onTap: () async {
+                  final items = [
+                    (value: 0, label: 'Mkoa wote', subtitle: null as String?),
+                    ..._regions.map((r) {
+                      final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
+                      return (value: id, label: '${r['name'] ?? r['region_name'] ?? r['id']}', subtitle: null as String?);
+                    }),
+                  ];
+                  final v = await showSelectSheet<int>(context,
+                    title: 'Chagua Mkoa', items: items,
+                    selected: _regionId ?? 0, searchable: _regions.length > 6);
+                  if (v != null) _onRegionChange(v == 0 ? null : v);
+                },
+              )),
+            ]),
+            const SizedBox(height: 8),
+            // Row 2: Wilaya | Masomo
+            Row(children: [
+              Expanded(child: SelectField(
+                hint: 'Wilaya zote',
+                value: _districtId == null ? null : (_districts.cast<dynamic>().firstWhere(
+                  (d) { final id = d['id'] is int ? d['id'] as int : int.tryParse('${d['id']}'); return id == _districtId; },
+                  orElse: () => null,
+                )?['name'] as String?),
+                disabled: _regionId == null,
+                onTap: _regionId == null ? null : () async {
+                  final items = [
+                    (value: 0, label: 'Wilaya zote', subtitle: null as String?),
+                    ..._districts.map((d) {
+                      final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
+                      return (value: id, label: '${d['name'] ?? d['district_name'] ?? d['id']}', subtitle: null as String?);
+                    }),
+                  ];
+                  final v = await showSelectSheet<int>(context,
+                    title: 'Chagua Wilaya', items: items,
+                    selected: _districtId ?? 0, searchable: _districts.length > 6);
+                  if (v != null) _onDistrictChange(v == 0 ? null : v);
+                },
+              )),
+              const SizedBox(width: 8),
+              Expanded(child: SelectField(
+                hint: 'Masomo yote',
+                value: _subjectFilter.isEmpty ? null : _subjectFilter,
+                onTap: () async {
+                  final items = [
+                    (value: '', label: 'Masomo yote', subtitle: null as String?),
+                    ..._subjects.map((s) {
+                      final label = s is String ? s : '${s['name'] ?? s}';
+                      final val   = s is String ? s : '${s['name'] ?? s}';
+                      return (value: val, label: label, subtitle: null as String?);
+                    }),
+                  ];
+                  final v = await showSelectSheet<String>(context,
+                    title: 'Chagua Somo', items: items,
+                    selected: _subjectFilter, searchable: _subjects.length > 8);
+                  if (v != null) { setState(() { _subjectFilter = v; _page = 1; }); _load(); }
+                },
+              )),
+            ]),
           ]),
         ),
         const SizedBox(height: 8),
-
-        // ── COUNT ────────────────────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('Jumla $_total',
-            style: const TextStyle(fontSize: 11, color: _kGrey500)),
-        ),
-        const SizedBox(height: 6),
 
         // ── TABLE ─────────────────────────────────────────────────────────────
         Expanded(
@@ -925,20 +969,22 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 const SizedBox(height: 2),
                 Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 5),
-                // Category + Cadre + Region
+                // Category + Cadre
                 Wrap(spacing: 4, runSpacing: 3, children: [
                   _badge(isEdu ? 'Elimu' : 'Afya',
                     isEdu ? _kGreenDk : _kBlue,
                     isEdu ? _kGreen50 : _kBlue50),
                   if (cadre.isNotEmpty)
                     _badge(cadre, _kEmerald, _kEmerald.withValues(alpha: 0.1)),
-                  if (region.isNotEmpty)
-                    Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.location_on_outlined, size: 10, color: _kGrey400),
-                      const SizedBox(width: 2),
-                      Text(region, style: const TextStyle(fontSize: 10, color: _kGrey500)),
-                    ]),
                 ]),
+                if (region.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    const Icon(Icons.location_on_outlined, size: 11, color: _kGrey400),
+                    const SizedBox(width: 3),
+                    Text(region, style: const TextStyle(fontSize: 11, color: _kGrey500)),
+                  ]),
+                ],
                 const SizedBox(height: 5),
                 // Status + Payment + Admin role
                 Wrap(spacing: 4, runSpacing: 3, children: [
@@ -1461,151 +1507,6 @@ class _SearchBox extends StatelessWidget {
         onSubmitted: onSubmit,
       ),
     );
-  }
-}
-
-// ── LOCATION CASCADE FILTER ROW ───────────────────────────────────────────────
-class _LocationFiltersRow extends StatelessWidget {
-  final List<dynamic> regions;
-  final List<dynamic> districts;
-  final List<dynamic> facilities;
-  final List<dynamic> subjects;
-  final int?     regionId;
-  final int?     districtId;
-  final String   facilityId;
-  final String   subjectFilter;
-  final ValueChanged<int?>    onRegion;
-  final ValueChanged<int?>    onDistrict;
-  final ValueChanged<String>  onFacility;
-  final ValueChanged<String>  onSubject;
-
-  const _LocationFiltersRow({
-    required this.regions,
-    required this.districts,
-    required this.facilities,
-    required this.subjects,
-    required this.regionId,
-    required this.districtId,
-    required this.facilityId,
-    required this.subjectFilter,
-    required this.onRegion,
-    required this.onDistrict,
-    required this.onFacility,
-    required this.onSubject,
-  });
-
-  String? _regionLabel() {
-    if (regionId == null) return null;
-    final r = regions.firstWhere(
-      (x) { final id = x['id'] is int ? x['id'] as int : int.tryParse('${x['id']}'); return id == regionId; },
-      orElse: () => null,
-    );
-    return r != null ? '${r['name'] ?? r['region_name'] ?? r['id']}' : null;
-  }
-
-  String? _districtLabel() {
-    if (districtId == null) return null;
-    final d = districts.firstWhere(
-      (x) { final id = x['id'] is int ? x['id'] as int : int.tryParse('${x['id']}'); return id == districtId; },
-      orElse: () => null,
-    );
-    return d != null ? '${d['name'] ?? d['district_name'] ?? d['id']}' : null;
-  }
-
-  String? _facilityLabel() {
-    if (facilityId.isEmpty) return null;
-    final f = facilities.firstWhere(
-      (x) => '${x['id'] ?? x['facility_id']}' == facilityId,
-      orElse: () => null,
-    );
-    return f != null ? '${f['name'] ?? f['facility_name'] ?? facilityId}' : null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [
-      Row(children: [
-        Expanded(child: SelectField(
-          hint: 'Mkoa wote',
-          value: _regionLabel(),
-          onTap: () async {
-            final items = [
-              (value: 0, label: 'Mkoa wote', subtitle: null as String?),
-              ...regions.map((r) {
-                final id = r['id'] is int ? r['id'] as int : (int.tryParse('${r['id']}') ?? 0);
-                return (value: id, label: '${r['name'] ?? r['region_name'] ?? r['id']}', subtitle: null as String?);
-              }),
-            ];
-            final v = await showSelectSheet<int>(context,
-              title: 'Chagua Mkoa', items: items,
-              selected: regionId ?? 0, searchable: regions.length > 6);
-            if (v != null) onRegion(v == 0 ? null : v);
-          },
-        )),
-        const SizedBox(width: 6),
-        Expanded(child: SelectField(
-          hint: 'Wilaya zote',
-          value: _districtLabel(),
-          disabled: regionId == null,
-          onTap: regionId == null ? null : () async {
-            final items = [
-              (value: 0, label: 'Wilaya zote', subtitle: null as String?),
-              ...districts.map((d) {
-                final id = d['id'] is int ? d['id'] as int : (int.tryParse('${d['id']}') ?? 0);
-                return (value: id, label: '${d['name'] ?? d['district_name'] ?? d['id']}', subtitle: null as String?);
-              }),
-            ];
-            final v = await showSelectSheet<int>(context,
-              title: 'Chagua Wilaya', items: items,
-              selected: districtId ?? 0, searchable: districts.length > 6);
-            if (v != null) onDistrict(v == 0 ? null : v);
-          },
-        )),
-      ]),
-      if (facilities.isNotEmpty || subjects.isNotEmpty) ...[
-        const SizedBox(height: 6),
-        Row(children: [
-          if (facilities.isNotEmpty)
-            Expanded(child: SelectField(
-              hint: 'Vituo vyote',
-              value: _facilityLabel(),
-              onTap: () async {
-                final items = [
-                  (value: '', label: 'Vituo vyote', subtitle: null as String?),
-                  ...facilities.map((f) {
-                    final id = '${f['id'] ?? f['facility_id']}';
-                    return (value: id, label: '${f['name'] ?? f['facility_name'] ?? id}', subtitle: null as String?);
-                  }),
-                ];
-                final v = await showSelectSheet<String>(context,
-                  title: 'Chagua Kituo', items: items,
-                  selected: facilityId, searchable: facilities.length > 6);
-                if (v != null) onFacility(v);
-              },
-            )),
-          if (facilities.isNotEmpty && subjects.isNotEmpty) const SizedBox(width: 6),
-          if (subjects.isNotEmpty)
-            Expanded(child: SelectField(
-              hint: 'Masomo yote',
-              value: subjectFilter.isEmpty ? null : subjectFilter,
-              onTap: () async {
-                final items = [
-                  (value: '', label: 'Masomo yote', subtitle: null as String?),
-                  ...subjects.map((s) {
-                    final label = s is String ? s : '${s['name'] ?? s}';
-                    final val   = s is String ? s : '${s['name'] ?? s}';
-                    return (value: val, label: label, subtitle: null as String?);
-                  }),
-                ];
-                final v = await showSelectSheet<String>(context,
-                  title: 'Chagua Somo', items: items,
-                  selected: subjectFilter, searchable: subjects.length > 8);
-                if (v != null) onSubject(v);
-              },
-            )),
-        ]),
-      ],
-    ]);
   }
 }
 

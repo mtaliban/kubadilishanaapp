@@ -673,15 +673,36 @@ class _MatchCard extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // ── Two user halves side by side (matches website grid) ─
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _UserHalf(user: userA)),
-              const SizedBox(width: 8),
-              Expanded(child: _UserHalf(user: userB)),
-            ],
+          // ── User A ─────────────────────────────────────────────
+          _UserHalf(user: userA),
+
+          // ── Swap divider ───────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(children: [
+              Expanded(child: Container(height: 1, color: _kGrey200)),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _kBlue50,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _kBlueLt),
+                ),
+                child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.swap_vert_rounded, size: 14, color: _kBlue),
+                  SizedBox(width: 5),
+                  Text('KUBADILISHANA',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800,
+                          color: _kBlue, letterSpacing: 0.4)),
+                ]),
+              ),
+              Expanded(child: Container(height: 1, color: _kGrey200)),
+            ]),
           ),
+
+          // ── User B ─────────────────────────────────────────────
+          _UserHalf(user: userB),
         ],
       ),
     );
@@ -732,7 +753,7 @@ class _ScoreBadge extends StatelessWidget {
   }
 }
 
-// ── User half (compact side-by-side card) ──────────────────────────
+// ── User row (full-width stacked layout) ──────────────────────────
 class _UserHalf extends StatelessWidget {
   final Map<String, dynamic> user;
   const _UserHalf({required this.user});
@@ -748,7 +769,6 @@ class _UserHalf extends StatelessWidget {
     final online   = p['online']      == true;
     final verified = p['is_verified'] == true;
 
-    // Parse destinations (handle both List<Map> and List<String>)
     final rawDests = p['desired_destinations'];
     final dests = <String>[];
     if (rawDests is List) {
@@ -765,7 +785,7 @@ class _UserHalf extends StatelessWidget {
 
     final subjects = (p['subjects'] as List?)
         ?.map((s) => s.toString())
-        .take(3)
+        .take(5)
         .toList() ?? <String>[];
 
     final initials = name.trim().isNotEmpty
@@ -774,180 +794,115 @@ class _UserHalf extends StatelessWidget {
         : '?';
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _kGrey50,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _kGrey200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Avatar + name + verified ───────────────────────────
-          Row(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(color: _kBlue, shape: BoxShape.circle),
-                    alignment: Alignment.center,
-                    child: Text(
-                      initials,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (online)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 9,
-                        height: 9,
-                        decoration: BoxDecoration(
-                          color: _kGreen,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                      ),
-                    ),
-                ],
+          // ── Avatar row ────────────────────────────────────────
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Stack(clipBehavior: Clip.none, children: [
+              Container(
+                width: 44, height: 44,
+                decoration: const BoxDecoration(color: _kBlue, shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: Text(initials,
+                    style: const TextStyle(color: Colors.white, fontSize: 15,
+                        fontWeight: FontWeight.bold)),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: _kGrey900,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                    if (verified) ...[
-                      const SizedBox(width: 2),
-                      const Icon(Icons.check_circle, size: 11, color: _kGreen600),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          // cadre
-          if (cadre.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              cadre,
-              style: const TextStyle(fontSize: 11, color: _kGrey500),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ],
-
-          const SizedBox(height: 4),
-
-          // Kutoka
-          if (region.isNotEmpty)
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 11, color: _kGrey500),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Text(
-                    'Kutoka: ${[region, district].where((s) => s.isNotEmpty).join(', ')}',
-                    style: const TextStyle(fontSize: 11, color: _kGrey500),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ),
-              ],
-            ),
-
-          // Anataka
-          if (dests.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                const Icon(Icons.swap_horiz, size: 11, color: _kGrey500),
-                const SizedBox(width: 2),
-                Expanded(
-                  child: Text(
-                    'Anataka: ${dests.join(', ')}',
-                    style: const TextStyle(fontSize: 11, color: _kGrey500),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          // Subjects (max 3 for compact layout)
-          if (subjects.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 3,
-              runSpacing: 3,
-              children: subjects.map((s) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: BoxDecoration(
-                  color: _kBlue50,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: _kBlueLt),
-                ),
-                child: Text(
-                  s,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: _kBlue,
-                  ),
-                ),
-              )).toList(),
-            ),
-          ],
-
-          // Phone full-width
-          if (phone.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: _kGrey200),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.phone_outlined, size: 11, color: _kGrey500),
+              if (online)
+                Positioned(bottom: 0, right: 0,
+                  child: Container(
+                    width: 11, height: 11,
+                    decoration: BoxDecoration(color: _kGreen, shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5)),
+                  )),
+            ]),
+            const SizedBox(width: 10),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // Name + verified tick
+              Row(children: [
+                Expanded(child: Text(name,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
+                        color: _kGrey900),
+                    overflow: TextOverflow.ellipsis)),
+                if (verified) ...[
                   const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      phone,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: _kGrey700,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                  const Icon(Icons.check_circle_rounded, size: 14, color: _kGreen600),
                 ],
-              ),
+              ]),
+              const SizedBox(height: 2),
+              // Phone
+              if (phone.isNotEmpty)
+                Row(children: [
+                  const Icon(Icons.phone_outlined, size: 12, color: _kGrey400),
+                  const SizedBox(width: 4),
+                  Text(phone,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                          color: _kBlue)),
+                ]),
+            ])),
+          ]),
+
+          // ── Cadre pill ────────────────────────────────────────
+          if (cadre.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                  color: _kBlue50,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: _kBlueLt)),
+              child: Text(cadre,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                      color: _kBlue)),
             ),
+          ],
+
+          const SizedBox(height: 8),
+
+          // ── Kutoka ────────────────────────────────────────────
+          if (region.isNotEmpty)
+            Row(children: [
+              const Icon(Icons.location_on_outlined, size: 13, color: _kGrey400),
+              const SizedBox(width: 4),
+              Expanded(child: Text(
+                  'Kutoka: ${[region, district].where((s) => s.isNotEmpty).join(' — ')}',
+                  style: const TextStyle(fontSize: 12, color: _kGrey500),
+                  overflow: TextOverflow.ellipsis)),
+            ]),
+
+          // ── Anataka ───────────────────────────────────────────
+          if (dests.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Icon(Icons.arrow_forward_rounded, size: 13, color: _kGreen600),
+              const SizedBox(width: 4),
+              Expanded(child: Text(
+                  'Anataka: ${dests.join(', ')}',
+                  style: const TextStyle(fontSize: 12, color: _kGreen700,
+                      fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis, maxLines: 2)),
+            ]),
+          ],
+
+          // ── Subjects ──────────────────────────────────────────
+          if (subjects.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(spacing: 4, runSpacing: 4, children: subjects.map((s) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                  color: _kBlue50,
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(color: _kBlueLt)),
+              child: Text(s,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                      color: _kBlue)),
+            )).toList()),
           ],
         ],
       ),

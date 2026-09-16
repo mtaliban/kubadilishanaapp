@@ -478,17 +478,52 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
     );
   }
 
-  Widget _empty() => Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-    Container(width: 56, height: 56,
-      decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(28)),
-      child: const Icon(Icons.receipt_long, size: 28, color: _kGrey400)),
-    const SizedBox(height: 10),
-    Text(_filter == 'verifying' ? 'Hakuna malipo yanayosubiri' : 'Hakuna malipo',
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey500)),
-    const SizedBox(height: 3),
-    const Text('Malipo mapya yataonekana hapa',
-      style: TextStyle(fontSize: 11, color: _kGrey400)),
-  ]));
+  Widget _empty() {
+    final (emptyColor, emptyBg, emptyIcon, emptyTitle, emptyBody) = switch (_filter) {
+      'verifying' => (_kAmber700, _kAmber50, Icons.receipt_outlined,
+          'Hakuna malipo yanayosubiri',
+          'Malipo mapya yatakayohitaji idhini yataonekana hapa yatakapowasilishwa'),
+      'rejected'  => (_kRed, _kRed50, Icons.cancel_outlined,
+          'Hakuna malipo yaliyokataliwa',
+          'Malipo yaliyokataliwa yataonekana hapa'),
+      'approved'  => (_kGreenDk, _kGreen50, Icons.check_circle_outline,
+          'Hakuna malipo yaliyoidhinishwa',
+          'Malipo yaliyoidhinishwa yataonekana hapa'),
+      _           => (_kBlue, _kBlue50, Icons.receipt_long_rounded,
+          'Hakuna malipo', 'Malipo yote yataonekana hapa'),
+    };
+    return Center(child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Container(
+          width: 80, height: 80,
+          decoration: BoxDecoration(color: emptyBg, shape: BoxShape.circle),
+          child: Icon(emptyIcon, size: 36, color: emptyColor),
+        ),
+        const SizedBox(height: 18),
+        Text(emptyTitle,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _kGrey900),
+          textAlign: TextAlign.center),
+        const SizedBox(height: 8),
+        Text(emptyBody,
+          style: const TextStyle(fontSize: 13, color: _kGrey500),
+          textAlign: TextAlign.center),
+        const SizedBox(height: 20),
+        OutlinedButton.icon(
+          onPressed: _load,
+          icon: const Icon(Icons.refresh_rounded, size: 16),
+          label: const Text('Onyesha upya'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _kGrey700,
+            side: const BorderSide(color: _kGrey200),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ]),
+    ));
+  }
 }
 
 // ── Stat card ──────────────────────────────────────────────────────────────
@@ -654,12 +689,17 @@ class _PayCard extends StatelessWidget {
     final hasMessages = (p['messages'] as List?)?.isNotEmpty == true;
     final initial    = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
+    final borderColor = switch (status) {
+      'approved' => _kGreen200,
+      'rejected' => _kRed200,
+      _          => _kGrey200,
+    };
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kGrey200),
+        border: Border.all(color: borderColor),
         boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
       child: ClipRRect(
@@ -820,9 +860,9 @@ class _PayCard extends StatelessWidget {
                     child: Column(children: [
                       const Align(alignment: Alignment.centerLeft,
                         child: Row(children: [
-                          Icon(Icons.chat_bubble_outline_rounded, size: 11, color: _kGrey400),
-                          SizedBox(width: 5),
-                          Text('Mazungumzo', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _kGrey500)),
+                          Icon(Icons.chat_bubble_outline_rounded, size: 14, color: _kGrey500),
+                          SizedBox(width: 6),
+                          Text('Mazungumzo', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kGrey700)),
                         ])),
                       const SizedBox(height: 8),
                       _ChatMessages(msgs: chatMsgs),

@@ -167,43 +167,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: GestureDetector(
-            onTap: () => Navigator.maybePop(context),
-            child: Container(
-              width: 36, height: 36,
+      body: Column(children: [
+        Container(
+          color: Colors.white,
+          padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 12),
+          child: Row(children: [
+            GestureDetector(
+              onTap: () => Navigator.maybePop(context),
+              child: Container(
+                width: 38, height: 38,
+                decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _kGrey700)),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 40, height: 40,
               decoration: BoxDecoration(
-                color: _kGrey100,
-                borderRadius: BorderRadius.circular(10)),
-              child: const Center(child: Icon(Icons.arrow_back, size: 18, color: _kGrey900))),
-          ),
-        ),
-        title: Row(children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              color: _kBlue50,
-              borderRadius: BorderRadius.circular(12)),
-            child: const Center(child: Icon(Icons.settings_outlined, size: 22, color: _kBlue)),
-          ),
-          const SizedBox(width: 12),
-          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Mipangilio',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2)),
-            Text('Arifa na mikoa inayofuatwa', style: TextStyle(fontSize: 11, color: _kGrey500)),
+                color: _kBlue50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _kBlue.withValues(alpha: 0.2))),
+              child: const Icon(Icons.settings_outlined, size: 20, color: _kBlue)),
+            const SizedBox(width: 12),
+            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Mipangilio',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900)),
+              Text('Arifa na mikoa inayofuatwa',
+                  style: TextStyle(fontSize: 12, color: _kGrey500)),
+            ])),
           ]),
-        ]),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: _kGrey200),
         ),
-      ),
-      body: ListView(
+        Container(height: 1, color: _kGrey200),
+        Expanded(child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
         children: [
           // ── Section 1: Notification Preferences ──
@@ -314,7 +308,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ]),
           ),
         ],
-      ),
+        )),
+      ]),
     );
   }
 

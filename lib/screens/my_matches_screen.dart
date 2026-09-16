@@ -100,31 +100,37 @@ class _MyMatchesScreenState extends State<MyMatchesScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _kGrey50,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: _kGrey900,
-        elevation: 0,
-        centerTitle: false,
-        title: Row(children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              color: _kBlue50,
-              borderRadius: BorderRadius.circular(12)),
-            child: const Center(child: Icon(Icons.people_outline, size: 22, color: _kBlue)),
-          ),
-          const SizedBox(width: 12),
-          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Mechi Zangu',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2)),
-            Text('Watu wanaofanana nawe', style: TextStyle(fontSize: 11, color: _kGrey500)),
-          ]),
-        ]),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(44),
-          child: Container(
-            color: Colors.white,
-            child: TabBar(
+      body: Column(children: [
+        Container(
+          color: Colors.white,
+          padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 0),
+          child: Column(children: [
+            Row(children: [
+              GestureDetector(
+                onTap: () => Navigator.maybePop(context),
+                child: Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _kGrey700)),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: _kBlue50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _kBlue200.withValues(alpha: 0.6))),
+                child: const Icon(Icons.people_outline, size: 20, color: _kBlue)),
+              const SizedBox(width: 12),
+              const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Mechi Zangu',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900)),
+                Text('Watu wanaofanana nawe',
+                  style: TextStyle(fontSize: 12, color: _kGrey500)),
+              ])),
+            ]),
+            const SizedBox(height: 8),
+            TabBar(
               controller: _tabCtrl,
               labelColor: _kBlue,
               unselectedLabelColor: _kGrey500,
@@ -137,16 +143,17 @@ class _MyMatchesScreenState extends State<MyMatchesScreen>
                 Tab(text: 'Match za Kweli'),
               ],
             ),
-          ),
+          ]),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabCtrl,
-        children: const [
-          _MyMatchesTab(),
-          _RealMatchesTab(),
-        ],
-      ),
+        Container(height: 1, color: _kGrey200),
+        Expanded(child: TabBarView(
+          controller: _tabCtrl,
+          children: const [
+            _MyMatchesTab(),
+            _RealMatchesTab(),
+          ],
+        )),
+      ]),
     );
   }
 }

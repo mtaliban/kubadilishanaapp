@@ -181,65 +181,61 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                       itemBuilder: (_, i) {
                         final item = list[i];
                         final isSel = item.value == widget.selected;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: GestureDetector(
-                            onTap: () => Navigator.pop(context, item.value),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 16),
-                              decoration: BoxDecoration(
-                                color: isSel
-                                    ? const Color(0xFFEFF6FF)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isSel
-                                      ? const Color(0xFFBFDBFE)
-                                      : AppColors.border,
-                                  width: isSel ? 1.5 : 1,
+                        return GestureDetector(
+                          onTap: () => Navigator.pop(context, item.value),
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 16),
+                            decoration: isSel
+                                ? BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: const Color(0xFFBFDBFE),
+                                      width: 1.5,
+                                    ),
+                                  )
+                                : null,
+                            child: Row(children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(item.label,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: isSel
+                                              ? FontWeight.w700
+                                              : FontWeight.w400,
+                                          color: isSel
+                                              ? AppColors.primary
+                                              : AppColors.textPrimary,
+                                        )),
+                                    if (item.subtitle != null &&
+                                        item.subtitle!.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(item.subtitle!,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.textLight)),
+                                    ],
+                                  ],
                                 ),
                               ),
-                              child: Row(children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(item.label,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: isSel
-                                                ? FontWeight.w700
-                                                : FontWeight.w500,
-                                            color: isSel
-                                                ? AppColors.primary
-                                                : AppColors.textPrimary,
-                                          )),
-                                      if (item.subtitle != null &&
-                                          item.subtitle!.isNotEmpty) ...[
-                                        const SizedBox(height: 2),
-                                        Text(item.subtitle!,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                color: AppColors.textLight)),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                if (isSel) ...[
-                                  const SizedBox(width: 12),
-                                  const Icon(Icons.check_rounded,
-                                      size: 22,
-                                      color: AppColors.primary),
-                                ],
-                              ]),
-                            ),
+                              if (isSel) ...[
+                                const SizedBox(width: 12),
+                                const Icon(Icons.check_rounded,
+                                    size: 22,
+                                    color: AppColors.primary),
+                              ],
+                            ]),
                           ),
                         );
                       },
@@ -275,17 +271,23 @@ class SelectField extends StatelessWidget {
       onTap: disabled ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        height: 48,
+        height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: disabled ? AppColors.grey100 : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          color: disabled
+              ? AppColors.grey100
+              : hasValue
+                  ? const Color(0xFFEFF6FF)
+                  : Colors.white,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: disabled ? AppColors.grey200 : AppColors.border,
+            color: disabled
+                ? AppColors.grey200
+                : hasValue
+                    ? const Color(0xFF93C5FD)
+                    : AppColors.border,
+            width: hasValue ? 1.5 : 1,
           ),
-          boxShadow: disabled ? null : const [
-            BoxShadow(color: Color(0x07000000), blurRadius: 6, offset: Offset(0, 2)),
-          ],
         ),
         child: Row(children: [
           if (leading != null) ...[leading!, const SizedBox(width: 10)],
@@ -295,7 +297,7 @@ class SelectField extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
                 color: hasValue ? AppColors.textPrimary : AppColors.textLight,
               ),
