@@ -221,24 +221,24 @@ class _AdminShellState extends State<AdminShell> {
                   const Divider(height: 1, color: _kGrey200, indent: 16, endIndent: 16),
                   _section('MFUMO'),
                   _item(Icons.notifications_none_rounded, 'Matangazo', 5),
-                  _item(Icons.receipt_long_outlined, 'Malipo', 6),
+                  _item(Icons.payments_outlined, 'Malipo', 6),
                   _item(Icons.phone_in_talk_outlined, 'Waliopigiana', 7),
-                  _item(Icons.feedback_outlined, 'Maoni', 8),
+                  _item(Icons.assignment_outlined, 'Maoni', 8),
                   const SizedBox(height: 8),
                 ],
               ),
             ),
             const Divider(height: 1, color: _kGrey200),
-            // Wasifu wangu
+            // Wasifu wangu — kama picha: avatar + "Wasifu wangu" + arrow
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               leading: CircleAvatar(
-                radius: 18,
+                radius: 20,
                 backgroundColor: _kBlue,
-                child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
               ),
-              title: Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey900), overflow: TextOverflow.ellipsis),
-              subtitle: const Text('Wasifu wangu', style: TextStyle(fontSize: 11, color: _kGrey500)),
+              title: const Text('Wasifu wangu', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey900)),
+              subtitle: Text(name, style: const TextStyle(fontSize: 11, color: _kGrey500), overflow: TextOverflow.ellipsis),
               trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: _kGrey400),
               onTap: () { Navigator.pop(context); Navigator.pushNamed(context, '/profile'); },
             ),
@@ -279,7 +279,6 @@ class _AdminShellState extends State<AdminShell> {
         decoration: BoxDecoration(
           color: active ? _kBlueBg : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          border: active ? Border(left: BorderSide(color: _kBlue, width: 3)) : null,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
