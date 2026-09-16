@@ -10,17 +10,10 @@ const _kAmberBg = Color(0xFFFEF3C7);
 const _kRed     = Color(0xFFDC2626);
 const _kRedBg   = Color(0xFFFEE2E2);
 const _kGrey900 = Color(0xFF111827);
-const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
-const _kGrey400 = Color(0xFF9CA3AF);
-const _kGrey200 = Color(0xFFE5E7EB);
-const _kGrey100 = Color(0xFFF3F4F6);
-const _kPurple  = Color(0xFF7C3AED);
-const _kPurpleBg = Color(0xFFF5F3FF);
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
-
   @override
   State<AdminDashboardPage> createState() => _AdminDashboardPageState();
 }
@@ -33,251 +26,181 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   void initState() {
     super.initState();
-    _loadStats();
+    _load();
   }
 
-  Future<void> _loadStats() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
     try {
       final res = await ApiService().adminStats();
       if (!mounted) return;
       setState(() {
-        _stats = (res.data as Map<String, dynamic>?) ?? {};
+        _stats = (res.data as Map<String, dynamic>? ?? {});
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+      setState(() { _loading = false; _error = e.toString(); });
     }
-  }
-
-  int _int(String key) => (_stats[key] as num?)?.toInt() ?? 0;
-
-  Widget _statCard({
-    required String label,
-    required int value,
-    required IconData icon,
-    required Color bg,
-    required Color iconColor,
-    required Color textColor,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _kGrey200),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 20, color: iconColor),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value.toString(),
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: _kGrey500,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _activityRow(IconData icon, Color iconColor, String title, String sub) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: _kGrey100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 18, color: iconColor),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey900)),
-                Text(sub, style: const TextStyle(fontSize: 12, color: _kGrey500)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: _kBlue));
-    }
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 48, color: _kRed),
-            const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: _kGrey700), textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadStats,
-              style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white),
-              child: const Text('Jaribu Tena'),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: _kBlue,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        color: _kBlueBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.workspace_premium, color: _kBlue, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Admin Panel',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                        Text('Muhtasari wa mfumo',
+                            style: TextStyle(fontSize: 12, color: _kGrey500)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
+            if (_loading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator(color: _kBlue)),
+              )
+            else if (_error != null)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, color: _kRed, size: 48),
+                      const SizedBox(height: 12),
+                      Text('Kosa la kupakia data', style: TextStyle(color: _kGrey500)),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Jaribu tena'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kBlue, foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.45,
+                  ),
+                  delegate: SliverChildListDelegate([
+                    _StatCard(
+                      icon: Icons.group_outlined,
+                      label: 'Watumiaji',
+                      value: '${_stats['users'] ?? 0}',
+                      color: _kBlue,
+                      bgColor: _kBlueBg,
+                    ),
+                    _StatCard(
+                      icon: Icons.check_circle_outline,
+                      label: 'Wanaolipa',
+                      value: '${_stats['paid'] ?? 0}',
+                      color: _kGreen,
+                      bgColor: _kGreenBg,
+                    ),
+                    _StatCard(
+                      icon: Icons.cancel_outlined,
+                      label: 'Hawajalipia',
+                      value: '${_stats['unpaid'] ?? 0}',
+                      color: _kRed,
+                      bgColor: _kRedBg,
+                    ),
+                    _StatCard(
+                      icon: Icons.notifications_outlined,
+                      label: 'Matangazo',
+                      value: '${_stats['announcements'] ?? 0}',
+                      color: _kAmber,
+                      bgColor: _kAmberBg,
+                    ),
+                    _StatCard(
+                      icon: Icons.receipt_long_outlined,
+                      label: 'Malipo',
+                      value: '${_stats['payments'] ?? 0}',
+                      color: const Color(0xFF7C3AED),
+                      bgColor: const Color(0xFFF3E8FF),
+                    ),
+                    _StatCard(
+                      icon: Icons.swap_horiz,
+                      label: 'Mechi',
+                      value: '${_stats['matches'] ?? 0}',
+                      color: const Color(0xFF0D9488),
+                      bgColor: const Color(0xFFCCFBF1),
+                    ),
+                  ]),
+                ),
+              ),
           ],
         ),
-      );
-    }
+      ),
+    );
+  }
+}
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final Color bgColor;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.bgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _kBlueBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.bar_chart_rounded, color: _kBlue, size: 24),
-              ),
-              const SizedBox(width: 12),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Dashboard', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kGrey900)),
-                  Text('Muhtasari wa mfumo', style: TextStyle(fontSize: 13, color: _kGrey500)),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              _statCard(
-                label: 'Watumiaji',
-                value: _int('users'),
-                icon: Icons.group_rounded,
-                bg: _kBlueBg,
-                iconColor: _kBlue,
-                textColor: _kBlue,
-              ),
-              const SizedBox(width: 12),
-              _statCard(
-                label: 'Wanaolipa',
-                value: _int('paid'),
-                icon: Icons.check_circle_rounded,
-                bg: _kGreenBg,
-                iconColor: _kGreen,
-                textColor: _kGreen,
-              ),
-              const SizedBox(width: 12),
-              _statCard(
-                label: 'Hawajalipia',
-                value: _int('unpaid'),
-                icon: Icons.cancel_rounded,
-                bg: _kAmberBg,
-                iconColor: _kAmber,
-                textColor: _kAmber,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _statCard(
-                label: 'Matangazo',
-                value: _int('announcements'),
-                icon: Icons.campaign_rounded,
-                bg: _kPurpleBg,
-                iconColor: _kPurple,
-                textColor: _kPurple,
-              ),
-              const SizedBox(width: 12),
-              _statCard(
-                label: 'Malipo Pending',
-                value: _int('pending_payments'),
-                icon: Icons.hourglass_empty_rounded,
-                bg: _kAmberBg,
-                iconColor: _kAmber,
-                textColor: _kAmber,
-              ),
-              const SizedBox(width: 12),
-              _statCard(
-                label: 'Mechi',
-                value: _int('matches'),
-                icon: Icons.auto_awesome_rounded,
-                bg: _kBlueBg,
-                iconColor: _kBlue,
-                textColor: _kBlue,
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _kGrey200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Shughuli za Hivi Karibuni', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _kGrey900)),
-                const SizedBox(height: 4),
-                Container(height: 1, color: _kGrey200),
-                _activityRow(Icons.person_add_alt_rounded, _kBlue, 'Watumiaji wapya', 'Angalia watumiaji waliojisajili hivi karibuni'),
-                Container(height: 1, color: _kGrey200),
-                _activityRow(Icons.payments_rounded, _kGreen, 'Malipo mapya', 'Malipo yanayosubiri uidhinisho'),
-                Container(height: 1, color: _kGrey200),
-                _activityRow(Icons.handshake_rounded, _kPurple, 'Mechi mpya', 'Mechi za hivi karibuni zilizotokea'),
-                Container(height: 1, color: _kGrey200),
-                _activityRow(Icons.rate_review_rounded, _kAmber, 'Maoni mapya', 'Maoni na malamiko mapya kutoka watumiaji'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+          Icon(icon, color: color, size: 22),
+          const Spacer(),
+          Text(value,
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
+          Text(label,
+              style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.8))),
         ],
       ),
     );

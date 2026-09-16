@@ -12,13 +12,11 @@ const _kRedBg   = Color(0xFFFEE2E2);
 const _kGrey900 = Color(0xFF111827);
 const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
-const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kGrey100 = Color(0xFFF3F4F6);
 
 class AdminMonitoringPage extends StatefulWidget {
   const AdminMonitoringPage({super.key});
-
   @override
   State<AdminMonitoringPage> createState() => _AdminMonitoringPageState();
 }
@@ -35,195 +33,163 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
     try {
       final res = await ApiService().adminGetMonitoring();
       if (!mounted) return;
-      final raw = res.data;
-      List<dynamic> items = [];
-      if (raw is List) {
-        items = raw;
-      } else if (raw is Map && raw['events'] != null) {
-        items = raw['events'] as List<dynamic>;
-      }
+      final data = res.data;
       setState(() {
-        _events = items;
+        if (data is List) {
+          _events = data;
+        } else if (data is Map && data['events'] is List) {
+          _events = data['events'] as List;
+        } else {
+          _events = [];
+        }
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+      setState(() { _loading = false; _error = e.toString(); });
     }
   }
 
   Color _dotColor(String? type) {
     switch ((type ?? '').toLowerCase()) {
-      case 'login':
-      case 'register':
-        return _kBlue;
-      case 'payment':
-        return _kGreen;
-      case 'error':
-        return _kRed;
-      case 'match':
-        return _kAmber;
-      default:
-        return _kGrey400;
-    }
-  }
-
-  String _formatTime(dynamic raw) {
-    if (raw == null) return '';
-    try {
-      final dt = DateTime.tryParse(raw.toString());
-      if (dt == null) return raw.toString();
-      final local = dt.toLocal();
-      final hour = local.hour.toString().padLeft(2, '0');
-      final min = local.minute.toString().padLeft(2, '0');
-      return '${local.day}/${local.month} $hour:$min';
-    } catch (_) {
-      return raw.toString();
+      case 'error': return _kRed;
+      case 'warning': return _kAmber;
+      case 'success': return _kGreen;
+      default: return _kBlue;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: _kBlueBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.monitor_heart_rounded, color: _kBlue, size: 24),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: _kBlueBg,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Moni', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kGrey900)),
-                      Text('Shughuli za mfumo', style: TextStyle(fontSize: 13, color: _kGrey500)),
-                    ],
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: _load,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _kBlueBg,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.refresh_rounded, size: 16, color: _kBlue),
-                          SizedBox(width: 6),
-                          Text('Refresh', style: TextStyle(fontSize: 13, color: _kBlue, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                  child: const Icon(Icons.monitor_heart_outlined, color: _kBlue, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Moni', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                    Text('Matukio ya mfumo', style: TextStyle(fontSize: 12, color: _kGrey500)),
+                  ],
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: _kBlue),
+                  onPressed: _load,
+                ),
+              ],
+            ),
           ),
-        ),
-        Container(height: 1, color: _kGrey200),
-        Expanded(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator(color: _kBlue))
-              : _error != null
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+          const Divider(height: 1, color: _kGrey200),
+          if (_loading)
+            const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
+          else if (_error != null)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, color: _kRed, size: 48),
+                    const SizedBox(height: 12),
+                    Text('Kosa la kupakia', style: TextStyle(color: _kGrey500)),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _load,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Jaribu tena'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBlue, foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_events.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.info_outline, color: _kGrey500, size: 48),
+                    const SizedBox(height: 12),
+                    Text('Hakuna matukio', style: TextStyle(color: _kGrey500)),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _load,
+                color: _kBlue,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  itemCount: _events.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, i) {
+                    final e = _events[i] as Map<String, dynamic>;
+                    final type = e['event_type'] as String? ?? e['type'] as String? ?? '';
+                    final desc = e['description'] as String? ?? e['message'] as String? ?? type;
+                    final ts = e['created_at'] as String? ?? e['timestamp'] as String? ?? '';
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: _kGrey200),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.error_outline_rounded, size: 48, color: _kRed),
-                          const SizedBox(height: 12),
-                          Text(_error!, style: const TextStyle(color: _kGrey700), textAlign: TextAlign.center),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _load,
-                            style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white),
-                            child: const Text('Jaribu Tena'),
+                          Container(
+                            width: 10, height: 10,
+                            margin: const EdgeInsets.only(top: 4, right: 10),
+                            decoration: BoxDecoration(
+                              color: _dotColor(type),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(desc,
+                                    style: TextStyle(fontSize: 13, color: _kGrey700)),
+                                if (ts.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(ts,
+                                      style: TextStyle(fontSize: 11, color: _kGrey500)),
+                                ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                    )
-                  : _events.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.monitor_heart_outlined, size: 56, color: _kGrey400),
-                              const SizedBox(height: 12),
-                              const Text('Hakuna shughuli', style: TextStyle(fontSize: 16, color: _kGrey500, fontWeight: FontWeight.w500)),
-                            ],
-                          ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _events.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 4),
-                          itemBuilder: (context, i) {
-                            final item = _events[i] as Map<String, dynamic>;
-                            final type = item['event_type'] as String? ?? item['type'] as String?;
-                            final description = item['description'] as String? ?? item['message'] as String? ?? type ?? 'Shughuli';
-                            final createdAt = item['created_at'] ?? item['createdAt'] ?? item['timestamp'];
-                            final dotColor = _dotColor(type);
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: _kGrey200),
-                              ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                                leading: Container(
-                                  width: 12,
-                                  height: 12,
-                                  decoration: BoxDecoration(
-                                    color: dotColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                title: Text(
-                                  description,
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _kGrey900),
-                                ),
-                                subtitle: type != null
-                                    ? Text(
-                                        type,
-                                        style: const TextStyle(fontSize: 11, color: _kGrey500),
-                                      )
-                                    : null,
-                                trailing: Text(
-                                  _formatTime(createdAt),
-                                  style: const TextStyle(fontSize: 11, color: _kGrey400),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-        ),
-      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
