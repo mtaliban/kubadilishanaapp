@@ -274,11 +274,9 @@ class SelectField extends StatelessWidget {
         height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: disabled
-              ? AppColors.grey100
-              : hasValue
-                  ? const Color(0xFFEFF6FF)
-                  : Colors.white,
+          color: hasValue && !disabled
+              ? const Color(0xFFEFF6FF)
+              : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: disabled
