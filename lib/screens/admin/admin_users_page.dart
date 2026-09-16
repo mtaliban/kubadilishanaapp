@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 
+// ── Design tokens ──────────────────────────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg  = Color(0xFFEFF6FF);
 const _kGreen   = Color(0xFF16A34A);
@@ -18,6 +18,7 @@ const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kGrey100 = Color(0xFFF3F4F6);
 
+// ── Page ───────────────────────────────────────────────────────────────────
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
   @override
@@ -28,605 +29,1050 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   bool _loading = true;
   String? _error;
   List<dynamic> _users = [];
-  Set<String> _selected = {};
-  bool _selectAll = false;
+  final _search = TextEditingController();
+  Timer? _debounce;
 
-  final _searchCtrl = TextEditingController();
+  // filters
   String _category = '';
-  String? _regionId;
+  int? _regionId;
   String? _regionName;
-  String? _districtId;
+  int? _districtId;
   String? _districtName;
-  String? _subject;
+  String? _subjectCode;
+  String? _subjectName;
 
+  // reference data
   List<dynamic> _regions = [];
   List<dynamic> _districts = [];
   List<dynamic> _subjects = [];
-  List<dynamic> _cadres = [];
-  bool _refsLoaded = false;
+
+  // selection
+  Set<String> _selected = {};
+  bool _selectAll = false;
 
   @override
   void initState() {
     super.initState();
-    _loadRefs();
     _load();
-    _searchCtrl.addListener(_onSearchChanged);
+    _loadRefs();
+    _search.addListener(_onSearch);
   }
 
   @override
   void dispose() {
-    _searchCtrl.dispose();
+    _debounce?.cancel();
+    _search.removeListener(_onSearch);
+    _search.dispose();
     super.dispose();
+  }
+
+  void _onSearch() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 450), _load);
   }
 
   Future<void> _loadRefs() async {
     try {
-      final results = await Future.wait([
-        ApiService().getRegions(),
-        ApiService().getSubjects(),
-        ApiService().getCadres(),
-      ]);
+      final r = await ApiService().getRegions();
       if (!mounted) return;
-      setState(() {
-        final rd = results[0].data;
-        _regions = rd is List ? rd : (rd['results'] as List? ?? []);
-        final sd = results[1].data;
-        _subjects = sd is List ? sd : (sd['results'] as List? ?? []);
-        final cd = results[2].data;
-        _cadres = cd is List ? cd : (cd['results'] as List? ?? []);
-        _refsLoaded = true;
-      });
+      final raw = r.data;
+      setState(() => _regions = raw is List ? raw : (raw['regions'] ?? raw['data'] ?? []));
     } catch (_) {}
-  }
-
-  Future<void> _loadDistricts(String regionId) async {
     try {
-      final res = await ApiService().getDistricts(int.parse(regionId));
+      final r = await ApiService().getSubjects();
       if (!mounted) return;
-      final data = res.data;
-      setState(() {
-        _districts = data is List ? data : (data['results'] as List? ?? []);
-      });
+      final raw = r.data;
+      setState(() => _subjects = raw is List ? raw : (raw['subjects'] ?? raw['data'] ?? []));
     } catch (_) {}
   }
 
-  Timer? _debounce;
-
-  void _onSearchChanged() {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), _load);
+  Future<void> _loadDistricts(int regionId) async {
+    try {
+      final r = await ApiService().getDistricts(regionId);
+      if (!mounted) return;
+      final raw = r.data;
+      setState(() => _districts = raw is List ? raw : (raw['districts'] ?? raw['data'] ?? []));
+    } catch (_) {}
   }
 
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final params = <String, dynamic>{};
-      if (_searchCtrl.text.isNotEmpty) params['q'] = _searchCtrl.text;
-      if (_category.isNotEmpty) params['category'] = _category;
-      if (_regionId != null) params['region'] = _regionId;
-      if (_districtId != null) params['district'] = _districtId;
-      if (_subject != null) params['subject'] = _subject;
-      final res = await ApiService().adminUsers(params: params, useCache: false);
+      final p = <String, dynamic>{};
+      if (_search.text.isNotEmpty) p['q'] = _search.text;
+      if (_category.isNotEmpty) p['category'] = _category;
+      if (_regionId != null) p['region'] = _regionId;
+      if (_districtId != null) p['district'] = _districtId;
+      if (_subjectCode != null) p['subject'] = _subjectCode;
+      final r = await ApiService().adminUsers(params: p, useCache: false);
       if (!mounted) return;
-      final data = res.data;
-      setState(() {
-        _users = data is List ? data : (data['results'] as List? ?? []);
-        _loading = false;
-      });
+      final raw = r.data;
+      final list = raw is List ? raw : (raw['users'] ?? raw['data'] ?? raw['results'] ?? []) as List;
+      setState(() { _users = list; _loading = false; });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() { _error = e.toString(); _loading = false; });
     }
   }
 
+  // ── Actions ───────────────────────────────────────────────────────────────
   void _toggleSelectAll() {
     setState(() {
       if (_selectAll) {
         _selected.clear();
         _selectAll = false;
       } else {
-        _selected = _users.map((u) => (u as Map)['user_id']?.toString() ?? '').toSet();
+        _selected = _users.map((u) => _uid(u)).toSet();
         _selectAll = true;
       }
     });
   }
 
-  Future<void> _bulkDelete() async {
-    if (_selected.isEmpty) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Futa Watumiaji'),
-        content: Text('Futa watumiaji ${_selected.length} waliochaguliwa?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Futa', style: TextStyle(color: _kRed)),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    for (final id in _selected) {
-      try { await ApiService().adminDeleteUser(id); } catch (_) {}
-    }
-    if (!mounted) return;
-    setState(() { _selected.clear(); _selectAll = false; });
-    _load();
-  }
+  String _uid(dynamic u) => (u as Map)['user_id']?.toString() ?? (u)['_id']?.toString() ?? '';
 
-  void _showDetail(Map<String, dynamic> user) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _UserDetailSheet(user: user),
-    );
-  }
-
-  void _showEdit(Map<String, dynamic> user) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _UserEditSheet(
-        user: user,
-        cadres: _cadres,
-        subjects: _subjects,
-        onSaved: _load,
-      ),
-    );
-  }
-
-  void _showAddAdmin() {
-    showDialog(
-      context: context,
-      builder: (ctx) => _AddAdminDialog(onAdded: _load),
-    );
-  }
-
-  void _showAddUser() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _AddUserSheet(
-        regions: _regions,
-        cadres: _cadres,
-        subjects: _subjects,
-        onAdded: _load,
-      ),
-    );
-  }
-
-  Future<void> _deleteUser(String id) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Futa Mtumiaji'),
-        content: const Text('Una uhakika unataka kufuta mtumiaji huyu?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Futa', style: TextStyle(color: _kRed)),
-          ),
-        ],
-      ),
-    );
+  Future<void> _deleteUser(String id, String name) async {
+    final ok = await _confirm('Futa "$name"?', 'Hatua hii haiwezi kutenduliwa.');
     if (ok != true) return;
     try {
       await ApiService().adminDeleteUser(id);
       if (!mounted) return;
+      _snack('Mtumiaji amefutwa', _kGreen);
       _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
+      _snack('Hitilafu: $e', _kRed);
     }
   }
 
-  void _pickCategory() {
-    showModalBottomSheet(
-      context: context,
+  Future<void> _toggleSuspend(Map u) async {
+    final id = _uid(u);
+    final isActive = u['is_active'] as bool? ?? true;
+    try {
+      await ApiService().adminUpdateUser(id, {'status': isActive ? 'suspended' : 'active'});
+      if (!mounted) return;
+      _snack(isActive ? 'Amesitishwa' : 'Amewezeshwa', _kAmber);
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      _snack('Hitilafu: $e', _kRed);
+    }
+  }
+
+  Future<void> _toggleAdmin(Map u) async {
+    final id = _uid(u);
+    final isAdmin = u['is_admin'] as bool? ?? false;
+    try {
+      if (isAdmin) {
+        await ApiService().adminRevoke(id);
+      } else {
+        await ApiService().adminGrant(id);
+      }
+      if (!mounted) return;
+      _snack(isAdmin ? 'Haki za admin zimeondolewa' : 'Amepewa haki za admin', _kGreen);
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      _snack('Hitilafu: $e', _kRed);
+    }
+  }
+
+  Future<bool?> _confirm(String title, String body) => showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => _CategoryPicker(
-        current: _category,
-        onPicked: (v) {
-          setState(() { _category = v; });
-          _load();
-        },
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+      content: Text(body),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Ndio', style: TextStyle(color: _kRed, fontWeight: FontWeight.w700)),
+        ),
+      ],
+    ),
+  );
+
+  void _snack(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: color, behavior: SnackBarBehavior.floating),
     );
   }
 
-  void _pickRegion() {
+  // ── Pickers ───────────────────────────────────────────────────────────────
+  void _openCategoryPicker() {
+    _showListPicker(
+      title: 'Chagua Idara',
+      items: const [
+        {'label': 'Idara zote', 'value': ''},
+        {'label': 'Afya', 'value': 'health'},
+        {'label': 'Elimu', 'value': 'education'},
+      ],
+      current: _category,
+      onPick: (v) { setState(() { _category = v; }); _load(); },
+      getLabel: (i) => i['label'] as String,
+      getValue: (i) => i['value'] as String,
+    );
+  }
+
+  void _openRegionPicker() {
+    final items = [
+      {'label': 'Mkoa wote', 'id': null},
+      ...List<Map<String, dynamic>>.from(_regions.map((r) => {
+        'label': r['name'] ?? r['region_name'] ?? '',
+        'id': r['id'] ?? r['region_id'],
+      })),
+    ];
+    _showListPicker(
+      title: 'Chagua Mkoa',
+      items: items,
+      current: _regionId?.toString() ?? '',
+      onPick: (v) {
+        final id = v.isEmpty ? null : int.tryParse(v);
+        final name = id == null ? null : items.firstWhere((i) => i['id'] == id, orElse: () => {})['label'] as String?;
+        setState(() { _regionId = id; _regionName = name; _districtId = null; _districtName = null; _districts = []; });
+        if (id != null) _loadDistricts(id);
+        _load();
+      },
+      getLabel: (i) => i['label'] as String,
+      getValue: (i) => i['id'] == null ? '' : i['id'].toString(),
+    );
+  }
+
+  void _openDistrictPicker() {
+    if (_regionId == null) { _snack('Chagua mkoa kwanza', _kAmber); return; }
+    final items = [
+      {'label': 'Wilaya zote', 'id': null},
+      ...List<Map<String, dynamic>>.from(_districts.map((d) => {
+        'label': d['name'] ?? d['district_name'] ?? '',
+        'id': d['id'] ?? d['district_id'],
+      })),
+    ];
+    _showListPicker(
+      title: 'Chagua Wilaya',
+      items: items,
+      current: _districtId?.toString() ?? '',
+      onPick: (v) {
+        final id = v.isEmpty ? null : int.tryParse(v);
+        final name = id == null ? null : items.firstWhere((i) => i['id'] == id, orElse: () => {})['label'] as String?;
+        setState(() { _districtId = id; _districtName = name; });
+        _load();
+      },
+      getLabel: (i) => i['label'] as String,
+      getValue: (i) => i['id'] == null ? '' : i['id'].toString(),
+    );
+  }
+
+  void _openSubjectPicker() {
+    final items = [
+      {'label': 'Masomo yote', 'code': ''},
+      ...List<Map<String, dynamic>>.from(_subjects.map((s) => {
+        'label': s['name'] ?? s['subject_name'] ?? '',
+        'code': s['code'] ?? s['subject_code'] ?? '',
+      })),
+    ];
+    _showListPicker(
+      title: 'Chagua Somo',
+      items: items,
+      current: _subjectCode ?? '',
+      onPick: (v) {
+        final name = items.firstWhere((i) => i['code'] == v, orElse: () => {})['label'] as String?;
+        setState(() { _subjectCode = v.isEmpty ? null : v; _subjectName = name; });
+        _load();
+      },
+      getLabel: (i) => i['label'] as String,
+      getValue: (i) => i['code'] as String,
+    );
+  }
+
+  void _showListPicker<T>({
+    required String title,
+    required List<T> items,
+    required String current,
+    required Function(String) onPick,
+    required String Function(T) getLabel,
+    required String Function(T) getValue,
+  }) {
+    final searchCtrl = TextEditingController();
+    List<T> filtered = List.from(items);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => _RegionPicker(
-        regions: _regions,
-        currentId: _regionId,
-        onPicked: (id, name) {
-          setState(() {
-            _regionId = id;
-            _regionName = name;
-            _districtId = null;
-            _districtName = null;
-            _districts = [];
-          });
-          if (id != null) _loadDistricts(id);
-          _load();
-        },
-      ),
-    );
-  }
-
-  void _pickDistrict() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => _DistrictPicker(
-        districts: _districts,
-        currentId: _districtId,
-        onPicked: (id, name) {
-          setState(() { _districtId = id; _districtName = name; });
-          _load();
-        },
-      ),
-    );
-  }
-
-  void _pickSubject() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => _SubjectPicker(
-        subjects: _subjects,
-        currentCode: _subject,
-        onPicked: (code) {
-          setState(() { _subject = code; });
-          _load();
-        },
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header container
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheet) => SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.65,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 6),
+              Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
                   children: [
-                    Container(
-                      width: 44, height: 44,
-                      decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.group_rounded, color: _kBlue, size: 22),
+                    Expanded(child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900))),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Container(
+                        width: 30, height: 30,
+                        decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+                        child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700),
+                      ),
                     ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: searchCtrl,
+                  onChanged: (q) {
+                    final ql = q.toLowerCase();
+                    setSheet(() => filtered = items.where((i) => getLabel(i).toLowerCase().contains(ql)).toList());
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Tafuta...',
+                    hintStyle: TextStyle(color: _kGrey400, fontSize: 14),
+                    prefixIcon: const Icon(Icons.search_rounded, color: _kGrey400, size: 18),
+                    fillColor: _kGrey100,
+                    filled: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: _kGrey200),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (_, i) {
+                    final item = filtered[i];
+                    final val = getValue(item);
+                    final selected = val == current;
+                    return InkWell(
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        onPick(val);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: selected ? _kBlueBg : Colors.transparent,
+                          border: Border(bottom: BorderSide(color: _kGrey200)),
+                        ),
+                        child: Row(
                           children: [
-                            Text('Watumiaji',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(color: _kGreenBg, borderRadius: BorderRadius.circular(6)),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(width: 6, height: 6,
-                                      decoration: const BoxDecoration(color: _kGreen, shape: BoxShape.circle)),
-                                  const SizedBox(width: 3),
-                                  Text('LIVE', style: TextStyle(fontSize: 9, color: _kGreen, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ),
+                            Expanded(child: Text(getLabel(item), style: TextStyle(fontSize: 15, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? _kBlue : _kGrey900))),
+                            if (selected) const Icon(Icons.check_rounded, color: _kBlue, size: 18),
                           ],
                         ),
-                        Text('${_users.length} watumiaji wote',
-                            style: TextStyle(fontSize: 12, color: _kGrey500)),
-                      ],
-                    ),
-                    const Spacer(),
-                    ElevatedButton.icon(
-                      onPressed: _showAddUser,
-                      icon: const Icon(Icons.add, size: 14),
-                      label: const Text('Ongeza', style: TextStyle(fontSize: 12)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _IconBtn(
-                      icon: Icons.delete_outline,
-                      color: _selected.isEmpty ? _kGrey400 : _kRed,
-                      bg: _selected.isEmpty ? _kGrey100 : _kRedBg,
-                      onTap: _selected.isEmpty ? null : _bulkDelete,
-                      border: _selected.isEmpty ? _kGrey200 : _kRed,
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: _showAddAdmin,
-                      icon: const Icon(Icons.admin_panel_settings_outlined, size: 14),
-                      label: const Text('Admin', style: TextStyle(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _kBlue,
-                        side: const BorderSide(color: _kBlue),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.upload_file_outlined, size: 14),
-                      label: const Text('Import', style: TextStyle(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _kGrey700,
-                        side: const BorderSide(color: _kGrey200),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: _toggleSelectAll,
-                  child: Row(
-                    children: [
-                      Checkbox(
-                        value: _selectAll,
-                        onChanged: (_) => _toggleSelectAll(),
-                        activeColor: _kBlue,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      Text('Chagua zote (${_users.length})',
-                          style: TextStyle(fontSize: 13, color: _kGrey700)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _searchCtrl,
-                  decoration: InputDecoration(
-                    hintText: 'Tafuta kwa jina, simu au...',
-                    prefixIcon: const Icon(Icons.search, color: _kGrey500, size: 18),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _kGrey200),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _kGrey200),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _kBlue),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(child: _FilterDropBtn(
-                      label: _category.isEmpty ? 'Idara zote' : (_category == 'health' ? 'Afya' : 'Elimu'),
-                      onTap: _pickCategory,
-                    )),
-                    const SizedBox(width: 8),
-                    Expanded(child: _FilterDropBtn(
-                      label: _regionName ?? 'Mkoa',
-                      onTap: _pickRegion,
-                    )),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(child: _FilterDropBtn(
-                      label: _districtName ?? 'Wilaya zote',
-                      onTap: _pickDistrict,
-                    )),
-                    const SizedBox(width: 8),
-                    Expanded(child: _FilterDropBtn(
-                      label: _subject ?? 'Masomo yote',
-                      onTap: _pickSubject,
-                    )),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text('Jumla: ${_users.length}',
-                      style: TextStyle(fontSize: 12, color: _kGrey500)),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: _kGrey200),
-          if (_loading)
-            const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
-          else if (_error != null)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline, color: _kRed, size: 48),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Jaribu tena'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (_users.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.group_outlined, color: _kGrey500, size: 48),
-                    const SizedBox(height: 12),
-                    Text('Hakuna watumiaji', style: TextStyle(color: _kGrey500)),
-                  ],
-                ),
-              ),
-            )
-          else
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _load,
-                color: _kBlue,
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: _users.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (ctx, i) {
-                    final user = _users[i] as Map<String, dynamic>;
-                    final uid = user['user_id']?.toString() ?? '';
-                    return _UserCard(
-                      user: user,
-                      selected: _selected.contains(uid),
-                      onToggleSelect: () {
-                        setState(() {
-                          if (_selected.contains(uid)) {
-                            _selected.remove(uid);
-                          } else {
-                            _selected.add(uid);
-                          }
-                          _selectAll = _selected.length == _users.length;
-                        });
-                      },
-                      onDetail: () => _showDetail(user),
-                      onEdit: () => _showEdit(user),
-                      onDelete: () => _deleteUser(uid),
                     );
                   },
                 ),
               ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
-}
 
-class _FilterDropBtn extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _FilterDropBtn({required this.label, required this.onTap});
+  // ── Bottom sheets ─────────────────────────────────────────────────────────
+  void _showAdd() {
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final waCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    bool saving = false;
 
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, ss) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 16),
+              Row(children: [
+                Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.person_add_rounded, color: _kBlue, size: 20),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Ongeza Mtumiaji', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _kGrey900)),
+                  Text('Jaza taarifa za mtumiaji mpya', style: TextStyle(fontSize: 12, color: _kGrey500)),
+                ])),
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(width: 30, height: 30, decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle), child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700)),
+                ),
+              ]),
+              const SizedBox(height: 20),
+              _label('Jina Kamili *'),
+              _input(nameCtrl, 'Jina kamili', icon: Icons.person_outline_rounded),
+              const SizedBox(height: 12),
+              Row(children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _label('Simu'), _input(phoneCtrl, '+255...', keyboard: TextInputType.phone),
+                ])),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _label('WhatsApp'), _input(waCtrl, '+255...', keyboard: TextInputType.phone),
+                ])),
+              ]),
+              const SizedBox(height: 12),
+              _label('Nywila *'),
+              _input(passCtrl, '••••••', icon: Icons.lock_outline_rounded, obscure: true),
+              const SizedBox(height: 24),
+              Row(children: [
+                Expanded(child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(foregroundColor: _kGrey700, side: const BorderSide(color: _kGrey200), padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: const Text('Ghairi'),
+                )),
+                const SizedBox(width: 12),
+                Expanded(child: ElevatedButton(
+                  onPressed: saving ? null : () async {
+                    ss(() => saving = true);
+                    try {
+                      await ApiService().adminCreateUser({
+                        'full_name': nameCtrl.text.trim(),
+                        'phone_primary': phoneCtrl.text.trim(),
+                        'phone_whatsapp': waCtrl.text.trim(),
+                        'password': passCtrl.text,
+                      });
+                      if (!mounted) return;
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      _snack('Mtumiaji ameongezwa', _kGreen);
+                      _load();
+                    } catch (e) {
+                      ss(() => saving = false);
+                      if (!mounted) return;
+                      _snack('Hitilafu: $e', _kRed);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.person_add_rounded, size: 16), SizedBox(width: 6), Text('Ongeza Mtumiaji', style: TextStyle(fontWeight: FontWeight.w700))]),
+                )),
+              ]),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEdit(Map<String, dynamic> u) {
+    final id = _uid(u);
+    final nameCtrl = TextEditingController(text: u['full_name'] as String? ?? '');
+    final phoneCtrl = TextEditingController(text: u['phone_primary'] as String? ?? u['phone'] as String? ?? '');
+    final waCtrl = TextEditingController(text: u['phone_whatsapp'] as String? ?? '');
+    String hali = (u['is_active'] as bool? ?? true) ? 'active' : 'suspended';
+    bool paid = u['is_paid'] as bool? ?? false;
+    bool admin = u['is_admin'] as bool? ?? false;
+    bool saving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, ss) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 16),
+              Row(children: [
+                Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.edit_rounded, color: _kBlue, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(child: Text('Hariri Mtumiaji', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _kGrey900))),
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(width: 30, height: 30, decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle), child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700)),
+                ),
+              ]),
+              const SizedBox(height: 20),
+              _label('MAELEZO BINAFSI'),
+              _input(nameCtrl, 'Jina kamili', icon: Icons.person_outline_rounded),
+              const SizedBox(height: 10),
+              Row(children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_label('Simu'), _input(phoneCtrl, '+255...', keyboard: TextInputType.phone)])),
+                const SizedBox(width: 10),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_label('WhatsApp'), _input(waCtrl, '+255...', keyboard: TextInputType.phone)])),
+              ]),
+              const SizedBox(height: 16),
+              _label('HALI NA HADHI'),
+              const SizedBox(height: 8),
+              Row(children: [
+                _pill('Hai', hali == 'active', _kGreen, _kGreenBg, () => ss(() => hali = 'active')),
+                const SizedBox(width: 8),
+                _pill('Amesitishwa', hali == 'suspended', _kAmber, _kAmberBg, () => ss(() => hali = 'suspended')),
+              ]),
+              const SizedBox(height: 10),
+              Row(children: [
+                _check('Amelipa', paid, (v) => ss(() => paid = v ?? false)),
+                const SizedBox(width: 16),
+                _check('Admin', admin, (v) => ss(() => admin = v ?? false)),
+              ]),
+              const SizedBox(height: 24),
+              Row(children: [
+                Expanded(child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(foregroundColor: _kGrey700, side: const BorderSide(color: _kGrey200), padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: const Text('Ghairi'),
+                )),
+                const SizedBox(width: 12),
+                Expanded(child: ElevatedButton(
+                  onPressed: saving ? null : () async {
+                    ss(() => saving = true);
+                    try {
+                      await ApiService().adminUpdateUser(id, {
+                        'full_name': nameCtrl.text.trim(),
+                        'phone_primary': phoneCtrl.text.trim(),
+                        'phone_whatsapp': waCtrl.text.trim(),
+                        'status': hali,
+                        'is_paid': paid,
+                        'is_admin': admin,
+                      });
+                      if (!mounted) return;
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      _snack('Imehifadhiwa', _kGreen);
+                      _load();
+                    } catch (e) {
+                      ss(() => saving = false);
+                      if (!mounted) return;
+                      _snack('Hitilafu: $e', _kRed);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.save_rounded, size: 16), SizedBox(width: 6), Text('Hifadhi', style: TextStyle(fontWeight: FontWeight.w700))]),
+                )),
+              ]),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showImport() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(height: 16),
+          Row(children: [
+            Container(width: 36, height: 36, decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.upload_file_rounded, color: _kBlue, size: 20)),
+            const SizedBox(width: 10),
+            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Import Watumiaji', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              Text('Pakua faili la CSV au Excel', style: TextStyle(fontSize: 12, color: _kGrey500)),
+            ])),
+            GestureDetector(onTap: () => Navigator.pop(ctx), child: Container(width: 30, height: 30, decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle), child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700))),
+          ]),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
+            child: Row(children: [
+              const Icon(Icons.info_outline_rounded, size: 16, color: _kBlue),
+              const SizedBox(width: 8),
+              const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Muundo unaohitajika', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kBlue)),
+                SizedBox(height: 2),
+                Text('CSV/Excel yenye safu: full_name, phone_primary, category (health/education), region_id, district_id', style: TextStyle(fontSize: 11, color: _kBlue)),
+              ])),
+            ]),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(width: double.infinity, child: OutlinedButton.icon(
+            onPressed: () => Navigator.pop(ctx),
+            icon: const Icon(Icons.folder_open_rounded, size: 18),
+            label: const Text('Chagua Faili', style: TextStyle(fontWeight: FontWeight.w600)),
+            style: OutlinedButton.styleFrom(foregroundColor: _kBlue, side: const BorderSide(color: _kBlue), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          )),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+  }
+
+  // ── Helper widgets ────────────────────────────────────────────────────────
+  Widget _label(String t) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(t, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kGrey500, letterSpacing: 0.8)),
+  );
+
+  Widget _input(TextEditingController ctrl, String hint, {IconData? icon, TextInputType keyboard = TextInputType.text, bool obscure = false}) {
+    return TextField(
+      controller: ctrl, keyboardType: keyboard, obscureText: obscure,
+      decoration: InputDecoration(
+        hintText: hint, hintStyle: const TextStyle(color: _kGrey400, fontSize: 13),
+        prefixIcon: icon != null ? Icon(icon, size: 18, color: _kGrey400) : null,
+        fillColor: Colors.white, filled: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+      ),
+    );
+  }
+
+  Widget _pill(String label, bool active, Color fg, Color bg, VoidCallback onTap) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(color: active ? bg : Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: active ? fg : _kGrey200)),
+      child: Text(label, style: TextStyle(fontSize: 13, color: active ? fg : _kGrey700, fontWeight: active ? FontWeight.w700 : FontWeight.w400)),
+    ),
+  );
+
+  Widget _check(String label, bool value, ValueChanged<bool?> onChange) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Transform.scale(scale: 0.9, child: Checkbox(value: value, onChanged: onChange, activeColor: _kBlue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)))),
+      Text(label, style: const TextStyle(fontSize: 13, color: _kGrey700)),
+    ],
+  );
+
+  // ── Filter dropdown button ─────────────────────────────────────────────────
+  Widget _filterBtn(String label, VoidCallback onTap) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: _kGrey200),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 13, color: _kGrey700), overflow: TextOverflow.ellipsis)),
+          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _kGrey500),
+        ],
+      ),
+    ),
+  );
+
+  // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: _kGrey200),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: Text(label,
-                style: TextStyle(fontSize: 12, color: _kGrey700),
-                overflow: TextOverflow.ellipsis)),
-            const Icon(Icons.keyboard_arrow_down, size: 16, color: _kGrey500),
+            // ── Page header ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46, height: 46,
+                    decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.group_rounded, color: _kBlue, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          const Text('Watumiaji', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _kGrey900)),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(color: const Color(0xFFFEE2E2), borderRadius: BorderRadius.circular(6)),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Container(width: 6, height: 6, decoration: const BoxDecoration(color: _kRed, shape: BoxShape.circle)),
+                              const SizedBox(width: 4),
+                              const Text('LIVE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: _kRed, letterSpacing: 0.5)),
+                            ]),
+                          ),
+                        ]),
+                        Text('${_users.length} watumiaji wote', style: const TextStyle(fontSize: 12, color: _kGrey500)),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _showAdd,
+                    icon: const Icon(Icons.person_add_rounded, size: 16),
+                    label: const Text('Ongeza', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _kBlue, foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            // ── Action buttons ───────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  _actionBtn(Icons.delete_outline_rounded, 'Trash', _kRed, _kRedBg, _kRed,
+                      _selected.isEmpty ? null : () async {
+                        final ok = await _confirm('Futa ${_selected.length} mtumiaji?', 'Hatua hii haiwezi kutenduliwa.');
+                        if (ok != true) return;
+                        for (final id in _selected) {
+                          try { await ApiService().adminDeleteUser(id); } catch (_) {}
+                        }
+                        if (!mounted) return;
+                        setState(() { _selected.clear(); _selectAll = false; });
+                        _load();
+                      }),
+                  const SizedBox(width: 8),
+                  _actionBtn(Icons.admin_panel_settings_outlined, 'Admin', _kGrey700, Colors.white, _kGrey200, _showAddAdmin),
+                  const SizedBox(width: 8),
+                  _actionBtn(Icons.upload_file_outlined, 'Import', _kGrey700, Colors.white, _kGrey200, _showImport),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            // ── Search ───────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _search,
+                decoration: InputDecoration(
+                  hintText: 'Tafuta kwa jina, simu au...',
+                  hintStyle: const TextStyle(color: _kGrey400, fontSize: 13),
+                  prefixIcon: const Icon(Icons.search_rounded, color: _kGrey400, size: 20),
+                  fillColor: Colors.white,
+                  filled: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // ── Filters row 1: Idara | Mkoa ──────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(child: _filterBtn(_category.isEmpty ? 'Idara zote' : (_category == 'health' ? 'Afya' : 'Elimu'), _openCategoryPicker)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _filterBtn(_regionName != null ? 'Mkoa: $_regionName' : 'Mkoa wote', _openRegionPicker)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            // ── Filters row 2: Wilaya | Masomo ──────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(child: _filterBtn(_districtName ?? 'Wilaya zote', _openDistrictPicker)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _filterBtn(_subjectName ?? 'Masomo yote', _openSubjectPicker)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            // ── Chagua zote + Jumla ──────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: _toggleSelectAll,
+                    child: Row(children: [
+                      SizedBox(
+                        width: 24, height: 24,
+                        child: Checkbox(
+                          value: _selectAll, onChanged: (_) => _toggleSelectAll(),
+                          activeColor: _kBlue, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text('Chagua zote (${_selected.length})', style: const TextStyle(fontSize: 13, color: _kGrey700)),
+                    ]),
+                  ),
+                  const Spacer(),
+                  Text('Jumla ${_users.length}', style: const TextStyle(fontSize: 13, color: _kGrey500, fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: _kGrey200),
+            // ── List ─────────────────────────────────────────────────────
+            if (_loading)
+              const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
+            else if (_error != null)
+              Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.wifi_off_rounded, color: _kGrey400, size: 48),
+                const SizedBox(height: 12),
+                Text(_error!, style: const TextStyle(color: _kGrey500, fontSize: 12), textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(onPressed: _load, icon: const Icon(Icons.refresh_rounded, size: 16), label: const Text('Jaribu tena'), style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white)),
+              ])))
+            else if (_users.isEmpty)
+              const Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.group_off_outlined, color: _kGrey400, size: 52),
+                SizedBox(height: 12),
+                Text('Hakuna watumiaji walioonekana', style: TextStyle(color: _kGrey500, fontSize: 14)),
+              ])))
+            else
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _load, color: _kBlue,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    itemCount: _users.length,
+                    itemBuilder: (ctx, i) {
+                      final u = _users[i] as Map<String, dynamic>;
+                      final uid = _uid(u);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _UserCard(
+                          user: u,
+                          index: i + 1,
+                          selected: _selected.contains(uid),
+                          onToggle: () {
+                            setState(() {
+                              if (_selected.contains(uid)) { _selected.remove(uid); } else { _selected.add(uid); }
+                              _selectAll = _selected.length == _users.length;
+                            });
+                          },
+                          onView: () => _showDetail(u),
+                          onEdit: () => _showEdit(u),
+                          onSuspend: () => _toggleSuspend(u),
+                          onAdmin: () => _toggleAdmin(u),
+                          onDelete: () => _deleteUser(uid, u['full_name'] as String? ?? ''),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
-}
 
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final Color bg;
-  final Color border;
-  final VoidCallback? onTap;
-  const _IconBtn({required this.icon, required this.color, required this.bg, required this.border, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _actionBtn(IconData icon, String label, Color fg, Color bg, Color border, VoidCallback? onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 36, height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: bg,
           border: Border.all(color: border),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: color, size: 18),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, color: fg, fontWeight: FontWeight.w600)),
+        ]),
+      ),
+    );
+  }
+
+  void _showDetail(Map<String, dynamic> u) {
+    final name = u['full_name'] as String? ?? '';
+    final phone = u['phone_primary'] as String? ?? '';
+    final wa = u['phone_whatsapp'] as String? ?? '';
+    final category = u['category'] as String? ?? '';
+    final cadre = u['cadre_display'] as String? ?? u['cadre_name'] as String? ?? '';
+    final isPaid = u['is_paid'] as bool? ?? false;
+    final isAdmin = u['is_admin'] as bool? ?? false;
+    final station = u['current_station'] as Map? ?? u['station'] as Map? ?? {};
+    final region = station['region_name'] as String? ?? station['region'] as String? ?? '';
+    final district = station['district_name'] as String? ?? station['district'] as String? ?? '';
+    final facility = station['facility_name'] as String? ?? station['facility'] as String? ?? '';
+    final subjects = (u['subjects'] as List?)?.map((s) => s['name'] ?? s['code'] ?? s.toString()).toList() ?? [];
+    final dests = (u['destinations'] as List?)?.map((d) => d['region_name'] ?? d['region'] ?? d.toString()).toList() ?? [];
+    final init = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false, maxChildSize: 0.9, initialChildSize: 0.75,
+        builder: (_, ctrl) => ListView(controller: ctrl, padding: const EdgeInsets.fromLTRB(20, 16, 20, 24), children: [
+          Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(height: 20),
+          Center(child: Column(children: [
+            CircleAvatar(radius: 34, backgroundColor: _kGreenBg, child: Text(init, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: _kGreen))),
+            const SizedBox(height: 10),
+            Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kGrey900), textAlign: TextAlign.center),
+            if (cadre.isNotEmpty) Text(cadre, style: const TextStyle(fontSize: 13, color: _kGrey500)),
+            const SizedBox(height: 8),
+            Wrap(spacing: 6, children: [
+              if (isPaid) _chip('Amelipa', _kGreen, _kGreenBg) else _chip('Hajalipa', _kRed, _kRedBg),
+              if (isAdmin) _chip('Admin', _kBlue, _kBlueBg),
+            ]),
+          ])),
+          const SizedBox(height: 20),
+          _infoRow('Simu', phone.isNotEmpty ? phone : '—', valueColor: _kBlue),
+          if (wa.isNotEmpty) _infoRow('WhatsApp', wa, valueColor: _kGreen),
+          _infoRow('Idara', category.isNotEmpty ? (category == 'health' ? 'Afya' : 'Elimu') : '—'),
+          if (region.isNotEmpty) _infoRow('Mkoa', region),
+          if (district.isNotEmpty) _infoRow('Wilaya', district),
+          if (facility.isNotEmpty) _infoRow('Kituo', facility),
+          if (subjects.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text('Masomo', style: TextStyle(fontSize: 11, color: _kGrey500, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Wrap(spacing: 6, runSpacing: 6, children: subjects.map((s) => _chip(s.toString(), _kBlue, _kBlueBg)).toList()),
+          ],
+          if (dests.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text('Anataka kwenda', style: TextStyle(fontSize: 11, color: _kGrey500, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Wrap(spacing: 6, runSpacing: 6, children: dests.map((d) => _chip(d.toString(), _kGrey700, _kGrey100)).toList()),
+          ],
+          const SizedBox(height: 24),
+          Row(children: [
+            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(context), style: OutlinedButton.styleFrom(foregroundColor: _kGrey700, side: const BorderSide(color: _kGrey200), padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Funga'))),
+            const SizedBox(width: 12),
+            Expanded(child: ElevatedButton.icon(onPressed: () { Navigator.pop(context); _showEdit(u); }, icon: const Icon(Icons.edit_rounded, size: 16), label: const Text('Hariri', style: TextStyle(fontWeight: FontWeight.w700)), style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _chip(String t, Color fg, Color bg) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+    child: Text(t, style: TextStyle(fontSize: 11, color: fg, fontWeight: FontWeight.w600)),
+  );
+
+  Widget _infoRow(String label, String value, {Color valueColor = _kGrey900}) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(children: [
+      Text('$label:', style: const TextStyle(fontSize: 13, color: _kGrey500)),
+      const SizedBox(width: 8),
+      Expanded(child: Text(value, style: TextStyle(fontSize: 13, color: valueColor, fontWeight: FontWeight.w600), textAlign: TextAlign.right)),
+    ]),
+  );
+
+  void _showAddAdmin() {
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    bool saving = false;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, ss) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 16),
+              Row(children: [
+                Container(width: 36, height: 36, decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.admin_panel_settings_rounded, color: _kBlue, size: 20)),
+                const SizedBox(width: 10),
+                const Expanded(child: Text('Ongeza Admin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+                GestureDetector(onTap: () => Navigator.pop(ctx), child: Container(width: 30, height: 30, decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle), child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700))),
+              ]),
+              const SizedBox(height: 20),
+              _label('Jina Kamili'), _input(nameCtrl, 'Jina kamili', icon: Icons.person_outline_rounded),
+              const SizedBox(height: 10),
+              _label('Barua Pepe'), _input(emailCtrl, 'admin@mfumo.tz', icon: Icons.email_outlined, keyboard: TextInputType.emailAddress),
+              const SizedBox(height: 10),
+              _label('Simu'), _input(phoneCtrl, '+255...', icon: Icons.phone_outlined, keyboard: TextInputType.phone),
+              const SizedBox(height: 10),
+              _label('Nenosiri'), _input(passCtrl, '••••••', icon: Icons.lock_outline_rounded, obscure: true),
+              const SizedBox(height: 24),
+              SizedBox(width: double.infinity, child: ElevatedButton.icon(
+                onPressed: saving ? null : () async {
+                  ss(() => saving = true);
+                  try {
+                    await ApiService().adminCreateUser({
+                      'full_name': nameCtrl.text.trim(),
+                      'email': emailCtrl.text.trim(),
+                      'phone_primary': phoneCtrl.text.trim(),
+                      'password': passCtrl.text,
+                      'is_admin': true,
+                    });
+                    if (!mounted) return;
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _snack('Admin ameongezwa', _kGreen);
+                    _load();
+                  } catch (e) {
+                    ss(() => saving = false);
+                    if (!mounted) return;
+                    _snack('Hitilafu: $e', _kRed);
+                  }
+                },
+                icon: saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.admin_panel_settings_rounded, size: 16),
+                label: const Text('Ongeza Admin', style: TextStyle(fontWeight: FontWeight.w700)),
+                style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              )),
+            ]),
+          ),
+        ),
       ),
     );
   }
 }
 
+// ── User card ──────────────────────────────────────────────────────────────
 class _UserCard extends StatelessWidget {
   final Map<String, dynamic> user;
+  final int index;
   final bool selected;
-  final VoidCallback onToggleSelect;
-  final VoidCallback onDetail;
+  final VoidCallback onToggle;
+  final VoidCallback onView;
   final VoidCallback onEdit;
+  final VoidCallback onSuspend;
+  final VoidCallback onAdmin;
   final VoidCallback onDelete;
 
   const _UserCard({
     required this.user,
+    required this.index,
     required this.selected,
-    required this.onToggleSelect,
-    required this.onDetail,
+    required this.onToggle,
+    required this.onView,
     required this.onEdit,
+    required this.onSuspend,
+    required this.onAdmin,
     required this.onDelete,
   });
 
@@ -636,108 +1082,121 @@ class _UserCard extends StatelessWidget {
     final phone = user['phone_primary'] as String? ?? user['phone'] as String? ?? '';
     final category = user['category'] as String? ?? '';
     final cadre = user['cadre_display'] as String? ?? user['cadre_name'] as String? ?? '';
-    final region = (user['current_station'] as Map?)?['region'] as String? ?? user['region'] as String? ?? '';
-    final isActive = user['is_active'] as bool? ?? true;
+    final station = user['current_station'] as Map? ?? user['station'] as Map? ?? {};
+    final region = station['region_name'] as String? ?? station['region'] as String? ?? '';
+    final district = station['district_name'] as String? ?? station['district'] as String? ?? '';
+    final String? statusStr = user['status'] as String?;
+    final isActive = (user['is_active'] as bool?) ?? (statusStr != 'suspended');
     final isPaid = user['is_paid'] as bool? ?? false;
     final isAdmin = user['is_admin'] as bool? ?? false;
-    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'M';
-    final catColor = category.toLowerCase().contains('health') || category.toLowerCase() == 'afya' ? _kRed : _kGreen;
-    final catBg = category.toLowerCase().contains('health') || category.toLowerCase() == 'afya'
-        ? _kRedBg : _kGreenBg;
-    final index = (user['_index'] as int?) ?? 0;
+    final init = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    // Category display
+    final catLabel = category == 'health' ? 'Afya' : category == 'education' ? 'Elimu' : category;
+    final catFg = category == 'health' ? const Color(0xFFDC2626) : const Color(0xFF16A34A);
+    final catBg = category == 'health' ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7);
+
+    // location
+    final location = [region, district].where((s) => s.isNotEmpty).join(', ');
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: selected ? _kBlue : _kGrey200),
         borderRadius: BorderRadius.circular(12),
+        border: Border(
+          left: BorderSide(color: selected ? _kBlue : _kGreen, width: 4),
+          top: BorderSide(color: _kGrey200),
+          right: BorderSide(color: _kGrey200),
+          bottom: BorderSide(color: _kGrey200),
+        ),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 2))],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Card body ────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(10, 12, 12, 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Checkbox(
-                  value: selected,
-                  onChanged: (_) => onToggleSelect(),
-                  activeColor: _kBlue,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                // Checkbox
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: SizedBox(
+                    width: 22, height: 22,
+                    child: Checkbox(
+                      value: selected, onChanged: (_) => onToggle(),
+                      activeColor: _kBlue, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 8),
+                // Avatar
                 CircleAvatar(
                   radius: 22,
                   backgroundColor: _kGreenBg,
-                  child: Text(initials,
-                      style: TextStyle(color: _kGreen, fontWeight: FontWeight.bold, fontSize: 15)),
+                  child: Text(init, style: const TextStyle(color: _kGreen, fontWeight: FontWeight.w800, fontSize: 16)),
                 ),
                 const SizedBox(width: 10),
+                // Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name,
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _kGrey900)),
-                      if (phone.isNotEmpty)
-                        Text(phone, style: TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 4, runSpacing: 4,
-                        children: [
-                          if (category.isNotEmpty)
-                            _Badge(label: category, color: catColor, bg: catBg),
-                          if (cadre.isNotEmpty)
-                            _Badge(label: cadre, color: _kGreen, bg: _kGreenBg),
-                          if (isAdmin)
-                            _Badge(label: 'Admin', color: _kBlue, bg: _kBlueBg),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      if (region.isNotEmpty)
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined, size: 12, color: _kGrey500),
-                            const SizedBox(width: 3),
-                            Text(region, style: TextStyle(fontSize: 11, color: _kGrey500)),
-                          ],
-                        ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          _Badge(
-                            label: isActive ? 'Hai' : 'Amesitishwa',
-                            color: isActive ? _kGreen : _kAmber,
-                            bg: isActive ? _kGreenBg : _kAmberBg,
-                          ),
-                          const SizedBox(width: 6),
-                          _Badge(
-                            label: isPaid ? 'Amelipa' : 'Hajalipa',
-                            color: isPaid ? _kGreen : _kRed,
-                            bg: isPaid ? _kGreenBg : _kRedBg,
-                          ),
-                        ],
-                      ),
+                      // Numbered name + phone
+                      Text('$index. $name', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900)),
+                      if (phone.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w600)),
+                      ],
+                      const SizedBox(height: 5),
+                      // Category + cadre chips
+                      Wrap(spacing: 4, runSpacing: 4, children: [
+                        if (catLabel.isNotEmpty) _Badge(catLabel, catFg, catBg),
+                        if (cadre.isNotEmpty) _Badge(cadre, _kGreen, _kGreenBg),
+                        if (isAdmin) _Badge('Admin', _kBlue, _kBlueBg),
+                      ]),
+                      // Location
+                      if (location.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(children: [
+                          const Icon(Icons.location_on_outlined, size: 12, color: _kGrey500),
+                          const SizedBox(width: 3),
+                          Expanded(child: Text(location, style: const TextStyle(fontSize: 11, color: _kGrey500), overflow: TextOverflow.ellipsis)),
+                        ]),
+                      ],
+                      const SizedBox(height: 5),
+                      // Status chips
+                      Wrap(spacing: 4, runSpacing: 4, children: [
+                        _Badge(isActive ? 'Hai' : 'Amesitishwa', isActive ? _kGreen : _kAmber, isActive ? _kGreenBg : _kAmberBg),
+                        _Badge(isPaid ? 'Amelipa' : 'Hajalipa', isPaid ? _kGreen : _kRed, isPaid ? _kGreenBg : _kRedBg),
+                        _Badge('Mtumiaji', const Color(0xFF374151), const Color(0xFFF3F4F6)),
+                      ]),
                     ],
                   ),
                 ),
               ],
             ),
           ),
+          // ── Action buttons ───────────────────────────────────────────
           const Divider(height: 1, color: _kGrey200),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                _ActionBtn(icon: Icons.open_in_new, color: _kBlue, onTap: onDetail),
+                _TxtBtn(Icons.open_in_new_rounded, 'Angalia', _kBlue, onView),
                 const SizedBox(width: 6),
-                _ActionBtn(icon: Icons.edit_outlined, color: _kGrey700, onTap: onEdit),
+                _TxtBtn(Icons.edit_rounded, 'Hariri', _kGrey700, onEdit),
+                const SizedBox(width: 6),
+                _TxtBtn(isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
+                    isActive ? 'Simamisha' : 'Wezeshwa', _kAmber, onSuspend),
                 const Spacer(),
-                _ActionBtn(icon: Icons.block_outlined, color: _kAmber, onTap: () {}),
+                _TxtBtn(isAdmin ? Icons.shield_rounded : Icons.shield_outlined,
+                    isAdmin ? 'Ameruhusiwa' : 'Ruhusu', isAdmin ? _kGreen : _kGrey700, onAdmin),
                 const SizedBox(width: 6),
-                _ActionBtn(icon: Icons.phone_outlined, color: _kGreen, onTap: () {}),
-                const SizedBox(width: 6),
-                _ActionBtn(icon: Icons.delete_outline, color: _kRed, onTap: onDelete),
+                _TxtBtn(Icons.delete_outline_rounded, 'Futa', _kRed, onDelete),
               ],
             ),
           ),
@@ -749,1200 +1208,37 @@ class _UserCard extends StatelessWidget {
 
 class _Badge extends StatelessWidget {
   final String label;
-  final Color color;
-  final Color bg;
-  const _Badge({required this.label, required this.color, required this.bg});
-
+  final Color fg, bg;
+  const _Badge(this.label, this.fg, this.bg);
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
-      child: Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
-    );
-  }
-}
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  const _ActionBtn({required this.icon, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: _kGrey200),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: color, size: 16),
-      ),
-    );
-  }
-}
-
-// ── PICKERS ──
-
-class _CategoryPicker extends StatelessWidget {
-  final String current;
-  final ValueChanged<String> onPicked;
-  const _CategoryPicker({required this.current, required this.onPicked});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('Chagua idara',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-              const Spacer(),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _PickerItem(
-            icon: Icons.apps_outlined,
-            iconColor: _kBlue,
-            iconBg: _kBlueBg,
-            label: 'Zote',
-            selected: current.isEmpty,
-            onTap: () { Navigator.pop(context); onPicked(''); },
-          ),
-          _PickerItem(
-            icon: Icons.medical_services_outlined,
-            iconColor: _kRed,
-            iconBg: _kRedBg,
-            label: 'Afya',
-            selected: current == 'health',
-            onTap: () { Navigator.pop(context); onPicked('health'); },
-          ),
-          _PickerItem(
-            icon: Icons.menu_book_outlined,
-            iconColor: _kGreen,
-            iconBg: _kGreenBg,
-            label: 'Elimu',
-            selected: current == 'education',
-            onTap: () { Navigator.pop(context); onPicked('education'); },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PickerItem extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBg;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _PickerItem({
-    required this.icon, required this.iconColor, required this.iconBg,
-    required this.label, required this.selected, required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      leading: Container(
-        width: 36, height: 36,
-        decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, color: iconColor, size: 18),
-      ),
-      title: Text(label, style: TextStyle(fontSize: 14, color: _kGrey900)),
-      trailing: selected ? const Icon(Icons.check, color: _kBlue) : null,
-      tileColor: selected ? _kBlueBg : null,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    );
-  }
-}
-
-class _RegionPicker extends StatefulWidget {
-  final List<dynamic> regions;
-  final String? currentId;
-  final void Function(String?, String?) onPicked;
-  const _RegionPicker({required this.regions, this.currentId, required this.onPicked});
-  @override
-  State<_RegionPicker> createState() => _RegionPickerState();
-}
-
-class _RegionPickerState extends State<_RegionPicker> {
-  final _searchCtrl = TextEditingController();
-  List<dynamic> _filtered = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filtered = List.from(widget.regions);
-    _searchCtrl.addListener(() {
-      final q = _searchCtrl.text.toLowerCase();
-      setState(() {
-        _filtered = q.isEmpty
-            ? List.from(widget.regions)
-            : widget.regions.where((r) {
-                return ((r as Map)['name'] as String? ?? '').toLowerCase().contains(q);
-              }).toList();
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Text('Chagua mkoa',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-                const Spacer(),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Tafuta mkoa...',
-                prefixIcon: const Icon(Icons.search, size: 18, color: _kGrey500),
-                filled: true, fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ListTile(
-            title: const Text('Mkoa wote'),
-            trailing: widget.currentId == null ? const Icon(Icons.check, color: _kBlue) : null,
-            onTap: () { Navigator.pop(context); widget.onPicked(null, null); },
-          ),
-          const Divider(height: 1),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: _filtered.length,
-              itemBuilder: (ctx, i) {
-                final r = _filtered[i] as Map<String, dynamic>;
-                final id = r['id']?.toString() ?? '';
-                final name = r['name'] as String? ?? '';
-                return ListTile(
-                  title: Text(name),
-                  trailing: widget.currentId == id ? const Icon(Icons.check, color: _kBlue) : null,
-                  onTap: () { Navigator.pop(context); widget.onPicked(id, name); },
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
-class _DistrictPicker extends StatefulWidget {
-  final List<dynamic> districts;
-  final String? currentId;
-  final void Function(String?, String?) onPicked;
-  const _DistrictPicker({required this.districts, this.currentId, required this.onPicked});
-  @override
-  State<_DistrictPicker> createState() => _DistrictPickerState();
-}
-
-class _DistrictPickerState extends State<_DistrictPicker> {
-  final _searchCtrl = TextEditingController();
-  List<dynamic> _filtered = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filtered = List.from(widget.districts);
-    _searchCtrl.addListener(() {
-      final q = _searchCtrl.text.toLowerCase();
-      setState(() {
-        _filtered = q.isEmpty
-            ? List.from(widget.districts)
-            : widget.districts.where((d) {
-                return ((d as Map)['name'] as String? ?? '').toLowerCase().contains(q);
-              }).toList();
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Text('Chagua wilaya',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-                const Spacer(),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Tafuta wilaya...',
-                prefixIcon: const Icon(Icons.search, size: 18, color: _kGrey500),
-                filled: true, fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ListTile(
-            title: const Text('Wilaya zote'),
-            trailing: widget.currentId == null ? const Icon(Icons.check, color: _kBlue) : null,
-            onTap: () { Navigator.pop(context); widget.onPicked(null, null); },
-          ),
-          const Divider(height: 1),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
-            child: widget.districts.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text('Chagua mkoa kwanza', textAlign: TextAlign.center),
-                  )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _filtered.length,
-                    itemBuilder: (ctx, i) {
-                      final d = _filtered[i] as Map<String, dynamic>;
-                      final id = d['id']?.toString() ?? '';
-                      final name = d['name'] as String? ?? '';
-                      return ListTile(
-                        title: Text(name),
-                        trailing: widget.currentId == id ? const Icon(Icons.check, color: _kBlue) : null,
-                        onTap: () { Navigator.pop(context); widget.onPicked(id, name); },
-                      );
-                    },
-                  ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
-class _SubjectPicker extends StatefulWidget {
-  final List<dynamic> subjects;
-  final String? currentCode;
-  final ValueChanged<String?> onPicked;
-  const _SubjectPicker({required this.subjects, this.currentCode, required this.onPicked});
-  @override
-  State<_SubjectPicker> createState() => _SubjectPickerState();
-}
-
-class _SubjectPickerState extends State<_SubjectPicker> {
-  final _searchCtrl = TextEditingController();
-  List<dynamic> _filtered = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filtered = List.from(widget.subjects);
-    _searchCtrl.addListener(() {
-      final q = _searchCtrl.text.toLowerCase();
-      setState(() {
-        _filtered = q.isEmpty
-            ? List.from(widget.subjects)
-            : widget.subjects.where((s) {
-                return ((s as Map)['name'] as String? ?? '').toLowerCase().contains(q);
-              }).toList();
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Text('Chagua somo',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-                const Spacer(),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Tafuta somo...',
-                prefixIcon: const Icon(Icons.search, size: 18, color: _kGrey500),
-                filled: true, fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ListTile(
-            title: const Text('Masomo yote'),
-            trailing: widget.currentCode == null ? const Icon(Icons.check, color: _kBlue) : null,
-            onTap: () { Navigator.pop(context); widget.onPicked(null); },
-          ),
-          const Divider(height: 1),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: _filtered.length,
-              itemBuilder: (ctx, i) {
-                final s = _filtered[i] as Map<String, dynamic>;
-                final code = s['code'] as String? ?? s['name'] as String? ?? '';
-                final name = s['name'] as String? ?? '';
-                return ListTile(
-                  title: Text(name),
-                  trailing: widget.currentCode == code ? const Icon(Icons.check, color: _kBlue) : null,
-                  onTap: () { Navigator.pop(context); widget.onPicked(code); },
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
-// ── USER DETAIL SHEET ──
-
-class _UserDetailSheet extends StatelessWidget {
-  final Map<String, dynamic> user;
-  const _UserDetailSheet({required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    final name = user['full_name'] as String? ?? '';
-    final phone = user['phone_primary'] as String? ?? user['phone'] as String? ?? '';
-    final whatsapp = user['phone_whatsapp'] as String? ?? '';
-    final category = user['category'] as String? ?? '';
-    final cadre = user['cadre_display'] as String? ?? '';
-    final station = user['current_station'] as Map<String, dynamic>? ?? {};
-    final region = station['region'] as String? ?? user['region'] as String? ?? '';
-    final district = station['district'] as String? ?? user['district'] as String? ?? '';
-    final facility = station['name'] as String? ?? '';
-    final destinations = (user['destination_regions'] as List?)?.map((r) => r.toString()).toList() ?? [];
-    final isActive = user['is_active'] as bool? ?? true;
-    final isPaid = user['is_paid'] as bool? ?? false;
-    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'M';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 96, height: 96,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [_kBlue, const Color(0xFF3B82F6)],
-              ),
-              borderRadius: BorderRadius.circular(48),
-            ),
-            child: Center(
-              child: Text(initials,
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(name,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _kGrey900),
-              textAlign: TextAlign.center),
-          if (cadre.isNotEmpty)
-            Text(cadre, style: TextStyle(fontSize: 13, color: _kGrey500)),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _Badge(
-                label: isActive ? 'Hai' : 'Amesitishwa',
-                color: isActive ? _kGreen : _kAmber,
-                bg: isActive ? _kGreenBg : _kAmberBg,
-              ),
-              const SizedBox(width: 8),
-              _Badge(
-                label: isPaid ? 'Amelipa' : 'Hajalipa',
-                color: isPaid ? _kGreen : _kRed,
-                bg: isPaid ? _kGreenBg : _kRedBg,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Divider(color: _kGrey200),
-          _InfoRow(label: 'Simu', value: phone, valueColor: _kBlue),
-          if (whatsapp.isNotEmpty) _InfoRow(label: 'WhatsApp', value: whatsapp, valueColor: _kBlue),
-          if (category.isNotEmpty) _InfoRow(label: 'Idara', value: category),
-          if (region.isNotEmpty) _InfoRow(label: 'Mkoa', value: region),
-          if (district.isNotEmpty) _InfoRow(label: 'Wilaya', value: district),
-          if (facility.isNotEmpty) _InfoRow(label: 'Kituo', value: facility),
-          if (destinations.isNotEmpty) ...[
-            const Divider(color: _kGrey200),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Mikoa anayotaka kwenda',
-                  style: TextStyle(fontSize: 12, color: _kGrey500)),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6, runSpacing: 6,
-              children: destinations.map((d) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(6)),
-                child: Text(d, style: TextStyle(fontSize: 12, color: _kBlue)),
-              )).toList(),
-            ),
-          ],
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _kGrey700,
-                    side: const BorderSide(color: _kGrey200),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Funga'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kBlue, foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Hariri'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  const _InfoRow({required this.label, required this.value, this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 90,
-            child: Text(label, style: TextStyle(fontSize: 13, color: _kGrey500)),
-          ),
-          Expanded(
-            child: Text(value,
-                style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.bold,
-                  color: valueColor ?? _kGrey900,
-                )),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── USER EDIT SHEET ──
-
-class _UserEditSheet extends StatefulWidget {
-  final Map<String, dynamic> user;
-  final List<dynamic> cadres;
-  final List<dynamic> subjects;
-  final VoidCallback onSaved;
-  const _UserEditSheet({
-    required this.user, required this.cadres, required this.subjects, required this.onSaved,
-  });
-  @override
-  State<_UserEditSheet> createState() => _UserEditSheetState();
-}
-
-class _UserEditSheetState extends State<_UserEditSheet> {
-  final _nameCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  final _waCtrl = TextEditingController();
-  bool _isActive = true;
-  bool _isPaid = false;
-  bool _isAdmin = false;
-  String? _cadreCode;
-  Set<String> _selectedSubjects = {};
-  bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final u = widget.user;
-    _nameCtrl.text = u['full_name'] as String? ?? '';
-    _phoneCtrl.text = u['phone_primary'] as String? ?? u['phone'] as String? ?? '';
-    _waCtrl.text = u['phone_whatsapp'] as String? ?? '';
-    _isActive = u['is_active'] as bool? ?? true;
-    _isPaid = u['is_paid'] as bool? ?? false;
-    _isAdmin = u['is_admin'] as bool? ?? false;
-    _cadreCode = u['cadre_code'] as String?;
-    _selectedSubjects = Set.from((u['subjects'] as List?)?.map((s) => s.toString()) ?? []);
-  }
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _phoneCtrl.dispose();
-    _waCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    setState(() { _saving = true; });
-    try {
-      final id = widget.user['user_id']?.toString() ?? '';
-      await ApiService().adminUpdateUser(id, {
-        'full_name': _nameCtrl.text.trim(),
-        'phone_primary': _phoneCtrl.text.trim(),
-        if (_waCtrl.text.isNotEmpty) 'phone_whatsapp': _waCtrl.text.trim(),
-        'is_active': _isActive,
-        'is_paid': _isPaid,
-        if (_cadreCode != null) 'cadre_code': _cadreCode,
-        'subjects': _selectedSubjects.toList(),
-      });
-      if (_isAdmin != (widget.user['is_admin'] as bool? ?? false)) {
-        if (_isAdmin) {
-          await ApiService().adminGrant(id);
-        } else {
-          await ApiService().adminRevoke(id);
-        }
-      }
-      if (!mounted) return;
-      Navigator.pop(context);
-      widget.onSaved();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _saving = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
-    }
-  }
-
-  InputDecoration _inputDec(String hint) => InputDecoration(
-    hintText: hint,
-    filled: true,
-    fillColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+    child: Text(label, style: TextStyle(fontSize: 10, color: fg, fontWeight: FontWeight.w700)),
   );
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('Hariri Mtumiaji',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-              const Spacer(),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Personal info section
-          _SectionHeader(icon: Icons.person_outline, label: 'MAELEZO BINAFSI'),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _nameCtrl,
-            decoration: _inputDec('Jina kamili *'),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: TextField(controller: _phoneCtrl, decoration: _inputDec('Simu'))),
-              const SizedBox(width: 10),
-              Expanded(child: TextField(controller: _waCtrl, decoration: _inputDec('WhatsApp'))),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Status section
-          _SectionHeader(icon: Icons.shield_outlined, label: 'HALI NA HADHI'),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _TogglePill2(label: 'Hai', selected: _isActive, color: _kGreen,
-                  onTap: () => setState(() { _isActive = true; })),
-              const SizedBox(width: 8),
-              _TogglePill2(label: 'Amesitishwa', selected: !_isActive, color: _kAmber,
-                  onTap: () => setState(() { _isActive = false; })),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Checkbox(
-                value: _isPaid,
-                onChanged: (v) => setState(() { _isPaid = v ?? false; }),
-                activeColor: _kBlue,
-              ),
-              const Text('Amelipa'),
-              const SizedBox(width: 16),
-              Checkbox(
-                value: _isAdmin,
-                onChanged: (v) => setState(() { _isAdmin = v ?? false; }),
-                activeColor: _kBlue,
-              ),
-              const Text('Admin'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Cadre & subjects section
-          _SectionHeader(icon: Icons.work_outline, label: 'KADA NA MASOMO'),
-          const SizedBox(height: 10),
-          if (widget.cadres.isNotEmpty)
-            DropdownButtonFormField<String>(
-              value: widget.cadres.any((c) => c['code'] == _cadreCode) ? _cadreCode : null,
-              decoration: _inputDec('Chagua kada'),
-              items: widget.cadres.map((c) => DropdownMenuItem<String>(
-                value: c['code'] as String? ?? '',
-                child: Text(c['name'] as String? ?? ''),
-              )).toList(),
-              onChanged: (v) => setState(() { _cadreCode = v; }),
-            ),
-          if (widget.subjects.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text('Masomo', style: TextStyle(fontSize: 12, color: _kGrey700, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6, runSpacing: 6,
-              children: widget.subjects.map((s) {
-                final code = s['code'] as String? ?? s['name'] as String? ?? '';
-                final name = s['name'] as String? ?? '';
-                final selected = _selectedSubjects.contains(code);
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (selected) {
-                        _selectedSubjects.remove(code);
-                      } else {
-                        _selectedSubjects.add(code);
-                      }
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: selected ? _kBlueBg : Colors.white,
-                      border: Border.all(color: selected ? _kBlue : _kGrey200),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(name,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: selected ? _kBlue : _kGrey700,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                        )),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _kGrey700,
-                    side: const BorderSide(color: _kGrey200),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Ghairi'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: const Icon(Icons.save_outlined, size: 16),
-                  label: _saving
-                      ? const SizedBox(width: 16, height: 16,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Hifadhi'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kBlue, foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
-class _SectionHeader extends StatelessWidget {
+class _TxtBtn extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _SectionHeader({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: _kGrey500),
-        const SizedBox(width: 6),
-        Text(label,
-            style: TextStyle(fontSize: 11, color: _kGrey500, fontWeight: FontWeight.w600,
-                letterSpacing: 0.5)),
-      ],
-    );
-  }
-}
-
-class _TogglePill2 extends StatelessWidget {
-  final String label;
-  final bool selected;
   final Color color;
   final VoidCallback onTap;
-  const _TogglePill2({required this.label, required this.selected, required this.color, required this.onTap});
-
+  const _TxtBtn(this.icon, this.label, this.color, this.onTap);
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.12) : Colors.white,
-          border: Border.all(color: selected ? color : _kGrey200, width: selected ? 1.5 : 1),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(label,
-            style: TextStyle(
-              fontSize: 13,
-              color: selected ? color : _kGrey700,
-              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-            )),
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: _kGrey200),
+        borderRadius: BorderRadius.circular(7),
       ),
-    );
-  }
-}
-
-// ── ADD ADMIN DIALOG ──
-
-class _AddAdminDialog extends StatefulWidget {
-  final VoidCallback onAdded;
-  const _AddAdminDialog({required this.onAdded});
-  @override
-  State<_AddAdminDialog> createState() => _AddAdminDialogState();
-}
-
-class _AddAdminDialogState extends State<_AddAdminDialog> {
-  final _nameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
-  bool _adding = false;
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _emailCtrl.dispose();
-    _phoneCtrl.dispose();
-    _passCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _add() async {
-    setState(() { _adding = true; });
-    try {
-      await ApiService().adminCreateUser({
-        'full_name': _nameCtrl.text.trim(),
-        'email': _emailCtrl.text.trim(),
-        'phone_primary': _phoneCtrl.text.trim(),
-        'password': _passCtrl.text,
-        'is_admin': true,
-      });
-      if (!mounted) return;
-      Navigator.pop(context);
-      widget.onAdded();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _adding = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
-    }
-  }
-
-  InputDecoration _inputDec(String hint) => InputDecoration(
-    hintText: hint,
-    filled: true, fillColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 13, color: color),
+        const SizedBox(width: 3),
+        Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w700)),
+      ]),
+    ),
   );
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: Colors.white,
-      title: Row(
-        children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.admin_panel_settings_outlined, color: _kBlue, size: 18),
-          ),
-          const SizedBox(width: 10),
-          const Text('Ongeza Admin'),
-          const Spacer(),
-          IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(controller: _nameCtrl, decoration: _inputDec('Jina Kamili')),
-          const SizedBox(height: 10),
-          TextField(controller: _emailCtrl, decoration: _inputDec('Barua Pepe')),
-          const SizedBox(height: 10),
-          TextField(controller: _phoneCtrl, decoration: _inputDec('Simu')),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _passCtrl,
-            obscureText: true,
-            decoration: _inputDec('Nenosiri'),
-          ),
-        ],
-      ),
-      actions: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _adding ? null : _add,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kBlue, foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: _adding
-                ? const SizedBox(width: 18, height: 18,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Ongeza Admin'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ── ADD USER SHEET ──
-
-class _AddUserSheet extends StatefulWidget {
-  final List<dynamic> regions;
-  final List<dynamic> cadres;
-  final List<dynamic> subjects;
-  final VoidCallback onAdded;
-  const _AddUserSheet({
-    required this.regions, required this.cadres, required this.subjects, required this.onAdded,
-  });
-  @override
-  State<_AddUserSheet> createState() => _AddUserSheetState();
-}
-
-class _AddUserSheetState extends State<_AddUserSheet> {
-  final _nameCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  final _waCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
-  String _category = 'health';
-  String? _cadreCode;
-  String? _regionId;
-  bool _isAdmin = false;
-  bool _isPaid = false;
-  Set<String> _selectedSubjects = {};
-  bool _adding = false;
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _phoneCtrl.dispose();
-    _waCtrl.dispose();
-    _passCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _add() async {
-    if (_nameCtrl.text.trim().isEmpty || _phoneCtrl.text.trim().isEmpty) return;
-    setState(() { _adding = true; });
-    try {
-      await ApiService().adminCreateUser({
-        'full_name': _nameCtrl.text.trim(),
-        'phone_primary': _phoneCtrl.text.trim(),
-        if (_waCtrl.text.isNotEmpty) 'phone_whatsapp': _waCtrl.text.trim(),
-        if (_passCtrl.text.isNotEmpty) 'password': _passCtrl.text,
-        'category': _category,
-        if (_cadreCode != null) 'cadre_code': _cadreCode,
-        'is_admin': _isAdmin,
-        'is_paid': _isPaid,
-        if (_regionId != null) 'region_id': _regionId,
-        'subjects': _selectedSubjects.toList(),
-      });
-      if (!mounted) return;
-      Navigator.pop(context);
-      widget.onAdded();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _adding = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
-    }
-  }
-
-  InputDecoration _inputDec(String hint) => InputDecoration(
-    hintText: hint,
-    filled: true, fillColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('Ongeza Mtumiaji',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-              const Spacer(),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _SectionHeader(icon: Icons.person_outline, label: 'MAELEZO BINAFSI'),
-          const SizedBox(height: 10),
-          TextField(controller: _nameCtrl, decoration: _inputDec('Jina Kamili *')),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: TextField(controller: _phoneCtrl, decoration: _inputDec('Simu *'))),
-              const SizedBox(width: 10),
-              Expanded(child: TextField(controller: _waCtrl, decoration: _inputDec('WhatsApp'))),
-            ],
-          ),
-          const SizedBox(height: 10),
-          TextField(controller: _passCtrl, obscureText: true, decoration: _inputDec('Nenosiri')),
-          const SizedBox(height: 16),
-          _SectionHeader(icon: Icons.work_outline, label: 'SEKTA NA KADA'),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _TogglePill2(label: 'Afya', selected: _category == 'health', color: _kRed,
-                  onTap: () => setState(() { _category = 'health'; })),
-              const SizedBox(width: 8),
-              _TogglePill2(label: 'Elimu', selected: _category == 'education', color: _kGreen,
-                  onTap: () => setState(() { _category = 'education'; })),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (widget.cadres.isNotEmpty)
-            DropdownButtonFormField<String>(
-              value: widget.cadres.any((c) => c['code'] == _cadreCode) ? _cadreCode : null,
-              decoration: _inputDec('Chagua kada'),
-              items: widget.cadres.map((c) => DropdownMenuItem<String>(
-                value: c['code'] as String? ?? '',
-                child: Text(c['name'] as String? ?? ''),
-              )).toList(),
-              onChanged: (v) => setState(() { _cadreCode = v; }),
-            ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Checkbox(
-                value: _isPaid,
-                onChanged: (v) => setState(() { _isPaid = v ?? false; }),
-                activeColor: _kBlue,
-              ),
-              const Text('Amelipa'),
-              const SizedBox(width: 16),
-              Checkbox(
-                value: _isAdmin,
-                onChanged: (v) => setState(() { _isAdmin = v ?? false; }),
-                activeColor: _kBlue,
-              ),
-              const Text('Admin'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _SectionHeader(icon: Icons.location_on_outlined, label: 'KITUO CHA SASA'),
-          const SizedBox(height: 10),
-          if (widget.regions.isNotEmpty)
-            DropdownButtonFormField<String>(
-              value: widget.regions.any((r) => r['id'].toString() == _regionId) ? _regionId : null,
-              decoration: _inputDec('Chagua mkoa'),
-              items: widget.regions.map((r) => DropdownMenuItem<String>(
-                value: r['id'].toString(),
-                child: Text(r['name'] as String? ?? ''),
-              )).toList(),
-              onChanged: (v) => setState(() { _regionId = v; }),
-            ),
-          const SizedBox(height: 16),
-          if (widget.subjects.isNotEmpty) ...[
-            _SectionHeader(icon: Icons.menu_book_outlined, label: 'MIKOA ANAYOTAKA KWENDA'),
-            const SizedBox(height: 10),
-            Text('Masomo', style: TextStyle(fontSize: 12, color: _kGrey700, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6, runSpacing: 6,
-              children: widget.subjects.map((s) {
-                final code = s['code'] as String? ?? s['name'] as String? ?? '';
-                final name = s['name'] as String? ?? '';
-                final selected = _selectedSubjects.contains(code);
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (selected) {
-                        _selectedSubjects.remove(code);
-                      } else {
-                        _selectedSubjects.add(code);
-                      }
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: selected ? _kBlueBg : Colors.white,
-                      border: Border.all(color: selected ? _kBlue : _kGrey200),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(name,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: selected ? _kBlue : _kGrey700,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                        )),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-          ],
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _adding ? null : _add,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kBlue, foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: _adding
-                  ? const SizedBox(width: 20, height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('Ongeza Mtumiaji', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
