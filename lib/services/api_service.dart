@@ -100,8 +100,8 @@ class ApiService {
     return response;
   }
 
-  Future<Response> post(String path, {dynamic data}) =>
-      _dio.post(path, data: data);
+  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) =>
+      _dio.post(path, data: data, queryParameters: queryParameters);
   Future<Response> put(String path, {dynamic data}) =>
       _dio.put(path, data: data);
   Future<Response> patch(String path, {dynamic data}) =>
@@ -365,13 +365,13 @@ class ApiService {
         if (cadreCode != null) 'cadre_code': cadreCode,
         'limit': limit,
       }, cacheTtl: _ttlShort);
-  Future<Response> adminReports({int days = 365, String? region, String? category, String? level}) =>
+  Future<Response> adminReports({int days = 365, String? region, String? category, String? level, bool refresh = false}) =>
       get('/admin/reports', queryParameters: {
         'days': days,
         if (region != null && region.isNotEmpty) 'region': region,
         if (category != null && category.isNotEmpty) 'category': category,
         if (level != null && level.isNotEmpty) 'level': level,
-      }, cacheTtl: _ttlShort);
+      }, useCache: !refresh, cacheTtl: _ttlShort);
   Future<Response> adminListDepartments() =>
       get('/admin/departments', cacheTtl: _ttlSemiStatic);
   Future<Response> adminEvents({String? eventType, int limit = 100, int skip = 0}) =>
@@ -418,23 +418,71 @@ class ApiService {
       get('/admin/users/$userId/matches', cacheTtl: _ttlShort);
   Future<Response> adminGetUserBoard(String userId) =>
       get('/admin/users/$userId/board', cacheTtl: _ttlShort);
-  Future<Response> adminImportUsers(dynamic formData) async {
+  /// Import ya watumiaji wengi kwa faili la Excel (.xlsx). `category` ni
+  /// LAZIMA (health | education | service) — backend inaitumia kujua muundo
+  /// wa safu (kada/kiwango). Bila hiyo backend inarudisha 422.
+  Future<Response> adminImportUsers(FormData formData, {required String category}) async {
     AppCache().invalidatePrefix('/admin/users');
-    return post('/admin/users/import', data: formData);
+    return post('/admin/users/import',
+        data: formData, queryParameters: {'category': category});
   }
+
+  /// Import kutoka faili la Excel lililochaguliwa kwenye simu.
+  Future<Response> adminImportUsersFile({
+    required String path,
+    required String filename,
+    required String category,
+  }) async {
+    final fd = FormData.fromMap({
+      'file': await MultipartFile.fromFile(path, filename: filename),
+    });
+    return adminImportUsers(fd, category: category);
+  }
+
+  /// Kiolezo (Excel template) cha import — bytes zenye auth (endpoint ni ya
+  /// admin, hivyo haiwezi kufunguliwa kwenye browser moja kwa moja).
+  Future<List<int>> adminImportTemplateBytes(String category) async {
+    final res = await _dio.get(
+      '/admin/users/import/template',
+      queryParameters: {'category': category},
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final data = res.data;
+    if (data is List<int>) return data;
+    return (data as List).cast<int>();
+  }
+
+  /// Watumiaji WOTE waliopata matches ("waliopata wenzao") — pamoja na
+  /// orodha ya waliokutanishwa nao, hesabu ya matches na mkoa/wilaya.
+  Future<Response> adminUsersWithMatches({int limit = 100}) =>
+      get('/admin/users/with-matches',
+          queryParameters: {'limit': limit}, cacheTtl: _ttlShort);
   Future<Response> adminGetMonitoring() =>
       get('/admin/monitoring', cacheTtl: _ttlShort);
   Future<Response> adminListData(String type) =>
       get('/admin/data/$type', cacheTtl: _ttlSemiStatic);
+  /// Data ya reference (mikoa/wilaya/kada/masomo/idara/vituo) inatumiwa PIA
+  /// na usajili, wasifu na settings kupitia `/locations/*` na `/cadres*`.
+  /// Bila kufuta hizi, mabadiliko ya admin yanaonekana kwenye Data page pekee
+  /// na usajili unaendelea kuonyesha orodha ya kale hadi TTL (dakika 30) iishe
+  /// — ndiyo sababu "nimeongeza data, nikija kuisajili siioni".
+  void _invalidateReferenceData() {
+    AppCache().invalidatePrefix('/locations');
+    AppCache().invalidatePrefix('/cadres');
+  }
+
   Future<Response> adminCreateData(String type, Map<String, dynamic> data) async {
+    _invalidateReferenceData();
     AppCache().invalidatePrefix('/admin/data/$type');
     return post('/admin/data/$type', data: data);
   }
   Future<Response> adminUpdateData(String type, String id, Map<String, dynamic> data) async {
+    _invalidateReferenceData();
     AppCache().invalidatePrefix('/admin/data/$type');
     return patch('/admin/data/$type/$id', data: data);
   }
   Future<Response> adminDeleteData(String type, String id) async {
+    _invalidateReferenceData();
     AppCache().invalidatePrefix('/admin/data/$type');
     return delete('/admin/data/$type/$id');
   }

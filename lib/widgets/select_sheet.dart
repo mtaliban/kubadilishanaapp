@@ -271,40 +271,33 @@ class SelectField extends StatelessWidget {
       onTap: disabled ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        height: 36, // ndogo ya kisomo — siyo unene
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: hasValue && !disabled
-              ? const Color(0xFFEFF6FF)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: disabled ? AppColors.grey100 : Colors.white,
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: disabled
-                ? AppColors.grey200
-                : hasValue
-                    ? const Color(0xFF93C5FD)
-                    : AppColors.border,
-            width: hasValue ? 1.5 : 1,
+            color: disabled ? AppColors.grey200 : AppColors.grey300,
           ),
         ),
         child: Row(children: [
-          if (leading != null) ...[leading!, const SizedBox(width: 10)],
+          if (leading != null) ...[leading!, const SizedBox(width: 8)],
           Expanded(
             child: Text(
               hasValue ? value! : hint,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 12,
                 fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
                 color: hasValue ? AppColors.textPrimary : AppColors.textLight,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Icon(
             Icons.keyboard_arrow_down_rounded,
-            size: 20,
+            size: 16,
             color: hasValue ? AppColors.primary : AppColors.textLight,
           ),
         ]),

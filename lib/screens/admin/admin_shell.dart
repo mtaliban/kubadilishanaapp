@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_shell.dart' show LanguageProvider;
 import 'admin_dashboard_page.dart';
 import 'admin_users_page.dart';
 import 'admin_matches_page.dart';
@@ -12,6 +13,10 @@ import 'admin_announcements_page.dart';
 import 'admin_payments_page.dart';
 import 'admin_contacts_page.dart';
 import 'admin_feedback_page.dart';
+// Pages zilizokuwa hazipo kwenye menu kabisa (zilishindwa kufikiwa).
+import 'admin_reports_page.dart';
+import 'admin_monitoring_page.dart';
+import 'admin_password_resets_page.dart';
 
 const _kBlue   = Color(0xFF1E40AF);
 const _kBlueBg = Color(0xFFEFF6FF);
@@ -33,19 +38,7 @@ class AdminShell extends StatefulWidget {
 class _AdminShellState extends State<AdminShell> {
   int _idx = 0;
   int _userCount = 0;
-  bool _sw = true;
-
-  final _pages = const [
-    AdminDashboardPage(),
-    AdminUsersPage(),
-    AdminMatchesPage(),
-    AdminRealMatchesPage(),
-    AdminDataPage(),
-    AdminAnnouncementsPage(),
-    AdminPaymentsPage(),
-    AdminContactsPage(),
-    AdminFeedbackPage(),
-  ];
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -62,9 +55,38 @@ class _AdminShellState extends State<AdminShell> {
     } catch (_) {}
   }
 
+  /// Page inajengwa MOJA kwa MOJA kila unapoingia tab — hivyo data
+  /// inakuwa FRESH (ule "nimeongeza data, siioni" ulikuwa pia kwa sababu
+  /// IndexedStack ilijenga pages zote mara moja na kuziacha zikiwa za kale).
+  Widget _pageFor(int i) {
+    switch (i) {
+      case 0: return AdminDashboardPage(onNavigate: _go);
+      case 1: return const AdminUsersPage();
+      case 2: return const AdminMatchesPage();
+      case 3: return const AdminRealMatchesPage();
+      case 4: return const AdminDataPage();
+      case 5: return const AdminAnnouncementsPage();
+      case 6: return const AdminPaymentsPage();
+      case 7: return const AdminContactsPage();
+      case 8: return const AdminFeedbackPage();
+      case 9: return const AdminReportsPage();
+      case 10: return const AdminMonitoringPage();
+      case 11: return const AdminPasswordResetsPage();
+      default: return const AdminDashboardPage();
+    }
+  }
+
   void _go(int i) {
+    // Funga drawer KAMА ikiwa imefunguliwa (Flutter inaongeza local history
+    // entry kwa drawer, ndiyo sababu `canPop()` inakuwa true). Hii ni muhimu
+    // sasa kwa sababu dashboard inaita `_go` MOJA KWA MOJA (hakuna drawer
+    // iliyofunguliwa) — kama tunge-pop tu kwa `canPop()`, tungefunga Admin
+    // Shell na kurudi kwenye login.
+    final nav = Navigator.of(context);
+    final drawerOpen = _scaffoldKey.currentState?.isDrawerOpen ?? false;
     setState(() => _idx = i);
-    Navigator.pop(context);
+    if (drawerOpen && nav.canPop()) nav.pop();
+    if (i == 0 || i == 1) _loadCount();
   }
 
   Future<void> _logout() async {
@@ -81,6 +103,7 @@ class _AdminShellState extends State<AdminShell> {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'A';
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -111,23 +134,30 @@ class _AdminShellState extends State<AdminShell> {
             ),
           ),
           const SizedBox(width: 8),
-          // SW/EN language toggle pill
-          GestureDetector(
-            onTap: () => setState(() => _sw = !_sw),
-            child: Container(
-              margin: const EdgeInsets.only(right: 14),
-              decoration: BoxDecoration(
-                color: _kBlue,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _langChip('SW', _sw),
-                  _langChip('EN', !_sw),
-                ],
-              ),
-            ),
+          // SW/EN language toggle — imeunganishwa na LanguageProvider halisi
+          // (kabla ilikuwa inabadilisha boolean ya ndani tu = haifanyi kazi).
+          ListenableBuilder(
+            listenable: LanguageProvider(),
+            builder: (context, _) {
+              final sw = LanguageProvider().lang == 'sw';
+              return GestureDetector(
+                onTap: () => LanguageProvider().setLang(sw ? 'en' : 'sw'),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 14),
+                  decoration: BoxDecoration(
+                    color: _kBlue,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _langChip('SW', sw),
+                      _langChip('EN', !sw),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
         bottom: PreferredSize(
@@ -136,7 +166,7 @@ class _AdminShellState extends State<AdminShell> {
         ),
       ),
       drawer: _buildDrawer(initial, name),
-      body: IndexedStack(index: _idx, children: _pages),
+      body: _pageFor(_idx),
     );
   }
 
@@ -224,6 +254,12 @@ class _AdminShellState extends State<AdminShell> {
                   _item(Icons.payments_outlined, 'Malipo', 6),
                   _item(Icons.phone_in_talk_outlined, 'Waliopigiana', 7),
                   _item(Icons.assignment_outlined, 'Maoni', 8),
+                  const SizedBox(height: 4),
+                  const Divider(height: 1, color: _kGrey200, indent: 16, endIndent: 16),
+                  _section('RIPOTI NA UFUATILIAJI'),
+                  _item(Icons.assessment_outlined, 'Ripoti', 9),
+                  _item(Icons.monitor_heart_outlined, 'Ufuatiliaji', 10),
+                  _item(Icons.lock_reset_rounded, 'Kuweka upya nenosiri', 11),
                   const SizedBox(height: 8),
                 ],
               ),

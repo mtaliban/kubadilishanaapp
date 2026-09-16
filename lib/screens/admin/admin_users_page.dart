@@ -1,6 +1,12 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../config/theme.dart';
 import '../../services/api_service.dart';
+import '../../widgets/select_sheet.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);
@@ -45,6 +51,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   List<dynamic> _regions = [];
   List<dynamic> _districts = [];
   List<dynamic> _subjects = [];
+  List<dynamic> _departments = [];
 
   // selection
   Set<String> _selected = {};
@@ -78,6 +85,13 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       final raw = r.data;
       setState(() => _regions = raw is List ? raw : (raw['regions'] ?? raw['data'] ?? []));
     } catch (_) {}
+    // Idara DYNAMIC (health/education/watumishi_wa_umma + mpya za admin).
+    try {
+      final r = await ApiService().getDepartments();
+      if (!mounted) return;
+      final raw = r.data;
+      setState(() => _departments = raw is List ? raw : (raw['departments'] ?? raw['data'] ?? []));
+    } catch (_) {}
     try {
       final r = await ApiService().getSubjects();
       if (!mounted) return;
@@ -98,11 +112,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final p = <String, dynamic>{};
+      // Backend inasoma `region_id` / `district_id` — sio `region`/`district`.
+      // (Zamani filter za mkoa/wilaya zilikuwa zinatumwa kwa majina yasiyopo
+      // hivyo backend ilizipuuza kimya na orodha haikuchujwa.)
+      final p = <String, dynamic>{'limit': 200};
       if (_search.text.isNotEmpty) p['q'] = _search.text;
       if (_category.isNotEmpty) p['category'] = _category;
-      if (_regionId != null) p['region'] = _regionId;
-      if (_districtId != null) p['district'] = _districtId;
+      if (_regionId != null) p['region_id'] = _regionId;
+      if (_districtId != null) p['district_id'] = _districtId;
       if (_subjectCode != null) p['subject'] = _subjectCode;
       final r = await ApiService().adminUsers(params: p, useCache: false);
       if (!mounted) return;
@@ -146,9 +163,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   Future<void> _toggleSuspend(Map u) async {
     final id = _uid(u);
-    final isActive = u['is_active'] as bool? ?? true;
+    // Hali halisi ni `status` = active | disabled (kama web). `is_active`
+    // haipo kwenye backend — ilifanya kila mtumiaji aonekane "Hai".
+    final status = '${u['status'] ?? 'active'}'.toLowerCase();
+    final isActive = status != 'disabled' && status != 'suspended';
     try {
-      await ApiService().adminUpdateUser(id, {'status': isActive ? 'suspended' : 'active'});
+      await ApiService().adminUpdateUser(id, {'status': isActive ? 'disabled' : 'active'});
       if (!mounted) return;
       _snack(isActive ? 'Amesitishwa' : 'Amewezeshwa', _kAmber);
       _load();
@@ -203,16 +223,22 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   void _openCategoryPicker() {
     _showListPicker(
       title: 'Chagua Idara',
-      items: const [
+      items: <Map<String, dynamic>>[
         {'label': 'Idara zote', 'value': ''},
-        {'label': 'Afya', 'value': 'health'},
-        {'label': 'Elimu', 'value': 'education'},
+        for (final d in _departments)
+          {'label': '${d['name'] ?? d['code']}', 'value': '${d['code']}'},
       ],
       current: _category,
       onPick: (v) { setState(() { _category = v; }); _load(); },
       getLabel: (i) => i['label'] as String,
       getValue: (i) => i['value'] as String,
     );
+  }
+
+  /// Jina la idara kwa `code` (dynamic — idara mpya za admin zinajulikana).
+  String _deptName(String code) {
+    final d = _departments.firstWhere((x) => '${x['code']}' == code, orElse: () => null);
+    return d == null ? code : '${d['name'] ?? code}';
   }
 
   void _openRegionPicker() {
@@ -391,6 +417,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     final waCtrl = TextEditingController();
     final passCtrl = TextEditingController();
     bool saving = false;
+    // Backend inahitaji IDARA + KADA kwa mtumiaji wa kawaida (bila hizi
+    // ombi linarudi 422 na mtumiaji hakuwahi kuongezwa).
+    String? catCode;
+    String? cadreCode;
+    String? regId;
+    String? distId;
+    List<dynamic> cadres = [];
+    List<dynamic> districts = [];
 
     showModalBottomSheet(
       context: context,
@@ -437,6 +471,122 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               const SizedBox(height: 12),
               _label('Nywila *'),
               _input(passCtrl, '••••••', icon: Icons.lock_outline_rounded, obscure: true),
+              const SizedBox(height: 12),
+              _label('Idara * (Elimu / Afya / n.k.)'),
+              SelectField(
+                hint: 'Chagua idara',
+                value: catCode == null ? null : _deptName(catCode!),
+                onTap: () async {
+                  if (_departments.isEmpty) await _loadRefs();
+                  final picked = await showSelectSheet<String>(
+                    ctx,
+                    title: 'Chagua Idara',
+                    items: [
+                      for (final d in _departments)
+                        (value: '${d['code']}', label: '${d['name'] ?? d['code']}', subtitle: null),
+                    ],
+                    selected: catCode,
+                    searchable: true,
+                  );
+                  if (picked == null) return;
+                  // Kada zitapakiwa kwa idara hii (backend inachuja).
+                  List<dynamic> list = [];
+                  try {
+                    final r = await ApiService().getCadres(category: picked);
+                    final raw = r.data;
+                    list = raw is List ? raw : (raw['cadres'] ?? raw['data'] ?? []);
+                  } catch (_) {}
+                  ss(() {
+                    catCode = picked;
+                    cadreCode = null;
+                    cadres = list;
+                  });
+                },
+                leading: const Icon(Icons.apartment_outlined, size: 15, color: AppColors.textLight),
+              ),
+              const SizedBox(height: 12),
+              _label('Kada *'),
+              SelectField(
+                hint: catCode == null ? 'Chagua idara kwanza' : 'Chagua kada',
+                disabled: catCode == null,
+                value: cadreCode == null
+                    ? null
+                    : '${cadres.firstWhere((c) => '${c['code']}' == cadreCode, orElse: () => {})['display_name'] ?? cadreCode}',
+                onTap: () async {
+                  final picked = await showSelectSheet<String>(
+                    ctx,
+                    title: 'Chagua Kada',
+                    items: [
+                      for (final c in cadres)
+                        (
+                          value: '${c['code']}',
+                          label: '${c['display_name'] ?? c['name'] ?? c['code']}',
+                          subtitle: '${c['code']}',
+                        ),
+                    ],
+                    selected: cadreCode,
+                    searchable: true,
+                  );
+                  if (picked != null) ss(() => cadreCode = picked);
+                },
+                leading: const Icon(Icons.badge_outlined, size: 15, color: AppColors.textLight),
+              ),
+              const SizedBox(height: 12),
+              _label('Mkoa (hiari)'),
+              SelectField(
+                hint: 'Chagua mkoa',
+                value: regId == null
+                    ? null
+                    : '${_regions.firstWhere((r) => '${r['id'] ?? r['region_id']}' == regId, orElse: () => {})['name'] ?? ''}',
+                onTap: () async {
+                  final picked = await showSelectSheet<String>(
+                    ctx,
+                    title: 'Chagua Mkoa',
+                    items: [
+                      for (final r in _regions)
+                        (value: '${r['id'] ?? r['region_id']}', label: '${r['name'] ?? ''}', subtitle: null),
+                    ],
+                    selected: regId,
+                    searchable: true,
+                  );
+                  if (picked == null) return;
+                  List<dynamic> list = [];
+                  try {
+                    final r = await ApiService().getDistricts(int.parse(picked));
+                    final raw = r.data;
+                    list = raw is List ? raw : (raw['districts'] ?? raw['data'] ?? []);
+                  } catch (_) {}
+                  ss(() {
+                    regId = picked;
+                    distId = null;
+                    districts = list;
+                  });
+                },
+                leading: const Icon(Icons.map_outlined, size: 15, color: AppColors.textLight),
+              ),
+              const SizedBox(height: 12),
+              _label('Wilaya (hiari)'),
+              SelectField(
+                hint: regId == null ? 'Chagua mkoa kwanza' : 'Chagua wilaya',
+                disabled: regId == null,
+                value: distId == null
+                    ? null
+                    : '${districts.firstWhere((d) => '${d['id'] ?? d['district_id']}' == distId, orElse: () => {})['name'] ?? ''}',
+                onTap: () async {
+                  final picked = await showSelectSheet<String>(
+                    ctx,
+                    title: 'Chagua Wilaya',
+                    items: [
+                      for (final d in districts)
+                        (value: '${d['id'] ?? d['district_id']}', label: '${d['name'] ?? ''}', subtitle: null),
+                    ],
+                    selected: distId,
+                    searchable: true,
+                  );
+                  if (picked != null) ss(() => distId = picked);
+                },
+                leading: const Icon(Icons.location_on_outlined, size: 15, color: AppColors.textLight),
+              ),
               const SizedBox(height: 24),
               Row(children: [
                 Expanded(child: OutlinedButton(
@@ -447,13 +597,47 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 const SizedBox(width: 12),
                 Expanded(child: ElevatedButton(
                   onPressed: saving ? null : () async {
+                    if (nameCtrl.text.trim().length < 2) {
+                      _snack('Jina kamili linahitajika', _kAmber);
+                      return;
+                    }
+                    if (phoneCtrl.text.trim().isEmpty) {
+                      _snack('Namba ya simu inahitajika', _kAmber);
+                      return;
+                    }
+                    if (passCtrl.text.length < 6) {
+                      _snack('Nywila iwe na herufi 6 au zaidi', _kAmber);
+                      return;
+                    }
+                    if (catCode == null || cadreCode == null) {
+                      _snack('Chagua idara na kada', _kAmber);
+                      return;
+                    }
                     ss(() => saving = true);
                     try {
+                      // current_station inahitaji MAJINA (region_name/district_name)
+                      // — ndiyo yanatumika kwenye matching na kuonyesha mahali.
+                      final reg = _regions.firstWhere(
+                          (r) => '${r['id'] ?? r['region_id']}' == regId,
+                          orElse: () => null);
+                      final dist = districts.firstWhere(
+                          (d) => '${d['id'] ?? d['district_id']}' == distId,
+                          orElse: () => null);
+                      final wa = waCtrl.text.trim();
                       await ApiService().adminCreateUser({
                         'full_name': nameCtrl.text.trim(),
                         'phone_primary': phoneCtrl.text.trim(),
-                        'phone_whatsapp': waCtrl.text.trim(),
+                        if (wa.isNotEmpty) 'phone_alt': wa,
                         'password': passCtrl.text,
+                        'category': catCode,
+                        'cadre_code': cadreCode,
+                        if (regId != null)
+                          'current_station': {
+                            'region_id': int.tryParse(regId!) ?? 0,
+                            'region_name': '${reg?['name'] ?? ''}',
+                            'district_id': distId == null ? null : int.tryParse(distId!),
+                            'district_name': dist == null ? null : '${dist['name'] ?? ''}',
+                          },
                       });
                       if (!mounted) return;
                       if (ctx.mounted) Navigator.pop(ctx);
@@ -480,9 +664,13 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     final id = _uid(u);
     final nameCtrl = TextEditingController(text: u['full_name'] as String? ?? '');
     final phoneCtrl = TextEditingController(text: u['phone_primary'] as String? ?? u['phone'] as String? ?? '');
-    final waCtrl = TextEditingController(text: u['phone_whatsapp'] as String? ?? '');
-    String hali = (u['is_active'] as bool? ?? true) ? 'active' : 'suspended';
-    bool paid = u['is_paid'] as bool? ?? false;
+    // Backend inatumia `phone_alt` (sio phone_whatsapp) na `is_verified`
+    // (sio is_paid); hali ni `status` = active | disabled (kama web).
+    final waCtrl = TextEditingController(
+        text: u['phone_alt'] as String? ?? u['phone_whatsapp'] as String? ?? '');
+    final statusStr = '${u['status'] ?? 'active'}'.toLowerCase();
+    String hali = (statusStr == 'disabled' || statusStr == 'suspended') ? 'disabled' : 'active';
+    bool paid = (u['is_verified'] as bool?) ?? (u['contact_enabled'] as bool?) ?? false;
     bool admin = u['is_admin'] as bool? ?? false;
     bool saving = false;
 
@@ -527,7 +715,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               Row(children: [
                 _pill('Hai', hali == 'active', _kGreen, _kGreenBg, () => ss(() => hali = 'active')),
                 const SizedBox(width: 8),
-                _pill('Amesitishwa', hali == 'suspended', _kAmber, _kAmberBg, () => ss(() => hali = 'suspended')),
+                _pill('Amesitishwa', hali == 'disabled', _kAmber, _kAmberBg, () => ss(() => hali = 'disabled')),
               ]),
               const SizedBox(height: 10),
               Row(children: [
@@ -550,9 +738,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       await ApiService().adminUpdateUser(id, {
                         'full_name': nameCtrl.text.trim(),
                         'phone_primary': phoneCtrl.text.trim(),
-                        'phone_whatsapp': waCtrl.text.trim(),
+                        'phone_alt': waCtrl.text.trim().isEmpty ? null : waCtrl.text.trim(),
                         'status': hali,
-                        'is_paid': paid,
+                        'is_verified': paid,
                         'is_admin': admin,
                       });
                       if (!mounted) return;
@@ -576,48 +764,129 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     );
   }
 
+  /// Import ya watumiaji wengi kwa faili la EXCEL (.xlsx) — hatimaye
+  /// imeunganishwa na backend (`POST /admin/users/import?category=...`).
+  /// Kabla kitufe kilikuwa kinafunga sheet tu (hakuna kilichotokea).
   void _showImport() {
+    String category = 'education';
+    bool busy = false;
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
-          const SizedBox(height: 16),
-          Row(children: [
-            Container(width: 36, height: 36, decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.upload_file_rounded, color: _kBlue, size: 20)),
-            const SizedBox(width: 10),
-            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Import Watumiaji', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-              Text('Pakua faili la CSV au Excel', style: TextStyle(fontSize: 12, color: _kGrey500)),
-            ])),
-            GestureDetector(onTap: () => Navigator.pop(ctx), child: Container(width: 30, height: 30, decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle), child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700))),
-          ]),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
-            child: Row(children: [
-              const Icon(Icons.info_outline_rounded, size: 16, color: _kBlue),
-              const SizedBox(width: 8),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, ss) => SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 16),
+            Row(children: [
+              Container(width: 36, height: 36, decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.upload_file_rounded, color: _kBlue, size: 20)),
+              const SizedBox(width: 10),
               const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Muundo unaohitajika', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kBlue)),
-                SizedBox(height: 2),
-                Text('CSV/Excel yenye safu: full_name, phone_primary, category (health/education), region_id, district_id', style: TextStyle(fontSize: 11, color: _kBlue)),
+                Text('Import Watumiaji', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                Text('Pakia faili la Excel (.xlsx)', style: TextStyle(fontSize: 12, color: _kGrey500)),
               ])),
+              GestureDetector(onTap: () => Navigator.pop(ctx), child: Container(width: 30, height: 30, decoration: BoxDecoration(color: _kGrey100, shape: BoxShape.circle), child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700))),
             ]),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: OutlinedButton.icon(
-            onPressed: () => Navigator.pop(ctx),
-            icon: const Icon(Icons.folder_open_rounded, size: 18),
-            label: const Text('Chagua Faili', style: TextStyle(fontWeight: FontWeight.w600)),
-            style: OutlinedButton.styleFrom(foregroundColor: _kBlue, side: const BorderSide(color: _kBlue), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-          )),
-          const SizedBox(height: 8),
-        ]),
+            const SizedBox(height: 16),
+            _label('CHAGUA IDARA YA FAILI'),
+            Row(children: [
+              _pill('Elimu', category == 'education', _kBlue, _kBlueBg, () => ss(() => category = 'education')),
+              const SizedBox(width: 8),
+              _pill('Afya', category == 'health', _kRed, _kRedBg, () => ss(() => category = 'health')),
+              const SizedBox(width: 8),
+              _pill('Utumishi', category == 'service', _kGreen, _kGreenBg, () => ss(() => category = 'service')),
+            ]),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
+              child: Row(children: [
+                const Icon(Icons.info_outline_rounded, size: 16, color: _kBlue),
+                const SizedBox(width: 8),
+                const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Safu za faili', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kBlue)),
+                  SizedBox(height: 2),
+                  Text(
+                    'Jina Kamili · Simu · WhatsApp · Kada · Kiwango (Elimu) · Somo 1 · Somo 2 · '
+                    'Mkoa wa Sasa · Wilaya · Shule/Kituo · Mkoa wa Lengo 1 · Wilaya za Lengo 1 · '
+                    'Mkoa wa Lengo 2 · Wilaya za Lengo 2 · Miaka ya Kazi',
+                    style: TextStyle(fontSize: 11, color: _kBlue),
+                  ),
+                ])),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(width: double.infinity, child: ElevatedButton.icon(
+              onPressed: busy
+                  ? null
+                  : () async {
+                      ss(() => busy = true);
+                      try {
+                        final res = await FilePicker.platform.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: ['xlsx'],
+                        );
+                        final f = res?.files.firstOrNull;
+                        if (f?.path == null) {
+                          ss(() => busy = false);
+                          return;
+                        }
+                        final r = await ApiService().adminImportUsersFile(
+                          path: f!.path!,
+                          filename: f.name,
+                          category: category,
+                        );
+                        final d = (r.data as Map?) ?? {};
+                        final created = d['created'] ?? 0;
+                        final skipped = d['skipped'] ?? 0;
+                        final errs = (d['errors'] as List?)?.length ?? 0;
+                        if (!mounted) return;
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        _snack(
+                          'Wameongezwa $created · wamerukwa $skipped'
+                          '${errs > 0 ? ' · makosa $errs' : ''}',
+                          created > 0 ? _kGreen : _kAmber,
+                        );
+                        _load();
+                      } catch (e) {
+                        ss(() => busy = false);
+                        if (!mounted) return;
+                        _snack('Imeshindikana: $e', _kRed);
+                      }
+                    },
+              icon: busy
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.folder_open_rounded, size: 18),
+              label: const Text('Chagua Faili la Excel', style: TextStyle(fontWeight: FontWeight.w700)),
+              style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            )),
+            const SizedBox(height: 8),
+            SizedBox(width: double.infinity, child: OutlinedButton.icon(
+              onPressed: () async {
+                try {
+                  final bytes = await ApiService().adminImportTemplateBytes(category);
+                  final path = await FilePicker.platform.saveFile(
+                    fileName: 'kiolezo_$category.xlsx',
+                    bytes: Uint8List.fromList(bytes),
+                  );
+                  if (!mounted) return;
+                  _snack(path == null ? 'Imeghairiwa' : 'Kiolezo kimehifadhiwa: $path', _kBlue);
+                } catch (e) {
+                  if (!mounted) return;
+                  _snack('Imeshindikana: $e', _kRed);
+                }
+              },
+              icon: const Icon(Icons.download_rounded, size: 18),
+              label: const Text('Pakua Kiolezo (Excel)', style: TextStyle(fontWeight: FontWeight.w600)),
+              style: OutlinedButton.styleFrom(foregroundColor: _kBlue, side: const BorderSide(color: _kBlue), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            )),
+            const SizedBox(height: 8),
+          ]),
+        ),
       ),
     );
   }
@@ -791,7 +1060,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
                         children: [
-                          Expanded(child: _filterBtn(_category.isEmpty ? 'Idara zote' : (_category == 'health' ? 'Afya' : 'Elimu'), _openCategoryPicker, active: _category.isNotEmpty)),
+                          Expanded(child: _filterBtn(_category.isEmpty ? 'Idara zote' : _deptName(_category), _openCategoryPicker, active: _category.isNotEmpty)),
                           const SizedBox(width: 8),
                           Expanded(child: _filterBtn(_regionName != null ? 'Mkoa: $_regionName' : 'Mkoa wote', _openRegionPicker, active: _regionId != null)),
                         ],
@@ -927,17 +1196,21 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   void _showDetail(Map<String, dynamic> u) {
     final name = u['full_name'] as String? ?? '';
     final phone = u['phone_primary'] as String? ?? '';
-    final wa = u['phone_whatsapp'] as String? ?? '';
+    final wa = u['phone_alt'] as String? ?? u['phone_whatsapp'] as String? ?? '';
     final category = u['category'] as String? ?? '';
     final cadre = u['cadre_display'] as String? ?? u['cadre_name'] as String? ?? '';
-    final isPaid = u['is_paid'] as bool? ?? false;
+    final isPaid = (u['is_verified'] as bool?) ?? (u['contact_enabled'] as bool?) ?? false;
     final isAdmin = u['is_admin'] as bool? ?? false;
     final station = u['current_station'] as Map? ?? u['station'] as Map? ?? {};
     final region = station['region_name'] as String? ?? station['region'] as String? ?? '';
     final district = station['district_name'] as String? ?? station['district'] as String? ?? '';
     final facility = station['facility_name'] as String? ?? station['facility'] as String? ?? '';
     final subjects = (u['subjects'] as List?)?.map((s) => s['name'] ?? s['code'] ?? s.toString()).toList() ?? [];
-    final dests = (u['destinations'] as List?)?.map((d) => d['region_name'] ?? d['region'] ?? d.toString()).toList() ?? [];
+    // Backend inahifadhi `desired_destinations` (sio `destinations`).
+    final dests = ((u['desired_destinations'] ?? u['destinations']) as List?)
+            ?.map((d) => d is Map ? (d['region_name'] ?? d['region'] ?? d.toString()) : d.toString())
+            .toList() ??
+        [];
     final init = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     showModalBottomSheet(
@@ -964,7 +1237,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           const SizedBox(height: 20),
           _infoRow('Simu', phone.isNotEmpty ? phone : '—', valueColor: _kBlue),
           if (wa.isNotEmpty) _infoRow('WhatsApp', wa, valueColor: _kGreen),
-          _infoRow('Idara', category.isNotEmpty ? (category == 'health' ? 'Afya' : 'Elimu') : '—'),
+          _infoRow('Idara', category.isNotEmpty ? _deptName(category) : '—'),
           if (region.isNotEmpty) _infoRow('Mkoa', region),
           if (district.isNotEmpty) _infoRow('Wilaya', district),
           if (facility.isNotEmpty) _infoRow('Kituo', facility),
@@ -1106,14 +1379,23 @@ class _UserCard extends StatelessWidget {
     final station = user['current_station'] as Map? ?? user['station'] as Map? ?? {};
     final region = station['region_name'] as String? ?? station['region'] as String? ?? '';
     final district = station['district_name'] as String? ?? station['district'] as String? ?? '';
-    final String? statusStr = user['status'] as String?;
-    final isActive = (user['is_active'] as bool?) ?? (statusStr != 'suspended');
-    final isPaid = user['is_paid'] as bool? ?? false;
+    // Hali halisi: `status` (active | disabled). `is_active` haipo kwenye
+    // backend — ilifanya kila mtumiaji aonekane "Hai".
+    final statusStr = '${user['status'] ?? 'active'}'.toLowerCase();
+    final isActive = statusStr != 'disabled' && statusStr != 'suspended';
+    // Malipo: backend inatumia `is_verified` / `contact_enabled` (sio is_paid).
+    final isPaid = (user['is_verified'] as bool?) ?? (user['contact_enabled'] as bool?) ?? false;
     final isAdmin = user['is_admin'] as bool? ?? false;
     final init = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
-    // Category display
-    final catLabel = category == 'health' ? 'Afya' : category == 'education' ? 'Elimu' : category;
+    // Category display — idara zinazojulikana + code nyingine yoyote.
+    final catLabel = category == 'health'
+        ? 'Afya'
+        : category == 'education'
+            ? 'Elimu'
+            : category == 'watumishi_wa_umma'
+                ? 'Watumishi wa Umma'
+                : category;
     final catFg = category == 'health' ? const Color(0xFFDC2626) : const Color(0xFF16A34A);
 
     // location
@@ -1209,6 +1491,10 @@ class _UserCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 _IcoBtn(Icons.edit_rounded, _kGrey700, onEdit),
                 const Spacer(),
+                // Piga simu moja kwa moja (kabla hakuna kitufe cha kupiga).
+                if (phone.isNotEmpty)
+                  _IcoBtn(Icons.phone_outlined, _kBlue, () => _dial(phone)),
+                if (phone.isNotEmpty) const SizedBox(width: 6),
                 _IcoBtn(
                   isActive ? Icons.do_not_disturb_on_outlined : Icons.check_circle_outline_rounded,
                   isActive ? _kAmber : _kGreen,
@@ -1216,7 +1502,7 @@ class _UserCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 _IcoBtn(
-                  isAdmin ? Icons.phone_rounded : Icons.phone_outlined,
+                  isAdmin ? Icons.admin_panel_settings : Icons.admin_panel_settings_outlined,
                   isAdmin ? _kGreen : _kGrey700,
                   onAdmin,
                 ),
@@ -1260,6 +1546,15 @@ class _OutlineBadge extends StatelessWidget {
     ),
     child: Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
   );
+}
+
+/// Piga simu — inafungua app ya simu; kama haipo, namba inanakiliwa.
+Future<void> _dial(String phone) async {
+  try {
+    await launchUrl(Uri.parse('tel:$phone'), mode: LaunchMode.externalApplication);
+  } catch (_) {
+    await Clipboard.setData(ClipboardData(text: phone));
+  }
 }
 
 // ── Icon-only action button (kama picha) ──────────────────────────────────

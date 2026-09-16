@@ -69,7 +69,12 @@ class _AdminDataPageState extends State<AdminDataPage>
       final res = await ApiService().adminListData(type);
       if (!mounted) return;
       final data = res.data;
-      _cache[type] = data is List ? data : (data['results'] as List? ?? []);
+      // Baadhi ya endpoints zinarudisha {items: [...]} (facilities) au
+      // {users: [...]} — sio List moja kwa moja. Bila hii, tab ya Vituo
+      // ilikuwa inaonyesha "Hakuna data" hata data ikiwepo.
+      _cache[type] = data is List
+          ? data
+          : ((data['results'] ?? data['items'] ?? data['users'] ?? data['data'] ?? []) as List);
       setState(() { _loading[type] = false; });
     } catch (e) {
       if (!mounted) return;
@@ -83,7 +88,8 @@ class _AdminDataPageState extends State<AdminDataPage>
     final lf = _levelFilters[type] ?? '';
     return all.where((item) {
       final m = item as Map<String, dynamic>;
-      final name = (m['name'] as String? ?? '').toLowerCase();
+      // Kada zinatumia `display_name`, sio `name`.
+      final name = (m['name'] as String? ?? m['display_name'] as String? ?? '').toLowerCase();
       final code = (m['code'] as String? ?? '').toLowerCase();
       final level = (m['level'] as String? ?? m['type'] as String? ?? '').toLowerCase();
       final matchQ = q.isEmpty || name.contains(q) || code.contains(q);
@@ -181,7 +187,9 @@ class _AdminDataPageState extends State<AdminDataPage>
   }
 
   Future<void> _delete(String type, Map<String, dynamic> item) async {
-    final id = item['id']?.toString() ?? '';
+    // Kilicho fungua: idara/kada/masomo/vituo vya afya zinatumia `code`
+    // (hakuna `id`) — ndiyo maana edit/delete zilishindwa kwa tab hizo.
+    final id = item['id']?.toString() ?? item['code']?.toString() ?? '';
     if (id.isEmpty) return;
     final ok = await showDialog<bool>(
       context: context,
@@ -414,7 +422,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                             separatorBuilder: (_, __) => const SizedBox(height: 8),
                             itemBuilder: (ctx, i) {
                               final item = filtered[i] as Map<String, dynamic>;
-                              final name = item['name'] as String? ?? '';
+                              final name = (item['name'] ?? item['display_name'] ?? '') as String? ?? '';
                               final code = item['code'] as String? ?? '';
                               final badge = _badgeLabel(type, item);
                               final color = _itemColor(type, item);
@@ -539,23 +547,66 @@ class _DataFormSheetState extends State<_DataFormSheet> {
   final _nameCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
   String _category = 'health';
-  String _level = 'primary';
+  String _level = 'Primary';
+  String _status = 'active';
   bool _saving = false;
   List<dynamic> _regions = [];
   String? _selectedRegionId;
   String? _selectedDistrictId;
   List<dynamic> _districts = [];
+  List<dynamic> _departments = [];
 
   @override
   void initState() {
     super.initState();
     if (widget.item != null) {
-      _nameCtrl.text = widget.item!['name'] as String? ?? '';
-      _codeCtrl.text = widget.item!['code'] as String? ?? '';
-      _category = widget.item!['category'] as String? ?? 'health';
-      _level = widget.item!['level'] as String? ?? widget.item!['type'] as String? ?? 'primary';
+      final it = widget.item!;
+      // Kada zinasoma `display_name`; nyingine `name`.
+      _nameCtrl.text = (it['display_name'] ?? it['name'] ?? '') as String? ?? '';
+      _codeCtrl.text = it['code'] as String? ?? '';
+      _category = it['category'] as String? ?? 'health';
+      _status = it['status'] as String? ?? 'active';
+      final lvl = (it['level'] ?? it['type'] ?? '') as String? ?? '';
+      if (widget.type == 'subjects') {
+        _level = lvl.toLowerCase() == 'secondary' ? 'Secondary' : 'Primary';
+      } else {
+        _level = lvl.isNotEmpty ? lvl : 'dispensary';
+      }
+    } else {
+      _level = widget.type == 'subjects' ? 'Primary' : 'dispensary';
     }
     if (widget.type == 'facilities') _loadRegions();
+    if (widget.type == 'cadres') _loadDepartments();
+  }
+
+  /// Code ya kiotomatiki kutoka jina — admin hahitaji kuiandika kwa mkono.
+  static String _slug(String name) {
+    final buf = StringBuffer();
+    for (final ch in name.trim().toLowerCase().split('')) {
+      if (RegExp(r'[a-z0-9]').hasMatch(ch)) {
+        buf.write(ch);
+      } else if (buf.isNotEmpty && !buf.toString().endsWith('_')) {
+        buf.write('_');
+      }
+    }
+    var code = buf.toString();
+    while (code.endsWith('_')) {
+      code = code.substring(0, code.length - 1);
+    }
+    return code.isEmpty ? 'item' : code;
+  }
+
+  Future<void> _loadDepartments() async {
+    try {
+      final res = await ApiService().adminListData('departments');
+      if (!mounted) return;
+      final data = res.data;
+      setState(() {
+        _departments = data is List
+            ? data
+            : ((data['results'] ?? data['items'] ?? []) as List);
+      });
+    } catch (_) {}
   }
 
   @override
@@ -588,25 +639,54 @@ class _DataFormSheetState extends State<_DataFormSheet> {
   }
 
   Future<void> _save() async {
-    if (_nameCtrl.text.trim().isEmpty) return;
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) return;
     setState(() { _saving = true; });
     try {
-      final data = <String, dynamic>{
-        'name': _nameCtrl.text.trim(),
-        if (_codeCtrl.text.trim().isNotEmpty) 'code': _codeCtrl.text.trim(),
-      };
-      if (widget.type == 'departments' || widget.type == 'cadres') {
-        data['category'] = _category;
+      final typedCode = _codeCtrl.text.trim();
+      final slug = typedCode.isNotEmpty ? typedCode : _slug(name);
+      final data = <String, dynamic>{'name': name};
+
+      switch (widget.type) {
+        case 'departments':
+          // Backend: code (slug) + name + status. `category` hazitumiki hapa.
+          data['code'] = slug.toLowerCase();
+          data['status'] = _status;
+          break;
+        case 'subjects':
+          // Backend inataka level `Primary`/`Secondary` (capitalised).
+          data['code'] = slug.toUpperCase();
+          data['level'] = _level;
+          break;
+        case 'cadres':
+          // Backend: code + display_name + category (code ya idara).
+          data.remove('name');
+          data['code'] = slug.toUpperCase();
+          data['display_name'] = name;
+          data['category'] = _category;
+          if (_level == 'Primary' || _level == 'Secondary') data['level'] = _level;
+          break;
+        case 'regions':
+          // RegionIn ina `name` pekee (id inajiongeza yenyewe).
+          break;
+        case 'facilities':
+          // FacilityIn inahitaji category + region_id + district_id.
+          data['category'] = 'health';
+          data['type'] = _level;
+          if (_selectedRegionId != null) data['region_id'] = int.parse(_selectedRegionId!);
+          if (_selectedDistrictId != null) data['district_id'] = int.parse(_selectedDistrictId!);
+          if (_selectedRegionId == null || _selectedDistrictId == null) {
+            if (!mounted) return;
+            setState(() { _saving = false; });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Chagua mkoa na wilaya'), backgroundColor: _kAmber),
+            );
+            return;
+          }
+          break;
       }
-      if (widget.type == 'subjects') {
-        data['level'] = _level;
-      }
-      if (widget.type == 'facilities') {
-        data['type'] = _level;
-        if (_selectedRegionId != null) data['region_id'] = _selectedRegionId;
-        if (_selectedDistrictId != null) data['district_id'] = _selectedDistrictId;
-      }
-      final id = widget.item?['id']?.toString();
+
+      final id = widget.item?['id']?.toString() ?? widget.item?['code']?.toString();
       if (id != null && id.isNotEmpty) {
         await ApiService().adminUpdateData(widget.type, id, data);
       } else {
@@ -691,18 +771,23 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           ],
           TextField(
             controller: _nameCtrl,
-            decoration: _inputDec('Jina *'),
+            decoration: _inputDec(widget.type == 'cadres' ? 'Jina la kada *' : 'Jina *'),
           ),
           const SizedBox(height: 12),
-          if (widget.type != 'facilities')
+          if (widget.type != 'facilities' && widget.type != 'regions')
             TextField(
               controller: _codeCtrl,
-              decoration: _inputDec('Code'),
+              decoration: _inputDec('Code (ikiachiwa wazi tunautengeneza wenyewe)'),
             ),
           if (widget.type == 'facilities') ...[
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _level,
+              // Hifadhi ya kale ina `type` kwa herufi kubwa ("Dispensary") —
+              // lazima ilingane na items hapa chini, vinginevyo Flutter inacrash.
+              value: ['dispensary', 'health_center', 'laboratory', 'hospital', 'clinic']
+                      .contains(_level.toLowerCase())
+                  ? _level.toLowerCase()
+                  : 'dispensary',
               decoration: _inputDec('Aina ya kituo'),
               items: ['dispensary', 'health_center', 'laboratory', 'hospital', 'clinic']
                   .map((t) => DropdownMenuItem(value: t, child: Text(t)))
@@ -712,25 +797,42 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           ],
           if (widget.type == 'departments') ...[
             const SizedBox(height: 12),
+            // Hali ya idara: iliyozimwa (disabled) haionekani kwenye usajili.
             Row(
               children: [
-                _TogglePill(label: 'Afya', selected: _category == 'health',
-                    color: _kRed, onTap: () => setState(() { _category = 'health'; })),
+                _TogglePill(label: 'Hai', selected: _status == 'active',
+                    color: _kGreen, onTap: () => setState(() { _status = 'active'; })),
                 const SizedBox(width: 8),
-                _TogglePill(label: 'Elimu', selected: _category == 'education',
-                    color: _kGreen, onTap: () => setState(() { _category = 'education'; })),
+                _TogglePill(label: 'Imezimwa', selected: _status == 'disabled',
+                    color: _kAmber, onTap: () => setState(() { _status = 'disabled'; })),
               ],
             ),
           ],
           if (widget.type == 'cadres') ...[
             const SizedBox(height: 12),
+            // Kada inamilikiwa na IDARA halisi (code) — sio health/education
+            // tu, kwa kuwa admin anaweza kuongeza idara mpya.
+            DropdownButtonFormField<String>(
+              value: _departments.any((d) => d['code'] == _category) ? _category : null,
+              isExpanded: true,
+              decoration: _inputDec('Chagua idara *'),
+              items: _departments.map((d) => DropdownMenuItem<String>(
+                value: d['code'] as String,
+                child: Text(d['name'] as String? ?? d['code'] as String),
+              )).toList(),
+              onChanged: (v) => setState(() { _category = v ?? _category; }),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
-                _TogglePill(label: 'Afya', selected: _category == 'health',
-                    color: _kRed, onTap: () => setState(() { _category = 'health'; })),
+                _TogglePill(label: 'Bila kiwango', selected: _level != 'Primary' && _level != 'Secondary',
+                    color: _kGrey500, onTap: () => setState(() { _level = ''; })),
                 const SizedBox(width: 8),
-                _TogglePill(label: 'Elimu', selected: _category == 'education',
-                    color: _kGreen, onTap: () => setState(() { _category = 'education'; })),
+                _TogglePill(label: 'Primary', selected: _level == 'Primary',
+                    color: _kBlue, onTap: () => setState(() { _level = 'Primary'; })),
+                const SizedBox(width: 8),
+                _TogglePill(label: 'Secondary', selected: _level == 'Secondary',
+                    color: _kAmber, onTap: () => setState(() { _level = 'Secondary'; })),
               ],
             ),
           ],
@@ -738,11 +840,11 @@ class _DataFormSheetState extends State<_DataFormSheet> {
             const SizedBox(height: 12),
             Row(
               children: [
-                _TogglePill(label: 'Primary', selected: _level == 'primary',
-                    color: _kBlue, onTap: () => setState(() { _level = 'primary'; })),
+                _TogglePill(label: 'Primary', selected: _level == 'Primary',
+                    color: _kBlue, onTap: () => setState(() { _level = 'Primary'; })),
                 const SizedBox(width: 8),
-                _TogglePill(label: 'Secondary', selected: _level == 'secondary',
-                    color: _kAmber, onTap: () => setState(() { _level = 'secondary'; })),
+                _TogglePill(label: 'Secondary', selected: _level == 'Secondary',
+                    color: _kAmber, onTap: () => setState(() { _level = 'Secondary'; })),
               ],
             ),
           ],

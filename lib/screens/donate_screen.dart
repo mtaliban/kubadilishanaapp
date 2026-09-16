@@ -388,7 +388,9 @@ class _DonateScreenState extends State<DonateScreen> {
                         disabledBackgroundColor: _kBlue.withValues(alpha: 0.5),
                         foregroundColor: Colors.white,
                         disabledForegroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 48),
+                        // Web button ni nyembamba (py-2.5 ≈ 40px) — sio 48.
+                        minimumSize: const Size(double.infinity, 42),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
@@ -26,12 +27,25 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   List<dynamic> _filtered = [];
   final _searchCtrl = TextEditingController();
   String _categoryFilter = '';
+  List<dynamic> _departments = [];
 
   @override
   void initState() {
     super.initState();
     _load();
+    _loadDepartments();
     _searchCtrl.addListener(_applyFilter);
+  }
+
+  /// Idara zinapakiwa DYNAMIC — idara mpya aliyoongeza admin inaonekana
+  /// kwenye chips papo hapo (kabla ilikuwa hardcoded Afya/Elimu pekee).
+  Future<void> _loadDepartments() async {
+    try {
+      final r = await ApiService().getDepartments();
+      if (!mounted) return;
+      final raw = r.data;
+      setState(() => _departments = raw is List ? raw : (raw['departments'] ?? raw['data'] ?? []));
+    } catch (_) {}
   }
 
   @override
@@ -47,7 +61,9 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
       if (!mounted) return;
       final data = res.data;
       setState(() {
-        _items = data is List ? data : (data['results'] as List? ?? []);
+        // Backend inarudisha {total, matches: [...]} — 'results' haipo,
+        // ndiyo sababu page ilikuwa tupu kila mara.
+        _items = data is List ? data : ((data['matches'] ?? data['results']) as List? ?? []);
         _filtered = List.from(_items);
         _loading = false;
       });
@@ -134,12 +150,17 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
               children: [
                 _FilterChip(label: 'Zote', selected: _categoryFilter.isEmpty,
                     onTap: () { setState(() { _categoryFilter = ''; }); _applyFilter(); }),
-                const SizedBox(width: 8),
-                _FilterChip(label: 'Afya', selected: _categoryFilter == 'afya',
-                    onTap: () { setState(() { _categoryFilter = 'afya'; }); _applyFilter(); }),
-                const SizedBox(width: 8),
-                _FilterChip(label: 'Elimu', selected: _categoryFilter == 'elimu',
-                    onTap: () { setState(() { _categoryFilter = 'elimu'; }); _applyFilter(); }),
+                for (final d in _departments) ...[
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: '${d['name'] ?? d['code']}',
+                    selected: _categoryFilter == '${d['code']}',
+                    onTap: () {
+                      setState(() => _categoryFilter = '${d['code']}');
+                      _applyFilter();
+                    },
+                  ),
+                ],
               ],
             ),
           ),
@@ -266,8 +287,9 @@ class _UserSide extends StatelessWidget {
     final category = user['category'] as String? ?? '';
     final cadre = user['cadre_display'] as String? ?? '';
     final initials = name.isNotEmpty ? name[0].toUpperCase() : 'M';
-    final catColor = category.toLowerCase() == 'afya' ? _kRed : _kGreen;
-    final catBg = category.toLowerCase() == 'afya' ? const Color(0xFFFEE2E2) : _kGreenBg;
+    final isHealth = category.toLowerCase() == 'health' || category.toLowerCase() == 'afya';
+    final catColor = isHealth ? _kRed : _kGreen;
+    final catBg = isHealth ? const Color(0xFFFEE2E2) : _kGreenBg;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -289,7 +311,12 @@ class _UserSide extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(color: catBg, borderRadius: BorderRadius.circular(4)),
-            child: Text(category,
+            child: Text(
+                category == 'health'
+                    ? 'Afya'
+                    : category == 'education'
+                        ? 'Elimu'
+                        : category,
                 style: TextStyle(fontSize: 9, color: catColor, fontWeight: FontWeight.w600)),
           ),
         ],
@@ -314,18 +341,47 @@ class _UserSide extends StatelessWidget {
         ],
         if (phone.isNotEmpty) ...[
           const SizedBox(height: 6),
+          // Namba ionekane WAZI (kama web) — sio kufichwa nyuma ya icon.
+          SelectableText(
+            phone,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11, color: _kBlue, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _ContactBtn(icon: Icons.phone_outlined, color: _kBlue,
-                  onTap: () => Clipboard.setData(ClipboardData(text: phone))),
+                  onTap: () => _open(context, Uri.parse('tel:$phone'), phone)),
               const SizedBox(width: 4),
               _ContactBtn(icon: Icons.chat_outlined, color: _kGreen,
-                  onTap: () => Clipboard.setData(ClipboardData(text: phone))),
+                  onTap: () => _open(
+                        context,
+                        Uri.parse('https://wa.me/${phone.replaceAll(RegExp(r'\D'), '').replaceFirst(RegExp(r'^0'), '255')}'),
+                        phone,
+                      )),
             ],
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Vitufe vya mawasiliano vilikuwa vikifanya copy pekee — mtumiaji
+/// alibofya na hakuna kilichotokea. Sasa vinafungua app halisi ya simu.
+Future<void> _open(BuildContext context, Uri uri, String phone) async {
+  await Clipboard.setData(ClipboardData(text: phone));
+  if (!context.mounted) return;
+  var ok = false;
+  try {
+    ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {
+    ok = false;
+  }
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Namba imenakiliwa'), backgroundColor: _kBlue),
     );
   }
 }
