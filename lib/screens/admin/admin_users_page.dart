@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────
@@ -661,19 +662,19 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   );
 
   // ── Filter dropdown button ─────────────────────────────────────────────────
-  Widget _filterBtn(String label, VoidCallback onTap) => GestureDetector(
+  Widget _filterBtn(String label, VoidCallback onTap, {bool active = false}) => GestureDetector(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
+        color: active ? _kBlueBg : Colors.white,
+        border: Border.all(color: active ? _kBlue : const Color(0xFFCBD5E1), width: active ? 1.5 : 1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 13, color: _kGrey700), overflow: TextOverflow.ellipsis)),
-          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _kGrey500),
+          Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: active ? _kBlue : _kGrey900, fontWeight: active ? FontWeight.w600 : FontWeight.w400), overflow: TextOverflow.ellipsis)),
+          Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: active ? _kBlue : _kGrey700),
         ],
       ),
     ),
@@ -722,13 +723,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   ),
                   ElevatedButton.icon(
                     onPressed: _showAdd,
-                    icon: const Icon(Icons.person_add_rounded, size: 16),
-                    label: const Text('Ongeza', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    icon: const Icon(Icons.person_add_rounded, size: 14),
+                    label: const Text('Ongeza', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _kBlue, foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       elevation: 0,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                 ],
@@ -783,9 +785,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Expanded(child: _filterBtn(_category.isEmpty ? 'Idara zote' : (_category == 'health' ? 'Afya' : 'Elimu'), _openCategoryPicker)),
+                  Expanded(child: _filterBtn(_category.isEmpty ? 'Idara zote' : (_category == 'health' ? 'Afya' : 'Elimu'), _openCategoryPicker, active: _category.isNotEmpty)),
                   const SizedBox(width: 8),
-                  Expanded(child: _filterBtn(_regionName != null ? 'Mkoa: $_regionName' : 'Mkoa wote', _openRegionPicker)),
+                  Expanded(child: _filterBtn(_regionName != null ? 'Mkoa: $_regionName' : 'Mkoa wote', _openRegionPicker, active: _regionId != null)),
                 ],
               ),
             ),
@@ -795,9 +797,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Expanded(child: _filterBtn(_districtName ?? 'Wilaya zote', _openDistrictPicker)),
+                  Expanded(child: _filterBtn(_districtName ?? 'Wilaya zote', _openDistrictPicker, active: _districtId != null)),
                   const SizedBox(width: 8),
-                  Expanded(child: _filterBtn(_subjectName ?? 'Masomo yote', _openSubjectPicker)),
+                  Expanded(child: _filterBtn(_subjectName ?? 'Masomo yote', _openSubjectPicker, active: _subjectCode != null)),
                 ],
               ),
             ),
@@ -885,20 +887,24 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   }
 
   Widget _actionBtn(IconData icon, String label, Color fg, Color bg, Color border, VoidCallback? onTap) {
+    final enabled = onTap != null;
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: bg,
-          border: Border.all(color: border),
-          borderRadius: BorderRadius.circular(8),
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.45,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: bg,
+            border: Border.all(color: border),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 13, color: fg),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(fontSize: 11, color: fg, fontWeight: FontWeight.w600)),
+          ]),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 14, color: fg),
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: fg, fontWeight: FontWeight.w600)),
-        ]),
       ),
     );
   }
@@ -1145,11 +1151,17 @@ class _UserCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Numbered name + phone
+                      // Numbered name
                       Text('$index. $name', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900)),
                       if (phone.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 3),
+                        Row(children: [
+                          Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w600)),
+                          const SizedBox(width: 6),
+                          _RoundIcon(Icons.call_rounded, _kGreen, _kGreenBg, () => _launchPhone(phone)),
+                          const SizedBox(width: 4),
+                          _RoundIcon(Icons.message_rounded, _kBlue, _kBlueBg, () => _launchSms(phone)),
+                        ]),
                       ],
                       const SizedBox(height: 5),
                       // Category + cadre chips
@@ -1162,9 +1174,9 @@ class _UserCard extends StatelessWidget {
                       if (location.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Row(children: [
-                          const Icon(Icons.location_on_outlined, size: 12, color: _kGrey500),
+                          const Icon(Icons.location_on_outlined, size: 12, color: _kGrey700),
                           const SizedBox(width: 3),
-                          Expanded(child: Text(location, style: const TextStyle(fontSize: 11, color: _kGrey500), overflow: TextOverflow.ellipsis)),
+                          Expanded(child: Text(location, style: const TextStyle(fontSize: 11, color: _kGrey700), overflow: TextOverflow.ellipsis)),
                         ]),
                       ],
                       const SizedBox(height: 5),
@@ -1204,6 +1216,33 @@ class _UserCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Small round icon button ────────────────────────────────────────────────
+class _RoundIcon extends StatelessWidget {
+  final IconData icon;
+  final Color fg, bg;
+  final VoidCallback onTap;
+  const _RoundIcon(this.icon, this.fg, this.bg, this.onTap);
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 24, height: 24,
+      decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+      child: Icon(icon, size: 13, color: fg),
+    ),
+  );
+}
+
+void _launchPhone(String phone) async {
+  final uri = Uri(scheme: 'tel', path: phone.replaceAll(' ', ''));
+  if (await canLaunchUrl(uri)) launchUrl(uri);
+}
+
+void _launchSms(String phone) async {
+  final uri = Uri(scheme: 'sms', path: phone.replaceAll(' ', ''));
+  if (await canLaunchUrl(uri)) launchUrl(uri);
 }
 
 class _Badge extends StatelessWidget {
