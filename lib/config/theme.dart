@@ -93,6 +93,7 @@ class AppTheme {
       seedColor: AppColors.primary,
       brightness: Brightness.light,
       surface: Colors.white,
+      surfaceTint: Colors.transparent,
       onSurface: AppColors.textPrimary,
     ),
     // Nyeupe (kama web body background:#ffffff) — siyo grey-50.
