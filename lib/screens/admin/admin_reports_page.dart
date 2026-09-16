@@ -1,40 +1,40 @@
-/// Admin reports page — revenue, user trends, match trends.
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
-// ── Brand colours ──────────────────────────────────────────────────────────
-const _kBlue      = Color(0xFF1E40AF);
-const _kBlue50    = Color(0xFFEFF6FF);
-const _kBlue200   = Color(0xFFBFDBFE);
-const _kGrey50    = Color(0xFFF9FAFB);
-const _kGrey100   = Color(0xFFF3F4F6);
-const _kGrey200   = Color(0xFFE5E7EB);
-const _kGrey400   = Color(0xFF9CA3AF);
-const _kGrey500   = Color(0xFF6B7280);
-const _kGrey700   = Color(0xFF374151);
-const _kGrey900   = Color(0xFF111827);
-const _kGreenDk   = Color(0xFF16A34A);
-const _kGreen50   = Color(0xFFF0FDF4);
-const _kGreen200  = Color(0xFFBBF7D0);
-const _kRed       = Color(0xFFDC2626);
-const _kRed50     = Color(0xFFFEF2F2);
-const _kAmber50   = Color(0xFFFFFBEB);
-const _kAmber200  = Color(0xFFFDE68A);
-const _kAmber700  = Color(0xFFB45309);
-const _kPurple50  = Color(0xFFF5F3FF);
-const _kPurple200 = Color(0xFFDDD6FE);
-const _kPurple700 = Color(0xFF6D28D9);
+const _kBlue    = Color(0xFF1E40AF);
+const _kBlueBg  = Color(0xFFEFF6FF);
+const _kGreen   = Color(0xFF16A34A);
+const _kGreenBg = Color(0xFFDCFCE7);
+const _kAmber   = Color(0xFFD97706);
+const _kAmberBg = Color(0xFFFEF3C7);
+const _kRed     = Color(0xFFDC2626);
+const _kRedBg   = Color(0xFFFEE2E2);
+const _kGrey900 = Color(0xFF111827);
+const _kGrey700 = Color(0xFF374151);
+const _kGrey500 = Color(0xFF6B7280);
+const _kGrey400 = Color(0xFF9CA3AF);
+const _kGrey200 = Color(0xFFE5E7EB);
+const _kGrey100 = Color(0xFFF3F4F6);
 
 class AdminReportsPage extends StatefulWidget {
   const AdminReportsPage({super.key});
+
   @override
   State<AdminReportsPage> createState() => _AdminReportsPageState();
 }
 
 class _AdminReportsPageState extends State<AdminReportsPage> {
-  Map<String, dynamic> _reports = {};
   bool _loading = true;
-  int _days = 30;
+  String? _error;
+  Map<String, dynamic> _data = {};
+
+  String? _selectedRegion;
+  String? _selectedCategory;
+  int _selectedDays = 30;
+
+  final List<int> _dayOptions = [30, 90, 365];
+  final List<String> _categoryOptions = ['', 'afya', 'elimu', 'serikali'];
+  final List<String> _categoryLabels = ['Zote', 'Afya', 'Elimu', 'Serikali'];
 
   @override
   void initState() {
@@ -43,249 +43,315 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final res = await ApiService().get('/admin/reports', queryParameters: {'days': _days});
-      setState(() { _reports = res.data; _loading = false; });
-    } catch (_) { setState(() => _loading = false); }
+      final res = await ApiService().adminReports(
+        days: _selectedDays,
+        region: _selectedRegion,
+        category: _selectedCategory,
+      );
+      if (!mounted) return;
+      setState(() {
+        _data = (res.data as Map<String, dynamic>?) ?? {};
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Widget _statRow(String label, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: const TextStyle(fontSize: 13, color: _kGrey700)),
+          ),
+          Text(
+            value?.toString() ?? '0',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _kGrey900),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionCard({required String title, required IconData icon, required Color iconColor, required Color iconBg, required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _kGrey200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 18, color: iconColor),
+              ),
+              const SizedBox(width: 10),
+              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(height: 1, color: _kGrey200),
+          const SizedBox(height: 4),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _regionRows() {
+    final byRegion = _data['by_region'];
+    if (byRegion == null) return [const Text('Hakuna data', style: TextStyle(fontSize: 13, color: _kGrey400))];
+    if (byRegion is Map) {
+      return byRegion.entries
+          .take(10)
+          .map((e) => _statRow(e.key, e.value))
+          .toList();
+    }
+    if (byRegion is List) {
+      return (byRegion as List<dynamic>)
+          .take(10)
+          .map((e) {
+            if (e is Map) {
+              final name = e['region'] ?? e['name'] ?? e['_id'] ?? '';
+              final count = e['count'] ?? e['total'] ?? 0;
+              return _statRow(name.toString(), count);
+            }
+            return const SizedBox.shrink();
+          })
+          .toList();
+    }
+    return [const Text('Hakuna data', style: TextStyle(fontSize: 13, color: _kGrey400))];
+  }
+
+  List<Widget> _categoryRows() {
+    final byCategory = _data['by_category'];
+    if (byCategory == null) return [const Text('Hakuna data', style: TextStyle(fontSize: 13, color: _kGrey400))];
+    if (byCategory is Map) {
+      return byCategory.entries
+          .map((e) => _statRow(e.key, e.value))
+          .toList();
+    }
+    if (byCategory is List) {
+      return (byCategory as List<dynamic>)
+          .map((e) {
+            if (e is Map) {
+              final name = e['category'] ?? e['name'] ?? e['_id'] ?? '';
+              final count = e['count'] ?? e['total'] ?? 0;
+              return _statRow(name.toString(), count);
+            }
+            return const SizedBox.shrink();
+          })
+          .toList();
+    }
+    return [const Text('Hakuna data', style: TextStyle(fontSize: 13, color: _kGrey400))];
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header ──
         Container(
           color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: Row(children: [
-            Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(
-                color: _kBlue50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
-              ),
-              child: const Icon(Icons.bar_chart_rounded, size: 20, color: _kBlue),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Ripoti', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _kGrey900)),
-              Text('Takwimu za mapato, watumiaji na mikataba',
-                style: TextStyle(fontSize: 12, color: _kGrey500)),
-            ])),
-          ]),
-        ),
-        const Divider(height: 1, color: _kGrey100),
-
-        // ── Period selector ──
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-          child: Row(
-            children: [7, 30, 90, 365].map((d) {
-              final active = _days == d;
-              return Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: GestureDetector(
-                  onTap: () { setState(() => _days = d); _load(); },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: active ? _kBlue : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: active ? _kBlue.withValues(alpha: 0.5) : _kGrey200),
-                      boxShadow: active ? [] : [const BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 1))],
+                      color: _kBlueBg,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      '${d}s',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: active ? Colors.white : _kGrey500,
-                      ),
-                    ),
+                    child: const Icon(Icons.bar_chart_rounded, color: _kBlue, size: 24),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-
-        // ── Content ──
-        Expanded(
-          child: _loading
-              ? const Center(child: SizedBox(width: 24, height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue)))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  color: _kBlue,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 80),
+                  const SizedBox(width: 12),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Revenue
-                      _ReportCard(
-                        title: 'Mapato',
-                        icon: Icons.trending_up_rounded,
-                        color: _kGreenDk,
-                        bg: _kGreen50,
-                        border: _kGreen200,
-                        rows: [
-                          ('Jumla ya Malipo', 'TZS ${_reports['total_revenue'] ?? 0}'),
-                          ('Malipo Yaliyokubaliwa', '${_reports['approved_payments'] ?? 0}'),
-                          ('Malipo Yakataliwa', '${_reports['rejected_payments'] ?? 0}'),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Users
-                      _ReportCard(
-                        title: 'Watumiaji',
-                        icon: Icons.people_rounded,
-                        color: _kBlue,
-                        bg: _kBlue50,
-                        border: _kBlue200,
-                        rows: [
-                          ('Watumiaji Wote', '${_reports['total_users'] ?? 0}'),
-                          ('Wapya wiki hii', '${_reports['new_users_week'] ?? 0}'),
-                          ('Waliolipia', '${_reports['verified_users'] ?? 0}'),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Matches
-                      _ReportCard(
-                        title: 'Mikataba',
-                        icon: Icons.handshake_rounded,
-                        color: _kPurple700,
-                        bg: _kPurple50,
-                        border: _kPurple200,
-                        rows: [
-                          ('Mikataba Yote', '${_reports['total_matches'] ?? 0}'),
-                          ('Wiki hii', '${_reports['matches_week'] ?? 0}'),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Feedback
-                      _ReportCard(
-                        title: 'Maoni',
-                        icon: Icons.rate_review_rounded,
-                        color: _kAmber700,
-                        bg: _kAmber50,
-                        border: _kAmber200,
-                        rows: [
-                          ('Maoni Yote', '${_reports['total_feedback'] ?? 0}'),
-                          ('Malalamiko', '${_reports['total_complaints'] ?? 0}'),
-                          ('Mapendekezo', '${_reports['total_suggestions'] ?? 0}'),
-                        ],
-                      ),
-
-                      // Top regions
-                      if (_reports['top_regions'] != null) ...[
-                        const SizedBox(height: 20),
-                        const Text('Mikoa Inayoongoza',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: _kGrey700)),
-                        const SizedBox(height: 8),
-                        ...((_reports['top_regions'] as List?) ?? []).asMap().entries.map((e) {
-                          final r = e.value;
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 6),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: _kGrey200),
-                              boxShadow: const [BoxShadow(color: Color(0x07000000), blurRadius: 4, offset: Offset(0, 1))],
-                            ),
-                            child: Row(children: [
-                              Container(
-                                width: 24, height: 24,
-                                decoration: BoxDecoration(
-                                  color: _kBlue50,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Center(child: Text('${e.key + 1}',
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _kBlue))),
-                              ),
-                              const SizedBox(width: 10),
-                              const Icon(Icons.location_on_rounded, size: 14, color: _kGrey400),
-                              const SizedBox(width: 4),
-                              Expanded(child: Text(r['name'] ?? '',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey900))),
-                              Text('${r['count'] ?? 0}',
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _kBlue)),
-                            ]),
-                          );
-                        }),
-                      ],
+                      Text('Ripoti', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kGrey900)),
+                      Text('Takwimu na michoro', style: TextStyle(fontSize: 13, color: _kGrey500)),
                     ],
                   ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: _kGrey200),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedRegion ?? '',
+                          hint: const Text('Mkoa', style: TextStyle(fontSize: 12, color: _kGrey500)),
+                          isExpanded: true,
+                          style: const TextStyle(fontSize: 12, color: _kGrey900),
+                          items: [
+                            const DropdownMenuItem(value: '', child: Text('Mikoa Yote')),
+                            ...['Dar es Salaam', 'Mwanza', 'Dodoma', 'Arusha', 'Mbeya', 'Morogoro', 'Zanzibar', 'Tanga']
+                                .map((r) => DropdownMenuItem(value: r, child: Text(r))),
+                          ],
+                          onChanged: (v) => setState(() => _selectedRegion = v == '' ? null : v),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: _kGrey200),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedCategory ?? '',
+                          isExpanded: true,
+                          style: const TextStyle(fontSize: 12, color: _kGrey900),
+                          items: List.generate(_categoryOptions.length, (i) {
+                            return DropdownMenuItem(
+                              value: _categoryOptions[i],
+                              child: Text(_categoryLabels[i]),
+                            );
+                          }),
+                          onChanged: (v) => setState(() => _selectedCategory = v == '' ? null : v),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: _kGrey200),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          value: _selectedDays,
+                          isExpanded: true,
+                          style: const TextStyle(fontSize: 12, color: _kGrey900),
+                          items: _dayOptions
+                              .map((d) => DropdownMenuItem(value: d, child: Text('Siku $d')))
+                              .toList(),
+                          onChanged: (v) => setState(() => _selectedDays = v ?? 30),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _load,
+                  icon: const Icon(Icons.search_rounded, size: 16),
+                  label: const Text('Tafuta', style: TextStyle(fontWeight: FontWeight.w700)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
                 ),
+              ),
+            ],
+          ),
+        ),
+        Container(height: 1, color: _kGrey200),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator(color: _kBlue))
+              : _error != null
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.error_outline_rounded, size: 48, color: _kRed),
+                          const SizedBox(height: 12),
+                          Text(_error!, style: const TextStyle(color: _kGrey700), textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _load,
+                            style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white),
+                            child: const Text('Jaribu Tena'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          _sectionCard(
+                            title: 'Takwimu za Jumla',
+                            icon: Icons.people_rounded,
+                            iconColor: _kBlue,
+                            iconBg: _kBlueBg,
+                            children: [
+                              _statRow('Jumla ya Usajili', _data['total_registrations'] ?? _data['total'] ?? _data['users'] ?? 0),
+                              _statRow('Wanaolipa', _data['paid'] ?? _data['paying_users'] ?? 0),
+                              _statRow('Hawajalipia', _data['unpaid'] ?? _data['free_users'] ?? 0),
+                              _statRow('Mechi Zilizotokea', _data['matches'] ?? _data['total_matches'] ?? 0),
+                              _statRow('Matangazo Yaliyotumwa', _data['announcements'] ?? 0),
+                            ],
+                          ),
+                          _sectionCard(
+                            title: 'Kwa Mkoa',
+                            icon: Icons.map_rounded,
+                            iconColor: _kGreen,
+                            iconBg: _kGreenBg,
+                            children: _regionRows(),
+                          ),
+                          _sectionCard(
+                            title: 'Kwa Kategoria',
+                            icon: Icons.category_rounded,
+                            iconColor: _kAmber,
+                            iconBg: _kAmberBg,
+                            children: _categoryRows(),
+                          ),
+                        ],
+                      ),
+                    ),
         ),
       ],
     );
   }
-}
-
-// ── Report card ────────────────────────────────────────────────────────────
-class _ReportCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color, bg, border;
-  final List<(String, String)> rows;
-
-  const _ReportCard({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.bg,
-    required this.border,
-    required this.rows,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFFF3F4F6)),
-      boxShadow: const [BoxShadow(color: Color(0x07000000), blurRadius: 4, offset: Offset(0, 1))],
-    ),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // Header
-      Container(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
-          border: Border(bottom: BorderSide(color: border)),
-        ),
-        child: Row(children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
-          Text(title,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
-        ]),
-      ),
-      // Rows
-      ...rows.asMap().entries.map((e) {
-        final (label, value) = e.value;
-        final isLast = e.key == rows.length - 1;
-        return Column(children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            child: Row(children: [
-              Expanded(child: Text(label,
-                style: const TextStyle(fontSize: 13, color: Color(0xFF374151)))),
-              Text(value,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
-            ]),
-          ),
-          if (!isLast) const Divider(height: 1, indent: 14, endIndent: 14, color: Color(0xFFF3F4F6)),
-        ]);
-      }),
-    ]),
-  );
 }

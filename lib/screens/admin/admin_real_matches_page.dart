@@ -1,95 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 
-// ── Brand colours ──────────────────────────────────────────────────
-const _kBlue     = Color(0xFF1E40AF);
-const _kBlue50   = Color(0xFFEFF6FF);
-const _kBlueLt   = Color(0xFFDBEAFE);
-const _kGrey50   = Color(0xFFF9FAFB);
-const _kGrey100  = Color(0xFFF3F4F6);
-const _kGrey200  = Color(0xFFE5E7EB);
-const _kGrey400  = Color(0xFF9CA3AF);
-const _kGrey500  = Color(0xFF6B7280);
-const _kGrey700  = Color(0xFF374151);
-const _kGrey900  = Color(0xFF111827);
-const _kGreen    = Color(0xFF22C55E);
-const _kGreen50  = Color(0xFFF0FDF4);
-const _kGreen100 = Color(0xFFDCFCE7);
-const _kGreen200 = Color(0xFFBBF7D0);
-const _kGreen600 = Color(0xFF16A34A);
-const _kGreen700 = Color(0xFF15803D);
-const _kYellow50 = Color(0xFFFEF9C3);
-const _kYellow300 = Color(0xFFFDE047);
-const _kYellow600 = Color(0xFFCA8A04);
+const _kBlue    = Color(0xFF1E40AF);
+const _kBlueBg  = Color(0xFFEFF6FF);
+const _kGreen   = Color(0xFF16A34A);
+const _kGreenBg = Color(0xFFDCFCE7);
+const _kAmber   = Color(0xFFD97706);
+const _kAmberBg = Color(0xFFFEF3C7);
+const _kRed     = Color(0xFFDC2626);
+const _kRedBg   = Color(0xFFFEE2E2);
+const _kGrey900 = Color(0xFF111827);
+const _kGrey700 = Color(0xFF374151);
+const _kGrey500 = Color(0xFF6B7280);
+const _kGrey400 = Color(0xFF9CA3AF);
+const _kGrey200 = Color(0xFFE5E7EB);
+const _kGrey100 = Color(0xFFF3F4F6);
 
-// ── Cadre options ──────────────────────────────────────────────────
-const _kEducationCadres = [
-  {'code': 'TEACHER_PRIMARY',   'label': 'Mwalimu wa Msingi'},
-  {'code': 'TEACHER_SECONDARY', 'label': 'Mwalimu wa Sekondari'},
-  {'code': 'TEACHER_SPECIAL',   'label': 'Mwalimu wa Elimu ya Pekee'},
-];
-
-const _kHealthCadres = [
-  {'code': 'MD',          'label': 'Daktari (MD)'},
-  {'code': 'CO',          'label': 'Afisa wa Afya (CO)'},
-  {'code': 'ACO',         'label': 'Msaidizi wa Afisa wa Afya'},
-  {'code': 'CA',          'label': 'Msaidizi wa Kliniki'},
-  {'code': 'AMO',         'label': 'Msaidizi wa Daktari'},
-  {'code': 'NO',          'label': 'Afisa wa Ugojaji (NO)'},
-  {'code': 'RN',          'label': 'Muuguzi Aliyesajiliwa (RN)'},
-  {'code': 'EN',          'label': 'Muuguzi Aliyeandikwa (EN)'},
-  {'code': 'ANO',         'label': 'Msaidizi wa Ugojaji (ANO)'},
-  {'code': 'HA',          'label': 'Msaidizi wa Afya (HA)'},
-  {'code': 'MA',          'label': 'Msaidizi wa Matibabu (MA)'},
-  {'code': 'LAB_TECH_1',  'label': 'Teknolojia ya Maabara I'},
-  {'code': 'LAB_TECH_2',  'label': 'Teknolojia ya Maabara II'},
-  {'code': 'LAB_SCI_2',   'label': 'Wanasayansi wa Maabara II'},
-  {'code': 'LAB_ASST',    'label': 'Msaidizi wa Maabara'},
-  {'code': 'SR_LAB_ASST', 'label': 'Msaidizi Mkuu wa Maabara'},
-  {'code': 'MALT',        'label': 'Teknolojia ya Maabara ya Matibabu'},
-  {'code': 'PHARM_2',     'label': 'Daktari wa Pharmacy II'},
-];
-
-List<Map<String, String>> _getCadreOptions(String category) {
-  if (category == 'education') return List.from(_kEducationCadres);
-  if (category == 'health')    return List.from(_kHealthCadres);
-  return [..._kEducationCadres, ..._kHealthCadres];
+Color _avatarColor(String name) {
+  if (name.isEmpty) return _kBlue;
+  final colors = [Color(0xFF16A34A), Color(0xFF2563EB), Color(0xFFD97706), Color(0xFFDC2626), Color(0xFF7C3AED), Color(0xFF0891B2)];
+  return colors[name.codeUnitAt(0) % colors.length];
 }
 
-String _cadreLabel(String? code) {
-  if (code == null || code.isEmpty) return '—';
-  for (final c in [..._kEducationCadres, ..._kHealthCadres]) {
-    if (c['code'] == code) return c['label']!;
+String _timeAgo(dynamic raw) {
+  if (raw == null) return '';
+  try {
+    final dt = DateTime.parse(raw.toString()).toLocal();
+    final diff = DateTime.now().difference(dt);
+    if (diff.inDays == 0) return 'leo';
+    if (diff.inDays < 7) return 'siku ${diff.inDays} zilizopita';
+    final weeks = (diff.inDays / 7).floor();
+    if (weeks < 5) return 'wiki $weeks zilizopita';
+    final months = (diff.inDays / 30).floor();
+    return 'miezi $months iliyopita';
+  } catch (_) {
+    return '';
   }
-  return code;
 }
 
-String _categoryLabel(String cat) {
-  if (cat == 'education') return 'Elimu';
-  if (cat == 'health')    return 'Afya';
-  return cat.isEmpty ? '—' : cat;
-}
-
-const _kPageSize = 20;
-
-// ── Page ───────────────────────────────────────────────────────────
 class AdminRealMatchesPage extends StatefulWidget {
   const AdminRealMatchesPage({super.key});
+
   @override
   State<AdminRealMatchesPage> createState() => _AdminRealMatchesPageState();
 }
 
 class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
-  List<dynamic> _matches  = [];
-  bool   _loading         = true;
-  String _category        = '';
-  String _cadreCode       = '';
-  String _q               = '';
-  String _subjectQ        = '';
-  int    _page            = 1;
-
-  final _qCtrl       = TextEditingController();
-  final _subjectCtrl = TextEditingController();
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _pairs = [];
+  String? _selectedCategory;
+  String? _selectedCadre;
+  List<String> _categories = [];
+  List<String> _cadres = [];
 
   @override
   void initState() {
@@ -97,815 +61,470 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
     _load();
   }
 
-  @override
-  void dispose() {
-    _qCtrl.dispose();
-    _subjectCtrl.dispose();
-    super.dispose();
-  }
-
   Future<void> _load() async {
-    if (mounted) setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final res = await ApiService().adminRealMatches(
-        category:  _category.isNotEmpty  ? _category  : null,
-        cadreCode: _cadreCode.isNotEmpty ? _cadreCode : null,
-        limit: 500,
+        category: _selectedCategory?.isNotEmpty == true ? _selectedCategory : null,
+        cadreCode: _selectedCadre?.isNotEmpty == true ? _selectedCadre : null,
+        limit: 100,
       );
-      final data = res.data as Map<String, dynamic>;
-      if (mounted) {
-        setState(() {
-          _matches = (data['matches'] ?? []) as List<dynamic>;
-          _page    = 1;
-          _loading = false;
-        });
+      if (!mounted) return;
+      final raw = res.data;
+      final List<Map<String, dynamic>> pairs = [];
+      final cats = <String>{};
+      final cads = <String>{};
+
+      if (raw is List) {
+        for (var i = 0; i + 1 < raw.length; i += 2) {
+          final a = (raw[i] is Map) ? Map<String, dynamic>.from(raw[i] as Map) : <String, dynamic>{};
+          final b = (raw[i + 1] is Map) ? Map<String, dynamic>.from(raw[i + 1] as Map) : <String, dynamic>{};
+          pairs.add({'userA': a['user'] ?? a, 'userB': b['user'] ?? b});
+        }
+        if (raw.length.isOdd) {
+          final last = (raw.last is Map) ? Map<String, dynamic>.from(raw.last as Map) : <String, dynamic>{};
+          pairs.add({'userA': last['user'] ?? last, 'userB': <String, dynamic>{}});
+        }
+      } else if (raw is Map) {
+        final list = raw['matches'] as List? ?? raw['pairs'] as List? ?? [];
+        for (final item in list) {
+          if (item is Map && item.containsKey('userA')) {
+            pairs.add({
+              'userA': item['userA'] is Map ? Map<String, dynamic>.from(item['userA'] as Map) : <String, dynamic>{},
+              'userB': item['userB'] is Map ? Map<String, dynamic>.from(item['userB'] as Map) : <String, dynamic>{},
+            });
+          } else if (item is Map) {
+            final u = item['user'] ?? item;
+            final cat = u['category']?.toString() ?? '';
+            final cad = u['cadre_code']?.toString() ?? u['cadreName']?.toString() ?? '';
+            if (cat.isNotEmpty) cats.add(cat);
+            if (cad.isNotEmpty) cads.add(cad);
+          }
+        }
       }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+
+      for (final p in pairs) {
+        for (final key in ['userA', 'userB']) {
+          final u = p[key] as Map<String, dynamic>;
+          final cat = u['category']?.toString() ?? '';
+          final cad = u['cadre_code']?.toString() ?? u['cadreName']?.toString() ?? u['cadre']?['name']?.toString() ?? '';
+          if (cat.isNotEmpty) cats.add(cat);
+          if (cad.isNotEmpty) cads.add(cad);
+        }
+      }
+
+      setState(() {
+        _pairs = pairs;
+        _categories = cats.toList()..sort();
+        _cadres = cads.toList()..sort();
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
-  List<dynamic> get _filtered {
-    final ql  = _q.trim().toLowerCase();
-    final sql = _subjectQ.trim().toUpperCase();
-
-    return _matches.where((m) {
-      final a = (m['user_a'] as Map<String, dynamic>?) ?? {};
-      final b = (m['user_b'] as Map<String, dynamic>?) ?? {};
-
-      if (ql.isNotEmpty) {
-        bool hit = false;
-        for (final p in [a, b]) {
-          final name   = (p['full_name']      ?? '').toString().toLowerCase();
-          final phone  = (p['phone_primary']  ?? '').toString();
-          final cadre  = _cadreLabel(p['cadre_code'] as String?).toLowerCase();
-          final region = (p['current_region'] ?? '').toString().toLowerCase();
-          if (name.contains(ql) || phone.contains(ql) ||
-              cadre.contains(ql) || region.contains(ql)) {
-            hit = true;
-            break;
-          }
+  List<Map<String, dynamic>> get _filtered {
+    if ((_selectedCategory == null || _selectedCategory!.isEmpty) &&
+        (_selectedCadre == null || _selectedCadre!.isEmpty)) {
+      return _pairs;
+    }
+    return _pairs.where((p) {
+      for (final key in ['userA', 'userB']) {
+        final u = p[key] as Map<String, dynamic>;
+        if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
+          if ((u['category']?.toString() ?? '') == _selectedCategory) return true;
         }
-        if (!hit) return false;
+        if (_selectedCadre != null && _selectedCadre!.isNotEmpty) {
+          final cad = u['cadre_code']?.toString() ?? u['cadreName']?.toString() ?? u['cadre']?['name']?.toString() ?? '';
+          if (cad == _selectedCadre) return true;
+        }
       }
-
-      if (sql.isNotEmpty) {
-        final common  = (m['common_subjects'] as List?)?.map((s) => s.toString().toUpperCase()).toList() ?? [];
-        final aSubs   = (a['subjects'] as List?)?.map((s) => s.toString().toUpperCase()).toList() ?? [];
-        final bSubs   = (b['subjects'] as List?)?.map((s) => s.toString().toUpperCase()).toList() ?? [];
-        final allSubs = {...common, ...aSubs, ...bSubs};
-        if (!allSubs.any((s) => s.contains(sql))) return false;
-      }
-
-      return true;
+      return false;
     }).toList();
   }
 
-  bool get _hasActiveFilter =>
-      _category.isNotEmpty || _cadreCode.isNotEmpty ||
-      _q.isNotEmpty || _subjectQ.isNotEmpty;
-
-  void _clearFilters() {
-    _qCtrl.clear();
-    _subjectCtrl.clear();
-    setState(() {
-      _category  = '';
-      _cadreCode = '';
-      _q         = '';
-      _subjectQ  = '';
-      _page      = 1;
-    });
-    _load();
+  void _copyPhone(String phone) {
+    Clipboard.setData(ClipboardData(text: phone));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Nambari $phone imenakiliwa'), backgroundColor: _kBlue, duration: Duration(seconds: 2)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered   = _filtered;
-    final totalPages = (filtered.length / _kPageSize).ceil().clamp(1, 99999);
-    final safePage   = _page.clamp(1, totalPages);
-    final start      = (safePage - 1) * _kPageSize;
-    final end        = (start + _kPageSize).clamp(0, filtered.length);
-    final pageItems  = filtered.sublist(start, end);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Header ────────────────────────────────────────────────
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: Row(
-            children: [
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(
-                  color: _kBlue50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
-                ),
-                child: const Icon(Icons.handshake_rounded, size: 20, color: _kBlue),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Match za Kweli',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _kGrey900),
-                    ),
-                    Text(
-                      '${filtered.length} ${filtered.length == 1 ? 'match' : 'matches'} — watu wanaobadilishana',
-                      style: const TextStyle(fontSize: 12, color: _kGrey500),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // ── Filters ───────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _filterField<String>(
-                      title: 'Idara Zote',
-                      value: _category,
-                      opts: const [
-                        ('', 'Idara Zote'),
-                        ('education', 'Elimu'),
-                        ('health', 'Afya'),
-                      ],
-                      onChanged: (v) {
-                        setState(() { _category = v; _cadreCode = ''; _page = 1; });
-                        _load();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _filterField<String>(
-                      title: 'Kada Zote',
-                      value: _cadreCode,
-                      opts: [
-                        ('', 'Kada Zote'),
-                        ..._getCadreOptions(_category).map((c) => (c['code']!, c['label']!)),
-                      ],
-                      onChanged: (v) {
-                        setState(() { _cadreCode = v; _page = 1; });
-                        _load();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: _searchField(
-                      controller: _qCtrl,
-                      hint: 'Tafuta kwa jina, namba, kada au mkoa...',
-                      icon: Icons.search,
-                      onChanged: (v) => setState(() { _q = v; _page = 1; }),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 128,
-                    child: _searchField(
-                      controller: _subjectCtrl,
-                      hint: 'Somo (mfano MATH)',
-                      icon: Icons.book_outlined,
-                      onChanged: (v) => setState(() { _subjectQ = v; _page = 1; }),
-                    ),
-                  ),
-                  if (_hasActiveFilter) ...[
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: _clearFilters,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEE2E2),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFFCA5A5)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.close, size: 14, color: Color(0xFFDC2626)),
-                            SizedBox(width: 4),
-                            Text(
-                              'Futa',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFFDC2626),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        // ── Content ───────────────────────────────────────────────
-        Expanded(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator(color: _kBlue))
-              : filtered.isEmpty
-                  ? _emptyState()
-                  : Column(
-                      children: [
-                        Expanded(
-                          child: RefreshIndicator(
-                            onRefresh: _load,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-                              itemCount: pageItems.length,
-                              itemBuilder: (_, i) => _MatchCard(
-                                match: pageItems[i] as Map<String, dynamic>,
-                              ),
-                            ),
+    return Scaffold(
+      backgroundColor: _kGrey100,
+      body: SafeArea(
+        child: _loading
+            ? Center(child: CircularProgressIndicator(color: _kBlue))
+            : _error != null
+                ? _buildError()
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    color: _kBlue,
+                    child: CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(child: _buildHeader()),
+                        SliverToBoxAdapter(child: _buildCountBanner()),
+                        SliverToBoxAdapter(child: _buildFilters()),
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (ctx, i) => _buildPairCard(_filtered[i]),
+                            childCount: _filtered.length,
                           ),
                         ),
-                        if (totalPages > 1)
-                          _buildPagination(safePage, totalPages),
+                        if (_filtered.isEmpty) SliverToBoxAdapter(child: _buildEmpty()),
+                        SliverToBoxAdapter(child: SizedBox(height: 32)),
                       ],
                     ),
+                  ),
+      ),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: _kRed),
+          SizedBox(height: 12),
+          Text(_error!, style: TextStyle(color: _kGrey700), textAlign: TextAlign.center),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _load,
+            style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white),
+            child: Text('Jaribu Tena'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(12)),
+            child: Icon(Icons.stars_rounded, color: _kBlue, size: 24),
+          ),
+          SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Match za Kweli', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _kGrey900)),
+              Text('Mechi za kweli (pande zote)', style: TextStyle(fontSize: 13, color: _kGrey500)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCountBanner() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(color: _kGreenBg, borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.verified_rounded, size: 16, color: _kGreen),
+            SizedBox(width: 6),
+            Text('${_filtered.length} mechi za kweli', style: TextStyle(color: _kGreen, fontSize: 14, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilters() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: _dropdown(
+              'Elimu / Afya',
+              _selectedCategory,
+              _categories,
+              (v) {
+                setState(() => _selectedCategory = v);
+                _load();
+              },
+            ),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: _dropdown(
+              'Kada',
+              _selectedCadre,
+              _cadres,
+              (v) {
+                setState(() => _selectedCadre = v);
+                _load();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dropdown(String hint, String? value, List<String> items, ValueChanged<String?> onChanged) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: _kGrey200)),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          hint: Text(hint, style: TextStyle(color: _kGrey400, fontSize: 13)),
+          isExpanded: true,
+          onChanged: onChanged,
+          items: [
+            DropdownMenuItem<String>(value: null, child: Text('Zote', style: TextStyle(color: _kGrey700, fontSize: 13))),
+            ...items.map((i) => DropdownMenuItem<String>(value: i, child: Text(i, style: TextStyle(color: _kGrey900, fontSize: 13)))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmpty() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(60),
+        child: Column(
+          children: [
+            Icon(Icons.stars_outlined, size: 80, color: _kGrey400),
+            SizedBox(height: 16),
+            Text('Hakuna match za kweli bado', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey700)),
+            SizedBox(height: 8),
+            Text(
+              'Mechi za kweli zinaonekana pale ambapo watumiaji wawili wanataka kubadilishana maeneo yao.',
+              style: TextStyle(color: _kGrey500, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPairCard(Map<String, dynamic> pair) {
+    final userA = pair['userA'] as Map<String, dynamic>;
+    final userB = pair['userB'] as Map<String, dynamic>;
+    final hasB = userB.isNotEmpty;
+
+    return Container(
+      margin: EdgeInsets.fromLTRB(16, 0, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _kGreen.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: _kGreenBg,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.verified_rounded, size: 14, color: _kGreen),
+                SizedBox(width: 6),
+                Text('Match ya Kweli', style: TextStyle(color: _kGreen, fontSize: 12, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(14),
+            child: Column(
+              children: [
+                _buildUserRow(userA),
+                if (hasB) ...[
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      children: [
+                        Expanded(child: Divider(color: _kGrey200)),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Icon(Icons.swap_vert_rounded, color: _kGreen, size: 22),
+                        ),
+                        Expanded(child: Divider(color: _kGrey200)),
+                      ],
+                    ),
+                  ),
+                  _buildUserRow(userB),
+                ],
+                SizedBox(height: 12),
+                _buildContactButtons(userA, userB, hasB),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserRow(Map<String, dynamic> u) {
+    final name = u['name']?.toString() ?? u['full_name']?.toString() ?? 'Mtumiaji';
+    final phone = u['phone']?.toString() ?? '';
+    final category = u['category']?.toString() ?? '';
+    final cadreName = u['cadreName']?.toString() ?? u['cadre_name']?.toString() ?? u['cadre']?['name']?.toString() ?? '';
+    final fromRegion = u['station']?['region']?.toString() ?? '';
+    final fromDistrict = u['station']?['district']?.toString() ?? u['station']?['district_name']?.toString() ?? '';
+    final destinations = (u['destinations'] as List?) ?? [];
+    final toRegion = destinations.isNotEmpty ? (destinations[0]['region']?.toString() ?? '') : '';
+    final toDistrict = destinations.isNotEmpty ? (destinations[0]['district']?.toString() ?? destinations[0]['district_name']?.toString() ?? '') : '';
+    final createdAt = u['created_at'] ?? u['createdAt'];
+    final ago = _timeAgo(createdAt);
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 22,
+          backgroundColor: _avatarColor(name).withOpacity(0.15),
+          child: Text(initial, style: TextStyle(color: _avatarColor(name), fontSize: 16, fontWeight: FontWeight.bold)),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _kGrey900)),
+              if (category.isNotEmpty || cadreName.isNotEmpty)
+                Text(
+                  '${category.isNotEmpty ? category : ''}${category.isNotEmpty && cadreName.isNotEmpty ? ' · ' : ''}$cadreName',
+                  style: TextStyle(color: _kBlue, fontSize: 12),
+                ),
+              SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$fromRegion${fromDistrict.isNotEmpty ? ', $fromDistrict' : ''}',
+                      style: TextStyle(color: _kGrey700, fontSize: 12, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_rounded, size: 13, color: _kGrey400),
+                  SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '$toRegion${toDistrict.isNotEmpty ? ', $toDistrict' : ''}',
+                      style: TextStyle(color: _kBlue, fontSize: 12, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              if (ago.isNotEmpty)
+                Text(ago, style: TextStyle(color: _kGrey400, fontSize: 11)),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────
-  Widget _filterField<T>({
-    required String title,
-    required T value,
-    required List<(T, String)> opts,
-    required void Function(T) onChanged,
-  }) {
-    final label = opts.where((o) => o.$1 == value).firstOrNull?.$2;
-    final isDefault = opts.isNotEmpty && opts.first.$1 == value;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _showFilterPicker<T>(title: title, opts: opts, selected: value, onChanged: onChanged),
-      child: Container(
-        height: 44,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: _kGrey200),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(children: [
-          Expanded(child: Text(
-            label ?? title,
-            style: TextStyle(fontSize: 13, color: isDefault ? _kGrey400 : _kGrey900),
-            overflow: TextOverflow.ellipsis,
-          )),
-          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _kGrey400),
-        ]),
-      ),
-    );
-  }
+  Widget _buildContactButtons(Map<String, dynamic> userA, Map<String, dynamic> userB, bool hasB) {
+    final phoneA = userA['phone']?.toString() ?? '';
+    final phoneB = hasB ? (userB['phone']?.toString() ?? '') : '';
+    final nameA = userA['name']?.toString() ?? userA['full_name']?.toString() ?? 'A';
+    final nameB = hasB ? (userB['name']?.toString() ?? userB['full_name']?.toString() ?? 'B') : '';
 
-  void _showFilterPicker<T>({
-    required String title,
-    required List<(T, String)> opts,
-    required T selected,
-    required void Function(T) onChanged,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => DraggableScrollableSheet(
-        initialChildSize: 0.55,
-        maxChildSize: 0.9,
-        minChildSize: 0.3,
-        expand: false,
-        builder: (_, ctrl) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    if (!hasB) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => _copyPhone(phoneA),
+              icon: Icon(Icons.phone_outlined, size: 14),
+              label: Text('Piga', style: TextStyle(fontSize: 12)),
+              style: OutlinedButton.styleFrom(foregroundColor: _kGrey700, side: BorderSide(color: _kGrey200), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 8)),
+            ),
           ),
-          child: Column(children: [
-            Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 8),
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1D5DB),
-                borderRadius: BorderRadius.circular(2),
-              ),
+          SizedBox(width: 8),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _copyPhone(phoneA),
+              icon: Icon(Icons.chat_rounded, size: 14),
+              label: Text('WhatsApp', style: TextStyle(fontSize: 12)),
+              style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 8)),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Row(children: [
-                Expanded(child: Text(title, style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w700, color: _kGrey900,
-                ))),
-                GestureDetector(
-                  onTap: () => Navigator.pop(sheetCtx),
-                  child: Container(
-                    width: 32, height: 32,
-                    decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.close_rounded, size: 16, color: _kGrey500),
-                  ),
-                ),
-              ]),
-            ),
-            const Divider(height: 1, color: _kGrey100),
-            Expanded(
-              child: ListView.builder(
-                controller: ctrl,
-                padding: const EdgeInsets.only(bottom: 20),
-                itemCount: opts.length,
-                itemBuilder: (_, i) {
-                  final (val, lbl) = opts[i];
-                  final isSel = val == selected;
-                  return ListTile(
-                    title: Text(lbl, style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w400,
-                      color: isSel ? _kBlue : _kGrey900,
-                    )),
-                    tileColor: isSel ? _kBlue50 : Colors.transparent,
-                    trailing: isSel ? const Icon(Icons.check_rounded, size: 18, color: _kBlue) : null,
-                    onTap: () { onChanged(val); Navigator.pop(sheetCtx); },
-                  );
-                },
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
+          ),
+        ],
+      );
+    }
 
-  Widget _searchField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    required ValueChanged<String> onChanged,
-  }) {
-    return SizedBox(
-      height: 44,
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        style: const TextStyle(fontSize: 13, color: _kGrey900),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
-          prefixIcon: Icon(icon, size: 16, color: _kGrey400),
-          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: _kGrey200),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: _kGrey200),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: _kBlue, width: 1.5),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _emptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _kGrey200),
-          ),
+    return Row(
+      children: [
+        Expanded(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
-                child: const Icon(Icons.swap_horiz, size: 24, color: _kGrey400),
+              Text(nameA.split(' ').first, style: TextStyle(color: _kGrey500, fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+              SizedBox(height: 4),
+              OutlinedButton.icon(
+                onPressed: () => _copyPhone(phoneA),
+                icon: Icon(Icons.phone_outlined, size: 13),
+                label: Text('Piga', style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(foregroundColor: _kGrey700, side: BorderSide(color: _kGrey200), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 7)),
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Hakuna match za kweli zilizopatikana',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: _kGrey700),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Jaribu kubadilisha filters au kusubiri watu zaidi wajiungu',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: _kGrey400),
+              SizedBox(height: 4),
+              ElevatedButton.icon(
+                onPressed: () => _copyPhone(phoneA),
+                icon: Icon(Icons.chat_rounded, size: 13),
+                label: Text('WhatsApp', style: TextStyle(fontSize: 11)),
+                style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 7)),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPagination(int safePage, int totalPages) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _pageBtn(icon: Icons.chevron_left,  enabled: safePage > 1,           onTap: () => setState(() => _page = safePage - 1)),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(999)),
-            child: Text('$safePage / $totalPages',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey700)),
-          ),
-          const SizedBox(width: 12),
-          _pageBtn(icon: Icons.chevron_right, enabled: safePage < totalPages,  onTap: () => setState(() => _page = safePage + 1)),
-        ],
-      ),
-    );
-  }
-
-  Widget _pageBtn({required IconData icon, required bool enabled, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        width: 36, height: 36,
-        decoration: BoxDecoration(
-          color: enabled ? Colors.white : _kGrey100,
-          border: Border.all(color: _kGrey200),
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: enabled
-              ? [const BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1))]
-              : null,
-        ),
-        child: Icon(icon, size: 18, color: enabled ? _kGrey700 : _kGrey400),
-      ),
-    );
-  }
-}
-
-// ── Match card ─────────────────────────────────────────────────────
-class _MatchCard extends StatelessWidget {
-  final Map<String, dynamic> match;
-  const _MatchCard({required this.match});
-
-  @override
-  Widget build(BuildContext context) {
-    final m           = match;
-    final score       = (m['score'] as num?)?.toDouble() ?? 0.0;
-    final scorePct    = (score * 100).round();
-    final userA       = (m['user_a'] as Map<String, dynamic>?) ?? {};
-    final userB       = (m['user_b'] as Map<String, dynamic>?) ?? {};
-    final category    = (userA['category'] ?? userB['category'] ?? m['category'] ?? '') as String;
-    final cadreDisp   = (m['cadre_display'] ?? userA['cadre_display'] ?? userA['cadre_code'] ?? '') as String;
-    final commonSubjs = (m['common_subjects'] as List?)?.map((s) => s.toString()).toList() ?? <String>[];
-
-    final headerLabel = [
-      if (category.isNotEmpty) _categoryLabel(category),
-      if (cadreDisp.isNotEmpty) cadreDisp,
-    ].join(' · ');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kGrey200),
-        boxShadow: const [
-          BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header: score badge + category·cadre + Star ────────
-          Row(
+        SizedBox(width: 10),
+        Container(width: 1, height: 60, color: _kGrey200),
+        SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _ScoreBadge(score: score, pct: scorePct),
-              const SizedBox(width: 8),
-              if (headerLabel.isNotEmpty)
-                Expanded(
-                  child: Text(
-                    headerLabel,
-                    style: const TextStyle(fontSize: 12, color: _kGrey500),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                )
-              else
-                const Spacer(),
-              const Icon(Icons.star_rounded, size: 16, color: Color(0xFFFBBF24)),
+              Text(nameB.split(' ').first, style: TextStyle(color: _kGrey500, fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+              SizedBox(height: 4),
+              OutlinedButton.icon(
+                onPressed: () => _copyPhone(phoneB),
+                icon: Icon(Icons.phone_outlined, size: 13),
+                label: Text('Piga', style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(foregroundColor: _kGrey700, side: BorderSide(color: _kGrey200), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 7)),
+              ),
+              SizedBox(height: 4),
+              ElevatedButton.icon(
+                onPressed: () => _copyPhone(phoneB),
+                icon: Icon(Icons.chat_rounded, size: 13),
+                label: Text('WhatsApp', style: TextStyle(fontSize: 11)),
+                style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: EdgeInsets.symmetric(vertical: 7)),
+              ),
             ],
           ),
-
-          // ── Common subjects ─────────────────────────────────────
-          if (commonSubjs.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: _kGreen50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _kGreen200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Masomo Yanayofanana:',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _kGreen700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: commonSubjs.map((s) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: _kGreen100,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: _kGreen200),
-                      ),
-                      child: Text(
-                        '✓ $s',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: _kGreen700,
-                        ),
-                      ),
-                    )).toList(),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 10),
-
-          // ── User A ─────────────────────────────────────────────
-          _UserHalf(user: userA),
-
-          // ── Swap divider ───────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(children: [
-              Expanded(child: Container(height: 1, color: _kGrey200)),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _kBlue50,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _kBlueLt),
-                ),
-                child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.swap_vert_rounded, size: 14, color: _kBlue),
-                  SizedBox(width: 5),
-                  Text('KUBADILISHANA',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800,
-                          color: _kBlue, letterSpacing: 0.4)),
-                ]),
-              ),
-              Expanded(child: Container(height: 1, color: _kGrey200)),
-            ]),
-          ),
-
-          // ── User B ─────────────────────────────────────────────
-          _UserHalf(user: userB),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Score badge (rounded-full pill) ────────────────────────────────
-class _ScoreBadge extends StatelessWidget {
-  final double score;
-  final int    pct;
-  const _ScoreBadge({required this.score, required this.pct});
-
-  @override
-  Widget build(BuildContext context) {
-    late Color bg, fg, border;
-    late String label;
-
-    if (score >= 1.0) {
-      bg = _kGreen100; fg = _kGreen700; border = _kGreen200;
-      label = 'SAHIHI';
-    } else if (score >= 0.85) {
-      bg = _kBlueLt; fg = _kBlue; border = const Color(0xFF93C5FD);
-      label = 'NZURI';
-    } else {
-      bg = _kYellow50; fg = _kYellow600; border = _kYellow300;
-      label = 'POA';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.star_rounded, size: 12, color: fg),
-          const SizedBox(width: 4),
-          Text(
-            '$label ($pct%)',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: fg),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── User row (full-width stacked layout) ──────────────────────────
-class _UserHalf extends StatelessWidget {
-  final Map<String, dynamic> user;
-  const _UserHalf({required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    final p        = user;
-    final name     = (p['full_name']        ?? '') as String;
-    final cadre    = (p['cadre_display'] ?? p['cadre_code'] ?? '') as String;
-    final region   = (p['current_region']   ?? '') as String;
-    final district = (p['current_district'] ?? '') as String;
-    final phone    = (p['phone_primary']    ?? '') as String;
-    final online   = p['online']      == true;
-    final verified = p['is_verified'] == true;
-
-    final rawDests = p['desired_destinations'];
-    final dests = <String>[];
-    if (rawDests is List) {
-      for (final d in rawDests) {
-        if (d is Map) {
-          final rn = (d['region_name'] ?? d['region'] ?? '').toString();
-          if (rn.isNotEmpty) dests.add(rn);
-        } else {
-          final s = d.toString();
-          if (s.isNotEmpty) dests.add(s);
-        }
-      }
-    }
-
-    final subjects = (p['subjects'] as List?)
-        ?.map((s) => s.toString())
-        .take(5)
-        .toList() ?? <String>[];
-
-    final initials = name.trim().isNotEmpty
-        ? name.trim().split(' ').where((w) => w.isNotEmpty).take(2)
-            .map((w) => w[0].toUpperCase()).join()
-        : '?';
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _kGrey50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _kGrey200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Avatar row ────────────────────────────────────────
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Stack(clipBehavior: Clip.none, children: [
-              Container(
-                width: 44, height: 44,
-                decoration: const BoxDecoration(color: _kBlue, shape: BoxShape.circle),
-                alignment: Alignment.center,
-                child: Text(initials,
-                    style: const TextStyle(color: Colors.white, fontSize: 15,
-                        fontWeight: FontWeight.bold)),
-              ),
-              if (online)
-                Positioned(bottom: 0, right: 0,
-                  child: Container(
-                    width: 11, height: 11,
-                    decoration: BoxDecoration(color: _kGreen, shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5)),
-                  )),
-            ]),
-            const SizedBox(width: 10),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // Name + verified tick
-              Row(children: [
-                Expanded(child: Text(name,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
-                        color: _kGrey900),
-                    overflow: TextOverflow.ellipsis)),
-                if (verified) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.check_circle_rounded, size: 14, color: _kGreen600),
-                ],
-              ]),
-              const SizedBox(height: 2),
-              // Phone
-              if (phone.isNotEmpty)
-                Row(children: [
-                  const Icon(Icons.phone_outlined, size: 12, color: _kGrey400),
-                  const SizedBox(width: 4),
-                  Text(phone,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                          color: _kBlue)),
-                ]),
-            ])),
-          ]),
-
-          // ── Cadre pill ────────────────────────────────────────
-          if (cadre.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                  color: _kBlue50,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: _kBlueLt)),
-              child: Text(cadre,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                      color: _kBlue)),
-            ),
-          ],
-
-          const SizedBox(height: 8),
-
-          // ── Kutoka ────────────────────────────────────────────
-          if (region.isNotEmpty)
-            Row(children: [
-              const Icon(Icons.location_on_outlined, size: 13, color: _kGrey400),
-              const SizedBox(width: 4),
-              Expanded(child: Text(
-                  'Kutoka: ${[region, district].where((s) => s.isNotEmpty).join(' — ')}',
-                  style: const TextStyle(fontSize: 12, color: _kGrey500),
-                  overflow: TextOverflow.ellipsis)),
-            ]),
-
-          // ── Anataka ───────────────────────────────────────────
-          if (dests.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Icon(Icons.arrow_forward_rounded, size: 13, color: _kGreen600),
-              const SizedBox(width: 4),
-              Expanded(child: Text(
-                  'Anataka: ${dests.join(', ')}',
-                  style: const TextStyle(fontSize: 12, color: _kGreen700,
-                      fontWeight: FontWeight.w500),
-                  overflow: TextOverflow.ellipsis, maxLines: 2)),
-            ]),
-          ],
-
-          // ── Subjects ──────────────────────────────────────────
-          if (subjects.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(spacing: 4, runSpacing: 4, children: subjects.map((s) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                  color: _kBlue50,
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: _kBlueLt)),
-              child: Text(s,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                      color: _kBlue)),
-            )).toList()),
-          ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

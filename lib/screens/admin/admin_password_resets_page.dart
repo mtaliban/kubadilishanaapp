@@ -1,383 +1,333 @@
-/// Admin password resets page — approve/reject password reset requests.
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
-// ── Brand colours ──────────────────────────────────────────────────────────
-const _kBlue      = Color(0xFF1E40AF);
-const _kBlue50    = Color(0xFFEFF6FF);
-const _kGrey50    = Color(0xFFF9FAFB);
-const _kGrey100   = Color(0xFFF3F4F6);
-const _kGrey200   = Color(0xFFE5E7EB);
-const _kGrey400   = Color(0xFF9CA3AF);
-const _kGrey500   = Color(0xFF6B7280);
-const _kGrey700   = Color(0xFF374151);
-const _kGrey900   = Color(0xFF111827);
-const _kGreenDk   = Color(0xFF16A34A);
-const _kGreen50   = Color(0xFFF0FDF4);
-const _kGreen200  = Color(0xFFBBF7D0);
-const _kGreen700  = Color(0xFF15803D);
-const _kRed       = Color(0xFFDC2626);
-const _kRed50     = Color(0xFFFEF2F2);
-const _kRed200    = Color(0xFFFECACA);
-const _kAmber50   = Color(0xFFFFFBEB);
-const _kAmber200  = Color(0xFFFDE68A);
-const _kAmber700  = Color(0xFFB45309);
-
-String _fmtDate(String? iso) {
-  if (iso == null || iso.isEmpty) return '—';
-  try {
-    final d = DateTime.parse(iso).toLocal();
-    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}  '
-           '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-  } catch (_) { return iso.split('T').first; }
-}
+const _kBlue    = Color(0xFF1E40AF);
+const _kBlueBg  = Color(0xFFEFF6FF);
+const _kGreen   = Color(0xFF16A34A);
+const _kGreenBg = Color(0xFFDCFCE7);
+const _kAmber   = Color(0xFFD97706);
+const _kAmberBg = Color(0xFFFEF3C7);
+const _kRed     = Color(0xFFDC2626);
+const _kRedBg   = Color(0xFFFEE2E2);
+const _kGrey900 = Color(0xFF111827);
+const _kGrey700 = Color(0xFF374151);
+const _kGrey500 = Color(0xFF6B7280);
+const _kGrey400 = Color(0xFF9CA3AF);
+const _kGrey200 = Color(0xFFE5E7EB);
+const _kGrey100 = Color(0xFFF3F4F6);
 
 class AdminPasswordResetsPage extends StatefulWidget {
   const AdminPasswordResetsPage({super.key});
+
   @override
   State<AdminPasswordResetsPage> createState() => _AdminPasswordResetsPageState();
 }
 
-class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage> {
-  List<dynamic> _resets = [];
+class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   bool _loading = true;
-  final Map<String, bool> _busy = {};
-
-  String? _flashMsg;
-  bool _flashOk = true;
+  String? _error;
+  List<dynamic> _pending = [];
+  List<dynamic> _approved = [];
+  List<dynamic> _rejected = [];
+  final Set<String> _processingIds = {};
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _load();
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
-    if (!mounted) return;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final res = await ApiService().get('/admin/password-resets');
+      final results = await Future.wait([
+        ApiService().adminListPasswordResets(status: 'pending'),
+        ApiService().adminListPasswordResets(status: 'approved'),
+        ApiService().adminListPasswordResets(status: 'rejected'),
+      ]);
       if (!mounted) return;
+
+      List<dynamic> _parseList(dynamic raw) {
+        if (raw is List) return raw;
+        if (raw is Map) return (raw['resets'] ?? raw['data'] ?? raw['results'] ?? []) as List<dynamic>;
+        return [];
+      }
+
       setState(() {
-        _resets = res.data is List ? res.data : (res.data['resets'] ?? []);
+        _pending = _parseList(results[0].data);
+        _approved = _parseList(results[1].data);
+        _rejected = _parseList(results[2].data);
         _loading = false;
       });
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
-  void _showFlash(String msg, {bool ok = true}) {
-    if (!mounted) return;
-    setState(() { _flashMsg = msg; _flashOk = ok; });
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) setState(() => _flashMsg = null);
-    });
-  }
-
-  Future<void> _approve(Map<String, dynamic> r) async {
-    final id = (r['_id'] ?? r['id'] ?? '').toString();
-    setState(() => _busy[id] = true);
+  Future<void> _approve(String id) async {
+    setState(() => _processingIds.add(id));
     try {
-      await ApiService().post('/admin/password-resets/$id/approve');
-      _showFlash('Ombi limekubaliwa');
+      await ApiService().adminApprovePasswordReset(id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ombi limeidhinishwa'), backgroundColor: _kGreen),
+      );
       await _load();
-    } catch (_) {
-      _showFlash('Hitilafu ya kukubali', ok: false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hitilafu: ${e.toString()}'), backgroundColor: _kRed),
+      );
+    } finally {
+      if (mounted) setState(() => _processingIds.remove(id));
     }
-    if (mounted) setState(() => _busy.remove(id));
   }
 
-  Future<void> _reject(Map<String, dynamic> r) async {
-    final id = (r['_id'] ?? r['id'] ?? '').toString();
-    setState(() => _busy[id] = true);
+  Future<void> _reject(String id) async {
+    setState(() => _processingIds.add(id));
     try {
-      await ApiService().post('/admin/password-resets/$id/reject');
-      _showFlash('Ombi limekataliwa');
+      await ApiService().adminRejectPasswordReset(id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ombi limekataliwa'), backgroundColor: _kAmber),
+      );
       await _load();
-    } catch (_) {
-      _showFlash('Hitilafu ya kukataa', ok: false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hitilafu: ${e.toString()}'), backgroundColor: _kRed),
+      );
+    } finally {
+      if (mounted) setState(() => _processingIds.remove(id));
     }
-    if (mounted) setState(() => _busy.remove(id));
+  }
+
+  String _formatDate(dynamic raw) {
+    if (raw == null) return '';
+    try {
+      final dt = DateTime.tryParse(raw.toString());
+      if (dt == null) return raw.toString();
+      final local = dt.toLocal();
+      return '${local.day}/${local.month}/${local.year}';
+    } catch (_) {
+      return raw.toString();
+    }
+  }
+
+  String _initial(String name) {
+    if (name.isEmpty) return '?';
+    return name[0].toUpperCase();
+  }
+
+  Widget _resetCard(Map<String, dynamic> item, {bool showActions = false}) {
+    final id = item['_id'] as String? ?? item['id'] as String? ?? '';
+    final user = item['user'] as Map<String, dynamic>? ?? {};
+    final name = user['full_name'] as String? ?? user['name'] as String? ?? item['full_name'] as String? ?? 'Mtumiaji';
+    final phone = user['phone_primary'] as String? ?? user['phone'] as String? ?? item['phone'] as String? ?? '';
+    final createdAt = item['created_at'] ?? item['createdAt'];
+    final isProcessing = _processingIds.contains(id);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _kGrey200),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: _kBlueBg,
+            child: Text(
+              _initial(name),
+              style: const TextStyle(color: _kBlue, fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey900)),
+                const SizedBox(height: 2),
+                Text(phone, style: const TextStyle(fontSize: 12, color: _kGrey500)),
+                const SizedBox(height: 2),
+                Text(_formatDate(createdAt), style: const TextStyle(fontSize: 11, color: _kGrey400)),
+              ],
+            ),
+          ),
+          if (showActions && id.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            if (isProcessing)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue),
+              )
+            else
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => _approve(id),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _kGreenBg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('Idhinisha', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGreen)),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => _reject(id),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _kRedBg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('Kataa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kRed)),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _listView(List<dynamic> items, {bool showActions = false}) {
+    if (items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.key_off_rounded, size: 56, color: _kGrey400),
+            const SizedBox(height: 12),
+            const Text('Hakuna maombi', style: TextStyle(fontSize: 16, color: _kGrey500, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: items.length,
+      itemBuilder: (context, i) => _resetCard(items[i] as Map<String, dynamic>, showActions: showActions),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final pending  = _resets.where((r) => (r['status'] ?? 'pending') == 'pending').length;
-    final approved = _resets.where((r) => r['status'] == 'approved').length;
-    final rejected = _resets.where((r) => r['status'] == 'rejected').length;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header ──
         Container(
           color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: Row(children: [
-            Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(
-                color: _kBlue50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: _kBlueBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.key_rounded, color: _kBlue, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Manenosiri', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kGrey900)),
+                      Text('Maombi ya kubadilisha nenosiri', style: TextStyle(fontSize: 13, color: _kGrey500)),
+                    ],
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: _load,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _kBlueBg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.refresh_rounded, size: 18, color: _kBlue),
+                    ),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.key_rounded, size: 20, color: _kBlue),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Ombi la Nenosiri (${_resets.length})',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _kGrey900)),
-              const Text('Maombi ya kubadilisha nenosiri',
-                style: TextStyle(fontSize: 12, color: _kGrey500)),
-            ])),
-            GestureDetector(
-              onTap: _load,
-              child: Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(
-                  color: _kGrey50, borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _kGrey200)),
-                child: const Center(child: Icon(Icons.refresh_rounded, size: 18, color: _kGrey700)),
+              const SizedBox(height: 16),
+              TabBar(
+                controller: _tabController,
+                labelColor: _kBlue,
+                unselectedLabelColor: _kGrey500,
+                indicatorColor: _kBlue,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 13),
+                tabs: [
+                  Tab(text: 'Inasubiri (${_pending.length})'),
+                  Tab(text: 'Idhinishwa (${_approved.length})'),
+                  Tab(text: 'Kataliwa (${_rejected.length})'),
+                ],
               ),
-            ),
-          ]),
-        ),
-        const Divider(height: 1, color: _kGrey100),
-
-        // ── Stat pills ──
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-          child: Row(children: [
-            _StatPill(label: 'Zinasubiri', count: pending,  color: _kAmber700, bg: _kAmber50,  border: _kAmber200,  icon: Icons.hourglass_top_rounded),
-            const SizedBox(width: 6),
-            _StatPill(label: 'Zimekubaliwa', count: approved, color: _kGreen700, bg: _kGreen50,  border: _kGreen200,  icon: Icons.check_circle_outline_rounded),
-            const SizedBox(width: 6),
-            _StatPill(label: 'Zimekataliwa', count: rejected, color: _kRed,      bg: _kRed50,   border: _kRed200,    icon: Icons.cancel_outlined),
-          ]),
-        ),
-
-        // ── Flash ──
-        if (_flashMsg != null)
-          Container(
-            margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: _flashOk ? _kGreen50 : _kRed50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _flashOk ? _kGreen200 : _kRed200),
-            ),
-            child: Row(children: [
-              Icon(_flashOk ? Icons.check_circle_outline : Icons.error_outline,
-                size: 14, color: _flashOk ? _kGreenDk : _kRed),
-              const SizedBox(width: 7),
-              Expanded(child: Text(_flashMsg!,
-                style: TextStyle(fontSize: 12, color: _flashOk ? _kGreenDk : _kRed))),
-            ]),
+            ],
           ),
-
-        // ── List ──
+        ),
+        Container(height: 1, color: _kGrey200),
         Expanded(
           child: _loading
-              ? const Center(child: SizedBox(width: 24, height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue)))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  color: _kBlue,
-                  child: _resets.isEmpty
-                      ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.key_rounded, size: 48, color: _kGrey200),
+              ? const Center(child: CircularProgressIndicator(color: _kBlue))
+              : _error != null
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.error_outline_rounded, size: 48, color: _kRed),
                           const SizedBox(height: 12),
-                          const Text('Hakuna maombi ya nenosiri',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey500)),
-                          const SizedBox(height: 4),
-                          const Text('Maombi mapya yataonekana hapa',
-                            style: TextStyle(fontSize: 12, color: _kGrey400)),
-                        ]))
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(14, 10, 14, 80),
-                          itemCount: _resets.length,
-                          itemBuilder: (context, i) => _ResetCard(
-                            r: Map<String, dynamic>.from(_resets[i] as Map),
-                            busy: _busy[(_resets[i]['_id'] ?? _resets[i]['id'] ?? '').toString()] == true,
-                            onApprove: () => _approve(Map<String, dynamic>.from(_resets[i] as Map)),
-                            onReject:  () => _reject(Map<String, dynamic>.from(_resets[i] as Map)),
+                          Text(_error!, style: const TextStyle(color: _kGrey700), textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _load,
+                            style: ElevatedButton.styleFrom(backgroundColor: _kBlue, foregroundColor: Colors.white),
+                            child: const Text('Jaribu Tena'),
                           ),
-                        ),
-                ),
+                        ],
+                      ),
+                    )
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _listView(_pending, showActions: true),
+                        _listView(_approved),
+                        _listView(_rejected),
+                      ],
+                    ),
         ),
       ],
-    );
-  }
-}
-
-// ── Stat pill ──────────────────────────────────────────────────────────────
-class _StatPill extends StatelessWidget {
-  final String label;
-  final int count;
-  final Color color, bg, border;
-  final IconData icon;
-  const _StatPill({required this.label, required this.count, required this.color,
-    required this.bg, required this.border, required this.icon});
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: border),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: 12, color: color),
-        const SizedBox(height: 3),
-        Text('$count', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-        Text(label,
-          style: TextStyle(fontSize: 9, color: color.withValues(alpha: 0.75), fontWeight: FontWeight.w500),
-          overflow: TextOverflow.ellipsis),
-      ]),
-    ),
-  );
-}
-
-// ── Reset card ─────────────────────────────────────────────────────────────
-class _ResetCard extends StatelessWidget {
-  final Map<String, dynamic> r;
-  final bool busy;
-  final VoidCallback onApprove, onReject;
-  const _ResetCard({required this.r, required this.busy, required this.onApprove, required this.onReject});
-
-  @override
-  Widget build(BuildContext context) {
-    final status   = (r['status'] ?? 'pending').toString();
-    final name     = (r['user_name'] ?? r['full_name'] ?? '').toString();
-    final phone    = (r['phone'] ?? r['phone_primary'] ?? '').toString();
-    final dateRaw  = (r['created_at'] ?? r['requested_at'] ?? '').toString();
-    final dateStr  = _fmtDate(dateRaw.isNotEmpty ? dateRaw : null);
-    final isPending = status == 'pending';
-    final initial  = name.isNotEmpty ? name[0].toUpperCase() : (phone.isNotEmpty ? phone[0] : '?');
-
-    Color badgeBg, badgeFg, badgeBorder;
-    String statusLabel;
-    IconData statusIcon;
-
-    switch (status) {
-      case 'approved':
-        badgeBg = _kGreen50; badgeFg = _kGreen700;
-        badgeBorder = _kGreen200; statusLabel = 'Imekubaliwa'; statusIcon = Icons.check_circle_outline_rounded;
-      case 'rejected':
-        badgeBg = _kRed50; badgeFg = _kRed;
-        badgeBorder = _kRed200; statusLabel = 'Imekataliwa'; statusIcon = Icons.cancel_outlined;
-      default:
-        badgeBg = _kAmber50; badgeFg = _kAmber700;
-        badgeBorder = _kAmber200; statusLabel = 'Inasubiri'; statusIcon = Icons.hourglass_top_rounded;
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kGrey200),
-        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Top row: avatar + info + status badge
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Container(
-                width: 44, height: 44,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFBBF7D0),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(child: Text(initial,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _kGreen700))),
-              ),
-                    const SizedBox(width: 10),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(name.isNotEmpty ? name : 'Mtumiaji',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kGrey900)),
-                      if (phone.isNotEmpty)
-                        Text(phone,
-                          style: const TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w500)),
-                    ])),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: badgeBg, borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: badgeBorder)),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(statusIcon, size: 10, color: badgeFg),
-                        const SizedBox(width: 3),
-                        Text(statusLabel,
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: badgeFg)),
-                      ]),
-                    ),
-                  ]),
-
-                  // Date
-                  if (dateStr != '—') ...[
-                    const SizedBox(height: 8),
-                    Row(children: [
-                      const Icon(Icons.access_time_rounded, size: 11, color: _kGrey400),
-                      const SizedBox(width: 4),
-                      Text(dateStr, style: const TextStyle(fontSize: 10, color: _kGrey400)),
-                    ]),
-                  ],
-
-                  // Actions (pending only)
-                  if (isPending) ...[
-                    const SizedBox(height: 10),
-                    Container(height: 1, color: _kGrey100),
-                    const SizedBox(height: 10),
-                    Row(children: [
-                      Expanded(child: GestureDetector(
-                        onTap: busy ? null : onApprove,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 9),
-                          decoration: BoxDecoration(
-                            color: busy ? _kGreen50 : _kGreenDk,
-                            borderRadius: BorderRadius.circular(8)),
-                          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            if (busy)
-                              const SizedBox(width: 13, height: 13,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: _kGreenDk))
-                            else
-                              const Icon(Icons.check_circle_rounded, size: 14, color: Colors.white),
-                            const SizedBox(width: 5),
-                            Text(busy ? 'Inafanya...' : 'Kubali',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
-                                color: busy ? _kGreenDk : Colors.white)),
-                          ]),
-                        ),
-                      )),
-                      const SizedBox(width: 8),
-                      Expanded(child: GestureDetector(
-                        onTap: busy ? null : onReject,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 9),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: _kRed200)),
-                          child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            Icon(Icons.cancel_rounded, size: 14, color: _kRed),
-                            SizedBox(width: 5),
-                            Text('Kataa',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kRed)),
-                          ]),
-                        ),
-                      )),
-                    ]),
-                  ],
-          ]),
-        ),
-      ),
     );
   }
 }
