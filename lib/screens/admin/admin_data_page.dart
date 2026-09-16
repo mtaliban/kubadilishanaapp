@@ -102,7 +102,7 @@ class _AdminDataPageState extends State<AdminDataPage> with SingleTickerProvider
       await ApiService().adminDeleteData(type, id);
       if (!mounted) return;
       _snack('Imefutwa', _kGreen);
-      setState(() { _data[type] = null; });
+      setState(() { _data.remove(type); });
       _loadType(type);
     } catch (e) {
       if (!mounted) return;
@@ -205,7 +205,7 @@ class _AdminDataPageState extends State<AdminDataPage> with SingleTickerProvider
                       if (!mounted) return;
                       Navigator.pop(ctx);
                       _snack(isEdit ? 'Imehifadhiwa' : 'Imeongezwa', _kGreen);
-                      setState(() => _data[type] = null);
+                      setState(() => _data.remove(type));
                       _loadType(type);
                     } catch (e) {
                       setInner(() => saving = false);
