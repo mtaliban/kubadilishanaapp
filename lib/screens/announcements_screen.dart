@@ -136,7 +136,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     final pagedHistory = _history.sublist(histStart, histEnd);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.white,
       body: Column(children: [
         Container(
           color: Colors.white,

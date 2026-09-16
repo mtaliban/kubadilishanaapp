@@ -244,7 +244,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final steps = List.generate(_totalSteps, (i) => _stepTitle(i));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),

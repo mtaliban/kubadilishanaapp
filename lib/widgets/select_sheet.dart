@@ -140,7 +140,7 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                     hintText: 'Tafuta...',
                     isDense: true,
                     filled: true,
-                    fillColor: AppColors.grey50,
+                    fillColor: Colors.white,
                     prefixIcon: const Icon(Icons.search_rounded,
                         size: 18, color: AppColors.textLight),
                     prefixIconConstraints:

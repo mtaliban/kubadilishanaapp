@@ -1053,7 +1053,7 @@ class _TrueMatchCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: score / 100,
                 minHeight: 4,
-                backgroundColor: Colors.grey.shade100,
+                backgroundColor: Colors.white,
                 valueColor: const AlwaysStoppedAnimation<Color>(emerald),
               ),
             ),

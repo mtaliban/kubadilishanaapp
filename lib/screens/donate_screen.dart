@@ -52,7 +52,7 @@ InputDecoration _inputDec({String? hint}) => InputDecoration(
   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
   disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
   filled: true,
-  fillColor: _kGrey50,
+  fillColor: Colors.white,
 );
 
 // .label = text-sm=14 font-semibold text-grey-700 mb-1.5=6px
@@ -516,7 +516,7 @@ class _DonateScreenState extends State<DonateScreen> {
             // thead: bg-grey-50, text-[10px] uppercase tracking-wide text-grey-500
             // px-4=16 py-2=8
             Container(
-              color: _kGrey50,
+              color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: const Row(children: [
                 SizedBox(width: 40,

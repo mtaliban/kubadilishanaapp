@@ -99,7 +99,7 @@ class _MyMatchesScreenState extends State<MyMatchesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kGrey50,
+      backgroundColor: Colors.white,
       body: Column(children: [
         Container(
           color: Colors.white,
@@ -418,7 +418,7 @@ class _RealMatchesTabState extends State<_RealMatchesTab>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: _kGrey50, border: Border.all(color: _kGrey200),
+                    color: Colors.white, border: Border.all(color: _kGrey200),
                     borderRadius: BorderRadius.circular(10)),
                   child: Text('${filtered.length}',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _kGrey700)),

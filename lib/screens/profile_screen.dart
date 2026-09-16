@@ -39,7 +39,7 @@ InputDecoration _inputDec({String? hint, bool disabled = false}) => InputDecorat
   disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
   hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
   filled: true,
-  fillColor: disabled ? _kGrey100 : _kGrey50,
+  fillColor: Colors.white,
 );
 
 // .label = text-sm=14px font-semibold text-grey-700 mb-1.5=6px
@@ -299,7 +299,7 @@ class _ViewUser extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
               decoration: BoxDecoration(
-                color: _kGrey50,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFF3F4F6)),
               ),
@@ -939,7 +939,7 @@ class _EditProfileState extends State<_EditProfile> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _kGrey50,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _kGrey200),
       ),
@@ -1137,7 +1137,7 @@ class _PickerField<T> extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          color: enabled ? _kGrey50 : _kGrey100,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _kGrey200),
         ),
@@ -1245,7 +1245,7 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
                 prefixIcon: const Icon(Icons.search_rounded, size: 18, color: _kGrey400),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                filled: true, fillColor: _kGrey50,
+                filled: true, fillColor: Colors.white,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),

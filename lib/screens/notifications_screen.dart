@@ -98,7 +98,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     final unread = _notifications.where((n) => !(n['read'] ?? false)).length;
     return Scaffold(
-      backgroundColor: _kGrey50,
+      backgroundColor: Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
