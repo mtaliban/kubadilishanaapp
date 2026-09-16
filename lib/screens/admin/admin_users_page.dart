@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────
@@ -1100,7 +1099,6 @@ class _UserCard extends StatelessWidget {
     // Category display
     final catLabel = category == 'health' ? 'Afya' : category == 'education' ? 'Elimu' : category;
     final catFg = category == 'health' ? const Color(0xFFDC2626) : const Color(0xFF16A34A);
-    final catBg = category == 'health' ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7);
 
     // location
     final location = [region, district].where((s) => s.isNotEmpty).join(', ');
@@ -1154,19 +1152,13 @@ class _UserCard extends StatelessWidget {
                       // Numbered name
                       Text('$index. $name', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900)),
                       if (phone.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Row(children: [
-                          Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w600)),
-                          const SizedBox(width: 6),
-                          _RoundIcon(Icons.call_rounded, _kGreen, _kGreenBg, () => _launchPhone(phone)),
-                          const SizedBox(width: 4),
-                          _RoundIcon(Icons.message_rounded, _kBlue, _kBlueBg, () => _launchSms(phone)),
-                        ]),
+                        const SizedBox(height: 2),
+                        Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w600)),
                       ],
                       const SizedBox(height: 5),
-                      // Category + cadre chips
+                      // Category (outlined) + cadre (filled) kama picha
                       Wrap(spacing: 4, runSpacing: 4, children: [
-                        if (catLabel.isNotEmpty) _Badge(catLabel, catFg, catBg),
+                        if (catLabel.isNotEmpty) _OutlineBadge(catLabel, catFg),
                         if (cadre.isNotEmpty) _Badge(cadre, _kGreen, _kGreenBg),
                         if (isAdmin) _Badge('Admin', _kBlue, _kBlueBg),
                       ]),
@@ -1180,11 +1172,10 @@ class _UserCard extends StatelessWidget {
                         ]),
                       ],
                       const SizedBox(height: 5),
-                      // Status chips
+                      // Status chips — outlined style kama picha
                       Wrap(spacing: 4, runSpacing: 4, children: [
-                        _Badge(isActive ? 'Hai' : 'Amesitishwa', isActive ? _kGreen : _kAmber, isActive ? _kGreenBg : _kAmberBg),
-                        _Badge(isPaid ? 'Amelipa' : 'Hajalipa', isPaid ? _kGreen : _kRed, isPaid ? _kGreenBg : _kRedBg),
-                        _Badge('Mtumiaji', const Color(0xFF374151), const Color(0xFFF3F4F6)),
+                        _OutlineBadge(isActive ? 'Hai' : 'Amesitishwa', isActive ? _kGreen : _kAmber),
+                        _OutlineBadge(isPaid ? 'Amelipa' : 'Hajalipa', isPaid ? _kGreen : _kRed),
                       ]),
                     ],
                   ),
@@ -1192,23 +1183,29 @@ class _UserCard extends StatelessWidget {
               ],
             ),
           ),
-          // ── Action buttons ───────────────────────────────────────────
+          // ── Action buttons (icon-only kama picha) ────────────────
           const Divider(height: 1, color: _kGrey200),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             child: Row(
               children: [
-                _TxtBtn(Icons.open_in_new_rounded, 'Angalia', _kBlue, onView),
+                _IcoBtn(Icons.open_in_new_rounded, _kBlue, onView),
                 const SizedBox(width: 6),
-                _TxtBtn(Icons.edit_rounded, 'Hariri', _kGrey700, onEdit),
-                const SizedBox(width: 6),
-                _TxtBtn(isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
-                    isActive ? 'Simamisha' : 'Wezeshwa', _kAmber, onSuspend),
+                _IcoBtn(Icons.edit_rounded, _kGrey700, onEdit),
                 const Spacer(),
-                _TxtBtn(isAdmin ? Icons.shield_rounded : Icons.shield_outlined,
-                    isAdmin ? 'Ameruhusiwa' : 'Ruhusu', isAdmin ? _kGreen : _kGrey700, onAdmin),
+                _IcoBtn(
+                  isActive ? Icons.do_not_disturb_on_outlined : Icons.check_circle_outline_rounded,
+                  isActive ? _kAmber : _kGreen,
+                  onSuspend,
+                ),
                 const SizedBox(width: 6),
-                _TxtBtn(Icons.delete_outline_rounded, 'Futa', _kRed, onDelete),
+                _IcoBtn(
+                  isAdmin ? Icons.phone_rounded : Icons.phone_outlined,
+                  isAdmin ? _kGreen : _kGrey700,
+                  onAdmin,
+                ),
+                const SizedBox(width: 6),
+                _IcoBtn(Icons.delete_outline_rounded, _kRed, onDelete),
               ],
             ),
           ),
@@ -1218,33 +1215,8 @@ class _UserCard extends StatelessWidget {
   }
 }
 
-// ── Small round icon button ────────────────────────────────────────────────
-class _RoundIcon extends StatelessWidget {
-  final IconData icon;
-  final Color fg, bg;
-  final VoidCallback onTap;
-  const _RoundIcon(this.icon, this.fg, this.bg, this.onTap);
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 24, height: 24,
-      decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      child: Icon(icon, size: 13, color: fg),
-    ),
-  );
-}
 
-void _launchPhone(String phone) async {
-  final uri = Uri(scheme: 'tel', path: phone.replaceAll(' ', ''));
-  if (await canLaunchUrl(uri)) launchUrl(uri);
-}
-
-void _launchSms(String phone) async {
-  final uri = Uri(scheme: 'sms', path: phone.replaceAll(' ', ''));
-  if (await canLaunchUrl(uri)) launchUrl(uri);
-}
-
+// ── Filled badge (category/cadre) ─────────────────────────────────────────
 class _Badge extends StatelessWidget {
   final String label;
   final Color fg, bg;
@@ -1252,32 +1224,45 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
     child: Text(label, style: TextStyle(fontSize: 10, color: fg, fontWeight: FontWeight.w700)),
   );
 }
 
-class _TxtBtn extends StatelessWidget {
-  final IconData icon;
+// ── Outlined badge (status chips kama picha) ──────────────────────────────
+class _OutlineBadge extends StatelessWidget {
   final String label;
   final Color color;
+  const _OutlineBadge(this.label, this.color);
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: color, width: 1.2),
+    ),
+    child: Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+  );
+}
+
+// ── Icon-only action button (kama picha) ──────────────────────────────────
+class _IcoBtn extends StatelessWidget {
+  final IconData icon;
+  final Color color;
   final VoidCallback onTap;
-  const _TxtBtn(this.icon, this.label, this.color, this.onTap);
+  const _IcoBtn(this.icon, this.color, this.onTap);
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+      width: 34, height: 34,
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 13, color: color),
-        const SizedBox(width: 3),
-        Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w700)),
-      ]),
+      child: Icon(icon, size: 17, color: color),
     ),
   );
 }
