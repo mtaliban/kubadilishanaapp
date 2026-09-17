@@ -1219,7 +1219,7 @@ class _FiltersBar extends StatelessWidget {
 
         // Wilaya — disabled unless mkoa mmoja (hint inabadilika kama web)
         SelectField(
-          hint: !singleRegionSelected ? '-- Chagua Wilaya / Halmashauri --' : 'Wilaya zote',
+          hint: !singleRegionSelected ? 'Chagua Wilaya' : 'Wilaya zote',
           value: districtLabel,
           disabled: !singleRegionSelected,
           onTap: !singleRegionSelected ? null : () async {
@@ -1238,7 +1238,7 @@ class _FiltersBar extends StatelessWidget {
 
         // Kituo — disabled unless wilaya (hint inabadilika kama web)
         SelectField(
-          hint: !districtSelected ? '-- Chagua Kituo --' : 'Vituo vyote',
+          hint: !districtSelected ? 'Chagua Kituo' : 'Vituo vyote',
           value: facilityLabel,
           disabled: !districtSelected,
           onTap: !districtSelected ? null : () async {

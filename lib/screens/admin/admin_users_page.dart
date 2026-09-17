@@ -1264,15 +1264,15 @@ class _State extends State<AdminUsersPage> {
       GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
           decoration: BoxDecoration(
               color: bg,
               border: Border.all(color: border),
-              borderRadius: BorderRadius.circular(8)),
+              borderRadius: BorderRadius.circular(6)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 12, color: fg),
-            const SizedBox(width: 4),
-            Text(label, style: TextStyle(fontSize: 11, color: fg, fontWeight: FontWeight.w600)),
+            Icon(icon, size: 11, color: fg),
+            const SizedBox(width: 3),
+            Text(label, style: TextStyle(fontSize: 10, color: fg, fontWeight: FontWeight.w600)),
           ]),
         ),
       );

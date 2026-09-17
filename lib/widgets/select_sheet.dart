@@ -275,9 +275,7 @@ class SelectField extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: disabled ? AppColors.grey200 : AppColors.grey300,
-          ),
+          border: Border.all(color: AppColors.grey300),
         ),
         child: Row(children: [
           if (leading != null) ...[leading!, const SizedBox(width: 8)],
@@ -289,7 +287,7 @@ class SelectField extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
-                color: hasValue ? AppColors.textPrimary : AppColors.textLight,
+                color: hasValue ? AppColors.textPrimary : const Color(0xFF374151),
               ),
             ),
           ),
@@ -297,7 +295,7 @@ class SelectField extends StatelessWidget {
           Icon(
             Icons.keyboard_arrow_down_rounded,
             size: 16,
-            color: hasValue ? AppColors.primary : AppColors.textLight,
+            color: hasValue ? AppColors.primary : const Color(0xFF374151),
           ),
         ]),
       ),
