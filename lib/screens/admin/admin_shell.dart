@@ -51,7 +51,8 @@ class _AdminShellState extends State<AdminShell> {
       final r = await ApiService().adminStats();
       if (!mounted) return;
       final d = r.data as Map<String, dynamic>? ?? {};
-      setState(() => _userCount = (d['users'] as num?)?.toInt() ?? 0);
+      final totals = (d['totals'] as Map<String, dynamic>?) ?? {};
+      setState(() => _userCount = (totals['users'] as num?)?.toInt() ?? 0);
     } catch (_) {}
   }
 
@@ -167,6 +168,65 @@ class _AdminShellState extends State<AdminShell> {
       ),
       drawer: _buildDrawer(initial, name),
       body: _pageFor(_idx),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    const items = [
+      (0, Icons.bar_chart_rounded, 'Admin'),
+      (1, Icons.group_rounded, 'Watumiaji'),
+      (2, Icons.merge_type_rounded, 'Wenzao'),
+      (6, Icons.payments_outlined, 'Malipo'),
+      (8, Icons.assignment_outlined, 'Maoni'),
+    ];
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: _kGrey200)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            for (final (idx, icon, label) in items)
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _go(idx),
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    height: 56,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(icon,
+                            size: 20,
+                            color: _idx == idx ? _kBlue : _kGrey500),
+                        const SizedBox(height: 2),
+                        Text(label,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: _idx == idx ? FontWeight.w700 : FontWeight.w500,
+                              color: _idx == idx ? _kBlue : _kGrey500,
+                            )),
+                        if (_idx == idx) ...[
+                          const SizedBox(height: 3),
+                          Container(
+                            width: 14, height: 2,
+                            decoration: BoxDecoration(
+                              color: _kBlue,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -241,23 +301,23 @@ class _AdminShellState extends State<AdminShell> {
                 padding: const EdgeInsets.only(top: 8),
                 children: [
                   _section('MENU KUU'),
-                  _item(Icons.workspace_premium_outlined, 'Admin', 0),
+                  _item(Icons.bar_chart_rounded, 'Admin', 0),
                   _item(Icons.group_outlined, 'Watumiaji', 1,
                       badge: _userCount > 0 ? '$_userCount' : null),
-                  _item(Icons.person_search_outlined, 'Waliopata wenzao', 2),
-                  _item(Icons.swap_horiz_rounded, 'Match za kweli', 3),
-                  _item(Icons.bar_chart_outlined, 'Data', 4),
+                  _item(Icons.merge_type_rounded, 'Waliopata wenzao', 2),
+                  _item(Icons.favorite_border_rounded, 'Match za kweli', 3),
+                  _item(Icons.storage_rounded, 'Data', 4),
                   const SizedBox(height: 4),
                   const Divider(height: 1, color: _kGrey200, indent: 16, endIndent: 16),
                   _section('MFUMO'),
-                  _item(Icons.notifications_none_rounded, 'Matangazo', 5),
+                  _item(Icons.campaign_rounded, 'Matangazo', 5),
                   _item(Icons.payments_outlined, 'Malipo', 6),
                   _item(Icons.phone_in_talk_outlined, 'Waliopigiana', 7),
                   _item(Icons.assignment_outlined, 'Maoni', 8),
                   const SizedBox(height: 4),
                   const Divider(height: 1, color: _kGrey200, indent: 16, endIndent: 16),
                   _section('RIPOTI NA UFUATILIAJI'),
-                  _item(Icons.assessment_outlined, 'Ripoti', 9),
+                  _item(Icons.assessment_outlined, 'Statistiki', 9),
                   _item(Icons.monitor_heart_outlined, 'Ufuatiliaji', 10),
                   _item(Icons.lock_reset_rounded, 'Kuweka upya nenosiri', 11),
                   const SizedBox(height: 8),
