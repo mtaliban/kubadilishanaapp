@@ -36,7 +36,7 @@ class AdminShell extends StatefulWidget {
 }
 
 class _AdminShellState extends State<AdminShell> {
-  int _idx = 0;
+  int _idx = 9;
   int _userCount = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -87,7 +87,7 @@ class _AdminShellState extends State<AdminShell> {
     final drawerOpen = _scaffoldKey.currentState?.isDrawerOpen ?? false;
     setState(() => _idx = i);
     if (drawerOpen && nav.canPop()) nav.pop();
-    if (i == 0 || i == 1) _loadCount();
+    if (i == 1) _loadCount();
   }
 
   Future<void> _logout() async {
@@ -174,11 +174,11 @@ class _AdminShellState extends State<AdminShell> {
 
   Widget _buildBottomNav() {
     const items = [
-      (0, Icons.workspace_premium_outlined, 'Admin'),
+      (9, Icons.bar_chart_rounded, 'Statistics'),
       (1, Icons.group_rounded, 'Watumiaji'),
-      (2, Icons.manage_search_rounded, 'Wenzao'),
-      (6, Icons.receipt_long_outlined, 'Malipo'),
-      (8, Icons.assignment_outlined, 'Maoni'),
+      (2, Icons.merge_type, 'Wenzao'),
+      (6, Icons.account_balance_wallet_outlined, 'Malipo'),
+      (8, Icons.assignment_rounded, 'Maoni'),
     ];
     return Container(
       decoration: BoxDecoration(
@@ -301,26 +301,16 @@ class _AdminShellState extends State<AdminShell> {
               child: ListView(
                 padding: const EdgeInsets.only(top: 8),
                 children: [
-                  _section('MENU KUU'),
-                  _item(Icons.workspace_premium_outlined, 'Admin', 0),
+                  _item(Icons.bar_chart_rounded, 'Statistics', 9),
                   _item(Icons.group_rounded, 'Watumiaji', 1,
                       badge: _userCount > 0 ? '$_userCount' : null),
-                  _item(Icons.manage_search_rounded, 'Waliopata wenzao', 2),
-                  _item(Icons.compare_arrows_rounded, 'Match za kweli', 3),
-                  _item(Icons.bar_chart_rounded, 'Data', 4),
-                  const SizedBox(height: 4),
-                  const Divider(height: 1, color: _kGrey200, indent: 16, endIndent: 16),
-                  _section('MFUMO'),
-                  _item(Icons.notifications_outlined, 'Matangazo', 5),
-                  _item(Icons.receipt_long_outlined, 'Malipo', 6),
-                  _item(Icons.phone_in_talk_rounded, 'Waliopigiana', 7),
-                  _item(Icons.assignment_outlined, 'Maoni', 8),
-                  const SizedBox(height: 4),
-                  const Divider(height: 1, color: _kGrey200, indent: 16, endIndent: 16),
-                  _section('RIPOTI NA UFUATILIAJI'),
-                  _item(Icons.insert_chart_outlined_rounded, 'Statistiki', 9),
-                  _item(Icons.monitor_heart_outlined, 'Ufuatiliaji', 10),
-                  _item(Icons.lock_reset_rounded, 'Kuweka upya nenosiri', 11),
+                  _item(Icons.merge_type, 'Waliopata Wenzao', 2),
+                  _item(Icons.favorite_rounded, 'Match za Kweli', 3),
+                  _item(Icons.dns_rounded, 'Data', 4),
+                  _item(Icons.campaign_rounded, 'Matangazo', 5),
+                  _item(Icons.account_balance_wallet_outlined, 'Malipo', 6),
+                  _item(Icons.phone_rounded, 'Waliopigiana', 7),
+                  _item(Icons.assignment_rounded, 'Maoni na Malalamiko', 8),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -353,16 +343,6 @@ class _AdminShellState extends State<AdminShell> {
             const SizedBox(height: 8),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _section(String label) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400, letterSpacing: 1.0),
       ),
     );
   }
