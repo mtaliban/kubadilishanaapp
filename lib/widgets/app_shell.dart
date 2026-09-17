@@ -355,7 +355,6 @@ class _AppShellState extends State<AppShell> {
     if (rb == null) return;
     final pos = rb.localToGlobal(Offset.zero);
     final sz = rb.size;
-    final screenW = MediaQuery.of(context).size.width;
 
     _menuOverlay = OverlayEntry(builder: (_) => Stack(children: [
       Positioned.fill(child: GestureDetector(
@@ -364,7 +363,7 @@ class _AppShellState extends State<AppShell> {
       )),
       Positioned(
         top: pos.dy + sz.height + 4,
-        right: screenW - pos.dx - sz.width,
+        right: 12,
         child: Material(
           type: MaterialType.transparency,
           child: Container(
@@ -393,7 +392,7 @@ class _AppShellState extends State<AppShell> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: const Row(children: [
-                    Icon(Icons.person_outline, size: 18, color: Color(0xFF374151)),
+                    Icon(Icons.person_outline, size: 20, color: Color(0xFF374151)),
                     SizedBox(width: 12),
                     Text('Wasifu', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
                         color: Color(0xFF374151))),
@@ -412,7 +411,7 @@ class _AppShellState extends State<AppShell> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: const Row(children: [
-                    Icon(Icons.logout, size: 18, color: Color(0xFFDC2626)),
+                    Icon(Icons.logout, size: 20, color: Color(0xFFDC2626)),
                     SizedBox(width: 12),
                     Text('Toka', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
                         color: Color(0xFFDC2626))),
@@ -444,7 +443,7 @@ class _AppShellState extends State<AppShell> {
         },
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Stack(clipBehavior: Clip.none, children: [
-            SvgPicture.asset(svgAsset, width: 20, height: 20,
+            SvgPicture.asset(svgAsset, width: 22, height: 22,
                 colorFilter: ColorFilter.mode(color, BlendMode.srcIn)),
             if (badge > 0)
               Positioned(
@@ -534,17 +533,17 @@ class _AppShellState extends State<AppShell> {
                       width: 40, height: 40,
                       alignment: Alignment.center,
                       child: Container(
-                        width: 32, height: 32,
+                        width: 36, height: 36,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.blue50,
-                          border: Border.all(color: AppColors.blue200),
+                          border: Border.all(color: AppColors.blue200, width: 1.5),
                         ),
                         child: Center(
                           child: Text(
                             _initials(user?.fullName ?? ''),
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: AppColors.blue700,
                             ),

@@ -371,7 +371,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // ── HERO CARD ──
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -379,21 +379,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 20, offset: Offset(0, 4))],
                     ),
                     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      // Avatar kubwa — 56x56
                       Container(
-                        width: 56, height: 56,
+                        width: 44, height: 44,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: const Color(0xFFEFF6FF),
                           border: Border.all(color: const Color(0xFFBFDBFE), width: 2),
                         ),
                         child: Center(child: Text(initial,
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF1D4ED8)))),
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF1D4ED8)))),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('Karibu, ${user?.fullName ?? ''}',
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF111827)),
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF111827)),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 4),
                         // Category + cadre chips
@@ -471,7 +470,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           const SizedBox(height: 6),
                           const Text(_kAdminPhone,
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFF111827))),
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: Color(0xFF111827))),
                         ]),
                     ]),
                   ),
@@ -948,12 +947,12 @@ class _TrueMatchCard extends StatelessWidget {
                     TextSpan(children: [
                       TextSpan(
                         text: to['region_name']?.toString() ?? '',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
                       ),
                       if ((to['district_name'] ?? '').toString().isNotEmpty)
                         TextSpan(
                           text: ', ${to['district_name']}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF1E40AF)),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF374151)),
                         ),
                     ]),
                     overflow: TextOverflow.ellipsis,
@@ -1505,19 +1504,19 @@ class _BoardCard extends StatelessWidget {
                   TextSpan(children: [
                     TextSpan(
                       text: activeDest['region_name']?.toString() ?? '',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF)),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
                     ),
                     if ((activeDest['district_name'] ?? '').toString().isNotEmpty)
                       TextSpan(
                         text: ', ${activeDest['district_name']}',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF1E40AF)),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF374151)),
                       ),
                   ]),
                   overflow: TextOverflow.ellipsis,
                 )),
               ]),
             ],
-            if (myRegionName.isNotEmpty) ...[
+            if (matchingDest != null && myRegionName.isNotEmpty) ...[
               const SizedBox(height: 5),
               Row(children: [
                 const Text('↓ ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF16A34A))),

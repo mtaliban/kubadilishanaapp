@@ -41,15 +41,19 @@ class WebSocketService {
 
   void _doConnect() {
     if (_stopped || _token == null) return;
+    _pingTimer?.cancel();
+    try { _channel?.sink.close(); } catch (_) {}
+    _channel = null;
+    _connected = false;
+
     try {
       final wsUrl = '${ApiConfig.wsUrl}/ws?token=$_token';
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
-      _connected = false;
 
       _channel!.stream.listen(
         (message) {
           _connected = true;
-          _reconnectDelay = 1; // reset on successful message
+          _reconnectDelay = 1;
           try {
             final event = jsonDecode(message as String) as Map<String, dynamic>;
             _handleEvent(event);
@@ -57,18 +61,21 @@ class WebSocketService {
         },
         onDone: () {
           _connected = false;
+          _channel = null;
+          _pingTimer?.cancel();
           _scheduleReconnect();
         },
         onError: (_) {
           _connected = false;
+          _channel = null;
+          _pingTimer?.cancel();
           _scheduleReconnect();
         },
+        cancelOnError: true,
       );
 
-      // Ping kila sekunde 30 — type: ping (sio event: ping)
-      _pingTimer?.cancel();
       _pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-        if (_channel != null) {
+        if (_channel != null && _connected) {
           try {
             _channel!.sink.add(jsonEncode({'type': 'ping'}));
           } catch (_) {}
