@@ -128,124 +128,133 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.feedback_outlined, color: _kBlue, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Maoni',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                    Text('Maoni na malamiko ya watumiaji',
-                        style: TextStyle(fontSize: 12, color: _kGrey500)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Tafuta maoni...',
-                prefixIcon: const Icon(Icons.search, color: _kGrey500),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: _kGrey200),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: _kGrey200),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: _kBlue),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _TabPill(label: 'Yote', selected: _tabIndex == 0, onTap: () => _setTab(0)),
-                const SizedBox(width: 8),
-                _TabPill(label: 'Hayajajibiwa', selected: _tabIndex == 1, onTap: () => _setTab(1)),
-                const SizedBox(width: 8),
-                _TabPill(label: 'Yamejibiwa', selected: _tabIndex == 2, onTap: () => _setTab(2)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Divider(height: 1, color: _kGrey200),
-          if (_loading)
-            const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
-          else if (_error != null)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline, color: _kRed, size: 48),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Jaribu tena'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white,
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: _kBlue,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.feedback_outlined, color: _kBlue, size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Maoni',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                            Text('Maoni na malamiko ya watumiaji',
+                                style: TextStyle(fontSize: 12, color: _kGrey500)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Tafuta maoni...',
+                        prefixIcon: const Icon(Icons.search, color: _kGrey500),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _kGrey200),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _kGrey200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _kBlue),
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        _TabPill(label: 'Yote', selected: _tabIndex == 0, onTap: () => _setTab(0)),
+                        const SizedBox(width: 8),
+                        _TabPill(label: 'Hayajajibiwa', selected: _tabIndex == 1, onTap: () => _setTab(1)),
+                        const SizedBox(width: 8),
+                        _TabPill(label: 'Yamejibiwa', selected: _tabIndex == 2, onTap: () => _setTab(2)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(height: 1, color: _kGrey200),
+                ],
               ),
-            )
-          else if (_filtered.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.feedback_outlined, color: _kGrey500, size: 48),
-                    const SizedBox(height: 12),
-                    Text('Hakuna maoni', style: TextStyle(color: _kGrey500)),
-                  ],
+            ),
+            if (_loading)
+              const SliverFillRemaining(hasScrollBody: false, child: Center(child: CircularProgressIndicator(color: _kBlue)))
+            else if (_error != null)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, color: _kRed, size: 48),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Jaribu tena'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kBlue, foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            )
-          else
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _load,
-                color: _kBlue,
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) {
-                    final item = _filtered[i] as Map<String, dynamic>;
-                    final id = item['id']?.toString() ?? '';
-                    final name = item['user_name'] as String? ?? item['full_name'] as String? ?? 'Mtumiaji';
-                    final subject = item['subject'] as String? ?? '';
-                    final msg = item['message'] as String? ?? '';
-                    final createdAt = item['created_at'] as String? ?? '';
-                    final reply = item['reply'] as String? ?? item['admin_reply'] as String?;
-                    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'M';
-                    return Container(
+              )
+            else if (_filtered.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.feedback_outlined, color: _kGrey500, size: 48),
+                      const SizedBox(height: 12),
+                      Text('Hakuna maoni', style: TextStyle(color: _kGrey500)),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      final item = _filtered[i] as Map<String, dynamic>;
+                      final id = item['id']?.toString() ?? '';
+                      final name = item['user_name'] as String? ?? item['full_name'] as String? ?? 'Mtumiaji';
+                      final subject = item['subject'] as String? ?? '';
+                      final msg = item['message'] as String? ?? '';
+                      final createdAt = item['created_at'] as String? ?? '';
+                      final reply = item['reply'] as String? ?? item['admin_reply'] as String?;
+                      final initials = name.isNotEmpty ? name[0].toUpperCase() : 'M';
+                      return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -348,11 +357,13 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         ],
                       ),
                     );
-                  },
+                    },
+                    childCount: _filtered.length,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

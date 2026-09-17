@@ -240,182 +240,188 @@ class _State extends State<AdminRealMatchesPage> {
     return Container(
       color: Colors.white,
       child: SafeArea(
-        child: Column(
-          children: [
-            // ── Header (kama web: flex items-center gap-2 + subtitle p) ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                // h1: ArrowLeftRight icon inline + "Match za Kweli"
-                Row(children: [
-                  const Icon(Icons.swap_horiz_rounded, size: 22, color: _kGreen),
-                  const SizedBox(width: 8),   // gap-2
-                  const Text('Match za Kweli',
-                      style: TextStyle(
-                        fontSize: 20,           // text-xl
-                        fontWeight: FontWeight.w700,  // font-bold
-                        height: 10 / 7,         // line-height: 20/20 → Tailwind default
-                        color: _kGrey900,
-                      )),
-                ]),
-                const SizedBox(height: 2),    // mt-0.5
-                // Subtitle p text-sm text-brand-grey-500
-                Text(
-                  _loading
-                      ? 'Inapakia...'
-                      : '${filtered.length} ${filtered.length == 1 ? 'match' : 'matches'} zilizopatikana',
-                  style: const TextStyle(
-                    fontSize: 14,              // text-sm
-                    height: 10 / 7,
-                    color: _kGrey500,
-                  ),
-                ),
-              ]),
-            ),
-
-            // ── Filters (flex-col kama web mobile) ───────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Column(children: [
-                // 1. Idara select (full width)
-                _FilterDrop(
-                  hint: 'Idara Zote',
-                  value: _category.isEmpty ? null : _catLabel(_category),
-                  active: _category.isNotEmpty,
-                  onTap: () => _showPicker(
-                    title: 'Chagua Idara',
-                    items: [('', 'Idara Zote'), ('education', 'Elimu'), ('health', 'Afya')],
-                    current: _category,
-                    onPick: (v) {
-                      setState(() { _category = v; _cadreCode = ''; _page = 1; });
-                      _load();
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // 2. Kada select (full width)
-                _FilterDrop(
-                  hint: 'Kada Zote',
-                  value: _cadreCode.isEmpty ? null : _cadreLabel(_cadreCode),
-                  active: _cadreCode.isNotEmpty,
-                  onTap: () => _showPicker(
-                    title: 'Chagua Kada',
-                    items: [('', 'Kada Zote'), ..._cadreOptions(_category)],
-                    current: _cadreCode,
-                    onPick: (v) { setState(() { _cadreCode = v; _page = 1; }); _load(); },
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // 3. Search input (full width, flex-1)
-                _SearchField(
-                  ctrl: _searchCtrl,
-                  hint: 'Tafuta kwa jina, namba, kada au mkoa...',
-                ),
-                const SizedBox(height: 8),
-                // 4. Subject input (full width)
-                _SearchField(
-                  ctrl: _subjectCtrl,
-                  hint: 'Somo (mfano MATH)',
-                ),
-                // 5. Futa (full width, kama web — inaonekana mwisho wa filters)
-                if (_hasFilter) ...[
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: _resetFilters,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: _kGrey200),
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.white,
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.close_rounded, size: 14, color: _kGrey700),
-                          SizedBox(width: 4),
-                          Text('Futa', style: TextStyle(
-                            fontSize: 12,
-                            height: 4 / 3,
-                            color: _kGrey700,
-                            fontWeight: FontWeight.w600,
-                          )),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ]),
-            ),
-
-            const Divider(height: 1, color: _kGrey200),
-
-            // ── Content ──────────────────────────────────────────────────
-            if (_loading)
-              const Expanded(child: Center(child: CircularProgressIndicator(color: _kGreen)))
-            else if (_error != null)
-              Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.wifi_off_rounded, color: _kGrey400, size: 48),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: _load,
-                  icon: const Icon(Icons.refresh_rounded, size: 16),
-                  label: const Text('Jaribu tena'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: _kBlue, foregroundColor: Colors.white),
-                ),
-              ])))
-            else if (filtered.isEmpty)
-              Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Container(
-                  width: 56, height: 56,
-                  decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(28)),
-                  child: const Icon(Icons.swap_horiz_rounded, color: _kGrey400, size: 24),
-                ),
-                const SizedBox(height: 12),
-                const Text('Hakuna match iliyopatikana',
-                    style: TextStyle(fontSize: 14, height: 10 / 7, fontWeight: FontWeight.w600, color: _kGrey700)),
-                const SizedBox(height: 4),
-                const Text('Watumiaji wataonekana wanapojiunga na kuchagua destinations',
-                    style: TextStyle(fontSize: 12, height: 4 / 3, color: _kGrey400),
-                    textAlign: TextAlign.center),
-              ])))
-            else
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _load,
-                  color: _kGreen,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),      // p-4 (kama web)
-                    itemCount: pageItems.length + (totalPages > 1 ? 1 : 0),
-                    separatorBuilder: (_, _) => const SizedBox(height: 12), // space-y-3
-                    itemBuilder: (ctx, i) {
-                      if (i < pageItems.length) {
-                        return _MatchCard(match: pageItems[i] as Map<String, dynamic>);
-                      }
-                      // Pagination row — kama web (← Rudi | safePage/totalPages | Endelea →)
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          _pageBtn('← Rudi', safePage <= 1 ? null : () => setState(() => _page = safePage - 1)),
-                          const SizedBox(width: 12),
-                          Text('$safePage / $totalPages',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                height: 10 / 7,
+        child: RefreshIndicator(
+          onRefresh: _load,
+          color: _kGreen,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          const Icon(Icons.swap_horiz_rounded, size: 22, color: _kGreen),
+                          const SizedBox(width: 8),
+                          const Text('Match za Kweli',
+                              style: TextStyle(
+                                fontSize: 20,
                                 fontWeight: FontWeight.w700,
-                                color: _kGrey500,
+                                height: 10 / 7,
+                                color: _kGrey900,
                               )),
-                          const SizedBox(width: 12),
-                          _pageBtn('Endelea →', safePage >= totalPages ? null : () => setState(() => _page = safePage + 1)),
                         ]),
-                      );
-                    },
-                  ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _loading
+                              ? 'Inapakia...'
+                              : '${filtered.length} ${filtered.length == 1 ? 'match' : 'matches'} zilizopatikana',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            height: 10 / 7,
+                            color: _kGrey500,
+                          ),
+                        ),
+                      ]),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      child: Column(children: [
+                        _FilterDrop(
+                          hint: 'Idara Zote',
+                          value: _category.isEmpty ? null : _catLabel(_category),
+                          active: _category.isNotEmpty,
+                          onTap: () => _showPicker(
+                            title: 'Chagua Idara',
+                            items: [('', 'Idara Zote'), ('education', 'Elimu'), ('health', 'Afya')],
+                            current: _category,
+                            onPick: (v) {
+                              setState(() { _category = v; _cadreCode = ''; _page = 1; });
+                              _load();
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _FilterDrop(
+                          hint: 'Kada Zote',
+                          value: _cadreCode.isEmpty ? null : _cadreLabel(_cadreCode),
+                          active: _cadreCode.isNotEmpty,
+                          onTap: () => _showPicker(
+                            title: 'Chagua Kada',
+                            items: [('', 'Kada Zote'), ..._cadreOptions(_category)],
+                            current: _cadreCode,
+                            onPick: (v) { setState(() { _cadreCode = v; _page = 1; }); _load(); },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _SearchField(
+                          ctrl: _searchCtrl,
+                          hint: 'Tafuta kwa jina, namba, kada au mkoa...',
+                        ),
+                        const SizedBox(height: 8),
+                        _SearchField(
+                          ctrl: _subjectCtrl,
+                          hint: 'Somo (mfano MATH)',
+                        ),
+                        if (_hasFilter) ...[
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: _resetFilters,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: _kGrey200),
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white,
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.close_rounded, size: 14, color: _kGrey700),
+                                  SizedBox(width: 4),
+                                  Text('Futa', style: TextStyle(
+                                    fontSize: 12,
+                                    height: 4 / 3,
+                                    color: _kGrey700,
+                                    fontWeight: FontWeight.w600,
+                                  )),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ]),
+                    ),
+                    const Divider(height: 1, color: _kGrey200),
+                  ],
                 ),
               ),
-          ],
+              if (_loading)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: CircularProgressIndicator(color: _kGreen)),
+                )
+              else if (_error != null)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.wifi_off_rounded, color: _kGrey400, size: 48),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _load,
+                      icon: const Icon(Icons.refresh_rounded, size: 16),
+                      label: const Text('Jaribu tena'),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: _kBlue, foregroundColor: Colors.white),
+                    ),
+                  ])),
+                )
+              else if (filtered.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                      width: 56, height: 56,
+                      decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(28)),
+                      child: const Icon(Icons.swap_horiz_rounded, color: _kGrey400, size: 24),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Hakuna match iliyopatikana',
+                        style: TextStyle(fontSize: 14, height: 10 / 7, fontWeight: FontWeight.w600, color: _kGrey700)),
+                    const SizedBox(height: 4),
+                    const Text('Watumiaji wataonekana wanapojiunga na kuchagua destinations',
+                        style: TextStyle(fontSize: 12, height: 4 / 3, color: _kGrey400),
+                        textAlign: TextAlign.center),
+                  ])),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (ctx, i) {
+                        if (i < pageItems.length) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: _MatchCard(match: pageItems[i] as Map<String, dynamic>),
+                          );
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                            _pageBtn('← Rudi', safePage <= 1 ? null : () => setState(() => _page = safePage - 1)),
+                            const SizedBox(width: 12),
+                            Text('$safePage / $totalPages',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  height: 10 / 7,
+                                  fontWeight: FontWeight.w700,
+                                  color: _kGrey500,
+                                )),
+                            const SizedBox(width: 12),
+                            _pageBtn('Endelea →', safePage >= totalPages ? null : () => setState(() => _page = safePage + 1)),
+                          ]),
+                        );
+                      },
+                      childCount: pageItems.length + (totalPages > 1 ? 1 : 0),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

@@ -105,131 +105,140 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.phone_in_talk_outlined, color: _kBlue, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Waliopigiana',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                    Text('Historia ya mawasiliano',
-                        style: TextStyle(fontSize: 12, color: _kGrey500)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Tafuta...',
-                prefixIcon: const Icon(Icons.search, color: _kGrey500),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: _kGrey200),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: _kGrey200),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: _kBlue),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _FilterChip(label: 'Zote', selected: _filterType.isEmpty, onTap: () => _setType('')),
-                const SizedBox(width: 8),
-                _FilterChip(label: 'Simu', selected: _filterType == 'call', onTap: () => _setType('call')),
-                const SizedBox(width: 8),
-                _FilterChip(label: 'SMS', selected: _filterType == 'sms', onTap: () => _setType('sms')),
-                const SizedBox(width: 8),
-                _FilterChip(label: 'WhatsApp', selected: _filterType == 'whatsapp', onTap: () => _setType('whatsapp')),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Divider(height: 1, color: _kGrey200),
-          if (_loading)
-            const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
-          else if (_error != null)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 48),
-                    const SizedBox(height: 12),
-                    Text('Kosa la kupakia', style: TextStyle(color: _kGrey500)),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Jaribu tena'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white,
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: _kBlue,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.phone_in_talk_outlined, color: _kBlue, size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Waliopigiana',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                            Text('Historia ya mawasiliano',
+                                style: TextStyle(fontSize: 12, color: _kGrey500)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Tafuta...',
+                        prefixIcon: const Icon(Icons.search, color: _kGrey500),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _kGrey200),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _kGrey200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _kBlue),
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        _FilterChip(label: 'Zote', selected: _filterType.isEmpty, onTap: () => _setType('')),
+                        const SizedBox(width: 8),
+                        _FilterChip(label: 'Simu', selected: _filterType == 'call', onTap: () => _setType('call')),
+                        const SizedBox(width: 8),
+                        _FilterChip(label: 'SMS', selected: _filterType == 'sms', onTap: () => _setType('sms')),
+                        const SizedBox(width: 8),
+                        _FilterChip(label: 'WhatsApp', selected: _filterType == 'whatsapp', onTap: () => _setType('whatsapp')),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(height: 1, color: _kGrey200),
+                ],
               ),
-            )
-          else if (_filtered.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.phone_outlined, color: _kGrey500, size: 48),
-                    const SizedBox(height: 12),
-                    Text('Hakuna mawasiliano', style: TextStyle(color: _kGrey500)),
-                  ],
+            ),
+            if (_loading)
+              const SliverFillRemaining(hasScrollBody: false, child: Center(child: CircularProgressIndicator(color: _kBlue)))
+            else if (_error != null)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 48),
+                      const SizedBox(height: 12),
+                      Text('Kosa la kupakia', style: TextStyle(color: _kGrey500)),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Jaribu tena'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kBlue, foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            )
-          else
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _load,
-                color: _kBlue,
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) {
-                    final item = _filtered[i] as Map<String, dynamic>;
-                    final fromName = item['from_full_name'] as String? ?? item['caller_name'] as String? ?? item['full_name'] as String? ?? '—';
-                    final toName   = item['to_full_name'] as String? ?? '—';
-                    final fromCadre = item['from_cadre'] as String? ?? '';
-                    final toCadre   = item['to_cadre'] as String? ?? '';
-                    final fromRegion = item['from_region'] as String? ?? '';
-                    final toRegion   = item['to_region'] as String? ?? '';
-                    final fromCat  = (item['from_category'] as String? ?? '') == 'education' ? 'Elimu' : 'Afya';
-                    final toCat    = (item['to_category'] as String? ?? '') == 'education' ? 'Elimu' : 'Afya';
-                    final type = item['contact_type'] as String? ?? item['type'] as String? ?? 'call';
-                    final ts = item['created_at'] as String? ?? item['timestamp'] as String? ?? '';
-                    return Container(
+              )
+            else if (_filtered.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.phone_outlined, color: _kGrey500, size: 48),
+                      const SizedBox(height: 12),
+                      Text('Hakuna mawasiliano', style: TextStyle(color: _kGrey500)),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      final item = _filtered[i] as Map<String, dynamic>;
+                      final fromName = item['from_full_name'] as String? ?? item['caller_name'] as String? ?? item['full_name'] as String? ?? '—';
+                      final toName   = item['to_full_name'] as String? ?? '—';
+                      final fromCadre = item['from_cadre'] as String? ?? '';
+                      final toCadre   = item['to_cadre'] as String? ?? '';
+                      final fromRegion = item['from_region'] as String? ?? '';
+                      final toRegion   = item['to_region'] as String? ?? '';
+                      final fromCat  = (item['from_category'] as String? ?? '') == 'education' ? 'Elimu' : 'Afya';
+                      final toCat    = (item['to_category'] as String? ?? '') == 'education' ? 'Elimu' : 'Afya';
+                      final type = item['contact_type'] as String? ?? item['type'] as String? ?? 'call';
+                      final ts = item['created_at'] as String? ?? item['timestamp'] as String? ?? '';
+                      return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -278,11 +287,13 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                         ]),
                       ]),
                     );
-                  },
+                    },
+                    childCount: _filtered.length,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

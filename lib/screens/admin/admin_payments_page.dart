@@ -127,200 +127,210 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.receipt_long_outlined, color: _kBlue, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Malipo',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                    Text('Simamia michango ya watumiaji',
-                        style: TextStyle(fontSize: 12, color: _kGrey500)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Stat cards
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(child: _StatCard(
-                  icon: Icons.arrow_upward,
-                  value: total >= 1000 ? '${(total / 1000).toStringAsFixed(0)}K' : '${total.toInt()}',
-                  label: 'Imeidhinishwa',
-                  color: _kGreen,
-                  bgColor: _kGreenBg,
-                )),
-                const SizedBox(width: 10),
-                Expanded(child: _StatCard(
-                  icon: Icons.hourglass_empty,
-                  value: '${_count('pending')}',
-                  label: 'Zinasubiri',
-                  color: _kAmber,
-                  bgColor: _kAmberBg,
-                )),
-                const SizedBox(width: 10),
-                Expanded(child: _StatCard(
-                  icon: Icons.cancel_outlined,
-                  value: '${_count('rejected')}',
-                  label: 'Zimekataliwa',
-                  color: _kRed,
-                  bgColor: _kRedBg,
-                )),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          // Tab pills
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: List.generate(3, (i) {
-                final status = _statuses[i];
-                final cnt = _count(status);
-                final active = _tabIndex == i;
-                Color activeColor;
-                Color activeBg;
-                switch (i) {
-                  case 1: activeColor = _kGreen; activeBg = _kGreenBg; break;
-                  case 2: activeColor = _kRed; activeBg = _kRedBg; break;
-                  default: activeColor = _kAmber; activeBg = _kAmberBg;
-                }
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => _switchTab(i),
-                    child: Container(
-                      margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: active ? activeBg : Colors.white,
-                        border: Border.all(color: active ? activeColor : _kGrey200),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          Text('$cnt',
-                              style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold,
-                                color: active ? activeColor : _kGrey700,
-                              )),
-                          Text(_labels[i],
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: active ? activeColor : _kGrey500,
-                              )),
-                        ],
-                      ),
+      body: RefreshIndicator(
+        onRefresh: () async { _cache.remove(currentStatus); await _loadTab(currentStatus); },
+        color: _kBlue,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.receipt_long_outlined, color: _kBlue, size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Malipo',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                            Text('Simamia michango ya watumiaji',
+                                style: TextStyle(fontSize: 12, color: _kGrey500)),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                );
-              }),
-            ),
-          ),
-          const SizedBox(height: 10),
-          if (!_loading && items.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'Zinaonyesha ${items.length} malipo',
-                  style: TextStyle(fontSize: 11, color: _kGrey500),
-                ),
-              ),
-            ),
-          const SizedBox(height: 6),
-          const Divider(height: 1, color: _kGrey200),
-          if (_loading)
-            const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
-          else if (_error != null)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline, color: _kRed, size: 48),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () { _cache.remove(currentStatus); _loadTab(currentStatus); },
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Jaribu tena'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Expanded(child: _StatCard(
+                          icon: Icons.arrow_upward,
+                          value: total >= 1000 ? '${(total / 1000).toStringAsFixed(0)}K' : '${total.toInt()}',
+                          label: 'Imeidhinishwa',
+                          color: _kGreen,
+                          bgColor: _kGreenBg,
+                        )),
+                        const SizedBox(width: 10),
+                        Expanded(child: _StatCard(
+                          icon: Icons.hourglass_empty,
+                          value: '${_count('pending')}',
+                          label: 'Zinasubiri',
+                          color: _kAmber,
+                          bgColor: _kAmberBg,
+                        )),
+                        const SizedBox(width: 10),
+                        Expanded(child: _StatCard(
+                          icon: Icons.cancel_outlined,
+                          value: '${_count('rejected')}',
+                          label: 'Zimekataliwa',
+                          color: _kRed,
+                          bgColor: _kRedBg,
+                        )),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: List.generate(3, (i) {
+                        final status = _statuses[i];
+                        final cnt = _count(status);
+                        final active = _tabIndex == i;
+                        Color activeColor;
+                        Color activeBg;
+                        switch (i) {
+                          case 1: activeColor = _kGreen; activeBg = _kGreenBg; break;
+                          case 2: activeColor = _kRed; activeBg = _kRedBg; break;
+                          default: activeColor = _kAmber; activeBg = _kAmberBg;
+                        }
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () => _switchTab(i),
+                            child: Container(
+                              margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: active ? activeBg : Colors.white,
+                                border: Border.all(color: active ? activeColor : _kGrey200),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text('$cnt',
+                                      style: TextStyle(
+                                        fontSize: 16, fontWeight: FontWeight.bold,
+                                        color: active ? activeColor : _kGrey700,
+                                      )),
+                                  Text(_labels[i],
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: active ? activeColor : _kGrey500,
+                                      )),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (!_loading && items.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'Zinaonyesha ${items.length} malipo',
+                          style: TextStyle(fontSize: 11, color: _kGrey500),
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            )
-          else if (items.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 64, height: 64,
-                      decoration: BoxDecoration(color: _kAmberBg, borderRadius: BorderRadius.circular(32)),
-                      child: const Icon(Icons.receipt_long_outlined, color: _kAmber, size: 30),
-                    ),
-                    const SizedBox(height: 12),
-                    Text('Hakuna malipo yanayosubiri',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _kGrey700)),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () { _cache.remove(currentStatus); _loadTab(currentStatus); },
-                      icon: const Icon(Icons.refresh, size: 14),
-                      label: const Text('Onyesha upya'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _kBlue,
-                        side: const BorderSide(color: _kBlue),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  _cache.remove(currentStatus);
-                  await _loadTab(currentStatus);
-                },
-                color: _kBlue,
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) {
-                    final item = items[i] as Map<String, dynamic>;
-                    return _PaymentCard(
-                      item: item,
-                      status: currentStatus,
-                      onApprove: _approve,
-                      onReject: _reject,
-                      onReply: _sendReply,
-                    );
-                  },
-                ),
+                  const SizedBox(height: 6),
+                  const Divider(height: 1, color: _kGrey200),
+                ],
               ),
             ),
-        ],
+            if (_loading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator(color: _kBlue)),
+              )
+            else if (_error != null)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, color: _kRed, size: 48),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: () { _cache.remove(currentStatus); _loadTab(currentStatus); },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Jaribu tena'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kBlue, foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (items.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 64, height: 64,
+                        decoration: BoxDecoration(color: _kAmberBg, borderRadius: BorderRadius.circular(32)),
+                        child: const Icon(Icons.receipt_long_outlined, color: _kAmber, size: 30),
+                      ),
+                      const SizedBox(height: 12),
+                      Text('Hakuna malipo yanayosubiri',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _kGrey700)),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () { _cache.remove(currentStatus); _loadTab(currentStatus); },
+                        icon: const Icon(Icons.refresh, size: 14),
+                        label: const Text('Onyesha upya'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _kBlue,
+                          side: const BorderSide(color: _kBlue),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (ctx, i) {
+                      final item = items[i] as Map<String, dynamic>;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: _PaymentCard(
+                          item: item,
+                          status: currentStatus,
+                          onApprove: _approve,
+                          onReject: _reject,
+                          onReply: _sendReply,
+                        ),
+                      );
+                    },
+                    childCount: items.length,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

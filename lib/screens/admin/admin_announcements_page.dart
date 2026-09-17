@@ -135,104 +135,113 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.notifications_outlined, color: _kBlue, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: _kBlue,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.notifications_outlined, color: _kBlue, size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Matangazo',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                              Text('Tuma taarifa kwa watumiaji',
+                                  style: TextStyle(fontSize: 12, color: _kGrey500)),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _showSendForm,
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text('Tangazo Jipya', style: TextStyle(fontSize: 12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kBlue, foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: _kGrey200),
+                ],
+              ),
+            ),
+            if (_loading)
+              const SliverFillRemaining(hasScrollBody: false, child: Center(child: CircularProgressIndicator(color: _kBlue)))
+            else if (_error != null)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Matangazo',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                      Text('Tuma taarifa kwa watumiaji',
-                          style: TextStyle(fontSize: 12, color: _kGrey500)),
+                      const Icon(Icons.error_outline, color: _kRed, size: 48),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Jaribu tena'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kBlue, foregroundColor: Colors.white,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: _showSendForm,
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Tangazo Jipya', style: TextStyle(fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kBlue, foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              )
+            else if (_items.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.notifications_none, color: _kGrey500, size: 48),
+                      const SizedBox(height: 12),
+                      Text('Hakuna matangazo', style: TextStyle(color: _kGrey500)),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: _showSendForm,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Tangazo Jipya'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kBlue, foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: _kGrey200),
-          if (_loading)
-            const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
-          else if (_error != null)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline, color: _kRed, size: 48),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Jaribu tena'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (_items.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.notifications_none, color: _kGrey500, size: 48),
-                    const SizedBox(height: 12),
-                    Text('Hakuna matangazo', style: TextStyle(color: _kGrey500)),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _showSendForm,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Tangazo Jipya'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _load,
-                color: _kBlue,
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) {
-                    final item = _items[i] as Map<String, dynamic>;
-                    final id = item['id']?.toString() ?? '';
-                    final title = item['title'] as String? ?? '';
-                    final message = item['message'] as String? ?? '';
-                    final type = item['type'] as String? ?? 'info';
-                    final createdAt = item['created_at'] as String? ?? '';
-                    return Container(
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      final item = _items[i] as Map<String, dynamic>;
+                      final id = item['id']?.toString() ?? '';
+                      final title = item['title'] as String? ?? '';
+                      final message = item['message'] as String? ?? '';
+                      final type = item['type'] as String? ?? 'info';
+                      final createdAt = item['created_at'] as String? ?? '';
+                      return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -320,11 +329,13 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                         ],
                       ),
                     );
-                  },
+                    },
+                    childCount: _items.length,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
