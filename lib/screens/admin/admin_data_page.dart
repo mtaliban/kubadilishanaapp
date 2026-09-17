@@ -14,6 +14,7 @@ const _kGrey900  = Color(0xFF111827);
 const _kGrey700  = Color(0xFF374151);
 const _kGrey600  = Color(0xFF4B5563);
 const _kGrey500  = Color(0xFF6B7280);
+const _kGrey400  = Color(0xFF9CA3AF);
 const _kGrey200  = Color(0xFFE5E7EB);
 const _kGrey100  = Color(0xFFF3F4F6);
 const _kGrey50   = Color(0xFFF9FAFB);
@@ -34,11 +35,8 @@ class _AdminDataPageState extends State<AdminDataPage>
   final Map<String, String>                _levelFilters = {};
   final Map<String, String>                _regionFilters = {};
 
-  // Facilities-specific filter state
-  String        _facCategory  = 'health';
-  String        _facRegion    = '';
-  String        _facDistrict  = '';
-  List<dynamic> _facDistricts = [];
+  // Facilities level chip filter ('': Zote, 'Dispensary': ...etc)
+  String _facLevelFilter = '';
 
   static const _types      = ['departments', 'subjects', 'cadres', 'regions', 'districts', 'facilities'];
   static const _typeLabels  = ['Idara', 'Masomo', 'Kada', 'Mikoa', 'Wilaya', 'Vituo'];
@@ -87,17 +85,6 @@ class _AdminDataPageState extends State<AdminDataPage>
     }
   }
 
-  Future<void> _loadFacDistricts(String regionId) async {
-    try {
-      final res = await ApiService().getDistricts(int.parse(regionId));
-      if (!mounted) return;
-      final data = res.data;
-      setState(() {
-        _facDistricts = data is List ? data : (data['results'] as List? ?? []);
-      });
-    } catch (_) {}
-  }
-
   List<dynamic> _filtered(String type) {
     final all = _cache[type] ?? [];
     final q   = _searchCtrls[type]?.text.toLowerCase() ?? '';
@@ -120,13 +107,10 @@ class _AdminDataPageState extends State<AdminDataPage>
         return matchQ && m['region_id']?.toString() == rf;
       }
       if (type == 'facilities') {
-        final hasSchool  = m['school_code'] != null;
-        final lvl        = (m['level'] as String? ?? '').toLowerCase();
-        final isEdu      = hasSchool || lvl == 'primary' || lvl == 'secondary';
-        final matchCat   = _facCategory == 'education' ? isEdu : !isEdu;
-        final matchReg   = _facRegion.isEmpty   || m['region_id']?.toString()   == _facRegion;
-        final matchDist  = _facDistrict.isEmpty || m['district_id']?.toString() == _facDistrict;
-        return matchQ && matchCat && matchReg && matchDist;
+        if (!matchQ) return false;
+        if (_facLevelFilter.isEmpty) return true;
+        final lvl = (m['level'] ?? m['type'] ?? '') as String? ?? '';
+        return lvl.toLowerCase() == _facLevelFilter.toLowerCase();
       }
       return matchQ;
     }).toList();
@@ -205,9 +189,12 @@ class _AdminDataPageState extends State<AdminDataPage>
         return [pill(disabled ? 'Imezimwa' : '● Hai',
             disabled ? _kRedBg : _kGreenBg, disabled ? _kRed : _kGreen)];
       case 'subjects':
-        final level = item['level'] as String? ?? '';
+        final level = (item['level'] as String? ?? '').toLowerCase();
         if (level.isEmpty) return [];
-        return [pill(level, _kAmberBg, _kAmber)];
+        final isSecondary = level == 'secondary';
+        return [pill(isSecondary ? 'Secondary' : 'Primary',
+            isSecondary ? _kAmberBg : _kBlueBg,
+            isSecondary ? _kAmber   : _kBlueDark)];
       case 'cadres':
         final cat   = item['category'] as String? ?? '';
         final level = item['level'] as String? ?? '';
@@ -362,118 +349,142 @@ class _AdminDataPageState extends State<AdminDataPage>
   }
 
   Widget _buildFilterArea(String type, int count) {
-    Widget searchRow = Row(
-      children: [
-        Expanded(child: _searchField(type)),
-        const SizedBox(width: 8),
-        _countBadge(count),
-        const SizedBox(width: 8),
-        _addBtn(type),
-      ],
-    );
+    const countLabels = {
+      'departments': 'idara', 'subjects': 'masomo', 'cadres': 'kada',
+      'regions': 'mikoa', 'districts': 'wilaya', 'facilities': 'vituo',
+    };
+    const searchHints = {
+      'departments': 'Tafuta idara...', 'subjects': 'Tafuta masomo...',
+      'cadres': 'Tafuta kada...', 'regions': 'Tafuta mkoa...',
+      'districts': 'Tafuta wilaya...', 'facilities': 'Tafuta kituo...',
+    };
+    final label = countLabels[type] ?? type;
+    final hint  = searchHints[type] ?? 'Tafuta...';
 
-    switch (type) {
-      case 'subjects':
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _dropdownField(
-            value: _levelFilters['subjects'] ?? '',
-            items: const [
-              DropdownMenuItem(value: '', child: Text('Viwango vyote')),
-              DropdownMenuItem(value: 'primary',    child: Text('Primary (Msingi)')),
-              DropdownMenuItem(value: 'secondary',  child: Text('Secondary (Sekondari)')),
-            ],
-            onChanged: (v) => setState(() { _levelFilters['subjects'] = v ?? ''; }),
-          ),
-          const SizedBox(height: 8),
-          searchRow,
-        ]);
-      case 'districts':
-        final regions = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _dropdownField(
-            value: _regionFilters['districts'] ?? '',
-            items: [
-              const DropdownMenuItem(value: '', child: Text('Mikoa yote')),
-              ...regions.map((r) => DropdownMenuItem(
-                value: r['id'].toString(),
-                child: Text(r['name'] as String? ?? ''),
-              )),
-            ],
-            onChanged: (v) => setState(() { _regionFilters['districts'] = v ?? ''; }),
-          ),
-          const SizedBox(height: 8),
-          searchRow,
-        ]);
-      case 'facilities':
-        final regions = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _dropdownField(
-            value: _facCategory,
-            items: const [
-              DropdownMenuItem(value: 'health',     child: Text('Vituo vya Afya')),
-              DropdownMenuItem(value: 'education',  child: Text('Shule')),
-            ],
-            onChanged: (v) => setState(() { _facCategory = v ?? 'health'; _facDistrict = ''; }),
-          ),
-          const SizedBox(height: 8),
-          _dropdownField(
-            value: _facRegion,
-            items: [
-              const DropdownMenuItem(value: '', child: Text('Mikoa yote')),
-              ...regions.map((r) => DropdownMenuItem(
-                value: r['id'].toString(),
-                child: Text(r['name'] as String? ?? ''),
-              )),
-            ],
-            onChanged: (v) {
-              setState(() { _facRegion = v ?? ''; _facDistrict = ''; _facDistricts = []; });
-              if (v != null && v.isNotEmpty) _loadFacDistricts(v);
-            },
-          ),
-          const SizedBox(height: 8),
-          _dropdownField(
-            value: _facDistrict,
-            enabled: _facRegion.isNotEmpty,
-            items: [
-              const DropdownMenuItem(value: '', child: Text('Wilaya zote')),
-              ..._facDistricts.cast<Map<String, dynamic>>().map((d) => DropdownMenuItem(
-                value: d['id'].toString(),
-                child: Text(d['name'] as String? ?? ''),
-              )),
-            ],
-            onChanged: (v) => setState(() { _facDistrict = v ?? ''; }),
-          ),
-          const SizedBox(height: 8),
-          searchRow,
-        ]);
-      default:
-        return searchRow;
-    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // Row 1: count + Ongeza
+      Row(children: [
+        Expanded(
+          child: Text('$count $label zilizosajiliwa',
+              style: const TextStyle(fontSize: 13, color: _kGrey500)),
+        ),
+        _addBtn(type),
+      ]),
+      const SizedBox(height: 10),
+      // Row 2: search
+      TextField(
+        controller: _searchCtrls[type],
+        style: const TextStyle(fontSize: 14, color: _kGrey900),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(fontSize: 14, color: _kGrey400),
+          prefixIcon: const Icon(Icons.search_rounded, size: 18, color: _kGrey400),
+          filled: true,
+          fillColor: _kGrey50,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+        ),
+      ),
+      // Row 3: chips or dropdown depending on type
+      if (type == 'subjects') ...[
+        const SizedBox(height: 8),
+        _chipRow(
+          options: const {'': 'Viwango vyote', 'primary': 'Primary', 'secondary': 'Secondary'},
+          selected: _levelFilters['subjects'] ?? '',
+          onSelect: (v) => setState(() => _levelFilters['subjects'] = v),
+        ),
+      ],
+      if (type == 'facilities') ...[
+        const SizedBox(height: 8),
+        _facChips(),
+      ],
+      if (type == 'districts') ...[
+        const SizedBox(height: 8),
+        _dropdownField(
+          value: _regionFilters['districts'] ?? '',
+          items: [
+            const DropdownMenuItem(value: '', child: Text('Mikoa yote')),
+            ...(_cache['regions'] ?? []).cast<Map<String, dynamic>>().map((r) =>
+              DropdownMenuItem(value: r['id'].toString(), child: Text(r['name'] as String? ?? ''))),
+          ],
+          onChanged: (v) => setState(() { _regionFilters['districts'] = v ?? ''; }),
+        ),
+      ],
+    ]);
   }
 
-  Widget _searchField(String type) => TextField(
-    controller: _searchCtrls[type],
-    style: const TextStyle(fontSize: 14, color: _kGrey900),
-    decoration: InputDecoration(
-      hintText: 'Tafuta...',
-      hintStyle: const TextStyle(fontSize: 14, color: _kGrey500),
-      prefixIcon: const Icon(Icons.search_rounded, size: 18, color: _kGrey500),
-      filled: true,
-      fillColor: Colors.white,
-      isDense: true,
-      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-      border:        OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue)),
-    ),
-  );
+  // Chips for subjects / simple option sets
+  Widget _chipRow({
+    required Map<String, String> options,
+    required String selected,
+    required void Function(String) onSelect,
+  }) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(children: [
+        for (final e in options.entries) ...[
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onSelect(e.key),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: selected == e.key ? _kBlueBg : Colors.white,
+                border: Border.all(
+                    color: selected == e.key ? _kBlue : _kGrey200, width: 1.5),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(e.value, style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected == e.key ? FontWeight.w700 : FontWeight.w500,
+                color: selected == e.key ? _kBlue : _kGrey700,
+              )),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ]),
+    );
+  }
 
-  Widget _countBadge(int count) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(999)),
-    child: Text('$count',
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kBlue, height: 4 / 3)),
-  );
+  // Dynamic chips from facility level values in data
+  Widget _facChips() {
+    final seen = <String>{};
+    final levels = <String>[''];
+    for (final raw in (_cache['facilities'] ?? [])) {
+      final lvl = ((raw as Map)['level'] ?? raw['type'] ?? '') as String? ?? '';
+      if (lvl.isNotEmpty && seen.add(lvl)) levels.add(lvl);
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(children: [
+        for (final lvl in levels) ...[
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _facLevelFilter = lvl),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: _facLevelFilter == lvl ? _kBlueBg : Colors.white,
+                border: Border.all(
+                    color: _facLevelFilter == lvl ? _kBlue : _kGrey200, width: 1.5),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(lvl.isEmpty ? 'Zote' : lvl, style: TextStyle(
+                fontSize: 13,
+                fontWeight: _facLevelFilter == lvl ? FontWeight.w700 : FontWeight.w500,
+                color: _facLevelFilter == lvl ? _kBlue : _kGrey700,
+              )),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ]),
+    );
+  }
 
   Widget _addBtn(String type) {
     return GestureDetector(
@@ -515,33 +526,28 @@ class _AdminDataPageState extends State<AdminDataPage>
 
   Widget _buildList(String type, List<dynamic> items) {
     if (items.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.inbox_outlined, size: 48, color: _kGrey500),
-          const SizedBox(height: 8),
-          const Text('Hakuna data',
-              style: TextStyle(fontSize: 14, color: _kGrey500)),
+          Icon(Icons.inbox_outlined, size: 48, color: _kGrey400),
+          SizedBox(height: 8),
+          Text('Hakuna data', style: TextStyle(fontSize: 14, color: _kGrey500)),
         ]),
       );
     }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: _kGrey100),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: RefreshIndicator(
-          onRefresh: () async { _cache.remove(type); await _loadType(type); },
-          color: _kBlue,
-          child: ListView.separated(
-            itemCount: items.length,
-            separatorBuilder: (_, idx) => const Divider(height: 1, thickness: 1, color: _kGrey100),
-            itemBuilder: (ctx, i) => _buildItem(type, items[i] as Map<String, dynamic>),
+    return RefreshIndicator(
+      onRefresh: () async { _cache.remove(type); await _loadType(type); },
+      color: _kBlue,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+        itemCount: items.length,
+        itemBuilder: (ctx, i) => Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: _kGrey200),
+            borderRadius: BorderRadius.circular(12),
           ),
+          child: _buildItem(type, items[i] as Map<String, dynamic>),
         ),
       ),
     );
@@ -643,14 +649,14 @@ class _RowAction extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Container(
-          width: 34, height: 34,
+          width: 44, height: 44,
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: _kGrey200),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 16, color: color),
+          child: Icon(icon, size: 19, color: color),
         ),
       );
 }
