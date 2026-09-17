@@ -5,7 +5,6 @@ import '../services/websocket_service.dart';
 // ── Brand colours ──────────────────────────────────────────────────────────
 const _kBlue      = Color(0xFF1E40AF);
 const _kBlue50    = Color(0xFFEFF6FF);
-const _kGrey50    = Color(0xFFF9FAFB);
 const _kGrey100   = Color(0xFFF3F4F6);
 const _kGrey200   = Color(0xFFE5E7EB);
 const _kGrey400   = Color(0xFF9CA3AF);

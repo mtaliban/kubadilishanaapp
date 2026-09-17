@@ -12,7 +12,6 @@ const _kGrey500 = Color(0xFF6B7280);
 const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey300 = Color(0xFFD1D5DB);
 const _kGrey100 = Color(0xFFF3F4F6);
-const _kGrey200 = Color(0xFFE5E7EB);
 const _kRed = Color(0xFFDC2626);
 
 BoxDecoration _cardDec() => BoxDecoration(

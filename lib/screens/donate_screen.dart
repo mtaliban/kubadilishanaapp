@@ -22,7 +22,6 @@ const _kGrey400   = Color(0xFF9CA3AF);
 const _kGrey300   = Color(0xFFD1D5DB);
 const _kGrey200   = Color(0xFFE5E7EB);
 const _kGrey100   = Color(0xFFF3F4F6);
-const _kGrey50    = Color(0xFFF9FAFB);
 const _kRed       = Color(0xFFDC2626);
 const _kRed100    = Color(0xFFFEE2E2);
 const _kEmerald100 = Color(0xFFD1FAE5);

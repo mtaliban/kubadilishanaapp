@@ -283,8 +283,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                 ),
               ),
               // ── Matukio ya Hivi Karibuni ──────────────────────────────────
-              if (_events.isNotEmpty)
-                SliverToBoxAdapter(child: _recentActivity()),
+              SliverToBoxAdapter(child: _recentActivity()),
               // ── Tabs ──────────────────────────────────────────────────────
               SliverToBoxAdapter(child: _tabBar()),
               // ── Tab content ───────────────────────────────────────────────
@@ -394,6 +393,12 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                     fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           ]),
           const SizedBox(height: 8),
+          if (_events.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text('Hakuna matukio ya hivi karibuni',
+                  style: TextStyle(fontSize: 12, color: AppColors.textLight)),
+            ),
           ..._events.take(6).map((e) {
             final m = e as Map<String, dynamic>;
             final type = m['event_type'] as String? ?? '';

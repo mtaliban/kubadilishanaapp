@@ -446,15 +446,7 @@ class _AdminDataPageState extends State<AdminDataPage>
       ],
       if (type == 'districts') ...[
         const SizedBox(height: 6),
-        _dropdownField(
-          value: _regionFilters['districts'] ?? '',
-          items: [
-            const DropdownMenuItem(value: '', child: Text('Mikoa yote')),
-            ...(_cache['regions'] ?? []).cast<Map<String, dynamic>>().map((r) =>
-              DropdownMenuItem(value: r['id'].toString(), child: Text(r['name'] as String? ?? ''))),
-          ],
-          onChanged: (v) => setState(() { _regionFilters['districts'] = v ?? ''; }),
-        ),
+        _regionFilterChip(),
       ],
     ]);
   }
@@ -544,28 +536,125 @@ class _AdminDataPageState extends State<AdminDataPage>
     );
   }
 
-  Widget _dropdownField({
-    required String value,
-    required List<DropdownMenuItem<String>> items,
-    required void Function(String?) onChanged,
-    bool enabled = true,
-  }) => DropdownButtonFormField<String>(
-    initialValue: value,
-    isExpanded: true,
-    decoration: InputDecoration(
-      isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      filled: true,
-      fillColor: enabled ? Colors.white : _kGrey50,
-      border:          OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-      enabledBorder:   OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-      focusedBorder:   OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue)),
-      disabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-    ),
-    style: const TextStyle(fontSize: 14, color: _kGrey900),
-    items: items,
-    onChanged: enabled ? onChanged : null,
-  );
+  Widget _regionFilterChip() {
+    final regions = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
+    final selId   = _regionFilters['districts'] ?? '';
+    final selName = selId.isEmpty ? null
+        : regions.firstWhere((r) => r['id'].toString() == selId,
+            orElse: () => <String, dynamic>{})['name'] as String?;
+    return GestureDetector(
+      onTap: () => _showDataPicker(
+        title: 'Chagua Mkoa',
+        items: [
+          (label: 'Mikoa yote', value: ''),
+          ...regions.map((r) => (label: r['name'] as String? ?? '', value: r['id'].toString())),
+        ],
+        onPick: (v) => setState(() => _regionFilters['districts'] = v),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: selId.isEmpty ? Colors.white : _kBlueBg,
+          border: Border.all(color: selId.isEmpty ? _kGrey200 : _kBlue, width: 1.5),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Text(selName ?? 'Mkoa wote', style: TextStyle(
+            fontSize: 12,
+            fontWeight: selId.isEmpty ? FontWeight.w500 : FontWeight.w700,
+            color: selId.isEmpty ? _kGrey700 : _kBlue,
+          )),
+          const SizedBox(width: 4),
+          Icon(Icons.keyboard_arrow_down_rounded, size: 14,
+              color: selId.isEmpty ? _kGrey400 : _kBlue),
+        ]),
+      ),
+    );
+  }
+
+  void _showDataPicker({
+    required String title,
+    required List<({String label, String value})> items,
+    required void Function(String) onPick,
+  }) {
+    final ctrl = TextEditingController();
+    List<({String label, String value})> filtered = List.from(items);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, ss) => SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.65,
+          child: Column(children: [
+            const SizedBox(height: 6),
+            Center(child: Container(width: 36, height: 4,
+                decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(children: [
+                Expanded(child: Text(title,
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900))),
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    width: 30, height: 30,
+                    decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+                    child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700),
+                  ),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                controller: ctrl,
+                onChanged: (q) {
+                  final ql = q.toLowerCase();
+                  ss(() => filtered = items.where((i) => i.label.toLowerCase().contains(ql)).toList());
+                },
+                decoration: InputDecoration(
+                  hintText: 'Tafuta...',
+                  hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search_rounded, color: _kGrey400, size: 18),
+                  fillColor: _kGrey100, filled: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Divider(height: 1, color: _kGrey200),
+            Expanded(
+              child: ListView.builder(
+                itemCount: filtered.length,
+                itemBuilder: (_, i) {
+                  final item = filtered[i];
+                  return InkWell(
+                    onTap: () { Navigator.pop(ctx); onPick(item.value); },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      decoration: const BoxDecoration(
+                        border: Border(bottom: BorderSide(color: _kGrey100)),
+                      ),
+                      child: Text(item.label,
+                          style: const TextStyle(fontSize: 15, color: _kGrey900)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
 
   // Colored icon kwa kila aina ya data (kama mockup)
   (IconData, Color, Color) _itemIcon(String type, Map<String, dynamic> item) {
@@ -722,8 +811,19 @@ class _DataFormSheetState extends State<_DataFormSheet> {
     } else {
       _level = widget.type == 'subjects' ? 'Primary' : 'dispensary';
     }
-    if (widget.type == 'facilities') _loadRegions();
-    if (widget.type == 'cadres')     _loadDepartments();
+    if (widget.type == 'facilities') {
+      _loadRegions();
+      if (widget.item != null) {
+        final rid = widget.item!['region_id'];
+        final did = widget.item!['district_id'];
+        if (rid != null) {
+          _selectedRegion = rid.toString();
+          _loadDistricts(rid.toString());
+        }
+        if (did != null) _selectedDistrict = did.toString();
+      }
+    }
+    if (widget.type == 'cadres') _loadDepartments();
   }
 
   static String _slug(String name) {
@@ -842,6 +942,143 @@ class _DataFormSheetState extends State<_DataFormSheet> {
     }
   }
 
+  // ── Display helpers ───────────────────────────────────────────────────────
+  String get _deptLabel {
+    if (_category.isEmpty || _departments.isEmpty) return '';
+    final d = _departments.firstWhere(
+      (x) => (x as Map)['code'] == _category,
+      orElse: () => <String, dynamic>{},
+    ) as Map<String, dynamic>;
+    return d['name'] as String? ?? _category;
+  }
+
+  String? get _regionLabel {
+    if (_selectedRegion == null) return null;
+    for (final r in _regions) {
+      if ((r as Map)['id'].toString() == _selectedRegion) return r['name'] as String?;
+    }
+    return _selectedRegion;
+  }
+
+  String? get _districtLabel {
+    if (_selectedDistrict == null) return null;
+    for (final d in _districts) {
+      if ((d as Map)['id'].toString() == _selectedDistrict) return d['name'] as String?;
+    }
+    return _selectedDistrict;
+  }
+
+  // ── Tappable picker button ────────────────────────────────────────────────
+  Widget _pickerBtn({required String hint, String? value, required VoidCallback onTap, bool disabled = false}) {
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: disabled ? _kGrey50 : Colors.white,
+          border: Border.all(color: _kGrey200),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(children: [
+          Expanded(
+            child: Text(
+              value ?? hint,
+              style: TextStyle(fontSize: 14, color: value != null ? _kGrey900 : _kGrey400),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Icon(Icons.keyboard_arrow_down_rounded, size: 18,
+              color: value != null ? _kGrey500 : _kGrey400),
+        ]),
+      ),
+    );
+  }
+
+  // ── Bottom-sheet picker ───────────────────────────────────────────────────
+  void _openPicker({
+    required String title,
+    required List<({String label, String value})> items,
+    required void Function(String) onPick,
+  }) {
+    final ctrl = TextEditingController();
+    List<({String label, String value})> filtered = List.from(items);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, ss) => SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.65,
+          child: Column(children: [
+            const SizedBox(height: 6),
+            Center(child: Container(width: 36, height: 4,
+                decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(children: [
+                Expanded(child: Text(title,
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900))),
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    width: 30, height: 30,
+                    decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+                    child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700),
+                  ),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                controller: ctrl,
+                onChanged: (q) {
+                  final ql = q.toLowerCase();
+                  ss(() => filtered = items.where((i) => i.label.toLowerCase().contains(ql)).toList());
+                },
+                decoration: InputDecoration(
+                  hintText: 'Tafuta...',
+                  hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search_rounded, color: _kGrey400, size: 18),
+                  fillColor: _kGrey100, filled: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Divider(height: 1, color: _kGrey200),
+            Expanded(
+              child: ListView.builder(
+                itemCount: filtered.length,
+                itemBuilder: (_, i) {
+                  final item = filtered[i];
+                  return InkWell(
+                    onTap: () { Navigator.pop(ctx); onPick(item.value); },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      decoration: const BoxDecoration(
+                        border: Border(bottom: BorderSide(color: _kGrey100)),
+                      ),
+                      child: Text(item.label,
+                          style: const TextStyle(fontSize: 15, color: _kGrey900)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
   InputDecoration _dec(String hint) => InputDecoration(
     hintText: hint,
     filled: true,
@@ -882,27 +1119,34 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           ]),
           const SizedBox(height: 16),
           if (widget.type == 'facilities') ...[
-            DropdownButtonFormField<String>(
-              initialValue: _regions.any((r) => r['id'].toString() == _selectedRegion) ? _selectedRegion : null,
-              decoration: _dec('Chagua mkoa'),
-              items: _regions.map((r) => DropdownMenuItem<String>(
-                value: r['id'].toString(),
-                child: Text(r['name'] as String? ?? ''),
-              )).toList(),
-              onChanged: (v) {
-                setState(() { _selectedRegion = v; _selectedDistrict = null; _districts = []; });
-                if (v != null) _loadDistricts(v);
-              },
+            _pickerBtn(
+              hint: 'Chagua mkoa *',
+              value: _regionLabel,
+              onTap: () => _openPicker(
+                title: 'Chagua Mkoa',
+                items: _regions.map((r) => (
+                    label: (r as Map)['name'] as String? ?? '',
+                    value: r['id'].toString(),
+                )).toList(),
+                onPick: (v) {
+                  setState(() { _selectedRegion = v; _selectedDistrict = null; _districts = []; });
+                  _loadDistricts(v);
+                },
+              ),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _districts.any((d) => d['id'].toString() == _selectedDistrict) ? _selectedDistrict : null,
-              decoration: _dec('Chagua wilaya'),
-              items: _districts.map((d) => DropdownMenuItem<String>(
-                value: d['id'].toString(),
-                child: Text(d['name'] as String? ?? ''),
-              )).toList(),
-              onChanged: (v) => setState(() { _selectedDistrict = v; }),
+            _pickerBtn(
+              hint: _selectedRegion == null ? 'Chagua mkoa kwanza' : 'Chagua wilaya *',
+              value: _districtLabel,
+              disabled: _selectedRegion == null,
+              onTap: () => _openPicker(
+                title: 'Chagua Wilaya',
+                items: _districts.map((d) => (
+                    label: (d as Map)['name'] as String? ?? '',
+                    value: d['id'].toString(),
+                )).toList(),
+                onPick: (v) => setState(() => _selectedDistrict = v),
+              ),
             ),
             const SizedBox(height: 12),
           ],
@@ -919,26 +1163,27 @@ class _DataFormSheetState extends State<_DataFormSheet> {
             ),
           if (widget.type == 'facilities') ...[
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _category,
-              decoration: _dec('Idara'),
-              items: const [
-                DropdownMenuItem(value: 'health',     child: Text('Afya')),
-                DropdownMenuItem(value: 'education',  child: Text('Elimu')),
-              ],
-              onChanged: (v) => setState(() { _category = v ?? 'health'; }),
-            ),
+            Row(children: [
+              _TogglePill(label: 'Afya',  selected: _category == 'health',
+                  color: _kRed,  onTap: () => setState(() => _category = 'health')),
+              const SizedBox(width: 8),
+              _TogglePill(label: 'Elimu', selected: _category == 'education',
+                  color: _kBlue, onTap: () => setState(() => _category = 'education')),
+            ]),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: ['dispensary', 'health_center', 'laboratory', 'hospital', 'clinic']
-                      .contains(_level.toLowerCase())
-                  ? _level.toLowerCase()
-                  : 'dispensary',
-              decoration: _dec('Aina ya kituo'),
-              items: ['dispensary', 'health_center', 'laboratory', 'hospital', 'clinic']
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                  .toList(),
-              onChanged: (v) => setState(() { _level = v ?? 'dispensary'; }),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(children: [
+                for (final t in const ['dispensary', 'health_center', 'hospital', 'laboratory', 'clinic']) ...[
+                  _TogglePill(
+                    label: t,
+                    selected: _level.toLowerCase() == t,
+                    color: _kBlue,
+                    onTap: () => setState(() => _level = t),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ]),
             ),
           ],
           if (widget.type == 'departments') ...[
@@ -958,15 +1203,17 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           ],
           if (widget.type == 'cadres') ...[
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _departments.any((d) => d['code'] == _category) ? _category : null,
-              isExpanded: true,
-              decoration: _dec('Chagua idara *'),
-              items: _departments.map((d) => DropdownMenuItem<String>(
-                value: d['code'] as String,
-                child: Text(d['name'] as String? ?? d['code'] as String),
-              )).toList(),
-              onChanged: (v) => setState(() { _category = v ?? _category; }),
+            _pickerBtn(
+              hint: 'Chagua idara *',
+              value: _deptLabel.isEmpty ? null : _deptLabel,
+              onTap: () => _openPicker(
+                title: 'Chagua Idara',
+                items: _departments.map((d) => (
+                    label: (d as Map)['name'] as String? ?? d['code'] as String,
+                    value: d['code'] as String,
+                )).toList(),
+                onPick: (v) => setState(() => _category = v),
+              ),
             ),
             const SizedBox(height: 12),
             Row(children: [

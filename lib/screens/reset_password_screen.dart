@@ -1,7 +1,6 @@
 /// Reset password screen — set new password with OTP code.
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../config/theme.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
