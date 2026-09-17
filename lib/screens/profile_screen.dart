@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../widgets/app_shell.dart';
@@ -115,11 +117,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = _profile?['is_admin'] == true;
+    final authIsAdmin = context.read<AuthProvider>().isAdmin;
+    final isAdmin = authIsAdmin || (_profile?['is_admin'] == true);
 
-    return AppShell(
-      tabIndex: 3,
-      child: _loading
+    final content = _loading
         ? const Center(
             child: Padding(
               padding: EdgeInsets.all(40),
@@ -221,7 +222,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 else
                   isAdmin ? _ViewAdmin(profile: _profile!) : _ViewUser(profile: _profile!),
               ]),
+            );
+
+    if (isAdmin) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(children: [
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
+              child: Row(children: [
+                GestureDetector(
+                  onTap: () => Navigator.maybePop(context),
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF374151)),
+                  ),
+                ),
+              ]),
             ),
+            Container(height: 1, color: const Color(0xFFE5E7EB)),
+            Expanded(child: content),
+          ]),
+        ),
+      );
+    }
+
+    return AppShell(
+      tabIndex: 3,
+      child: content,
     );
   }
 }

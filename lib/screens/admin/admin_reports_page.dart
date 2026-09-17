@@ -82,13 +82,19 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     try {
       final r = await ApiService().adminEvents(limit: 20);
       if (!mounted) return;
-      final d = r.data as Map? ?? {};
-      final raw = (d['events'] as List?) ?? [];
+      final d = r.data;
+      List raw = [];
+      if (d is List) {
+        raw = d;
+      } else if (d is Map) {
+        raw = (d['events'] as List?) ?? [];
+      }
       setState(() => _events = raw.where((e) {
-        final type = (e as Map)['event_type'] as String? ?? '';
+        final m = e as Map;
+        final type = (m['event_type'] ?? m['type'] ?? '') as String;
         return !['user.presence', 'user.online', 'user.offline',
                  'user.connected', 'user.disconnected'].contains(type);
-      }).take(6).toList());
+      }).take(8).toList());
     } catch (_) {}
     try {
       final res = await ApiService().adminReports(

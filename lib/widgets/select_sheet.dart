@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 
-const double _kItemH = 56;
+const double _kItemH = 40;
 
 // ── Generic select bottom sheet — modern picker (web parity) ──────────────────
 Future<T?> showSelectSheet<T>(
@@ -109,21 +109,21 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary)),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    width: 42, height: 42,
+                    width: 30, height: 30,
                     decoration: const BoxDecoration(
                       color: AppColors.grey100,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.close_rounded,
-                        size: 20, color: AppColors.grey700),
+                        size: 16, color: AppColors.grey700),
                   ),
                 ),
               ]),
@@ -146,19 +146,19 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                     prefixIconConstraints:
                         const BoxConstraints(minWidth: 44, minHeight: 0),
                     contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(6),
                         borderSide: const BorderSide(color: AppColors.border)),
                     enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(6),
                         borderSide: const BorderSide(color: AppColors.border)),
                     focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(6),
                         borderSide: const BorderSide(
                             color: AppColors.primary, width: 1.6)),
                   ),
-                  style: const TextStyle(fontSize: 14),
+                  style: const TextStyle(fontSize: 12),
                   onChanged: (v) => setState(() => _q = v),
                 ),
               ),
@@ -185,13 +185,13 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                           onTap: () => Navigator.pop(context, item.value),
                           behavior: HitTestBehavior.opaque,
                           child: Container(
-                            margin: const EdgeInsets.only(bottom: 2),
+                            margin: const EdgeInsets.only(bottom: 1),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 18, vertical: 16),
+                                horizontal: 12, vertical: 10),
                             decoration: isSel
                                 ? BoxDecoration(
                                     color: const Color(0xFFEFF6FF),
-                                    borderRadius: BorderRadius.circular(14),
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: const Color(0xFFBFDBFE),
                                       width: 1.5,
@@ -208,7 +208,7 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: 13,
                                           fontWeight: isSel
                                               ? FontWeight.w700
                                               : FontWeight.w400,
@@ -271,10 +271,9 @@ class SelectField extends StatelessWidget {
       onTap: disabled ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        height: 36, // ndogo ya kisomo — siyo unene
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: disabled ? AppColors.grey100 : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: disabled ? AppColors.grey200 : AppColors.grey300,

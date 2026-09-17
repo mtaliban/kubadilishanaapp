@@ -65,7 +65,11 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       if (!mounted) return;
       final data = res.data;
       setState(() {
-        _items = data is List ? data : (data['results'] as List? ?? []);
+        _items = data is List ? data
+            : (data['announcements'] as List?
+                ?? data['results'] as List?
+                ?? data['items'] as List?
+                ?? []);
         _loading = false;
         _page = 0;
       });

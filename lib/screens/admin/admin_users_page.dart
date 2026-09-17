@@ -1525,11 +1525,11 @@ class _State extends State<AdminUsersPage> {
             spacing: 6, runSpacing: 6,
             alignment: WrapAlignment.end,
             children: [
-              _hdrBtn(Icons.delete_outline_rounded, 'Trash', _red, _red50, _red100, () {
+              _hdrBtn(Icons.delete_outline_rounded, 'Trash', _g600, _g100, _g200, () {
                 _snack('Orodha ya waliofutwa haijatekelezwa bado', _g700);
               }),
               _hdrBtn(Icons.person_add_rounded, '+ Ongeza', Colors.white, _blue, _blue, _showAdd),
-              _hdrBtn(Icons.shield_outlined, 'Admin', _g700, Colors.white, _g200, _showAddAdmin),
+              _hdrBtn(Icons.shield_outlined, 'Admin', Colors.white, _blue, _blue, _showAddAdmin),
               _hdrBtn(Icons.upload_file_rounded, 'Import', _g700, Colors.white, _g200, _showImport),
             ],
           ),
