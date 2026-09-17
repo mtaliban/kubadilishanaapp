@@ -62,9 +62,10 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
     setState(() {
       _filtered = _all.where((item) {
         final m = item as Map<String, dynamic>;
-        final name = (m['caller_name'] as String? ?? m['full_name'] as String? ?? '').toLowerCase();
+        final fromName = (m['from_full_name'] as String? ?? m['caller_name'] as String? ?? m['full_name'] as String? ?? '').toLowerCase();
+        final toName   = (m['to_full_name'] as String? ?? '').toLowerCase();
         final type = (m['contact_type'] as String? ?? m['type'] as String? ?? '').toLowerCase();
-        final matchQ = q.isEmpty || name.contains(q);
+        final matchQ = q.isEmpty || fromName.contains(q) || toName.contains(q);
         final matchType = _filterType.isEmpty || type == _filterType.toLowerCase();
         return matchQ && matchType;
       }).toList();
@@ -218,10 +219,16 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final item = _filtered[i] as Map<String, dynamic>;
-                    final name = item['caller_name'] as String? ?? item['full_name'] as String? ?? 'Mtumiaji';
+                    final fromName = item['from_full_name'] as String? ?? item['caller_name'] as String? ?? item['full_name'] as String? ?? '—';
+                    final toName   = item['to_full_name'] as String? ?? '—';
+                    final fromCadre = item['from_cadre'] as String? ?? '';
+                    final toCadre   = item['to_cadre'] as String? ?? '';
+                    final fromRegion = item['from_region'] as String? ?? '';
+                    final toRegion   = item['to_region'] as String? ?? '';
+                    final fromCat  = (item['from_category'] as String? ?? '') == 'education' ? 'Elimu' : 'Afya';
+                    final toCat    = (item['to_category'] as String? ?? '') == 'education' ? 'Elimu' : 'Afya';
                     final type = item['contact_type'] as String? ?? item['type'] as String? ?? 'call';
                     final ts = item['created_at'] as String? ?? item['timestamp'] as String? ?? '';
-                    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'M';
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -229,46 +236,47 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                         border: Border.all(color: _kGrey200),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: _typeBg(type),
-                            child: Text(initials,
-                                style: TextStyle(color: _typeColor(type), fontWeight: FontWeight.bold)),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          // FROM
+                          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(fromName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey900), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            if (fromCadre.isNotEmpty)
+                              Text('$fromCat · $fromCadre', style: const TextStyle(fontSize: 11, color: _kGrey500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            if (fromRegion.isNotEmpty)
+                              Text(fromRegion, style: const TextStyle(fontSize: 10, color: _kBlue, fontWeight: FontWeight.w500)),
+                          ])),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Icon(Icons.arrow_forward_rounded, size: 14, color: _kGrey500),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(name,
-                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _kGrey900)),
-                                if (ts.isNotEmpty)
-                                  Text(ts, style: TextStyle(fontSize: 11, color: _kGrey500)),
-                              ],
-                            ),
-                          ),
+                          // TO
+                          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(toName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey900), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            if (toCadre.isNotEmpty)
+                              Text('$toCat · $toCadre', style: const TextStyle(fontSize: 11, color: _kGrey500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            if (toRegion.isNotEmpty)
+                              Text(toRegion, style: const TextStyle(fontSize: 10, color: _kBlue, fontWeight: FontWeight.w500)),
+                          ])),
+                        ]),
+                        const SizedBox(height: 8),
+                        Row(children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _typeBg(type),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(_typeIcon(type), color: _typeColor(type), size: 13),
-                                const SizedBox(width: 4),
-                                Text(
-                                  type == 'call' ? 'Simu' : type == 'sms' ? 'SMS' : 'WhatsApp',
-                                  style: TextStyle(fontSize: 11, color: _typeColor(type), fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(color: _typeBg(type), borderRadius: BorderRadius.circular(6)),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Icon(_typeIcon(type), color: _typeColor(type), size: 12),
+                              const SizedBox(width: 4),
+                              Text(type == 'call' ? 'Simu' : type == 'sms' ? 'SMS' : 'WhatsApp',
+                                  style: TextStyle(fontSize: 10, color: _typeColor(type), fontWeight: FontWeight.w600)),
+                            ]),
                           ),
-                        ],
-                      ),
+                          if (ts.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Text(ts, style: const TextStyle(fontSize: 10, color: _kGrey500)),
+                          ],
+                        ]),
+                      ]),
                     );
                   },
                 ),

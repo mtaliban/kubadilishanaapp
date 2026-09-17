@@ -646,6 +646,7 @@ class _State extends State<AdminUsersPage> {
     final waCtrl    = TextEditingController();
     final passCtrl  = TextEditingController();
     bool saving = false;
+    bool isAdmin = false;
     String? catCode; String? cadreCode; String? regId; String? distId;
     List<dynamic> cadres = []; List<dynamic> dists = [];
 
@@ -778,7 +779,22 @@ class _State extends State<AdminUsersPage> {
                 },
                 leading: const Icon(Icons.location_on_outlined, size: 15, color: AppColors.textLight),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () => ss(() => isAdmin = !isAdmin),
+                child: Row(children: [
+                  Checkbox(
+                    value: isAdmin,
+                    activeColor: _blue,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    onChanged: (v) => ss(() => isAdmin = v ?? false),
+                  ),
+                  const Icon(Icons.shield_outlined, size: 16, color: _blue),
+                  const SizedBox(width: 6),
+                  const Text('Admin', style: TextStyle(fontSize: 13, color: _g700)),
+                ]),
+              ),
+              const SizedBox(height: 16),
               Row(children: [
                 Expanded(child: OutlinedButton(
                   onPressed: () => Navigator.pop(ctx),
@@ -817,6 +833,7 @@ class _State extends State<AdminUsersPage> {
                         'password': passCtrl.text,
                         'category': catCode,
                         'cadre_code': cadreCode,
+                        'is_admin': isAdmin,
                         if (regId != null) 'current_station': {
                           'region_id': int.tryParse(regId!) ?? 0,
                           'region_name': '${reg?['name'] ?? ''}',
@@ -859,8 +876,9 @@ class _State extends State<AdminUsersPage> {
     final nameCtrl  = TextEditingController(text: u['full_name'] as String? ?? '');
     final phoneCtrl = TextEditingController(text: u['phone_primary'] as String? ?? u['phone'] as String? ?? '');
     final waCtrl    = TextEditingController(text: u['phone_alt'] as String? ?? u['phone_whatsapp'] as String? ?? '');
+    final passCtrl  = TextEditingController();
     final st        = '${u['status'] ?? 'active'}'.toLowerCase();
-    String hali     = (st == 'disabled' || st == 'suspended') ? 'disabled' : 'active';
+    String hali     = ['active', 'inactive', 'matched', 'disabled'].contains(st) ? st : 'active';
     bool paid       = (u['is_verified'] as bool?) ?? false;
     bool admin      = u['is_admin'] as bool? ?? false;
     bool saving     = false;
@@ -893,16 +911,30 @@ class _State extends State<AdminUsersPage> {
                   _inp(waCtrl, '+255...', keyboard: TextInputType.phone),
                 ])),
               ]),
+              const SizedBox(height: 12),
+              _lbl('Nywila Mpya'),
+              _inp(passCtrl, 'Acha tupu kama hubadilishi',
+                  icon: Icons.lock_outline_rounded, obscure: true),
               const SizedBox(height: 16),
-              _lbl('HALI NA HADHI'),
-              const SizedBox(height: 8),
-              Row(children: [
-                _pill2('Hai',         hali == 'active',   _green, _green100,
-                    () => ss(() => hali = 'active')),
-                const SizedBox(width: 8),
-                _pill2('Amesitishwa', hali == 'disabled', _amb600, _amb100,
-                    () => ss(() => hali = 'disabled')),
-              ]),
+              _lbl('Hali'),
+              SelectField(
+                hint: 'Hali ya mtumiaji',
+                value: hali == 'active' ? 'Hai' : hali == 'disabled' ? 'Amesitishwa'
+                    : hali == 'matched' ? 'Amepata mwenzake' : 'Hajakamilisha',
+                onTap: () async {
+                  final picked = await showSelectSheet<String>(ctx,
+                      title: 'Hali ya Mtumiaji',
+                      items: const [
+                        (value: 'active',   label: 'Hai',               subtitle: null),
+                        (value: 'inactive', label: 'Hajakamilisha',      subtitle: null),
+                        (value: 'matched',  label: 'Amepata mwenzake',   subtitle: null),
+                        (value: 'disabled', label: 'Amesitishwa',        subtitle: null),
+                      ],
+                      selected: hali, searchable: false);
+                  if (picked != null) ss(() => hali = picked);
+                },
+                leading: const Icon(Icons.toggle_on_outlined, size: 15, color: AppColors.textLight),
+              ),
               const SizedBox(height: 10),
               Row(children: [
                 _chk('Amelipa', paid,  (v) => ss(() => paid  = v ?? false)),
@@ -929,6 +961,7 @@ class _State extends State<AdminUsersPage> {
                         'phone_primary': phoneCtrl.text.trim(),
                         'phone_alt': waCtrl.text.trim().isEmpty ? null : waCtrl.text.trim(),
                         'status': hali, 'is_verified': paid, 'is_admin': admin,
+                        if (passCtrl.text.isNotEmpty) 'new_password': passCtrl.text,
                       });
                       if (!mounted) return;
                       if (ctx.mounted) Navigator.pop(ctx);
@@ -1703,7 +1736,7 @@ class _UserCard extends StatelessWidget {
     final station = user['current_station'] as Map? ?? user['station'] as Map? ?? {};
     final region  = station['region_name'] as String? ?? '';
     final st      = '${user['status'] ?? 'active'}'.toLowerCase();
-    final isActive  = st != 'disabled' && st != 'suspended';
+    final isActive  = st == 'active';
     final isPaid    = (user['is_verified'] as bool?) ?? false;
     final contact   = (user['contact_enabled'] as bool?) ?? false;
     final isAdmin   = user['is_admin'] as bool? ?? false;
@@ -1806,31 +1839,8 @@ class _UserCard extends StatelessWidget {
               // Region — text-[11px] text-grey-500
               if (region.isNotEmpty)
                 Text(region, style: const TextStyle(fontSize: 11, height: 1.5, color: _g500)),
-              // Status badge — UserCheck(9)/UserX(9) (web Lucide)
-              if (isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                      color: _green50, borderRadius: BorderRadius.circular(4)),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.how_to_reg_rounded, size: 9, color: _green),
-                    SizedBox(width: 2),
-                    Text('Hai', style: TextStyle(
-                        fontSize: 10, height: 1.5, fontWeight: FontWeight.w700, color: _green)),
-                  ]),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                      color: _red50, borderRadius: BorderRadius.circular(4)),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.person_remove_rounded, size: 9, color: _red),
-                    SizedBox(width: 2),
-                    Text('Imesitishwa', style: TextStyle(
-                        fontSize: 10, height: 1.5, fontWeight: FontWeight.w700, color: _red)),
-                  ]),
-                ),
+              // Status badge — 4 hali
+              _statusBadge(st),
               // Role badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1875,6 +1885,29 @@ class _UserCard extends StatelessWidget {
           ),
         ]),
       ),
+    );
+  }
+
+  Widget _statusBadge(String st) {
+    final Color bg; final Color fg; final IconData icon; final String label;
+    switch (st) {
+      case 'matched':
+        bg = _blue100; fg = _blue700; icon = Icons.handshake_outlined; label = 'Amepata mwenzake';
+      case 'inactive':
+        bg = _amb100;  fg = _amb700;  icon = Icons.hourglass_empty_rounded; label = 'Hajakamilisha';
+      case 'disabled':
+        bg = _red50;   fg = _red;     icon = Icons.person_remove_rounded;   label = 'Amesitishwa';
+      default:
+        bg = _green50; fg = _green;   icon = Icons.how_to_reg_rounded;      label = 'Hai';
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 9, color: fg),
+        const SizedBox(width: 2),
+        Text(label, style: TextStyle(fontSize: 10, height: 1.5, fontWeight: FontWeight.w700, color: fg)),
+      ]),
     );
   }
 

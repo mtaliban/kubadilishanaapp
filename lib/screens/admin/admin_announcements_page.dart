@@ -342,10 +342,29 @@ class _SendAnnouncementSheetState extends State<_SendAnnouncementSheet> {
   final _titleCtrl = TextEditingController();
   final _msgCtrl = TextEditingController();
   String _type = 'info';
+  String _audience = 'all';
+  List<dynamic> _departments = [];
   bool _sending = false;
 
   static const _types = ['info', 'warning', 'success', 'urgent'];
   static const _typeLabels = ['Taarifa', 'Onyo', 'Mafanikio', 'Haraka'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDepartments();
+  }
+
+  Future<void> _loadDepartments() async {
+    try {
+      final r = await ApiService().adminListDepartments();
+      final raw = r.data;
+      if (!mounted) return;
+      setState(() {
+        _departments = raw is List ? raw : (raw['results'] ?? raw['items'] ?? raw['data'] ?? []);
+      });
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -362,6 +381,7 @@ class _SendAnnouncementSheetState extends State<_SendAnnouncementSheet> {
         'title': _titleCtrl.text.trim(),
         'message': _msgCtrl.text.trim(),
         'type': _type,
+        'audience': _audience,
       });
       if (!mounted) return;
       Navigator.pop(context);
@@ -418,6 +438,22 @@ class _SendAnnouncementSheetState extends State<_SendAnnouncementSheet> {
               child: Text(_typeLabels[i]),
             )),
             onChanged: (v) => setState(() { _type = v ?? 'info'; }),
+          ),
+          const SizedBox(height: 12),
+          Text('Wasikilizaji', style: TextStyle(fontSize: 12, color: _kGrey700, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _audience,
+            isExpanded: true,
+            decoration: _inputDec('Chagua wasikilizaji'),
+            items: [
+              const DropdownMenuItem(value: 'all', child: Text('Wote')),
+              ..._departments.map((d) => DropdownMenuItem<String>(
+                value: d['code'] as String? ?? '',
+                child: Text('${d['icon'] != null ? '${d['icon']} ' : ''}${d['name'] ?? d['code']}'),
+              )),
+            ],
+            onChanged: (v) => setState(() { _audience = v ?? 'all'; }),
           ),
           const SizedBox(height: 20),
           SizedBox(

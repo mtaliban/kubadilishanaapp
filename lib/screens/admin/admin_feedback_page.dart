@@ -240,7 +240,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     final item = _filtered[i] as Map<String, dynamic>;
                     final id = item['id']?.toString() ?? '';
                     final name = item['user_name'] as String? ?? item['full_name'] as String? ?? 'Mtumiaji';
-                    final msg = item['message'] as String? ?? item['subject'] as String? ?? '';
+                    final subject = item['subject'] as String? ?? '';
+                    final msg = item['message'] as String? ?? '';
                     final createdAt = item['created_at'] as String? ?? '';
                     final reply = item['reply'] as String? ?? item['admin_reply'] as String?;
                     final initials = name.isNotEmpty ? name[0].toUpperCase() : 'M';
@@ -286,8 +287,13 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                                 ),
                             ],
                           ),
+                          if (subject.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(subject,
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey900)),
+                          ],
                           if (msg.isNotEmpty) ...[
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 4),
                             Text(msg, style: TextStyle(fontSize: 13, color: _kGrey700)),
                           ],
                           if (reply != null) ...[

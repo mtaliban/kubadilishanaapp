@@ -244,7 +244,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                   borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(Icons.bar_chart_rounded, color: _kBlue, size: 26),
+                child: const Icon(Icons.dns_rounded, color: _kBlue, size: 26),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -676,10 +676,12 @@ class _DataFormSheet extends StatefulWidget {
 class _DataFormSheetState extends State<_DataFormSheet> {
   final _nameCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
-  String _category = 'health';
-  String _level    = 'Primary';
-  String _status   = 'active';
-  bool   _saving   = false;
+  final _iconCtrl = TextEditingController();
+  String _category        = 'health';
+  String _level           = 'Primary';
+  String _status          = 'active';
+  bool   _requiresSubjects = false;
+  bool   _saving           = false;
   List<dynamic> _regions        = [];
   String?       _selectedRegion;
   String?       _selectedDistrict;
@@ -691,10 +693,12 @@ class _DataFormSheetState extends State<_DataFormSheet> {
     super.initState();
     if (widget.item != null) {
       final it = widget.item!;
-      _nameCtrl.text = (it['display_name'] ?? it['name'] ?? '') as String? ?? '';
-      _codeCtrl.text = it['code'] as String? ?? '';
-      _category      = it['category'] as String? ?? 'health';
-      _status        = it['status'] as String? ?? 'active';
+      _nameCtrl.text    = (it['display_name'] ?? it['name'] ?? '') as String? ?? '';
+      _codeCtrl.text    = it['code'] as String? ?? '';
+      _iconCtrl.text    = (it['icon'] ?? '') as String? ?? '';
+      _category         = it['category'] as String? ?? 'health';
+      _status           = it['status'] as String? ?? 'active';
+      _requiresSubjects = (it['requires_subjects'] as bool?) ?? false;
       final lvl = (it['level'] ?? it['type'] ?? '') as String? ?? '';
       if (widget.type == 'subjects') {
         _level = lvl.toLowerCase() == 'secondary' ? 'Secondary' : 'Primary';
@@ -759,6 +763,7 @@ class _DataFormSheetState extends State<_DataFormSheet> {
   void dispose() {
     _nameCtrl.dispose();
     _codeCtrl.dispose();
+    _iconCtrl.dispose();
     super.dispose();
   }
 
@@ -775,21 +780,23 @@ class _DataFormSheetState extends State<_DataFormSheet> {
         case 'departments':
           data['code']   = slug.toLowerCase();
           data['status'] = _status;
+          if (_iconCtrl.text.trim().isNotEmpty) data['icon'] = _iconCtrl.text.trim();
         case 'subjects':
           data['code']  = slug.toUpperCase();
           data['level'] = _level;
         case 'cadres':
           data.remove('name');
-          data['code']         = slug.toUpperCase();
-          data['display_name'] = name;
-          data['category']     = _category;
+          data['code']              = slug.toUpperCase();
+          data['display_name']      = name;
+          data['category']          = _category;
+          data['requires_subjects'] = _requiresSubjects;
           if (_level == 'Primary' || _level == 'Secondary') data['level'] = _level;
         case 'regions':
           break;
         case 'districts':
           break;
         case 'facilities':
-          data['category'] = 'health';
+          data['category'] = _category;
           data['type']     = _level;
           if (_selectedRegion != null)   data['region_id']   = int.parse(_selectedRegion!);
           if (_selectedDistrict != null) data['district_id'] = int.parse(_selectedDistrict!);
@@ -899,6 +906,16 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           if (widget.type == 'facilities') ...[
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              initialValue: _category,
+              decoration: _dec('Idara'),
+              items: const [
+                DropdownMenuItem(value: 'health',     child: Text('Afya')),
+                DropdownMenuItem(value: 'education',  child: Text('Elimu')),
+              ],
+              onChanged: (v) => setState(() { _category = v ?? 'health'; }),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
               initialValue: ['dispensary', 'health_center', 'laboratory', 'hospital', 'clinic']
                       .contains(_level.toLowerCase())
                   ? _level.toLowerCase()
@@ -911,6 +928,11 @@ class _DataFormSheetState extends State<_DataFormSheet> {
             ),
           ],
           if (widget.type == 'departments') ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _iconCtrl,
+              decoration: _dec('Ikoni (emoji, k.m. 🏥 — hiari)'),
+            ),
             const SizedBox(height: 12),
             Row(children: [
               _TogglePill(label: 'Hai',      selected: _status == 'active',
@@ -943,6 +965,17 @@ class _DataFormSheetState extends State<_DataFormSheet> {
               const SizedBox(width: 8),
               _TogglePill(label: 'Secondary', selected: _level == 'Secondary',
                   color: _kAmber, onTap: () => setState(() { _level = 'Secondary'; })),
+            ]),
+            const SizedBox(height: 10),
+            Row(children: [
+              Checkbox(
+                value: _requiresSubjects,
+                activeColor: _kBlue,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onChanged: (v) => setState(() { _requiresSubjects = v ?? false; }),
+              ),
+              const SizedBox(width: 4),
+              const Text('Inahitaji masomo', style: TextStyle(fontSize: 13, color: _kGrey700)),
             ]),
           ],
           if (widget.type == 'subjects') ...[
