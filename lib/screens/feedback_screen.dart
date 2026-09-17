@@ -165,76 +165,71 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
                 // Form card (.card = bg-white rounded-2xl p-6 border-grey-100 shadow-soft)
                 Container(
-                  padding: const EdgeInsets.all(24), // p-6=24px
+                  padding: const EdgeInsets.all(16),
                   decoration: _cardDec(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // .label: text-sm=14px font-semibold text-grey-700 mb-1.5=6px
                       const Padding(
                         padding: EdgeInsets.only(bottom: 6),
                         child: Text(
                           'Ujumbe wako',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: _kGrey700,
                           ),
                         ),
                       ),
-                      // Textarea: rounded-lg=8 border-grey-300 px-4=16 py-2.5=10 min-h-[110px]
                       TextField(
                         controller: _msgCtrl,
                         maxLines: 5,
                         minLines: 5,
-                        style: const TextStyle(fontSize: 14, color: _kGrey900),
+                        style: const TextStyle(fontSize: 12, color: _kGrey900),
                         decoration: InputDecoration(
                           hintText: 'Andika maoni/malalamiko yako hapa...',
-                          hintStyle: const TextStyle(color: _kGrey500, fontSize: 14),
+                          hintStyle: const TextStyle(color: _kGrey500, fontSize: 12),
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10), // px-4=16 py-2.5=10
+                              horizontal: 10, vertical: 8),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8), // rounded-lg=8
+                            borderRadius: BorderRadius.circular(6),
                             borderSide: const BorderSide(color: _kGrey300),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: _kBlue, width: 2),
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: _kBlue, width: 1.5),
                           ),
                           filled: true,
                           fillColor: Colors.white,
                         ),
                       ),
-                      // Error: bg-red-50 text-red text-sm=14 rounded-lg=8 p-3=12
                       if (_error.isNotEmpty) ...[
-                        const SizedBox(height: 12), // space-y-3=12px
+                        const SizedBox(height: 10),
                         Container(
-                          padding: const EdgeInsets.all(12), // p-3=12px
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF2F2), // bg-red-50
-                            borderRadius: BorderRadius.circular(8), // rounded-lg=8
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(_error,
-                              style: const TextStyle(color: _kRed, fontSize: 14)),
+                              style: const TextStyle(color: _kRed, fontSize: 12)),
                         ),
                       ],
-                      // Ok: bg-green-50 text-green-700 text-sm=14 rounded-lg=8 p-3=12
                       if (_ok.isNotEmpty) ...[
-                        const SizedBox(height: 12), // space-y-3=12px
+                        const SizedBox(height: 10),
                         Container(
-                          padding: const EdgeInsets.all(12), // p-3=12px
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4), // bg-green-50
-                            borderRadius: BorderRadius.circular(8), // rounded-lg=8
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(_ok,
                               style: const TextStyle(
-                                  color: Color(0xFF15803D), // text-green-700
-                                  fontSize: 14)),
+                                  color: Color(0xFF15803D),
+                                  fontSize: 12)),
                         ),
                       ],
                       const SizedBox(height: 12),
-                      // Submit — full-width, tall, rounded-xl
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -243,11 +238,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                             backgroundColor: _kBlue,
                             disabledBackgroundColor: _kBlue.withValues(alpha: 0.4),
                             foregroundColor: Colors.white,
-                            // Web button ni nyembamba (py-2.5 ≈ 40px) — sio 48.
-                            minimumSize: const Size(double.infinity, 42),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            minimumSize: Size.zero,
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                             elevation: 0,
                           ),
                           child: _sending
@@ -285,7 +279,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 else if (_items.isEmpty)
                   const Text(
                     'Hujatuma maoni bado.',
-                    style: TextStyle(fontSize: 14, color: _kGrey500),
+                    style: TextStyle(fontSize: 12, color: _kGrey500),
                   )
                 else ...[
                   // space-y-2=8px between cards
@@ -311,7 +305,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                             child: Text(
                               '$safe / $total',
                               style: const TextStyle(
-                                fontSize: 14, // text-sm
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: _kGrey500,
                               ),
@@ -345,19 +339,16 @@ class _PageBtn extends StatelessWidget {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        constraints: const BoxConstraints(minWidth: 80, minHeight: 40),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(color: enabled ? _kGrey300 : const Color(0xFFE5E7EB)),
-          boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4, offset: Offset(0, 1))],
         ),
-        alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w700,
             color: enabled ? _kGrey700 : _kGrey400,
           ),
@@ -394,9 +385,8 @@ class _FbCard extends StatelessWidget {
       }
     } catch (_) {}
 
-    // .card = bg-white rounded-2xl p-6 border-grey-100 shadow-soft
     return Container(
-      padding: const EdgeInsets.all(24), // p-6=24px
+      padding: const EdgeInsets.all(14),
       decoration: _cardDec(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,10 +419,9 @@ class _FbCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4), // mb-1=4px
-          // Message: text-sm=14 text-grey-700 whitespace-pre-wrap (hlinea hazionekani)
           Text(
             message,
-            style: const TextStyle(fontSize: 14, color: _kGrey700, height: 1.4),
+            style: const TextStyle(fontSize: 12, color: _kGrey700, height: 1.4),
           ),
           // Admin reply block
           if (reply.isNotEmpty) ...[
@@ -459,7 +448,7 @@ class _FbCard extends StatelessWidget {
                   Text(
                     reply,
                     style: const TextStyle(
-                        fontSize: 14, color: _kGrey800, height: 1.4), // text-sm text-grey-800
+                        fontSize: 12, color: _kGrey800, height: 1.4),
                   ),
                 ],
               ),

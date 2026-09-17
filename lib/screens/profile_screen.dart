@@ -30,24 +30,22 @@ BoxDecoration _cardDec({Color? borderColor}) => BoxDecoration(
   ],
 );
 
-// .input — rounded-xl(12), grey-50 bg, better padding
 InputDecoration _inputDec({String? hint, bool disabled = false}) => InputDecoration(
   hintText: hint,
   isDense: true,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
-  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
-  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
-  hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+  hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
   filled: true,
   fillColor: Colors.white,
 );
 
-// .label = text-sm=14px font-semibold text-grey-700 mb-1.5=6px
 Widget _label(String text) => Padding(
   padding: const EdgeInsets.only(bottom: 6),
-  child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+  child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGrey700)),
 );
 
 // btn-primary — text-sm=14px px-4 py-2 rounded-lg font-bold brand-blue full-width
@@ -372,43 +370,21 @@ class _EditAdminProfile extends StatefulWidget {
 }
 
 class _EditAdminProfileState extends State<_EditAdminProfile> {
-  late TextEditingController _nameCtrl, _altCtrl, _curPwdCtrl, _newPwdCtrl;
+  late TextEditingController _nameCtrl, _altCtrl;
   bool _saving = false;
-  bool _changingPwd = false;
   String? _error;
-  String? _pwdMsg;
 
   @override
   void initState() {
     super.initState();
-    _nameCtrl   = TextEditingController(text: widget.profile['full_name'] ?? '');
-    _altCtrl    = TextEditingController(text: widget.profile['phone_alt'] ?? '');
-    _curPwdCtrl = TextEditingController();
-    _newPwdCtrl = TextEditingController();
+    _nameCtrl = TextEditingController(text: widget.profile['full_name'] ?? '');
+    _altCtrl  = TextEditingController(text: widget.profile['phone_alt'] ?? '');
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose(); _altCtrl.dispose();
-    _curPwdCtrl.dispose(); _newPwdCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _changePassword() async {
-    if (_curPwdCtrl.text.isEmpty || _newPwdCtrl.text.length < 6) return;
-    setState(() { _changingPwd = true; _pwdMsg = null; _error = null; });
-    try {
-      await ApiService().changePassword(_curPwdCtrl.text, _newPwdCtrl.text);
-      if (!mounted) return;
-      _curPwdCtrl.clear(); _newPwdCtrl.clear();
-      setState(() { _changingPwd = false; _pwdMsg = 'Nywila imebadilishwa!'; });
-      Future.delayed(const Duration(seconds: 4), () {
-        if (mounted) setState(() => _pwdMsg = null);
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _changingPwd = false; _error = _parseErr(e); });
-    }
   }
 
   Future<void> _save() async {
@@ -479,74 +455,7 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
         ]),
       ),
 
-      const SizedBox(height: 24),
-
-      // ── Password change card ──
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: _cardDec(),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(children: const [
-            Text('🔑', style: TextStyle(fontSize: 16)),
-            SizedBox(width: 8),
-            Text('Badilisha Nywila',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kGrey900)),
-          ]),
-          const SizedBox(height: 16),
-          if (_pwdMsg != null) ...[
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFDCFCE7),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(_pwdMsg!,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
-            ),
-          ],
-          _label('Nywila ya Sasa'),
-          TextField(
-            controller: _curPwdCtrl,
-            obscureText: true,
-            style: const TextStyle(fontSize: 12),
-            decoration: _inputDec(hint: 'Nywila ya sasa'),
-          ),
-          const SizedBox(height: 16),
-          _label('Nywila Mpya'),
-          TextField(
-            controller: _newPwdCtrl,
-            obscureText: true,
-            style: const TextStyle(fontSize: 12),
-            decoration: _inputDec(hint: 'Angalau herufi 6'),
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: (_changingPwd || _curPwdCtrl.text.isEmpty || _newPwdCtrl.text.length < 6)
-                  ? null
-                  : _changePassword,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: _kBlue),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: _changingPwd
-                    ? const SizedBox(width: 14, height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue))
-                    : const Text('Badilisha Nywila',
-                        style: TextStyle(
-                            fontSize: 13, color: _kBlue, fontWeight: FontWeight.w600)),
-              ),
-            ),
-          ),
-        ]),
-      ),
-
-      const SizedBox(height: 24),
+      const SizedBox(height: 16),
 
       // ── Save button ──
       Row(
@@ -589,7 +498,7 @@ class _EditProfile extends StatefulWidget {
 }
 
 class _EditProfileState extends State<_EditProfile> {
-  late TextEditingController _nameCtrl, _phoneCtrl, _altCtrl, _curPwdCtrl, _newPwdCtrl;
+  late TextEditingController _nameCtrl, _phoneCtrl, _altCtrl;
 
   String _cadreCode = '';
   List<dynamic> _cadres = [];
@@ -609,9 +518,7 @@ class _EditProfileState extends State<_EditProfile> {
   final Map<int, List<dynamic>> _destFacilities = {};
 
   bool _saving = false;
-  bool _changingPwd = false;
   String? _error;
-  String? _pwdMsg;
 
   String get _category => widget.profile['category'] as String? ?? '';
 
@@ -627,11 +534,9 @@ class _EditProfileState extends State<_EditProfile> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl   = TextEditingController(text: widget.profile['full_name'] ?? '');
-    _phoneCtrl  = TextEditingController(text: widget.profile['phone_primary'] ?? '');
-    _altCtrl    = TextEditingController(text: widget.profile['phone_alt'] ?? '');
-    _curPwdCtrl = TextEditingController();
-    _newPwdCtrl = TextEditingController();
+    _nameCtrl  = TextEditingController(text: widget.profile['full_name'] ?? '');
+    _phoneCtrl = TextEditingController(text: widget.profile['phone_primary'] ?? '');
+    _altCtrl   = TextEditingController(text: widget.profile['phone_alt'] ?? '');
 
     _cadreCode = widget.profile['cadre_code'] as String? ?? '';
     _subjects = (widget.profile['subjects'] as List?)?.map((s) => s.toString()).toList() ?? [];
@@ -706,25 +611,7 @@ class _EditProfileState extends State<_EditProfile> {
   @override
   void dispose() {
     _nameCtrl.dispose(); _phoneCtrl.dispose(); _altCtrl.dispose();
-    _curPwdCtrl.dispose(); _newPwdCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _changePassword() async {
-    if (_curPwdCtrl.text.isEmpty || _newPwdCtrl.text.length < 6) return;
-    setState(() { _changingPwd = true; _pwdMsg = null; _error = null; });
-    try {
-      await ApiService().changePassword(_curPwdCtrl.text, _newPwdCtrl.text);
-      if (!mounted) return;
-      _curPwdCtrl.clear(); _newPwdCtrl.clear();
-      setState(() { _changingPwd = false; _pwdMsg = 'Nywila imebadilishwa!'; });
-      Future.delayed(const Duration(seconds: 4), () {
-        if (mounted) setState(() => _pwdMsg = null);
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _changingPwd = false; _error = _parseErr(e); });
-    }
   }
 
   Future<void> _save() async {
@@ -951,72 +838,7 @@ class _EditProfileState extends State<_EditProfile> {
             for (int i = 0; i < _destinations.length; i++) _buildDestRow(i),
         ],
       ),
-      const SizedBox(height: 24),
-
-      // ── Password change card ──
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: _cardDec(),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(children: const [
-            Text('🔑', style: TextStyle(fontSize: 16)),
-            SizedBox(width: 8),
-            Text('Badilisha Nywila',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kGrey900)),
-          ]),
-          const SizedBox(height: 16),
-          if (_pwdMsg != null) ...[
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFDCFCE7),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(_pwdMsg!,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
-            ),
-          ],
-          _label('Nywila ya Sasa'),
-          TextField(
-            controller: _curPwdCtrl,
-            obscureText: true,
-            style: const TextStyle(fontSize: 12),
-            decoration: _inputDec(hint: 'Nywila ya sasa'),
-          ),
-          const SizedBox(height: 16),
-          _label('Nywila Mpya'),
-          TextField(
-            controller: _newPwdCtrl,
-            obscureText: true,
-            style: const TextStyle(fontSize: 12),
-            decoration: _inputDec(hint: 'Angalau herufi 6'),
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: _changingPwd ? null : _changePassword,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: _kBlue),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: _changingPwd
-                    ? const SizedBox(width: 14, height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue))
-                    : const Text('Badilisha Nywila',
-                        style: TextStyle(
-                            fontSize: 13, color: _kBlue, fontWeight: FontWeight.w600)),
-              ),
-            ),
-          ),
-        ]),
-      ),
-
-      const SizedBox(height: 24),
+      const SizedBox(height: 16),
 
       // ── Save button ──
       Row(
@@ -1259,17 +1081,17 @@ class _PickerField<T> extends StatelessWidget {
     return GestureDetector(
       onTap: (enabled && onChanged != null) ? () => _open(context) : null,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(color: _kGrey200),
         ),
         child: Row(children: [
           Expanded(child: Text(
             has ? lbl : hint,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               color: has ? _kGrey900 : _kGrey400,
               fontWeight: has ? FontWeight.w500 : FontWeight.normal,
             ),

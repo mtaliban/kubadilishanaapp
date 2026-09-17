@@ -40,24 +40,23 @@ BoxDecoration _cardDec() => BoxDecoration(
   ],
 );
 
-// .input — rounded-xl(12), filled grey-50, better padding
+// .input — compact, matches web .input class
 InputDecoration _inputDec({String? hint}) => InputDecoration(
   hintText: hint,
-  hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
+  hintStyle: const TextStyle(fontSize: 12, color: _kGrey400),
   isDense: true,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
-  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
-  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+  disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
   filled: true,
   fillColor: Colors.white,
 );
 
-// .label = text-sm=14 font-semibold text-grey-700 mb-1.5=6px
 Widget _label(String text) => Padding(
   padding: const EdgeInsets.only(bottom: 6),
-  child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+  child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGrey700)),
 );
 
 class DonateScreen extends StatefulWidget {
@@ -377,7 +376,6 @@ class _DonateScreenState extends State<DonateScreen> {
 
                   const SizedBox(height: 12), // space-y-3
 
-                  // Submit — full-width, tall, rounded-xl
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -387,11 +385,10 @@ class _DonateScreenState extends State<DonateScreen> {
                         disabledBackgroundColor: _kBlue.withValues(alpha: 0.5),
                         foregroundColor: Colors.white,
                         disabledForegroundColor: Colors.white,
-                        // Web button ni nyembamba (py-2.5 ≈ 40px) — sio 48.
-                        minimumSize: const Size(double.infinity, 42),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                         elevation: 0,
                       ),
                       child: _sending
