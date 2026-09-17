@@ -148,135 +148,6 @@ class _AdminDataPageState extends State<AdminDataPage>
     );
   }
 
-  void _showView(String type, Map<String, dynamic> item) {
-    final name = (item['name'] ?? item['display_name'] ?? '') as String? ?? '';
-    final code = item['code'] as String? ?? item['school_code'] as String? ?? item['id']?.toString() ?? '';
-
-    List<Map<String, String>> fields;
-    switch (type) {
-      case 'departments':
-        fields = [
-          {'label': 'Code',  'value': code},
-          {'label': 'Jina',  'value': name},
-          {'label': 'Hali',  'value': item['status'] == 'disabled' ? 'Imezimwa' : 'Hai'},
-        ];
-      case 'subjects':
-        fields = [
-          {'label': 'Code',     'value': code},
-          {'label': 'Jina',     'value': name},
-          {'label': 'Kiwango',  'value': item['level'] as String? ?? '—'},
-        ];
-      case 'cadres':
-        fields = [
-          {'label': 'Code',   'value': code},
-          {'label': 'Jina',   'value': name},
-          {'label': 'Idara',  'value': item['category'] as String? ?? '—'},
-          {'label': 'Kiwango','value': item['level'] as String? ?? '—'},
-        ];
-      case 'regions':
-        fields = [
-          {'label': 'ID',   'value': code},
-          {'label': 'Jina', 'value': name},
-        ];
-      case 'districts':
-        fields = [
-          {'label': 'ID',    'value': code},
-          {'label': 'Jina',  'value': name},
-          {'label': 'Mkoa',  'value': _getRegionName(item)},
-        ];
-      case 'facilities':
-        fields = [
-          {'label': 'Code',    'value': item['school_code'] as String? ?? code},
-          {'label': 'Jina',    'value': name},
-          {'label': 'Aina',    'value': item['type'] as String? ?? item['level'] as String? ?? '—'},
-          {'label': 'Mkoa',    'value': item['region_name'] as String? ?? item['region']?.toString() ?? '—'},
-          {'label': 'Wilaya',  'value': item['district_name'] as String? ?? item['district']?.toString() ?? '—'},
-        ];
-      default:
-        fields = [{'label': 'Jina', 'value': name}];
-    }
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Expanded(child: Text(name,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900, height: 10/7))),
-              GestureDetector(
-                onTap: () => Navigator.pop(ctx),
-                child: const Icon(Icons.close_rounded, size: 20, color: _kGrey500),
-              ),
-            ]),
-            const SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: _kGrey100),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: fields.asMap().entries.map((entry) {
-                  final last = entry.key == fields.length - 1;
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      border: last ? null : const Border(bottom: BorderSide(color: _kGrey100)),
-                    ),
-                    child: Row(children: [
-                      Text((entry.value['label'] ?? '').toUpperCase(),
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-                              color: _kGrey500, letterSpacing: 0.5)),
-                      const Spacer(),
-                      Flexible(child: Text(entry.value['value'] ?? '—',
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(fontSize: 13, color: _kGrey900))),
-                    ]),
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _kGrey700,
-                    side: const BorderSide(color: _kGrey200),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Funga'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () { Navigator.pop(ctx); _showAddEdit(type, item: item); },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kBlue, foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Hariri'),
-                ),
-              ),
-            ]),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _delete(String type, Map<String, dynamic> item) async {
     final id = item['id']?.toString() ?? item['code']?.toString() ?? '';
     if (id.isEmpty) return;
@@ -359,6 +230,15 @@ class _AdminDataPageState extends State<AdminDataPage>
 
   // ─── BUILD ──────────────────────────────────────────────────────────────────
 
+  static const _tabIcons = [
+    Icons.domain_rounded,        // Idara
+    Icons.menu_book_rounded,     // Masomo
+    Icons.work_outline_rounded,  // Kada
+    Icons.terrain_rounded,       // Mikoa
+    Icons.map_outlined,          // Wilaya
+    Icons.local_hospital_outlined, // Vituo
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -366,42 +246,45 @@ class _AdminDataPageState extends State<AdminDataPage>
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // ── Header kama mockup: 52×52 icon box + title + subtitle ──────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Row(
-              children: [
-                const Icon(Icons.storage_rounded, size: 22, color: _kBlue),
-                const SizedBox(width: 8),
-                const Text('Data',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700,
-                        color: _kGrey900, height: 7 / 6)),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _kGrey50,
-                    border: Border.all(color: _kGrey200),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8, height: 8,
-                        decoration: const BoxDecoration(color: _kGrey500, shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 5),
-                      const Text('Moja kwa moja',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                              color: _kGrey500, height: 1.5)),
-                    ],
-                  ),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              Container(
+                width: 52, height: 52,
+                decoration: BoxDecoration(
+                  color: _kBlueBg,
+                  borderRadius: BorderRadius.circular(14),
                 ),
-              ],
-            ),
+                alignment: Alignment.center,
+                child: const Icon(Icons.bar_chart_rounded, color: _kBlue, size: 26),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    const Text('Data',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _kGrey900)),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(20)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Container(width: 6, height: 6,
+                            decoration: const BoxDecoration(color: _kGrey500, shape: BoxShape.circle)),
+                        const SizedBox(width: 4),
+                        const Text('LIVE', style: TextStyle(
+                            fontSize: 10, fontWeight: FontWeight.w800, color: _kGrey500, letterSpacing: 0.5)),
+                      ]),
+                    ),
+                  ]),
+                  const Text('Simamia data za mfumo',
+                      style: TextStyle(fontSize: 13, color: _kGrey500)),
+                ]),
+              ),
+            ]),
           ),
-          // Tab bar
+          // ── Tab bar na icons ───────────────────────────────────────────────
           Container(
             decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: _kGrey200)),
@@ -412,15 +295,22 @@ class _AdminDataPageState extends State<AdminDataPage>
               tabAlignment: TabAlignment.start,
               labelColor: _kBlue,
               unselectedLabelColor: _kGrey500,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, height: 4 / 3),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, height: 4 / 3),
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
               indicator: const UnderlineTabIndicator(
                 borderSide: BorderSide(color: _kBlue, width: 2),
               ),
               indicatorSize: TabBarIndicatorSize.tab,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+              labelPadding: const EdgeInsets.symmetric(horizontal: 10),
               padding: EdgeInsets.zero,
-              tabs: _typeLabels.map((l) => Tab(height: 36, child: Text(l))).toList(),
+              tabs: List.generate(_typeLabels.length, (i) => Tab(
+                height: 40,
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(_tabIcons[i], size: 14),
+                  const SizedBox(width: 5),
+                  Text(_typeLabels[i]),
+                ]),
+              )),
             ),
           ),
           Expanded(
@@ -586,23 +476,17 @@ class _AdminDataPageState extends State<AdminDataPage>
   );
 
   Widget _addBtn(String type) {
-    const labels = {
-      'departments': 'Idara',  'subjects': 'Somo',
-      'cadres': 'Kada',        'regions': 'Mkoa',
-      'districts': 'Wilaya',   'facilities': 'Kituo',
-    };
-    return OutlinedButton(
-      onPressed: () => _showAddEdit(type),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: _kGrey700,
-        side: const BorderSide(color: _kGrey200),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    return GestureDetector(
+      onTap: () => _showAddEdit(type),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(color: _kBlue, borderRadius: BorderRadius.circular(12)),
+        child: const Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.add_rounded, color: Colors.white, size: 15),
+          SizedBox(width: 4),
+          Text('Ongeza', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+        ]),
       ),
-      child: Text('+ ${labels[type] ?? 'Ongeza'}'),
     );
   }
 
@@ -663,96 +547,110 @@ class _AdminDataPageState extends State<AdminDataPage>
     );
   }
 
+  // Colored icon kwa kila aina ya data (kama mockup)
+  (IconData, Color, Color) _itemIcon(String type, Map<String, dynamic> item) {
+    if (type == 'facilities') {
+      final hasSchool = item['school_code'] != null;
+      final lvl = (item['level'] as String? ?? '').toLowerCase();
+      final isEdu = hasSchool || lvl == 'primary' || lvl == 'secondary';
+      return isEdu
+          ? (Icons.school_outlined, const Color(0xFF15803D), const Color(0xFFF0FDF4))
+          : (Icons.local_hospital_outlined, _kRed, _kRedBg);
+    }
+    if (type == 'cadres') {
+      final cat = (item['category'] as String? ?? '').toLowerCase();
+      return cat == 'education'
+          ? (Icons.menu_book_rounded, const Color(0xFF15803D), const Color(0xFFF0FDF4))
+          : (Icons.medical_services_outlined, _kRed, _kRedBg);
+    }
+    if (type == 'subjects') return (Icons.menu_book_rounded, _kAmber, _kAmberBg);
+    if (type == 'departments') return (Icons.domain_rounded, _kBlue, _kBlueBg);
+    if (type == 'regions') return (Icons.terrain_rounded, _kBlue, _kBlueBg);
+    if (type == 'districts') return (Icons.map_outlined, _kBlue, _kBlueBg);
+    return (Icons.circle_outlined, _kGrey600, _kGrey100);
+  }
+
   Widget _buildItem(String type, Map<String, dynamic> item) {
     final name    = (item['name'] ?? item['display_name'] ?? '') as String? ?? '';
     final code    = item['code'] as String? ?? item['school_code'] as String? ?? item['id']?.toString() ?? '';
     final badges  = _buildBadges(type, item);
     final dimmed  = type == 'departments' && item['status'] == 'disabled';
-
-    // Facilities subtitle: region · district
-    final facSub = type == 'facilities'
-        ? [
-            _getRegionName(item),
-            (item['district_name'] ?? item['district']) as String? ?? '',
-          ].where((s) => s.isNotEmpty).join(' · ')
+    final facSub  = type == 'facilities'
+        ? [_getRegionName(item), (item['district_name'] ?? item['district']) as String? ?? '']
+            .where((s) => s.isNotEmpty).join(' · ')
         : '';
+    final (ico, icoFg, icoBg) = _itemIcon(type, item);
 
     return Opacity(
       opacity: dimmed ? 0.5 : 1.0,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Code + badges row
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      if (code.isNotEmpty)
-                        Text(code,
-                            style: const TextStyle(
-                                fontSize: 12, height: 4 / 3, color: _kGrey500,
-                                fontFamily: 'monospace')),
-                      ...badges,
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(name,
-                      style: const TextStyle(
-                          fontSize: 14, height: 10 / 7,
-                          fontWeight: FontWeight.w500, color: _kGrey900),
-                      overflow: TextOverflow.ellipsis),
-                  if (facSub.isNotEmpty)
-                    Text(facSub,
-                        style: const TextStyle(fontSize: 11, height: 1.5, color: _kGrey500),
-                        overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            _RowAction(
-              onView:   () => _showView(type, item),
-              onEdit:   () => _showAddEdit(type, item: item),
-              onDelete: () => _delete(type, item),
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          // Colored icon box
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(color: icoBg, borderRadius: BorderRadius.circular(12)),
+            alignment: Alignment.center,
+            child: Icon(ico, size: 20, color: icoFg),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(name,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey900),
+                  overflow: TextOverflow.ellipsis),
+              if (code.isNotEmpty || badges.isNotEmpty || facSub.isNotEmpty)
+                const SizedBox(height: 3),
+              Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                if (code.isNotEmpty)
+                  Text(code, style: const TextStyle(fontSize: 11, color: _kGrey500, fontFamily: 'monospace')),
+                ...badges,
+              ]),
+              if (facSub.isNotEmpty)
+                Text(facSub, style: const TextStyle(fontSize: 11, color: _kGrey500),
+                    overflow: TextOverflow.ellipsis),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          _RowAction(
+            onEdit:   () => _showAddEdit(type, item: item),
+            onDelete: () => _delete(type, item),
+          ),
+        ]),
       ),
     );
   }
 }
 
-// ─── Row action buttons (Eye + Pencil + Trash) ───────────────────────────────
+// ─── Row action buttons — outlined square [✎][🗑] kama mockup ────────────────
 
 class _RowAction extends StatelessWidget {
-  final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  const _RowAction({required this.onView, required this.onEdit, required this.onDelete});
+  const _RowAction({required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _btn(Icons.visibility_outlined,  _kGrey600, 14, onView),
-        _btn(Icons.edit_outlined,        _kBlue,    13, onEdit),
-        _btn(Icons.delete_outline,       _kRed,     13, onDelete),
-      ],
-    );
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      _sq(Icons.edit_rounded, _kGrey600, onEdit),
+      const SizedBox(width: 6),
+      _sq(Icons.delete_outline_rounded, _kRed, onDelete),
+    ]);
   }
 
-  Widget _btn(IconData icon, Color color, double size, VoidCallback onTap) =>
+  Widget _sq(IconData icon, Color color, VoidCallback onTap) =>
       GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Icon(icon, size: size, color: color),
+        child: Container(
+          width: 34, height: 34,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: _kGrey200),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 16, color: color),
         ),
       );
 }
