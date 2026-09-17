@@ -817,7 +817,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         const SizedBox(width: 12),
         const Expanded(child: Text('JINA', style: hs)),
         const SizedBox(width: 40, child: Text('%', textAlign: TextAlign.right, style: hs)),
-        const SizedBox(width: 48, child: Text('IDADI', textAlign: TextAlign.right, style: hs)),
+        const SizedBox(width: 48, child: Text('HESABU', textAlign: TextAlign.right, style: hs)),
       ]),
       const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
       if (rows.length > 12)
@@ -829,7 +829,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
       Row(children: [
         const Expanded(
-            child: Text('Jumla',
+            child: Text('Jumla:',
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
         Text(total >= 1000 ? _thousands(total) : '$total',
             style: const TextStyle(
@@ -989,7 +989,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         const SizedBox(width: 12),
         const SizedBox(width: 64, child: Text('WALIOPO', textAlign: TextAlign.right, style: hs)),
         const SizedBox(width: 12),
-        const SizedBox(width: 64, child: Text('WANAOINGIA', textAlign: TextAlign.right, style: hs)),
+        const SizedBox(width: 64, child: Text('WANAOHAMIA', textAlign: TextAlign.right, style: hs)),
         const SizedBox(width: 12),
         const SizedBox(width: 56, child: Text('JUMLA', textAlign: TextAlign.right, style: hs)),
       ]),
@@ -1052,11 +1052,11 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       Row(children: [
         const SizedBox(width: 24),
         const SizedBox(width: 12),
-        const Expanded(child: Text('KUTOKA', style: hs)),
+        const Expanded(child: Text('WANATOKA', style: hs)),
         const SizedBox(width: 12),
-        const SizedBox(width: 64, child: Text('KWENDA', textAlign: TextAlign.right, style: hs)),
+        const SizedBox(width: 64, child: Text('WANAELEKEA', textAlign: TextAlign.right, style: hs)),
         const SizedBox(width: 12),
-        const SizedBox(width: 48, child: Text('N', textAlign: TextAlign.right, style: hs)),
+        const SizedBox(width: 48, child: Text('HESABU', textAlign: TextAlign.right, style: hs)),
       ]),
       const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
       if (rows.length > 12)
