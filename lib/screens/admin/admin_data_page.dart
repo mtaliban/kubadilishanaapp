@@ -226,87 +226,93 @@ class _AdminDataPageState extends State<AdminDataPage>
     Icons.local_hospital_outlined, // Vituo
   ];
 
+  Widget _tabBar() => Container(
+    color: Colors.white,
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: _kGrey200)),
+    ),
+    child: TabBar(
+      controller: _tabCtrl,
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      labelColor: _kBlue,
+      unselectedLabelColor: _kGrey500,
+      labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+      indicator: const UnderlineTabIndicator(
+        borderSide: BorderSide(color: _kBlue, width: 2),
+      ),
+      indicatorSize: TabBarIndicatorSize.tab,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: EdgeInsets.zero,
+      tabs: List.generate(_typeLabels.length, (i) => Tab(
+        height: 40,
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(_tabIcons[i], size: 14),
+          const SizedBox(width: 5),
+          Text(_typeLabels[i]),
+        ]),
+      )),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header kama mockup: 52×52 icon box + title + subtitle ──────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-              Container(
-                width: 52, height: 52,
-                decoration: BoxDecoration(
-                  color: _kBlueBg,
-                  borderRadius: BorderRadius.circular(14),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, _) => [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Container(
+                  width: 52, height: 52,
+                  decoration: BoxDecoration(
+                    color: _kBlueBg,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.dns_rounded, color: _kBlue, size: 26),
                 ),
-                alignment: Alignment.center,
-                child: const Icon(Icons.dns_rounded, color: _kBlue, size: 26),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    const Text('Data',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _kGrey900)),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(20)),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Container(width: 6, height: 6,
-                            decoration: const BoxDecoration(color: _kGrey500, shape: BoxShape.circle)),
-                        const SizedBox(width: 4),
-                        const Text('LIVE', style: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.w800, color: _kGrey500, letterSpacing: 0.5)),
-                      ]),
-                    ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      const Text('Data',
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _kGrey900)),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(20)),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Container(width: 6, height: 6,
+                              decoration: const BoxDecoration(color: _kGrey500, shape: BoxShape.circle)),
+                          const SizedBox(width: 4),
+                          const Text('LIVE', style: TextStyle(
+                              fontSize: 10, fontWeight: FontWeight.w800, color: _kGrey500, letterSpacing: 0.5)),
+                        ]),
+                      ),
+                    ]),
+                    const Text('Simamia data za mfumo',
+                        style: TextStyle(fontSize: 13, color: _kGrey500)),
                   ]),
-                  const Text('Simamia data za mfumo',
-                      style: TextStyle(fontSize: 13, color: _kGrey500)),
-                ]),
-              ),
-            ]),
-          ),
-          // ── Tab bar na icons ───────────────────────────────────────────────
-          Container(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _kGrey200)),
-            ),
-            child: TabBar(
-              controller: _tabCtrl,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              labelColor: _kBlue,
-              unselectedLabelColor: _kGrey500,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-              indicator: const UnderlineTabIndicator(
-                borderSide: BorderSide(color: _kBlue, width: 2),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 10),
-              padding: EdgeInsets.zero,
-              tabs: List.generate(_typeLabels.length, (i) => Tab(
-                height: 40,
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(_tabIcons[i], size: 14),
-                  const SizedBox(width: 5),
-                  Text(_typeLabels[i]),
-                ]),
-              )),
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabCtrl,
-              children: _types.map(_buildTabContent).toList(),
+                ),
+              ]),
             ),
           ),
         ],
+        body: Column(
+          children: [
+            _tabBar(),
+            Expanded(
+              child: TabBarView(
+                controller: _tabCtrl,
+                children: _types.map(_buildTabContent).toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -316,35 +322,72 @@ class _AdminDataPageState extends State<AdminDataPage>
     final error    = _errors[type];
     final filtered = _filtered(type);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: _buildFilterArea(type, filtered.length),
-        ),
-        const SizedBox(height: 12),
-        if (loading)
-          const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
-        else if (error != null)
-          Expanded(
-            child: Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.error_outline, color: _kRed, size: 48),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: () { _cache.remove(type); _loadType(type); },
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Jaribu tena'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: _kBlue, foregroundColor: Colors.white),
-                ),
-              ]),
+    return RefreshIndicator(
+      onRefresh: () async { _cache.remove(type); await _loadType(type); },
+      color: _kBlue,
+      child: CustomScrollView(
+        key: PageStorageKey<String>(type),
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: _buildFilterArea(type, filtered.length),
             ),
-          )
-        else
-          Expanded(child: _buildList(type, filtered)),
-      ],
+          ),
+          if (loading)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator(color: _kBlue)),
+            )
+          else if (error != null)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.error_outline, color: _kRed, size: 48),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () { _cache.remove(type); _loadType(type); },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Jaribu tena'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBlue, foregroundColor: Colors.white),
+                  ),
+                ]),
+              ),
+            )
+          else if (filtered.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.inbox_outlined, size: 48, color: _kGrey400),
+                  SizedBox(height: 8),
+                  Text('Hakuna data', style: TextStyle(fontSize: 14, color: _kGrey500)),
+                ]),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (ctx, i) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: _kGrey200),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: _buildItem(type, filtered[i] as Map<String, dynamic>),
+                  ),
+                  childCount: filtered.length,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -523,35 +566,6 @@ class _AdminDataPageState extends State<AdminDataPage>
     items: items,
     onChanged: enabled ? onChanged : null,
   );
-
-  Widget _buildList(String type, List<dynamic> items) {
-    if (items.isEmpty) {
-      return const Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.inbox_outlined, size: 48, color: _kGrey400),
-          SizedBox(height: 8),
-          Text('Hakuna data', style: TextStyle(fontSize: 14, color: _kGrey500)),
-        ]),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: () async { _cache.remove(type); await _loadType(type); },
-      color: _kBlue,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        itemCount: items.length,
-        itemBuilder: (ctx, i) => Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: _kGrey200),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: _buildItem(type, items[i] as Map<String, dynamic>),
-        ),
-      ),
-    );
-  }
 
   // Colored icon kwa kila aina ya data (kama mockup)
   (IconData, Color, Color) _itemIcon(String type, Map<String, dynamic> item) {
