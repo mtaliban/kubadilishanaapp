@@ -13,7 +13,6 @@ import '../../widgets/select_sheet.dart';
 const _blue    = Color(0xFF1E40AF);   // brand-blue
 const _blueBg  = Color(0xFFEFF6FF);   // blue-50
 const _blue100 = Color(0xFFDBEAFE);   // blue-100
-const _blue600 = Color(0xFF2563EB);   // blue-600
 const _blue700 = Color(0xFF1D4ED8);   // blue-700
 const _green50  = Color(0xFFF0FDF4);  // green-50
 const _green    = Color(0xFF16A34A);  // green-600
@@ -38,7 +37,6 @@ const _g400 = Color(0xFF9CA3AF);
 const _g300 = Color(0xFFD1D5DB);
 const _g200 = Color(0xFFE5E7EB);
 const _g100 = Color(0xFFF3F4F6);
-const _g50  = Color(0xFFF9FAFB);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Web `input` class ≡ py-1.5 px-2.5 text-xs rounded-md border-grey-300
@@ -1461,178 +1459,209 @@ class _State extends State<AdminUsersPage> {
   }
 
   // ── Header ─────────────────────────────────────────────────────────────────
-  // Web: flex items-start justify-between gap-3
-  //      h1 text-2xl font-bold + ● Live span
-  //      4 buttons: flex-wrap justify-end gap-1.5
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Row 1: icon + title/subtitle + Ongeza button
         Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          const Text('Watumiaji',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: _g900)),
-          const SizedBox(width: 8),
-          Text('● Live', style: TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w700,
-              color: _live ? const Color(0xFF22C55E) : const Color(0xFFD1D5DB))),
-        ]),
-        const Spacer(),
-        Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.end, children: [
-          _hdrBtn(Icons.delete_outline_rounded, 'Trash', _g600, _g100, _g200, () {
-            _snack('Orodha ya waliofutwa haijatekelezwa bado', _g700);
-          }),
-          _hdrBtn(Icons.add_rounded, 'Mtumiaji mpya', Colors.white, _blue, _blue, _showAdd),
-          _hdrBtn(Icons.verified_user_rounded, 'Admin', Colors.white, _blue600, _blue600, _showAddAdmin),
-          _hdrBtn(Icons.download_rounded, 'Import', _g600, _g100, _g200, _showImport),
-        ]),
-      ]),
-    );
-  }
-
-  // ── Bulk bar ────────────────────────────────────────────────────────────────
-  // Web: bg-grey-50 rounded-xl px-3 py-2 space-y-2
-  Widget _buildBulkBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(color: _g50, borderRadius: BorderRadius.circular(12)),
-        child: Column(children: [
-          // label + checkbox — text-sm font-semibold text-grey-700, w-4 h-4
-          Row(children: [
-            SizedBox(
-              width: 16, height: 16,
-              child: Checkbox(
-                value: _selectAll,
-                onChanged: (_) => _toggleSelectAll(),
-                activeColor: _blue,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _toggleSelectAll,
-              child: Text('Chagua zote (${_selected.length})',
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: _g700)),
-            ),
-          ]),
-          const SizedBox(height: 8),
-          // 3 bulk buttons: flex gap-1.5
-          Row(children: [
-            Expanded(child: _bulkBtn(
-              Icons.check_circle_outline_rounded, 'Wezesha',
-              _green700, _green50, const Color(0xFFBBF7D0),
-              _selected.isEmpty ? null : _bulkEnable,
-            )),
-            const SizedBox(width: 6),
-            Expanded(child: _bulkBtn(
-              Icons.block_rounded, 'Sitisha',
-              _org700, _org50, const Color(0xFFFED7AA),
-              _selected.isEmpty ? null : _bulkSuspend,
-            )),
-            const SizedBox(width: 6),
-            Expanded(child: _bulkBtn(
-              Icons.delete_outline_rounded, 'Futa',
-              _red, _red50, const Color(0xFFFECACA),
-              _selected.isEmpty ? null : _bulkDelete,
-            )),
-          ]),
-        ]),
-      ),
-    );
-  }
-
-  // ── Filters ─────────────────────────────────────────────────────────────────
-  // Web: flex flex-col gap-2
-  //      Row1: <input flex-1> + <select w-auto> (both className="input")
-  //      Row2: <select w-full> for region, district, facility, subjects
-  Widget _buildFilters() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        // Row 1: search flex-1 + category w-auto
-        Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          // Rounded square icon box (blue-50 bg)
+          Container(
+            width: 52, height: 52,
+            decoration: BoxDecoration(color: _blueBg, borderRadius: BorderRadius.circular(14)),
+            alignment: Alignment.center,
+            child: const Icon(Icons.group_rounded, color: _blue, size: 26),
+          ),
+          const SizedBox(width: 12),
           Expanded(
-            child: TextField(
-              controller: _search,
-              style: const TextStyle(fontSize: _kInputFs, color: _g900),
-              decoration: InputDecoration(
-                hintText: 'Tafuta jina, simu, kada...',
-                hintStyle: const TextStyle(color: _g400, fontSize: _kInputFs),
-                prefixIcon: const Icon(Icons.search_rounded, color: _g400, size: 16),
-                fillColor: Colors.white, filled: true,
-                isDense: true,
-                contentPadding: _kInputPad,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(_kInputRadius),
-                    borderSide: const BorderSide(color: _g300)),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(_kInputRadius),
-                    borderSide: const BorderSide(color: _g300)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(_kInputRadius),
-                    borderSide: const BorderSide(color: _blue, width: 1.5)),
-              ),
-            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                const Text('Watumiaji',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _g900)),
+                const SizedBox(width: 8),
+                // LIVE badge — pill shape
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _live ? const Color(0xFFDCFCE7) : _g100,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                      width: 6, height: 6,
+                      decoration: BoxDecoration(
+                        color: _live ? const Color(0xFF22C55E) : _g300,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text('LIVE',
+                        style: TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w800,
+                          color: _live ? _green : _g400,
+                          letterSpacing: 0.5,
+                        )),
+                  ]),
+                ),
+              ]),
+              Text('${_loading ? '...' : _users.length} watumiaji wote',
+                  style: const TextStyle(fontSize: 13, color: _g500)),
+            ]),
           ),
           const SizedBox(width: 8),
-          // Category select — w-auto, same height as search
+          // Ongeza button — big blue
           GestureDetector(
-            onTap: _openCategoryPicker,
+            onTap: _showAdd,
             child: Container(
-              padding: _kInputPad,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
               decoration: BoxDecoration(
-                color: _category.isNotEmpty ? _blueBg : Colors.white,
-                border: Border.all(
-                    color: _category.isNotEmpty ? _blue : _g300,
-                    width: _category.isNotEmpty ? 1.5 : 1.0),
-                borderRadius: BorderRadius.circular(_kInputRadius),
+                color: _blue,
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(_catLabel, style: TextStyle(
-                    fontSize: _kInputFs,
-                    color: _category.isNotEmpty ? _blue : _g700,
-                    fontWeight: _category.isNotEmpty ? FontWeight.w600 : FontWeight.w400)),
-                const SizedBox(width: 4),
-                Icon(Icons.keyboard_arrow_down_rounded,
-                    size: 15, color: _category.isNotEmpty ? _blue : _g500),
+              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.person_add_rounded, color: Colors.white, size: 16),
+                SizedBox(width: 6),
+                Text('Ongeza', style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
               ]),
             ),
           ),
         ]),
-        const SizedBox(height: 8),
-        // Region — w-full
-        _selBtn(
-          _regionName != null ? 'Mkoa: $_regionName' : 'Mkoa wote',
-          _openRegionPicker,
-          active: _regionId != null,
-        ),
-        const SizedBox(height: 8),
-        // District — disabled if no region
-        _selBtn(
-          _districtName ?? 'Wilaya zote',
-          _openDistrictPicker,
-          active: _districtId != null,
-          disabled: _regionId == null,
-        ),
-        const SizedBox(height: 8),
-        // Facility — disabled if no district
-        _selBtn(
-          _facilityName ?? 'Vituo vyote',
-          _openFacilityPicker,
-          active: _facilityId != null,
-          disabled: _districtId == null,
-        ),
-        if (_subjects.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          _selBtn(
-            _subjectName ?? 'Masomo yote',
-            _openSubjectPicker,
-            active: _subjectCode != null,
+        const SizedBox(height: 14),
+        // Row 2: 3 action buttons (Trash active=pink, Admin, Import outlined)
+        Row(children: [
+          Expanded(child: _hdrBtn(Icons.delete_outline_rounded, 'Trash', _red, _red50, _red100, () {
+            _snack('Orodha ya waliofutwa haijatekelezwa bado', _g700);
+          })),
+          const SizedBox(width: 8),
+          Expanded(child: _hdrBtn(Icons.shield_outlined, 'Admin', _g700, Colors.white, _g200,
+              _showAddAdmin)),
+          const SizedBox(width: 8),
+          Expanded(child: _hdrBtn(Icons.upload_file_rounded, 'Import', _g700, Colors.white, _g200,
+              _showImport)),
+        ]),
+        const SizedBox(height: 16),
+      ]),
+    );
+  }
+
+  // ── Bulk bar — select-all + count + bulk action buttons ───────────────────
+  Widget _buildBulkBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Chagua zote  ·  Jumla N
+        Row(children: [
+          SizedBox(
+            width: 18, height: 18,
+            child: Checkbox(
+              value: _selectAll,
+              onChanged: (_) => _toggleSelectAll(),
+              activeColor: _blue,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            ),
           ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: _toggleSelectAll,
+            child: Text('Chagua zote (${_selected.length})',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _g700)),
+          ),
+          const Spacer(),
+          Text('Jumla ${_loading ? '...' : _users.length}',
+              style: const TextStyle(fontSize: 12, color: _g500)),
+        ]),
+        // Bulk action buttons — only visible when something is selected
+        if (_selected.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(child: _bulkBtn(
+              Icons.check_circle_outline_rounded, 'Wezesha',
+              _green700, _green50, const Color(0xFFBBF7D0), _bulkEnable,
+            )),
+            const SizedBox(width: 6),
+            Expanded(child: _bulkBtn(
+              Icons.block_rounded, 'Sitisha',
+              _org700, _org50, const Color(0xFFFED7AA), _bulkSuspend,
+            )),
+            const SizedBox(width: 6),
+            Expanded(child: _bulkBtn(
+              Icons.delete_outline_rounded, 'Futa',
+              _red, _red50, const Color(0xFFFECACA), _bulkDelete,
+            )),
+          ]),
         ],
+      ]),
+    );
+  }
+
+  // ── Filters — 2×2 grid kama mockup ─────────────────────────────────────────
+  Widget _buildFilters() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Search — full width
+        TextField(
+          controller: _search,
+          style: const TextStyle(fontSize: _kInputFs, color: _g900),
+          decoration: InputDecoration(
+            hintText: 'Tafuta kwa jina, simu au...',
+            hintStyle: const TextStyle(color: _g400, fontSize: _kInputFs),
+            prefixIcon: const Icon(Icons.search_rounded, color: _g400, size: 18),
+            fillColor: Colors.white, filled: true,
+            isDense: true,
+            contentPadding: _kInputPad,
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: _g300)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: _g300)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: _blue, width: 1.5)),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Row 1: Idara + Mkoa
+        Row(children: [
+          Expanded(child: _selBtn(
+            _catLabel,
+            _openCategoryPicker,
+            active: _category.isNotEmpty,
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: _selBtn(
+            _regionName != null ? 'Mkoa: $_regionName' : 'Mkoa wote',
+            _openRegionPicker,
+            active: _regionId != null,
+          )),
+        ]),
+        const SizedBox(height: 8),
+        // Row 2: Wilaya + Masomo/Vituo
+        Row(children: [
+          Expanded(child: _selBtn(
+            _districtName ?? 'Wilaya zote',
+            _openDistrictPicker,
+            active: _districtId != null,
+            disabled: _regionId == null,
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: _subjects.isNotEmpty
+            ? _selBtn(
+                _subjectName ?? 'Masomo yote',
+                _openSubjectPicker,
+                active: _subjectCode != null,
+              )
+            : _selBtn(
+                _facilityName ?? 'Vituo vyote',
+                _openFacilityPicker,
+                active: _facilityId != null,
+                disabled: _districtId == null,
+              ),
+          ),
+        ]),
       ]),
     );
   }
@@ -1815,90 +1844,32 @@ class _UserCard extends StatelessWidget {
             ]),
           ),
 
-          // ── Action grid: px-3 pb-4 pt-1 → grid-cols-2 gap-2 ─────────────
-          // Web auto-placement:
-          //   Angalia | Hariri
-          //   if !admin: Funga/Fungua | (if !paid: Ruhusu)
-          //   if !admin: Futa | (empty if odd)
-          //   if admin: Ondoa Admin (col-span-2)
+          // ── Action row: icon-only buttons — left pair + spacer + right group ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
-            child: Column(children: [
-              // Row 1 — always present
-              Row(children: [
-                Expanded(child: _vBtn(
-                    Icons.visibility_rounded, 'Angalia', _g700, _g100, onView)),
-                const SizedBox(width: 8),
-                Expanded(child: _vBtn(
-                    Icons.edit_rounded, 'Hariri', _blue, _blueBg, onEdit)),
-              ]),
-              if (!isAdmin) ...[
-                const SizedBox(height: 8),
-                // Paid: [Funga/Fungua | Futa]
-                if (isPaid)
-                  Row(children: [
-                    Expanded(child: _vBtn(
-                      isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
-                      isActive ? 'Funga' : 'Fungua',
-                      _org600, _org50, onSuspend,
-                    )),
-                    const SizedBox(width: 8),
-                    Expanded(child: _vBtn(
-                        Icons.delete_outline_rounded, 'Futa', _red, _red50, onDelete)),
-                  ])
-                // Unpaid: [Funga/Fungua | Ruhusu] then [Futa | empty]
-                else ...[
-                  Row(children: [
-                    Expanded(child: _vBtn(
-                      isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
-                      isActive ? 'Funga' : 'Fungua',
-                      _org600, _org50, onSuspend,
-                    )),
-                    const SizedBox(width: 8),
-                    Expanded(child: _vBtn(
-                      Icons.phone_rounded,
-                      contact ? 'Ameruhusu' : 'Ruhusu',
-                      contact ? _green700 : _g600,
-                      contact ? _green50 : _g100,
-                      onContact,
-                    )),
-                  ]),
-                  const SizedBox(height: 8),
-                  Row(children: [
-                    Expanded(child: _vBtn(
-                        Icons.delete_outline_rounded, 'Futa', _red, _red50, onDelete)),
-                    const SizedBox(width: 8),
-                    const Expanded(child: SizedBox()),
-                  ]),
-                ],
-              ],
-              // Admin: Ondoa Admin col-span-2, flex items-center justify-center gap-1.5 (web: row layout)
-              if (isAdmin) ...[
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: onAdmin,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _red50,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shield_outlined, size: 16, color: _red),
-                        SizedBox(width: 6),
-                        Text('Ondoa Admin',
-                            style: TextStyle(
-                                fontSize: 12,
-                                height: 4 / 3,
-                                color: _red,
-                                fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+            child: Row(children: [
+              _iBtn(Icons.visibility_rounded, _g700, _g100, onView, tip: 'Angalia'),
+              const SizedBox(width: 6),
+              _iBtn(Icons.edit_rounded, _blue, _blueBg, onEdit, tip: 'Hariri'),
+              const Spacer(),
+              if (isAdmin)
+                _iBtn(Icons.shield_outlined, _red, _red50, onAdmin, tip: 'Ondoa Admin')
+              else ...[
+                _iBtn(
+                  isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
+                  _org600, _org50, onSuspend,
+                  tip: isActive ? 'Funga' : 'Fungua',
                 ),
+                const SizedBox(width: 6),
+                _iBtn(
+                  Icons.phone_rounded,
+                  contact ? _green700 : _g600,
+                  contact ? _green50 : _g100,
+                  onContact,
+                  tip: contact ? 'Ameruhusu' : 'Ruhusu',
+                ),
+                const SizedBox(width: 6),
+                _iBtn(Icons.delete_outline_rounded, _red, _red50, onDelete, tip: 'Futa'),
               ],
             ]),
           ),
@@ -1907,23 +1878,19 @@ class _UserCard extends StatelessWidget {
     );
   }
 
-  // Web: flex flex-col items-center justify-center gap-1 py-3 rounded-2xl font-semibold text-xs
-  Widget _vBtn(IconData icon, String label, Color fg, Color bg, VoidCallback onTap) =>
-      GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-              color: bg, borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 16, color: fg),
-              const SizedBox(height: 4),
-              Text(label, style: TextStyle(
-                  fontSize: 12, height: 4 / 3, color: fg, fontWeight: FontWeight.w600)),
-            ],
+  // Icon-only 38×38 rounded square — HitTestBehavior.opaque fixes taps inside ScrollViews
+  Widget _iBtn(IconData icon, Color fg, Color bg, VoidCallback onTap, {String tip = ''}) =>
+      Tooltip(
+        message: tip,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+                color: bg, borderRadius: BorderRadius.circular(10)),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 18, color: fg),
           ),
         ),
       );

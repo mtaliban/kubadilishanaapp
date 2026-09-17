@@ -174,10 +174,10 @@ class _AdminShellState extends State<AdminShell> {
 
   Widget _buildBottomNav() {
     const items = [
-      (0, Icons.bar_chart_rounded, 'Admin'),
+      (0, Icons.workspace_premium_outlined, 'Admin'),
       (1, Icons.group_rounded, 'Watumiaji'),
-      (2, Icons.merge_type_rounded, 'Wenzao'),
-      (6, Icons.payments_outlined, 'Malipo'),
+      (2, Icons.manage_search_rounded, 'Wenzao'),
+      (6, Icons.receipt_long_outlined, 'Malipo'),
       (8, Icons.assignment_outlined, 'Maoni'),
     ];
     return Container(
@@ -251,6 +251,7 @@ class _AdminShellState extends State<AdminShell> {
   void _showUserMenu(BuildContext context) {
     final RenderBox btn = context.findRenderObject() as RenderBox;
     final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    final nav = Navigator.of(context);
     final pos = RelativeRect.fromRect(
       Rect.fromPoints(
         btn.localToGlobal(Offset.zero, ancestor: overlay),
@@ -285,7 +286,7 @@ class _AdminShellState extends State<AdminShell> {
     ).then((v) {
       if (!mounted) return;
       if (v == 'logout') _logout();
-      if (v == 'profile') Navigator.pushNamed(context, '/profile');
+      if (v == 'profile') nav.pushNamed('/profile');
     });
   }
 
@@ -301,23 +302,23 @@ class _AdminShellState extends State<AdminShell> {
                 padding: const EdgeInsets.only(top: 8),
                 children: [
                   _section('MENU KUU'),
-                  _item(Icons.bar_chart_rounded, 'Admin', 0),
-                  _item(Icons.group_outlined, 'Watumiaji', 1,
+                  _item(Icons.workspace_premium_outlined, 'Admin', 0),
+                  _item(Icons.group_rounded, 'Watumiaji', 1,
                       badge: _userCount > 0 ? '$_userCount' : null),
-                  _item(Icons.merge_type_rounded, 'Waliopata wenzao', 2),
-                  _item(Icons.favorite_border_rounded, 'Match za kweli', 3),
-                  _item(Icons.storage_rounded, 'Data', 4),
+                  _item(Icons.manage_search_rounded, 'Waliopata wenzao', 2),
+                  _item(Icons.compare_arrows_rounded, 'Match za kweli', 3),
+                  _item(Icons.bar_chart_rounded, 'Data', 4),
                   const SizedBox(height: 4),
                   const Divider(height: 1, color: _kGrey200, indent: 16, endIndent: 16),
                   _section('MFUMO'),
-                  _item(Icons.campaign_rounded, 'Matangazo', 5),
-                  _item(Icons.payments_outlined, 'Malipo', 6),
-                  _item(Icons.phone_in_talk_outlined, 'Waliopigiana', 7),
+                  _item(Icons.notifications_outlined, 'Matangazo', 5),
+                  _item(Icons.receipt_long_outlined, 'Malipo', 6),
+                  _item(Icons.phone_in_talk_rounded, 'Waliopigiana', 7),
                   _item(Icons.assignment_outlined, 'Maoni', 8),
                   const SizedBox(height: 4),
                   const Divider(height: 1, color: _kGrey200, indent: 16, endIndent: 16),
                   _section('RIPOTI NA UFUATILIAJI'),
-                  _item(Icons.assessment_outlined, 'Statistiki', 9),
+                  _item(Icons.insert_chart_outlined_rounded, 'Statistiki', 9),
                   _item(Icons.monitor_heart_outlined, 'Ufuatiliaji', 10),
                   _item(Icons.lock_reset_rounded, 'Kuweka upya nenosiri', 11),
                   const SizedBox(height: 8),
