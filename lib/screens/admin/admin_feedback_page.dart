@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
@@ -11,8 +10,15 @@ const _kRedBg   = Color(0xFFFEE2E2);
 const _kGrey900 = Color(0xFF111827);
 const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
+const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kGrey100 = Color(0xFFF3F4F6);
+
+const _kOrangeBg  = Color(0xFFFFF7ED);
+const _kOrangeFg  = Color(0xFFC2410C);
+const _kOrangeBdr = Color(0xFFFED7AA);
+
+const _kPageSize = 5;
 
 class AdminFeedbackPage extends StatefulWidget {
   const AdminFeedbackPage({super.key});
@@ -26,7 +32,9 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   List<dynamic> _all = [];
   List<dynamic> _filtered = [];
   final _searchCtrl = TextEditingController();
-  int _tabIndex = 0; // 0=Yote 1=Hayajajibiwa 2=Yamejibiwa
+  int _tabIndex = 0;
+  int _page = 0;
+  Map<String, String>? _flash;
 
   @override
   void initState() {
@@ -48,7 +56,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
       if (!mounted) return;
       final data = res.data;
       setState(() {
-        _all = data is List ? data : (data['results'] as List? ?? []);
+        _all = data is List ? data : (data['items'] as List? ?? data['results'] as List? ?? []);
         _applyFilter();
         _loading = false;
       });
@@ -63,21 +71,29 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     setState(() {
       _filtered = _all.where((item) {
         final m = item as Map<String, dynamic>;
-        final name = (m['user_name'] as String? ?? m['full_name'] as String? ?? '').toLowerCase();
-        final msg = (m['message'] as String? ?? m['subject'] as String? ?? '').toLowerCase();
+        final name    = (m['user_name'] as String? ?? m['full_name'] as String? ?? '').toLowerCase();
+        final msg     = (m['message'] as String? ?? m['subject'] as String? ?? '').toLowerCase();
         final replied = m['reply'] != null || m['admin_reply'] != null;
-        final matchQ = q.isEmpty || name.contains(q) || msg.contains(q);
+        final matchQ  = q.isEmpty || name.contains(q) || msg.contains(q);
         bool matchTab = true;
         if (_tabIndex == 1) matchTab = !replied;
         if (_tabIndex == 2) matchTab = replied;
         return matchQ && matchTab;
       }).toList();
+      _page = 0;
     });
   }
 
   void _setTab(int i) {
     setState(() { _tabIndex = i; });
     _applyFilter();
+  }
+
+  void _showFlash(String type, String msg) {
+    setState(() => _flash = {'type': type, 'msg': msg});
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _flash = null);
+    });
   }
 
   Future<void> _delete(String id) async {
@@ -95,37 +111,37 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
         ],
       ),
     );
-    if (ok != true) return;
+    if (ok != true || !mounted) return;
     try {
       await ApiService().adminDeleteFeedback(id);
       if (!mounted) return;
+      _showFlash('success', 'Yamefutwa');
       _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
+      _showFlash('error', 'Kosa: $e');
     }
   }
 
-  void _showReplySheet(Map<String, dynamic> item) {
-    final id = item['id']?.toString() ?? '';
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _ReplySheet(
-        feedbackId: id,
-        onReplied: _load,
-      ),
-    );
+  Future<void> _reply(String id, String text) async {
+    try {
+      await ApiService().adminReplyFeedback(id, text);
+      if (!mounted) return;
+      _showFlash('success', 'Jibu limetumwa kwa mtumiaji');
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      _showFlash('error', 'Imeshindikana');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final totalPages = (_filtered.length / _kPageSize).ceil().clamp(0, 9999);
+    final pageItems = _loading || _error != null
+        ? <dynamic>[]
+        : _filtered.skip(_page * _kPageSize).take(_kPageSize).toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: RefreshIndicator(
@@ -147,14 +163,16 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                           child: const Icon(Icons.feedback_outlined, color: _kBlue, size: 22),
                         ),
                         const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Maoni',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                            Text('Maoni na malamiko ya watumiaji',
-                                style: TextStyle(fontSize: 12, color: _kGrey500)),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Maoni',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                              Text('Maoni na malamiko ya watumiaji',
+                                  style: TextStyle(fontSize: 12, color: _kGrey500)),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -163,24 +181,17 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: TextField(
                       controller: _searchCtrl,
+                      style: const TextStyle(fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Tafuta maoni...',
-                        prefixIcon: const Icon(Icons.search, color: _kGrey500),
+                        hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
+                        prefixIcon: const Icon(Icons.search, color: _kGrey400),
                         filled: true,
                         fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: _kGrey200),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: _kGrey200),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: _kBlue),
-                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 9),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
                       ),
                     ),
                   ),
@@ -202,8 +213,50 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                 ],
               ),
             ),
+            // Flash message
+            if (_flash != null)
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _flash!['type'] == 'success' ? _kGreenBg : _kRedBg,
+                    border: Border.all(
+                      color: _flash!['type'] == 'success'
+                          ? const Color(0xFFBBF7D0)
+                          : const Color(0xFFFECACA),
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _flash!['type'] == 'success'
+                            ? Icons.check_circle_outline
+                            : Icons.warning_outlined,
+                        size: 13,
+                        color: _flash!['type'] == 'success' ? _kGreen : _kRed,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _flash!['msg']!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _flash!['type'] == 'success' ? _kGreen : _kRed,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             if (_loading)
-              const SliverFillRemaining(hasScrollBody: false, child: Center(child: CircularProgressIndicator(color: _kBlue)))
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator(color: _kBlue)),
+              )
             else if (_error != null)
               SliverFillRemaining(
                 hasScrollBody: false,
@@ -218,8 +271,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         icon: const Icon(Icons.refresh),
                         label: const Text('Jaribu tena'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _kBlue, foregroundColor: Colors.white,
-                        ),
+                            backgroundColor: _kBlue, foregroundColor: Colors.white),
                       ),
                     ],
                   ),
@@ -232,136 +284,58 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.feedback_outlined, color: _kGrey500, size: 48),
+                      const Icon(Icons.feedback_outlined, color: _kGrey500, size: 48),
                       const SizedBox(height: 12),
-                      Text('Hakuna maoni', style: TextStyle(color: _kGrey500)),
+                      const Text('Hakuna maoni',
+                          style: TextStyle(color: _kGrey500)),
                     ],
                   ),
                 ),
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (context, i) {
-                      final item = _filtered[i] as Map<String, dynamic>;
-                      final id = item['id']?.toString() ?? '';
-                      final name = item['user_name'] as String? ?? item['full_name'] as String? ?? 'Mtumiaji';
-                      final subject = item['subject'] as String? ?? '';
-                      final msg = item['message'] as String? ?? '';
-                      final createdAt = item['created_at'] as String? ?? '';
-                      final reply = item['reply'] as String? ?? item['admin_reply'] as String?;
-                      final initials = name.isNotEmpty ? name[0].toUpperCase() : 'M';
-                      return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: _kGrey200),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 18,
-                                backgroundColor: _kBlueBg,
-                                child: Text(initials,
-                                    style: TextStyle(color: _kBlue, fontWeight: FontWeight.bold, fontSize: 13)),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(name,
-                                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey900)),
-                                    if (createdAt.isNotEmpty)
-                                      Text(createdAt, style: TextStyle(fontSize: 11, color: _kGrey500)),
-                                  ],
-                                ),
-                              ),
-                              if (reply != null)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: _kGreenBg,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text('Imejibiwa',
-                                      style: TextStyle(fontSize: 10, color: _kGreen, fontWeight: FontWeight.w600)),
-                                ),
-                            ],
-                          ),
-                          if (subject.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Text(subject,
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey900)),
-                          ],
-                          if (msg.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(msg, style: TextStyle(fontSize: 13, color: _kGrey700)),
-                          ],
-                          if (reply != null) ...[
-                            const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: _kBlueBg,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Icon(Icons.reply, color: _kBlue, size: 14),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(reply,
-                                        style: TextStyle(fontSize: 12, color: _kBlue)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: () => _showReplySheet(item),
-                                icon: const Icon(Icons.reply, size: 14),
-                                label: const Text('Jibu', style: TextStyle(fontSize: 12)),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _kBlue,
-                                  side: const BorderSide(color: _kBlue),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              OutlinedButton.icon(
-                                onPressed: () => _delete(id),
-                                icon: const Icon(Icons.delete_outline, size: 14),
-                                label: const Text('Futa', style: TextStyle(fontSize: 12)),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _kRed,
-                                  side: const BorderSide(color: _kRed),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                    },
-                    childCount: _filtered.length,
+                    (ctx, i) => _FeedbackCard(
+                      key: ValueKey(pageItems[i]['id'] ?? i),
+                      index: (_page * _kPageSize) + i + 1,
+                      item: pageItems[i] as Map<String, dynamic>,
+                      onReply: _reply,
+                      onDelete: _delete,
+                    ),
+                    childCount: pageItems.length,
                   ),
                 ),
               ),
+            // Pagination
+            if (!_loading && _error == null && totalPages > 1)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _PageBtn(
+                        icon: Icons.chevron_left,
+                        onTap: _page > 0 ? () => setState(() => _page--) : null,
+                      ),
+                      for (int p = 0; p < totalPages; p++)
+                        _PageNum(
+                          n: p + 1,
+                          active: _page == p,
+                          onTap: () => setState(() => _page = p),
+                        ),
+                      _PageBtn(
+                        icon: Icons.chevron_right,
+                        onTap: _page < totalPages - 1 ? () => setState(() => _page++) : null,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
       ),
@@ -369,15 +343,24 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   }
 }
 
-class _ReplySheet extends StatefulWidget {
-  final String feedbackId;
-  final VoidCallback onReplied;
-  const _ReplySheet({required this.feedbackId, required this.onReplied});
+class _FeedbackCard extends StatefulWidget {
+  final int index;
+  final Map<String, dynamic> item;
+  final Future<void> Function(String id, String text) onReply;
+  final Future<void> Function(String id) onDelete;
+  const _FeedbackCard({
+    super.key,
+    required this.index,
+    required this.item,
+    required this.onReply,
+    required this.onDelete,
+  });
+
   @override
-  State<_ReplySheet> createState() => _ReplySheetState();
+  State<_FeedbackCard> createState() => _FeedbackCardState();
 }
 
-class _ReplySheetState extends State<_ReplySheet> {
+class _FeedbackCardState extends State<_FeedbackCard> {
   final _ctrl = TextEditingController();
   bool _sending = false;
 
@@ -387,69 +370,223 @@ class _ReplySheetState extends State<_ReplySheet> {
     super.dispose();
   }
 
-  Future<void> _send() async {
-    if (_ctrl.text.trim().isEmpty) return;
-    setState(() { _sending = true; });
-    try {
-      await ApiService().adminReplyFeedback(widget.feedbackId, _ctrl.text.trim());
-      if (!mounted) return;
-      Navigator.pop(context);
-      widget.onReplied();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _sending = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottom),
+    final item      = widget.item;
+    final id        = item['id']?.toString() ?? '';
+    final name      = item['user_name'] as String? ?? item['full_name'] as String? ?? 'Mtumiaji';
+    final phone     = item['user_phone'] as String? ?? item['phone'] as String? ?? '';
+    final subject   = item['subject'] as String? ?? '';
+    final msg       = item['message'] as String? ?? '';
+    final createdAt = item['created_at'] as String? ?? '';
+    final reply     = item['reply'] as String? ?? item['admin_reply'] as String?;
+    final replied   = reply != null;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: _kGrey200),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top row: index + name/phone | status badge + delete
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Jibu Maoni',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-              const Spacer(),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              Text(
+                '${widget.index}',
+                style: const TextStyle(
+                    fontSize: 10, fontWeight: FontWeight.bold, color: _kGrey400),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name,
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey900)),
+                    if (phone.isNotEmpty)
+                      Row(
+                        children: [
+                          const Icon(Icons.phone_outlined, size: 11, color: _kBlue),
+                          const SizedBox(width: 3),
+                          Text(phone,
+                              style: const TextStyle(
+                                  fontSize: 11, color: _kBlue, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: replied ? _kGreenBg : _kOrangeBg,
+                      border: Border.all(
+                          color: replied
+                              ? const Color(0xFFBBF7D0)
+                              : _kOrangeBdr),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          replied ? Icons.check_circle_outline : Icons.access_time,
+                          size: 10,
+                          color: replied ? _kGreen : _kOrangeFg,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          replied ? 'Imejibiwa' : 'Wazi',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: replied ? _kGreen : _kOrangeFg,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => widget.onDelete(id),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: _kRedBg,
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(Icons.delete_outline, size: 12, color: _kRed),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _ctrl,
-            minLines: 3,
-            maxLines: 6,
-            decoration: InputDecoration(
-              hintText: 'Andika jibu...',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
-            ),
+          if (subject.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(subject,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1F2937))),
+          ],
+          if (msg.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(msg,
+                style: const TextStyle(
+                    fontSize: 13, color: _kGrey700, height: 1.4)),
+          ],
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(Icons.access_time, size: 10, color: _kGrey400),
+              const SizedBox(width: 3),
+              Text(createdAt, style: const TextStyle(fontSize: 11, color: _kGrey400)),
+            ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _sending ? null : _send,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kBlue, foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          // Admin reply box
+          if (reply != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _kBlueBg,
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: _sending
-                  ? const SizedBox(width: 20, height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('Tuma Jibu', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.verified_user_outlined, size: 11, color: _kBlue),
+                      SizedBox(width: 4),
+                      Text('JIBU LAKO',
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: _kBlue,
+                              letterSpacing: 0.5)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(reply,
+                      style: const TextStyle(
+                          fontSize: 12, color: _kGrey700, height: 1.4)),
+                ],
+              ),
             ),
+          ],
+          // Inline reply input (always visible)
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: _kGrey100),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _ctrl,
+                  style: const TextStyle(fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Andika jibu...',
+                    hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _sending ? null : () async {
+                  final text = _ctrl.text.trim();
+                  if (text.isEmpty) return;
+                  setState(() => _sending = true);
+                  await widget.onReply(id, text);
+                  if (mounted) {
+                    _ctrl.clear();
+                    setState(() => _sending = false);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _kBlue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: _sending
+                      ? const SizedBox(
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.send, color: Colors.white, size: 12),
+                            SizedBox(width: 4),
+                            Text('Jibu',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -482,6 +619,59 @@ class _TabPill extends StatelessWidget {
             fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PageNum extends StatelessWidget {
+  final int n;
+  final bool active;
+  final VoidCallback onTap;
+  const _PageNum({required this.n, required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32, height: 32,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          color: active ? _kBlue : Colors.white,
+          border: Border.all(color: active ? _kBlue : _kGrey200),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Center(
+          child: Text('$n',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: active ? Colors.white : _kGrey700)),
+        ),
+      ),
+    );
+  }
+}
+
+class _PageBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _PageBtn({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32, height: 32,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: onTap != null ? _kBlue : _kGrey200),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(icon, size: 16, color: onTap != null ? _kBlue : _kGrey200),
       ),
     );
   }

@@ -338,19 +338,44 @@ class _EditAdminProfile extends StatefulWidget {
 }
 
 class _EditAdminProfileState extends State<_EditAdminProfile> {
-  late TextEditingController _nameCtrl, _altCtrl;
+  late TextEditingController _nameCtrl, _altCtrl, _curPwdCtrl, _newPwdCtrl;
   bool _saving = false;
+  bool _changingPwd = false;
   String? _error;
+  String? _pwdMsg;
 
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: widget.profile['full_name'] ?? '');
-    _altCtrl = TextEditingController(text: widget.profile['phone_alt'] ?? '');
+    _nameCtrl   = TextEditingController(text: widget.profile['full_name'] ?? '');
+    _altCtrl    = TextEditingController(text: widget.profile['phone_alt'] ?? '');
+    _curPwdCtrl = TextEditingController();
+    _newPwdCtrl = TextEditingController();
   }
 
   @override
-  void dispose() { _nameCtrl.dispose(); _altCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _nameCtrl.dispose(); _altCtrl.dispose();
+    _curPwdCtrl.dispose(); _newPwdCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _changePassword() async {
+    if (_curPwdCtrl.text.isEmpty || _newPwdCtrl.text.length < 6) return;
+    setState(() { _changingPwd = true; _pwdMsg = null; _error = null; });
+    try {
+      await ApiService().changePassword(_curPwdCtrl.text, _newPwdCtrl.text);
+      if (!mounted) return;
+      _curPwdCtrl.clear(); _newPwdCtrl.clear();
+      setState(() { _changingPwd = false; _pwdMsg = 'Nywila imebadilishwa!'; });
+      Future.delayed(const Duration(seconds: 4), () {
+        if (mounted) setState(() => _pwdMsg = null);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _changingPwd = false; _error = _parseErr(e); });
+    }
+  }
 
   Future<void> _save() async {
     setState(() { _saving = true; _error = null; });
@@ -422,7 +447,74 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
 
       const SizedBox(height: 24),
 
-      // ── Save button — kama web: flex justify-end + btn-primary ──
+      // ── Password change card ──
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _cardDec(),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: const [
+            Text('🔑', style: TextStyle(fontSize: 16)),
+            SizedBox(width: 8),
+            Text('Badilisha Nywila',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kGrey900)),
+          ]),
+          const SizedBox(height: 16),
+          if (_pwdMsg != null) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(_pwdMsg!,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
+            ),
+          ],
+          _label('Nywila ya Sasa'),
+          TextField(
+            controller: _curPwdCtrl,
+            obscureText: true,
+            style: const TextStyle(fontSize: 12),
+            decoration: _inputDec(hint: 'Nywila ya sasa'),
+          ),
+          const SizedBox(height: 16),
+          _label('Nywila Mpya'),
+          TextField(
+            controller: _newPwdCtrl,
+            obscureText: true,
+            style: const TextStyle(fontSize: 12),
+            decoration: _inputDec(hint: 'Angalau herufi 6'),
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              onTap: (_changingPwd || _curPwdCtrl.text.isEmpty || _newPwdCtrl.text.length < 6)
+                  ? null
+                  : _changePassword,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: _kBlue),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: _changingPwd
+                    ? const SizedBox(width: 14, height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue))
+                    : const Text('Badilisha Nywila',
+                        style: TextStyle(
+                            fontSize: 13, color: _kBlue, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ),
+        ]),
+      ),
+
+      const SizedBox(height: 24),
+
+      // ── Save button ──
       Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -434,7 +526,7 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
               disabledBackgroundColor: _kBlue,
               disabledForegroundColor: Colors.white,
               textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), // px-4 py-1.5
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               elevation: 0,
               minimumSize: Size.zero,
@@ -463,7 +555,7 @@ class _EditProfile extends StatefulWidget {
 }
 
 class _EditProfileState extends State<_EditProfile> {
-  late TextEditingController _nameCtrl, _phoneCtrl, _altCtrl;
+  late TextEditingController _nameCtrl, _phoneCtrl, _altCtrl, _curPwdCtrl, _newPwdCtrl;
 
   String _cadreCode = '';
   List<dynamic> _cadres = [];
@@ -483,7 +575,9 @@ class _EditProfileState extends State<_EditProfile> {
   final Map<int, List<dynamic>> _destFacilities = {};
 
   bool _saving = false;
+  bool _changingPwd = false;
   String? _error;
+  String? _pwdMsg;
 
   String get _category => widget.profile['category'] as String? ?? '';
 
@@ -499,9 +593,11 @@ class _EditProfileState extends State<_EditProfile> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: widget.profile['full_name'] ?? '');
-    _phoneCtrl = TextEditingController(text: widget.profile['phone_primary'] ?? '');
-    _altCtrl = TextEditingController(text: widget.profile['phone_alt'] ?? '');
+    _nameCtrl   = TextEditingController(text: widget.profile['full_name'] ?? '');
+    _phoneCtrl  = TextEditingController(text: widget.profile['phone_primary'] ?? '');
+    _altCtrl    = TextEditingController(text: widget.profile['phone_alt'] ?? '');
+    _curPwdCtrl = TextEditingController();
+    _newPwdCtrl = TextEditingController();
 
     _cadreCode = widget.profile['cadre_code'] as String? ?? '';
     _subjects = (widget.profile['subjects'] as List?)?.map((s) => s.toString()).toList() ?? [];
@@ -576,7 +672,25 @@ class _EditProfileState extends State<_EditProfile> {
   @override
   void dispose() {
     _nameCtrl.dispose(); _phoneCtrl.dispose(); _altCtrl.dispose();
+    _curPwdCtrl.dispose(); _newPwdCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _changePassword() async {
+    if (_curPwdCtrl.text.isEmpty || _newPwdCtrl.text.length < 6) return;
+    setState(() { _changingPwd = true; _pwdMsg = null; _error = null; });
+    try {
+      await ApiService().changePassword(_curPwdCtrl.text, _newPwdCtrl.text);
+      if (!mounted) return;
+      _curPwdCtrl.clear(); _newPwdCtrl.clear();
+      setState(() { _changingPwd = false; _pwdMsg = 'Nywila imebadilishwa!'; });
+      Future.delayed(const Duration(seconds: 4), () {
+        if (mounted) setState(() => _pwdMsg = null);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _changingPwd = false; _error = _parseErr(e); });
+    }
   }
 
   Future<void> _save() async {
@@ -805,7 +919,72 @@ class _EditProfileState extends State<_EditProfile> {
       ),
       const SizedBox(height: 24),
 
-      // ── Save button — kama web: flex justify-end + btn-primary ──
+      // ── Password change card ──
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _cardDec(),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: const [
+            Text('🔑', style: TextStyle(fontSize: 16)),
+            SizedBox(width: 8),
+            Text('Badilisha Nywila',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _kGrey900)),
+          ]),
+          const SizedBox(height: 16),
+          if (_pwdMsg != null) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(_pwdMsg!,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
+            ),
+          ],
+          _label('Nywila ya Sasa'),
+          TextField(
+            controller: _curPwdCtrl,
+            obscureText: true,
+            style: const TextStyle(fontSize: 12),
+            decoration: _inputDec(hint: 'Nywila ya sasa'),
+          ),
+          const SizedBox(height: 16),
+          _label('Nywila Mpya'),
+          TextField(
+            controller: _newPwdCtrl,
+            obscureText: true,
+            style: const TextStyle(fontSize: 12),
+            decoration: _inputDec(hint: 'Angalau herufi 6'),
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              onTap: _changingPwd ? null : _changePassword,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: _kBlue),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: _changingPwd
+                    ? const SizedBox(width: 14, height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue))
+                    : const Text('Badilisha Nywila',
+                        style: TextStyle(
+                            fontSize: 13, color: _kBlue, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ),
+        ]),
+      ),
+
+      const SizedBox(height: 24),
+
+      // ── Save button ──
       Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -817,7 +996,7 @@ class _EditProfileState extends State<_EditProfile> {
               disabledBackgroundColor: _kBlue,
               disabledForegroundColor: Colors.white,
               textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6), // px-6 py-1.5
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               elevation: 0,
               minimumSize: Size.zero,
