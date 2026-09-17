@@ -373,7 +373,7 @@ class ApiService {
         if (level != null && level.isNotEmpty) 'level': level,
       }, useCache: !refresh, cacheTtl: _ttlShort);
   Future<Response> adminListDepartments() =>
-      get('/admin/departments', cacheTtl: _ttlSemiStatic);
+      get('/admin/data/departments', cacheTtl: _ttlSemiStatic);
   Future<Response> adminEvents({String? eventType, int limit = 100, int skip = 0}) =>
       get('/admin/events', queryParameters: {
         if (eventType != null) 'event_type': eventType,

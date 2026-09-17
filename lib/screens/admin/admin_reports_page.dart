@@ -62,7 +62,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       setState(() => _regions = raw is List ? raw : (raw['regions'] ?? raw['data'] ?? []));
     } catch (_) {}
     try {
-      final r = await ApiService().getDepartments();
+      final r = await ApiService().adminListDepartments();
       if (!mounted) return;
       final raw = r.data;
       setState(() => _departments = raw is List ? raw : (raw['departments'] ?? raw['data'] ?? []));
@@ -70,7 +70,10 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   }
 
   Future<void> _load({bool refresh = false}) async {
-    setState(() { _loading = true; _error = null; });
+    // Kama web: spinner ya full-screen iko MARA YA KWANZA tu; filter ikibadilika
+    // au RefreshIndicator ikivutwa — data inasasisha KIMYA KIMYA (content inabaki).
+    final firstLoad = _data.isEmpty;
+    setState(() { if (firstLoad) _loading = true; _error = null; });
     try {
       final r = await ApiService().adminStats();
       if (!mounted) return;
@@ -94,7 +97,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       setState(() { _data = (res.data as Map<String, dynamic>?) ?? {}; _loading = false; });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = e.toString(); if (firstLoad) _loading = false; });
     }
   }
 
@@ -117,10 +120,19 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   // ── Pickers ───────────────────────────────────────────────────────────────
   Future<void> _pickRegion() async {
+    // Kama web: orodha ina mikoa iliyo kwenye takwimu (waliopo + wanaohamia)
+    // — sio mikoa yote ya TZ. Hakuna data →anguka kwenye orodha ya mikoa yote.
+    final inData = <String>{
+      for (final r in _list('users_by_region')) if ((r['region'] ?? '').toString().isNotEmpty) '${r['region']}',
+      for (final r in _list('incoming_by_region')) if ((r['region'] ?? '').toString().isNotEmpty) '${r['region']}',
+    }.toList()..sort();
+    final source = inData.isNotEmpty
+        ? inData.map((n) => {'name': n}).toList()
+        : _regions;
     final items = <({String value, String label, String? subtitle})>[
-      (value: '__all__', label: 'Mikoa Yote', subtitle: 'Onyesha mikoa yote'),
-      for (final r in _regions)
-        (value: '${r['id'] ?? r['region_id']}',
+      (value: '__all__', label: 'Mkoa wote', subtitle: 'Onyesha mikoa yote'),
+      for (final r in source)
+        (value: '${r['id'] ?? r['region_id'] ?? r['name']}',
          label: '${r['name'] ?? r['region_name'] ?? ''}',
          subtitle: null),
     ];
@@ -128,8 +140,8 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         title: 'Chagua Mkoa', items: items,
         selected: _regionId ?? '__all__', searchable: true);
     if (picked == null || !mounted) return;
-    final r = _regions.firstWhere(
-        (x) => '${x['id'] ?? x['region_id']}' == picked, orElse: () => null);
+    final r = source.firstWhere(
+        (x) => '${x['id'] ?? x['region_id'] ?? x['name']}' == picked, orElse: () => null);
     setState(() {
       _regionId = picked == '__all__' ? null : picked;
       _region = picked == '__all__' ? null : '${r?['name'] ?? r?['region_name'] ?? ''}';
@@ -139,7 +151,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   Future<void> _pickCategory() async {
     final items = <({String value, String label, String? subtitle})>[
-      (value: '__all__', label: 'Idara Zote', subtitle: 'Onyesha idara zote'),
+      (value: '__all__', label: 'Idara zote', subtitle: 'Onyesha idara zote'),
       for (final d in _departments)
         (value: '${d['code']}',
          label: '${d['name'] ?? d['code']}',
@@ -160,9 +172,9 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   Future<void> _pickLevel() async {
     final items = <({String value, String label, String? subtitle})>[
-      (value: '', label: 'Ngazi Zote', subtitle: 'Primary na Secondary'),
-      (value: 'Primary', label: 'Primary — Msingi', subtitle: 'Kada za shule za msingi'),
-      (value: 'Secondary', label: 'Secondary — Sekondari', subtitle: 'Kada za sekondari'),
+      (value: '', label: 'Ngazi zote', subtitle: 'Primary na Secondary'),
+      (value: 'Primary', label: 'Primary (Msingi)', subtitle: null),
+      (value: 'Secondary', label: 'Secondary (Sekondari)', subtitle: null),
     ];
     final picked = await showSelectSheet<String>(context,
         title: 'Chagua Ngazi', items: items, selected: _level);
@@ -245,18 +257,18 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                       Expanded(child: _topCard(
                         '${totals['users'] ?? '—'}', 'Watumiaji',
                         AppColors.primary,
-                        sub: '+${totals['users_active_7d'] ?? 0} wiki 7',
+                        sub: '+${totals['users_active_7d'] ?? 0} wanatumia siku 7',
                       )),
                       const SizedBox(width: 12),
                       Expanded(child: _topCard(
-                        '${totals['users_verified'] ?? '—'}', 'Wanaolipa',
+                        '${totals['users_verified'] ?? '—'}', 'Imethibitishwa',
                         _kAmber,
                       )),
                     ]),
                     const SizedBox(height: 12),
                     Row(children: [
                       Expanded(child: _topCard(
-                        '${_int('regions_total')}', 'Mikoa',
+                        '${_int('regions_total')}', 'Mikoa yote',
                         AppColors.success,
                       )),
                       const SizedBox(width: 12),
@@ -271,13 +283,12 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
               // ── Tabs ──────────────────────────────────────────────────────
               SliverToBoxAdapter(child: _tabBar()),
               // ── Tab content ───────────────────────────────────────────────
-              if (_error != null && _tab == 'overview')
-                SliverFillRemaining(hasScrollBody: false, child: _errorView())
-              else if (_tab == 'overview')
+              if (_tab == 'overview')
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
+                      if (_error != null) _errorBanner(),
                       _filters(),
                       ..._sections(),
                     ]),
@@ -306,12 +317,12 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         children: [
           const Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // h1 text-2xl (24px) font-bold text-brand-grey-900
-              Text('Statistiki',
+              // h1 text-2xl (24px) font-bold text-brand-grey-900 — sawa na web
+              Text('Statistics',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
               SizedBox(height: 4),
-              // p text-sm (14px) text-brand-grey-500
-              Text('Namba halisi za mfumo — mkoa, wilaya, idara na kada',
+              // p text-sm (14px) text-brand-grey-500 — sawa na web
+              Text('Takwimu za mfumo mzima — mikoa, idara, kada, michango (real-time)',
                   style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
             ]),
           ),
@@ -415,7 +426,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: AppColors.grey200))),
       child: Row(children: [
-        for (final (idx, (lbl, key)) in [('Muhtasari', 'overview'), ('Watumiaji', 'users')].indexed) ...[
+        for (final (idx, (lbl, key)) in [('Statistics', 'overview'), ('Watumiaji', 'users')].indexed) ...[
           if (idx > 0) const SizedBox(width: 8),
           GestureDetector(
             onTap: () => setState(() => _tab = key),
@@ -443,27 +454,28 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   }
 
   // ── Filters (3 stacked selects kama web flex-col sm:flex-row) ─────────────
+  // Maelezo kama web: 'Mkoa wote' / 'Idara zote' / 'Ngazi zote'
   Widget _filters() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(children: [
         SelectField(
-          hint: 'Mkoa',
-          value: _region == null || _region!.isEmpty ? 'Mikoa Yote' : _region,
+          hint: 'Mkoa wote',
+          value: _region == null || _region!.isEmpty ? 'Mkoa wote' : _region,
           onTap: _pickRegion,
           leading: const Icon(Icons.map_outlined, size: 15, color: AppColors.textLight),
         ),
         const SizedBox(height: 8),
         SelectField(
-          hint: 'Idara',
-          value: _category == null ? 'Idara Zote' : _categoryName,
+          hint: 'Idara zote',
+          value: _category == null ? 'Idara zote' : _categoryName,
           onTap: _pickCategory,
           leading: const Icon(Icons.category_outlined, size: 15, color: AppColors.textLight),
         ),
         const SizedBox(height: 8),
         SelectField(
-          hint: 'Ngazi',
-          value: _level.isEmpty ? 'Ngazi Zote' : _level,
+          hint: 'Ngazi zote',
+          value: _level.isEmpty ? 'Ngazi zote' : _level,
           onTap: _pickLevel,
           leading: const Icon(Icons.school_outlined, size: 15, color: AppColors.textLight),
         ),
@@ -471,21 +483,32 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     );
   }
 
-  Widget _errorView() => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.error_outline_rounded, size: 44, color: AppColors.error),
-            const SizedBox(height: 12),
-            Text(_error ?? '',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-            const SizedBox(height: 16),
-            ElevatedButton(
-                onPressed: () => _load(refresh: true), child: const Text('Jaribu Tena')),
-          ]),
+  Widget _errorBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Row(children: [
+        const Icon(Icons.error_outline_rounded, size: 16, color: AppColors.error),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Hitilafu kupakua takwimu — tena.',
+            style: const TextStyle(fontSize: 12, color: AppColors.error),
+          ),
         ),
-      );
+        GestureDetector(
+          onTap: () => _load(refresh: true),
+          child: const Text('Jaribu tena',
+              style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+        ),
+      ]),
+    );
+  }
 
   // ── Overview sections (mpangilio kama web) ────────────────────────────────
   List<Widget> _sections() {
@@ -504,21 +527,21 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         .fold(0, (s, c) => s + ((c['count'] as num?)?.toInt() ?? 0));
 
     return [
-      // ── 4 filtered big cards (gap-3 = 12px) ──
+      // ── 4 filtered big cards (gap-3 = 12px) — MPANGILIO KAMA WEB: mikoa, wilaya, watumiaji, wanaohamia ──
       Row(children: [
-        Expanded(child: _bigCard('Mikoa', _int('regions_total'), AppColors.primary)),
+        Expanded(child: _bigCard('Mikoa yote', _int('regions_total'), AppColors.primary)),
         const SizedBox(width: 12),
-        Expanded(child: _bigCard('Wilaya', _int('districts_total'), _kAmber)),
+        Expanded(child: _bigCard('Wilaya zote', _int('districts_total'), _kAmber)),
       ]),
       const SizedBox(height: 12),
       Row(children: [
-        Expanded(child: _bigCard('Watumiaji', _reportUsersTotal, AppColors.success)),
+        Expanded(child: _bigCard('Watumiaji waliopo', _reportUsersTotal, AppColors.success)),
         const SizedBox(width: 12),
-        Expanded(child: _bigCard('Wanaohamia', incomingTotal, _kOrange)),
+        Expanded(child: _bigCard('Wanaohamia wote', incomingTotal, _kOrange)),
       ]),
       const SizedBox(height: 16),
 
-      // ── Idara ──
+      // ── Idara + Status (web: grid-cols-2) ──
       _card(
         title: 'Kwa Idara',
         child: _numTable([
@@ -530,9 +553,8 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         ]),
       ),
 
-      // ── Status ──
       _card(
-        title: 'Kwa Hali ya Akaunti',
+        title: 'Kwa Hali',
         child: _numTable([
           for (final s in _list('users_by_status')
               ..sort((a, b) => ((b['count'] as num?)?.toInt() ?? 0)
@@ -541,38 +563,38 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         ]),
       ),
 
-      // ── Mikoa: # | Jina | Waliopo (grey-700) | Wanaohamia (orange) | Bar ──
+      // ── Mikoa: # | Mkoa | Waliopo | Wanaohamia | Bar (vichwa kama web: MKOA/WALIOPO/WANAOHAMIA) ──
       _card(
-        title: 'Kwa Mkoa — waliopo na wanaohamia',
-        hint: 'Waliopo · Wanaohamia (chungwa)',
+        title: 'Waliopo na Wanaohamia kwa Mkoa',
+        hint: 'Walio (kijani-bluu) + Wanaohamia (chungwa) — kila mkoa',
         child: _regTable(_byRegion.take(40).toList()),
       ),
 
-      // ── Wilaya: # | Jina | Waliopo | Wanaohamia | JUMLA (namba kubwa) ──
+      // ── Wilaya: # | Wilaya | Waliopo | Wanaohamia | JUMLA (vichwa kama web) ──
       _card(
-        title: 'Kwa Wilaya${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
+        title: 'Watu kwa Wilaya${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
         child: _districtTable(_byDistrict()),
       ),
 
-      // ── Ngazi: Primary / Secondary / None ──
+      // ── Ngazi: Primary / Secondary / Hakuna ngazi (matare kama web) ──
       _card(
-        title: 'Kwa Ngazi (Primary / Secondary)',
+        title: 'Walimu kwa Ngazi (Primary/Secondary)',
         child: _numTable([
-          ('Walimu wa Msingi (Primary)', priCount),
-          ('Walimu wa Sekondari (Secondary)', secCount),
-          if (noneCount > 0) ('Bila Ngazi', noneCount),
+          ('Walimu wa Msingi', priCount),
+          ('Walimu wa Sekondari', secCount),
+          if (noneCount > 0) ('Hakuna ngazi', noneCount),
         ]),
       ),
 
       // ── Kada (max 20 kama web) ──
       _card(
-        title: 'Kwa Kada${priCount + secCount > 0 ? ' (Msingi: $priCount · Sekondari: $secCount)' : ''}',
+        title: 'Kwa Kada',
         child: _numTable([
           for (final c in (_list('users_by_cadre').toList()
                 ..sort((a, b) => ((b['count'] as num?)?.toInt() ?? 0)
                     .compareTo((a['count'] as num?)?.toInt() ?? 0)))
               .take(20))
-            ('${c['cadre_name'] ?? c['cadre']}${(c['level'] ?? '').toString().isEmpty ? '' : ' · ${c['level']}'}',
+            ('${c['cadre_name'] ?? c['cadre']}${(c['level'] ?? '').toString().isEmpty ? '' : ' (${c['level']})'}',
              (c['count'] as num?)?.toInt() ?? 0),
         ]),
       ),
@@ -580,32 +602,11 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       // ── Wanaohamia sources ──
       if (_list('incoming_sources').isNotEmpty)
         _card(
-          title: 'Wanaohamia — wanatoka wapi${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
-          hint: 'Wanaohamia wanatoka mkoa gani kwenda mkoa gani',
+          title: 'Wanaohamia wanatoka wapi${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
+          hint: 'Kila mkoa wanaohamia — wanatoka mikoa ipi',
           child: _sourcesTable(_list('incoming_sources').take(30).toList()),
         ),
 
-      // ── Vituo ──
-      if (_list('users_by_facility').isNotEmpty)
-        _card(
-          title: 'Kwa Kituo / Shule',
-          child: _numTable([
-            for (final f in _list('users_by_facility').take(40))
-              ('${f['facility'] ?? '—'}${(f['district'] ?? '').toString().isEmpty ? '' : ' · ${f['district']}'}',
-               (f['count'] as num?)?.toInt() ?? 0),
-          ]),
-        ),
-
-      // ── Michango ──
-      if (((_data['revenue'] as Map?)?.cast<String, dynamic>() ?? {})['per_purpose'] is List &&
-          ((_data['revenue'] as Map)['per_purpose'] as List).isNotEmpty)
-        _card(
-          title: 'Michango kwa Madhumuni',
-          child: _numTable([
-            for (final p in ((_data['revenue'] as Map)['per_purpose'] as List).take(20))
-              ('${(p as Map)['purpose'] ?? '—'}', ((p['total'] as num?)?.toInt() ?? 0)),
-          ]),
-        ),
     ];
   }
 
