@@ -28,6 +28,7 @@ InputDecoration _inputDec({String? hint, Color borderColor = _kGrey300, Widget? 
       fillColor: Colors.white,
       isDense: true,
       suffixIcon: suffix,
+      suffixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 0),
     );
 
 InputDecoration _dropDec({String? hint}) => InputDecoration(
@@ -520,7 +521,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
   Widget _statusIcon(String status) {
     if (status == 'checking') {
       return const Padding(
-        padding: EdgeInsets.all(10),
+        padding: EdgeInsets.symmetric(horizontal: 8),
         child: SizedBox(
             width: 14,
             height: 14,
@@ -529,14 +530,14 @@ class _Step1IdentityState extends State<_Step1Identity> {
     }
     if (status == 'available') {
       return const Padding(
-        padding: EdgeInsets.all(10),
-        child: Icon(Icons.check_circle, size: 16, color: Color(0xFF22C55E)),
+        padding: EdgeInsets.symmetric(horizontal: 8),
+        child: Icon(Icons.check_circle, size: 14, color: Color(0xFF22C55E)),
       );
     }
     if (status == 'taken') {
       return const Padding(
-        padding: EdgeInsets.all(10),
-        child: Icon(Icons.error_outline, size: 16, color: _kRed500),
+        padding: EdgeInsets.symmetric(horizontal: 8),
+        child: Icon(Icons.error_outline, size: 14, color: _kRed500),
       );
     }
     return const SizedBox();
