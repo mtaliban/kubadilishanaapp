@@ -80,10 +80,15 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       setState(() => _stats = (r.data as Map<String, dynamic>?) ?? {});
     } catch (_) {}
     try {
-      final r = await ApiService().adminEvents(limit: 6);
+      final r = await ApiService().adminEvents(limit: 20);
       if (!mounted) return;
       final d = r.data as Map? ?? {};
-      setState(() => _events = (d['events'] as List?) ?? []);
+      final raw = (d['events'] as List?) ?? [];
+      setState(() => _events = raw.where((e) {
+        final type = (e as Map)['event_type'] as String? ?? '';
+        return !['user.presence', 'user.online', 'user.offline',
+                 'user.connected', 'user.disconnected'].contains(type);
+      }).take(6).toList());
     } catch (_) {}
     try {
       final res = await ApiService().adminReports(
@@ -624,75 +629,115 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       const SizedBox(height: 8),
       if (_usersLoading)
-        const Center(
-            child: Padding(
+        const Center(child: Padding(
           padding: EdgeInsets.all(24),
           child: CircularProgressIndicator(color: AppColors.primary),
         ))
+      else if (_users.isEmpty)
+        const Center(child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text('Hakuna watumiaji', style: TextStyle(color: AppColors.textLight)),
+        ))
       else
-        ..._users.map(_userRow),
+        _usersTable(),
     ];
   }
 
-  Widget _userRow(dynamic u) {
-    final m = u as Map<String, dynamic>;
-    final name = (m['full_name'] ?? '') as String;
-    final phone = (m['phone_primary'] ?? m['phone'] ?? '') as String;
-    final cadre = (m['cadre_code'] ?? '') as String;
-    final station = (m['current_station'] as Map?) ?? {};
-    final region = (station['region_name'] ?? '') as String;
-    final dests = ((m['desired_destinations'] as List?) ?? [])
-        .map((d) => (d as Map)['region_name'] ?? '')
-        .where((s) => s.toString().isNotEmpty)
-        .join(', ');
-    final isAdmin = (m['is_admin'] as bool?) ?? false;
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+  Widget _usersTable() {
+    const hs = TextStyle(
+        fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: AppColors.textLight);
+    const w0 = 160.0; // Jina
+    const w1 = 120.0; // Simu
+    const w2 = 110.0; // Kada
+    const w3 = 110.0; // Mkoa
+    const w4 = 80.0;  // Hali
+
+    Widget headerCell(String t, double w) =>
+        SizedBox(width: w, child: Text(t, style: hs));
+    Widget sep() => const SizedBox(width: 12);
+
+    final rowsCol = Column(children: [
+      for (final u in _users) _tableRow(u as Map<String, dynamic>, w0, w1, w2, w3, w4),
+    ]);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
       decoration: AppColors.cardDecoration(),
-      child: Row(children: [
-        CircleAvatar(
-          radius: 17,
-          backgroundColor: AppColors.blue50,
-          child: Text(initial,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary)),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Expanded(
-                  child: Text(name,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary),
-                      overflow: TextOverflow.ellipsis)),
-              if (isAdmin)
-                Container(
-                  margin: const EdgeInsets.only(left: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(
-                      color: AppColors.blue50, borderRadius: BorderRadius.circular(6)),
-                  child: const Icon(Icons.shield_rounded, size: 11, color: AppColors.primary),
-                ),
-            ]),
-            if (phone.isNotEmpty)
-              Text(phone,
-                  style: const TextStyle(fontSize: 12, color: AppColors.primary)),
-            if (cadre.isNotEmpty || region.isNotEmpty)
-              Text([cadre, region].where((s) => s.isNotEmpty).join(' · '),
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                  overflow: TextOverflow.ellipsis),
-            if (dests.isNotEmpty)
-              Text('→ $dests',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textLight),
-                  overflow: TextOverflow.ellipsis),
+      padding: const EdgeInsets.all(12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            headerCell('JINA',  w0), sep(),
+            headerCell('SIMU',  w1), sep(),
+            headerCell('KADA',  w2), sep(),
+            headerCell('MKOA',  w3), sep(),
+            headerCell('HALI',  w4),
           ]),
-        ),
+          const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
+          if (_users.length > 15)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 480),
+              child: SingleChildScrollView(child: rowsCol),
+            )
+          else
+            rowsCol,
+        ]),
+      ),
+    );
+  }
+
+  Widget _tableRow(Map<String, dynamic> u,
+      double w0, double w1, double w2, double w3, double w4) {
+    final name    = (u['full_name'] ?? '') as String;
+    final phone   = (u['phone_primary'] ?? u['phone'] ?? '') as String;
+    final cadre   = (u['cadre_code'] ?? u['cadre_display'] ?? '') as String;
+    final station = (u['current_station'] as Map?) ?? {};
+    final region  = (station['region_name'] ?? '') as String;
+    final isAdmin = (u['is_admin'] as bool?) ?? false;
+    final st      = '${u['status'] ?? 'active'}'.toLowerCase();
+    final isActive = st == 'active';
+    final stColor  = isActive ? AppColors.success : AppColors.error;
+    final stBg     = isActive ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2);
+    final stLabel  = isActive ? 'Hai'
+        : st == 'matched'  ? 'Amepata'
+        : st == 'inactive' ? 'Pending'
+        : 'Imesitishwa';
+
+    return Container(
+      decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.borderLight, width: 1))),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        SizedBox(width: w0, child: Row(children: [
+          if (isAdmin) const Padding(
+            padding: EdgeInsets.only(right: 4),
+            child: Icon(Icons.verified_user_rounded, size: 11, color: AppColors.primary),
+          ),
+          Expanded(child: Text(name,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary),
+              maxLines: 1, overflow: TextOverflow.ellipsis)),
+        ])),
+        const SizedBox(width: 12),
+        SizedBox(width: w1, child: Text(phone,
+            style: const TextStyle(fontSize: 12, color: AppColors.primary),
+            maxLines: 1, overflow: TextOverflow.ellipsis)),
+        const SizedBox(width: 12),
+        SizedBox(width: w2, child: Text(cadre,
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            maxLines: 1, overflow: TextOverflow.ellipsis)),
+        const SizedBox(width: 12),
+        SizedBox(width: w3, child: Text(region,
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            maxLines: 1, overflow: TextOverflow.ellipsis)),
+        const SizedBox(width: 12),
+        SizedBox(width: w4, child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(color: stBg, borderRadius: BorderRadius.circular(4)),
+          child: Text(stLabel,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: stColor)),
+        )),
       ]),
     );
   }

@@ -1854,32 +1854,35 @@ class _UserCard extends StatelessWidget {
             ]),
           ),
 
-          // ── Action row: icon-only buttons — left pair + spacer + right group ──
+          // ── Action grid — large rounded buttons kama web (grid 2×N) ──────────
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-            child: Row(children: [
-              _iBtn(Icons.visibility_rounded, _g700, _g100, onView, tip: 'Angalia'),
-              const SizedBox(width: 6),
-              _iBtn(Icons.edit_rounded, _blue, _blueBg, onEdit, tip: 'Hariri'),
-              const Spacer(),
-              if (isAdmin)
-                _iBtn(Icons.shield_outlined, _red, _red50, onAdmin, tip: 'Ondoa Admin')
-              else ...[
-                _iBtn(
-                  isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
-                  _org600, _org50, onSuspend,
-                  tip: isActive ? 'Funga' : 'Fungua',
-                ),
-                const SizedBox(width: 6),
-                _iBtn(
-                  Icons.phone_rounded,
-                  contact ? _green700 : _g600,
-                  contact ? _green50 : _g100,
-                  onContact,
-                  tip: contact ? 'Ameruhusu' : 'Ruhusu',
-                ),
-                const SizedBox(width: 6),
-                _iBtn(Icons.delete_outline_rounded, _red, _red50, onDelete, tip: 'Futa'),
+            child: Column(children: [
+              Row(children: [
+                Expanded(child: _aBtn(Icons.visibility_rounded, 'Angalia', _g700, _g100, onView)),
+                const SizedBox(width: 8),
+                Expanded(child: _aBtn(Icons.edit_rounded, 'Hariri', _blue, _blueBg, onEdit)),
+              ]),
+              if (!isAdmin) ...[
+                const SizedBox(height: 8),
+                Row(children: [
+                  Expanded(child: _aBtn(
+                    isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
+                    isActive ? 'Funga' : 'Fungua', _org600, _org50, onSuspend)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _aBtn(
+                    Icons.phone_rounded,
+                    contact ? 'Ameruhusu' : 'Ruhusu',
+                    contact ? _green700 : _g600,
+                    contact ? _green50 : _g100, onContact)),
+                ]),
+                const SizedBox(height: 8),
+                SizedBox(width: double.infinity,
+                    child: _aBtn(Icons.delete_outline_rounded, 'Futa', _red, _red50, onDelete)),
+              ] else ...[
+                const SizedBox(height: 8),
+                SizedBox(width: double.infinity,
+                    child: _aBtn(Icons.shield_outlined, 'Ondoa Admin', _red, _red50, onAdmin)),
               ],
             ]),
           ),
@@ -1911,20 +1914,19 @@ class _UserCard extends StatelessWidget {
     );
   }
 
-  // Icon-only 38×38 rounded square — HitTestBehavior.opaque fixes taps inside ScrollViews
-  Widget _iBtn(IconData icon, Color fg, Color bg, VoidCallback onTap, {String tip = ''}) =>
-      Tooltip(
-        message: tip,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: Container(
-            width: 38, height: 38,
-            decoration: BoxDecoration(
-                color: bg, borderRadius: BorderRadius.circular(10)),
-            alignment: Alignment.center,
-            child: Icon(icon, size: 18, color: fg),
-          ),
+  // Large action button — icon + label wima, rounded-2xl kama web
+  Widget _aBtn(IconData icon, String label, Color fg, Color bg, VoidCallback onTap) =>
+      GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 16, color: fg),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
+          ]),
         ),
       );
 }

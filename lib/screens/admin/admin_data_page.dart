@@ -374,15 +374,15 @@ class _AdminDataPageState extends State<AdminDataPage>
       // Row 2: search
       TextField(
         controller: _searchCtrls[type],
-        style: const TextStyle(fontSize: 14, color: _kGrey900),
+        style: const TextStyle(fontSize: 13, color: _kGrey900),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(fontSize: 14, color: _kGrey400),
-          prefixIcon: const Icon(Icons.search_rounded, size: 18, color: _kGrey400),
+          hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
+          prefixIcon: const Icon(Icons.search_rounded, size: 16, color: _kGrey400),
           filled: true,
           fillColor: _kGrey50,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
           border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
@@ -390,7 +390,7 @@ class _AdminDataPageState extends State<AdminDataPage>
       ),
       // Row 3: chips or dropdown depending on type
       if (type == 'subjects') ...[
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         _chipRow(
           options: const {'': 'Viwango vyote', 'primary': 'Primary', 'secondary': 'Secondary'},
           selected: _levelFilters['subjects'] ?? '',
@@ -398,11 +398,11 @@ class _AdminDataPageState extends State<AdminDataPage>
         ),
       ],
       if (type == 'facilities') ...[
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         _facChips(),
       ],
       if (type == 'districts') ...[
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         _dropdownField(
           value: _regionFilters['districts'] ?? '',
           items: [
@@ -430,7 +430,7 @@ class _AdminDataPageState extends State<AdminDataPage>
             behavior: HitTestBehavior.opaque,
             onTap: () => onSelect(e.key),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: selected == e.key ? _kBlueBg : Colors.white,
                 border: Border.all(
@@ -438,7 +438,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(e.value, style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: selected == e.key ? FontWeight.w700 : FontWeight.w500,
                 color: selected == e.key ? _kBlue : _kGrey700,
               )),
@@ -466,7 +466,7 @@ class _AdminDataPageState extends State<AdminDataPage>
             behavior: HitTestBehavior.opaque,
             onTap: () => setState(() => _facLevelFilter = lvl),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: _facLevelFilter == lvl ? _kBlueBg : Colors.white,
                 border: Border.all(
@@ -474,7 +474,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(lvl.isEmpty ? 'Zote' : lvl, style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: _facLevelFilter == lvl ? FontWeight.w700 : FontWeight.w500,
                 color: _facLevelFilter == lvl ? _kBlue : _kGrey700,
               )),
@@ -511,7 +511,7 @@ class _AdminDataPageState extends State<AdminDataPage>
     isExpanded: true,
     decoration: InputDecoration(
       isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       filled: true,
       fillColor: enabled ? Colors.white : _kGrey50,
       border:          OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
