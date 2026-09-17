@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 
-const _kBlue    = Color(0xFF1E40AF);
-const _kBlueBg  = Color(0xFFEFF6FF);
-const _kGreen   = Color(0xFF16A34A);
-const _kGreenBg = Color(0xFFDCFCE7);
-const _kAmber   = Color(0xFFD97706);
-const _kAmberBg = Color(0xFFFEF3C7);
-const _kRed     = Color(0xFFDC2626);
-const _kRedBg   = Color(0xFFFEE2E2);
-const _kGrey900 = Color(0xFF111827);
-const _kGrey700 = Color(0xFF374151);
-const _kGrey500 = Color(0xFF6B7280);
-const _kGrey200 = Color(0xFFE5E7EB);
-const _kGrey100 = Color(0xFFF3F4F6);
+const _kBlue     = Color(0xFF1E40AF);
+const _kBlueBg   = Color(0xFFEFF6FF);
+const _kBlueDark = Color(0xFF1D4ED8);
+const _kGreen    = Color(0xFF16A34A);
+const _kGreenBg  = Color(0xFFDCFCE7);
+const _kAmber    = Color(0xFFD97706);
+const _kAmberBg  = Color(0xFFFEF3C7);
+const _kRed      = Color(0xFFDC2626);
+const _kRedBg    = Color(0xFFFEE2E2);
+const _kGrey900  = Color(0xFF111827);
+const _kGrey700  = Color(0xFF374151);
+const _kGrey600  = Color(0xFF4B5563);
+const _kGrey500  = Color(0xFF6B7280);
+const _kGrey200  = Color(0xFFE5E7EB);
+const _kGrey100  = Color(0xFFF3F4F6);
+const _kGrey50   = Color(0xFFF9FAFB);
 
 class AdminDataPage extends StatefulWidget {
   const AdminDataPage({super.key});
@@ -24,42 +27,47 @@ class AdminDataPage extends StatefulWidget {
 class _AdminDataPageState extends State<AdminDataPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
-  final Map<String, bool> _loading = {};
-  final Map<String, String?> _errors = {};
-  final Map<String, List<dynamic>> _cache = {};
-  final Map<String, TextEditingController> _searchCtrls = {};
-  final Map<String, String> _levelFilters = {};
+  final Map<String, bool>                  _loading      = {};
+  final Map<String, String?>               _errors       = {};
+  final Map<String, List<dynamic>>         _cache        = {};
+  final Map<String, TextEditingController> _searchCtrls  = {};
+  final Map<String, String>                _levelFilters = {};
+  final Map<String, String>                _regionFilters = {};
 
-  static const _types = ['departments', 'subjects', 'cadres', 'regions', 'facilities'];
-  static const _typeLabels = ['Idara', 'Masomo', 'Kada', 'Mikoa', 'Vituo'];
-  static const _typeIcons = [
-    Icons.business_outlined,
-    Icons.menu_book_outlined,
-    Icons.work_outline,
-    Icons.map_outlined,
-    Icons.local_hospital_outlined,
-  ];
+  // Facilities-specific filter state
+  String        _facCategory  = 'health';
+  String        _facRegion    = '';
+  String        _facDistrict  = '';
+  List<dynamic> _facDistricts = [];
+
+  static const _types      = ['departments', 'subjects', 'cadres', 'regions', 'districts', 'facilities'];
+  static const _typeLabels  = ['Idara', 'Masomo', 'Kada', 'Mikoa', 'Wilaya', 'Vituo'];
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: _types.length, vsync: this);
+    _tabCtrl = TabController(length: _types.length, initialIndex: 1, vsync: this);
     _tabCtrl.addListener(() {
       if (!_tabCtrl.indexIsChanging) {
         final type = _types[_tabCtrl.index];
         if (!_cache.containsKey(type)) _loadType(type);
+        if ((type == 'districts' || type == 'facilities') &&
+            !_cache.containsKey('regions')) {
+          _loadType('regions');
+        }
       }
     });
     for (final t in _types) {
       _searchCtrls[t] = TextEditingController()..addListener(() => setState(() {}));
     }
-    _loadType('departments');
+    _loadType('subjects');
+    _loadType('regions');
   }
 
   @override
   void dispose() {
     _tabCtrl.dispose();
-    for (final c in _searchCtrls.values) c.dispose();
+    for (final c in _searchCtrls.values) { c.dispose(); }
     super.dispose();
   }
 
@@ -69,9 +77,6 @@ class _AdminDataPageState extends State<AdminDataPage>
       final res = await ApiService().adminListData(type);
       if (!mounted) return;
       final data = res.data;
-      // Baadhi ya endpoints zinarudisha {items: [...]} (facilities) au
-      // {users: [...]} — sio List moja kwa moja. Bila hii, tab ya Vituo
-      // ilikuwa inaonyesha "Hakuna data" hata data ikiwepo.
       _cache[type] = data is List
           ? data
           : ((data['results'] ?? data['items'] ?? data['users'] ?? data['data'] ?? []) as List);
@@ -82,89 +87,49 @@ class _AdminDataPageState extends State<AdminDataPage>
     }
   }
 
+  Future<void> _loadFacDistricts(String regionId) async {
+    try {
+      final res = await ApiService().getDistricts(int.parse(regionId));
+      if (!mounted) return;
+      final data = res.data;
+      setState(() {
+        _facDistricts = data is List ? data : (data['results'] as List? ?? []);
+      });
+    } catch (_) {}
+  }
+
   List<dynamic> _filtered(String type) {
     final all = _cache[type] ?? [];
-    final q = _searchCtrls[type]?.text.toLowerCase() ?? '';
-    final lf = _levelFilters[type] ?? '';
-    return all.where((item) {
-      final m = item as Map<String, dynamic>;
-      // Kada zinatumia `display_name`, sio `name`.
-      final name = (m['name'] as String? ?? m['display_name'] as String? ?? '').toLowerCase();
-      final code = (m['code'] as String? ?? '').toLowerCase();
-      final level = (m['level'] as String? ?? m['type'] as String? ?? '').toLowerCase();
-      final matchQ = q.isEmpty || name.contains(q) || code.contains(q);
-      final matchLevel = lf.isEmpty || level.contains(lf.toLowerCase());
-      return matchQ && matchLevel;
+    final q   = _searchCtrls[type]?.text.toLowerCase() ?? '';
+
+    return all.where((raw) {
+      final m      = raw as Map<String, dynamic>;
+      final name   = (m['name'] as String? ?? m['display_name'] as String? ?? '').toLowerCase();
+      final code   = (m['code'] as String? ?? '').toLowerCase();
+      final idStr  = m['id']?.toString() ?? '';
+      final matchQ = q.isEmpty || name.contains(q) || code.contains(q) || idStr.contains(q);
+
+      if (type == 'subjects') {
+        final lf    = _levelFilters['subjects'] ?? '';
+        final level = (m['level'] as String? ?? '').toLowerCase();
+        return matchQ && (lf.isEmpty || level == lf.toLowerCase());
+      }
+      if (type == 'districts') {
+        final rf  = _regionFilters['districts'] ?? '';
+        if (rf.isEmpty) return matchQ;
+        return matchQ && m['region_id']?.toString() == rf;
+      }
+      if (type == 'facilities') {
+        final hasSchool  = m['school_code'] != null;
+        final lvl        = (m['level'] as String? ?? '').toLowerCase();
+        final isEdu      = hasSchool || lvl == 'primary' || lvl == 'secondary';
+        final matchCat   = _facCategory == 'education' ? isEdu : !isEdu;
+        final matchReg   = _facRegion.isEmpty   || m['region_id']?.toString()   == _facRegion;
+        final matchDist  = _facDistrict.isEmpty || m['district_id']?.toString() == _facDistrict;
+        return matchQ && matchCat && matchReg && matchDist;
+      }
+      return matchQ;
     }).toList();
-  }
-
-  Color _itemColor(String type, Map<String, dynamic> item) {
-    final category = (item['category'] as String? ?? '').toLowerCase();
-    final level = (item['level'] as String? ?? item['type'] as String? ?? '').toLowerCase();
-    switch (type) {
-      case 'departments':
-        return category.contains('health') || category.contains('afya') ? _kRed : _kGreen;
-      case 'subjects':
-        if (level.contains('secondary')) return _kAmber;
-        if (level.contains('primary')) return _kBlue;
-        return _kGrey500;
-      case 'cadres':
-        return category.contains('health') || category.contains('afya') ? _kRed : _kGreen;
-      case 'regions':
-        return _kBlue;
-      case 'facilities':
-        if (level.contains('dispensary') || level.contains('lab')) return _kRed;
-        if (level.contains('health center')) return _kGreen;
-        return _kBlue;
-      default:
-        return _kBlue;
-    }
-  }
-
-  Color _itemBg(String type, Map<String, dynamic> item) {
-    final c = _itemColor(type, item);
-    if (c == _kRed) return _kRedBg;
-    if (c == _kGreen) return _kGreenBg;
-    if (c == _kAmber) return _kAmberBg;
-    return _kBlueBg;
-  }
-
-  IconData _itemIcon(String type, Map<String, dynamic> item) {
-    final level = (item['level'] as String? ?? item['type'] as String? ?? '').toLowerCase();
-    switch (type) {
-      case 'departments':
-        final cat = (item['category'] as String? ?? '').toLowerCase();
-        return cat.contains('health') || cat.contains('afya')
-            ? Icons.medical_services_outlined
-            : Icons.menu_book_outlined;
-      case 'subjects':
-        return Icons.menu_book_outlined;
-      case 'cadres':
-        return Icons.work_outline;
-      case 'regions':
-        return Icons.map_outlined;
-      case 'facilities':
-        return Icons.local_hospital_outlined;
-      default:
-        return Icons.category_outlined;
-    }
-  }
-
-  String _badgeLabel(String type, Map<String, dynamic> item) {
-    switch (type) {
-      case 'departments':
-        return item['category'] as String? ?? '';
-      case 'subjects':
-        return item['level'] as String? ?? '';
-      case 'cadres':
-        return item['category'] as String? ?? '';
-      case 'regions':
-        return 'Mkoa';
-      case 'facilities':
-        return item['level'] as String? ?? item['type'] as String? ?? '';
-      default:
-        return '';
-    }
   }
 
   void _showAddEdit(String type, {Map<String, dynamic>? item}) {
@@ -178,24 +143,148 @@ class _AdminDataPageState extends State<AdminDataPage>
       builder: (ctx) => _DataFormSheet(
         type: type,
         item: item,
-        onSaved: () {
-          _cache.remove(type);
-          _loadType(type);
-        },
+        onSaved: () { _cache.remove(type); _loadType(type); },
+      ),
+    );
+  }
+
+  void _showView(String type, Map<String, dynamic> item) {
+    final name = (item['name'] ?? item['display_name'] ?? '') as String? ?? '';
+    final code = item['code'] as String? ?? item['school_code'] as String? ?? item['id']?.toString() ?? '';
+
+    List<Map<String, String>> fields;
+    switch (type) {
+      case 'departments':
+        fields = [
+          {'label': 'Code',  'value': code},
+          {'label': 'Jina',  'value': name},
+          {'label': 'Hali',  'value': item['status'] == 'disabled' ? 'Imezimwa' : 'Hai'},
+        ];
+      case 'subjects':
+        fields = [
+          {'label': 'Code',     'value': code},
+          {'label': 'Jina',     'value': name},
+          {'label': 'Kiwango',  'value': item['level'] as String? ?? '—'},
+        ];
+      case 'cadres':
+        fields = [
+          {'label': 'Code',   'value': code},
+          {'label': 'Jina',   'value': name},
+          {'label': 'Idara',  'value': item['category'] as String? ?? '—'},
+          {'label': 'Kiwango','value': item['level'] as String? ?? '—'},
+        ];
+      case 'regions':
+        fields = [
+          {'label': 'ID',   'value': code},
+          {'label': 'Jina', 'value': name},
+        ];
+      case 'districts':
+        fields = [
+          {'label': 'ID',    'value': code},
+          {'label': 'Jina',  'value': name},
+          {'label': 'Mkoa',  'value': _getRegionName(item)},
+        ];
+      case 'facilities':
+        fields = [
+          {'label': 'Code',    'value': item['school_code'] as String? ?? code},
+          {'label': 'Jina',    'value': name},
+          {'label': 'Aina',    'value': item['type'] as String? ?? item['level'] as String? ?? '—'},
+          {'label': 'Mkoa',    'value': item['region_name'] as String? ?? item['region']?.toString() ?? '—'},
+          {'label': 'Wilaya',  'value': item['district_name'] as String? ?? item['district']?.toString() ?? '—'},
+        ];
+      default:
+        fields = [{'label': 'Jina', 'value': name}];
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Expanded(child: Text(name,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900, height: 10/7))),
+              GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: const Icon(Icons.close_rounded, size: 20, color: _kGrey500),
+              ),
+            ]),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: _kGrey100),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: fields.asMap().entries.map((entry) {
+                  final last = entry.key == fields.length - 1;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      border: last ? null : const Border(bottom: BorderSide(color: _kGrey100)),
+                    ),
+                    child: Row(children: [
+                      Text((entry.value['label'] ?? '').toUpperCase(),
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+                              color: _kGrey500, letterSpacing: 0.5)),
+                      const Spacer(),
+                      Flexible(child: Text(entry.value['value'] ?? '—',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontSize: 13, color: _kGrey900))),
+                    ]),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _kGrey700,
+                    side: const BorderSide(color: _kGrey200),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Funga'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () { Navigator.pop(ctx); _showAddEdit(type, item: item); },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kBlue, foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Hariri'),
+                ),
+              ),
+            ]),
+          ],
+        ),
       ),
     );
   }
 
   Future<void> _delete(String type, Map<String, dynamic> item) async {
-    // Kilicho fungua: idara/kada/masomo/vituo vya afya zinatumia `code`
-    // (hakuna `id`) — ndiyo maana edit/delete zilishindwa kwa tab hizo.
     final id = item['id']?.toString() ?? item['code']?.toString() ?? '';
     if (id.isEmpty) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Futa'),
-        content: Text('Futa "${item['name']}"?'),
+        content: Text('Futa "${item['name'] ?? item['display_name']}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
           TextButton(
@@ -219,324 +308,461 @@ class _AdminDataPageState extends State<AdminDataPage>
     }
   }
 
-  List<String> _levelOptions(String type) {
+  String _getRegionName(Map<String, dynamic> item) {
+    final direct = (item['region_name'] ?? item['region']) as String? ?? '';
+    if (direct.isNotEmpty) return direct;
+    final rid = item['region_id'];
+    if (rid == null) return '';
+    for (final r in (_cache['regions'] ?? [])) {
+      final rm = r as Map<String, dynamic>;
+      if (rm['id'] == rid) return rm['name'] as String? ?? '';
+    }
+    return rid.toString();
+  }
+
+  List<Widget> _buildBadges(String type, Map<String, dynamic> item) {
+    Widget pill(String label, Color bg, Color fg) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+      child: Text(label,
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, height: 1.5, color: fg)),
+    );
+
     switch (type) {
-      case 'subjects': return ['', 'Primary', 'Secondary'];
-      case 'facilities': return ['', 'Dispensary', 'Health center', 'Laboratory', 'Hospital', 'Clinic'];
-      default: return [];
+      case 'departments':
+        final disabled = item['status'] == 'disabled';
+        return [pill(disabled ? 'Imezimwa' : '● Hai',
+            disabled ? _kRedBg : _kGreenBg, disabled ? _kRed : _kGreen)];
+      case 'subjects':
+        final level = item['level'] as String? ?? '';
+        if (level.isEmpty) return [];
+        return [pill(level, _kAmberBg, _kAmber)];
+      case 'cadres':
+        final cat   = item['category'] as String? ?? '';
+        final level = item['level'] as String? ?? '';
+        return [
+          if (cat.isNotEmpty)   pill(cat,   _kBlueBg,  _kBlueDark),
+          if (level.isNotEmpty) pill(level, _kAmberBg, _kAmber),
+        ];
+      case 'districts':
+        final rn = _getRegionName(item);
+        if (rn.isEmpty) return [];
+        return [pill(rn, _kBlueBg, _kBlueDark)];
+      case 'facilities':
+        final tl = (item['level'] ?? item['type'] ?? item['type_category']) as String? ?? '';
+        if (tl.isEmpty) return [];
+        return [pill(tl, _kBlueBg, _kBlueDark)];
+      default:
+        return [];
     }
   }
+
+  // ─── BUILD ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
             child: Row(
               children: [
+                const Icon(Icons.storage_rounded, size: 22, color: _kBlue),
+                const SizedBox(width: 8),
+                const Text('Data',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700,
+                        color: _kGrey900, height: 7 / 6)),
+                const SizedBox(width: 8),
                 Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.bar_chart, color: _kBlue, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Data', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                    Text('Simamia data za mfumo', style: TextStyle(fontSize: 12, color: _kGrey500)),
-                  ],
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _kGrey50,
+                    border: Border.all(color: _kGrey200),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8, height: 8,
+                        decoration: const BoxDecoration(color: _kGrey500, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 5),
+                      const Text('Moja kwa moja',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                              color: _kGrey500, height: 1.5)),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-          // Custom tab bar
+          // Tab bar
           Container(
-            height: 44,
-            color: Colors.white,
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: _kGrey200)),
+            ),
             child: TabBar(
               controller: _tabCtrl,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
               labelColor: _kBlue,
               unselectedLabelColor: _kGrey500,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-              unselectedLabelStyle: const TextStyle(fontSize: 12),
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, height: 4 / 3),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, height: 4 / 3),
               indicator: const UnderlineTabIndicator(
                 borderSide: BorderSide(color: _kBlue, width: 2),
               ),
-              tabs: List.generate(_types.length, (i) => Tab(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(_typeIcons[i], size: 15),
-                    const SizedBox(width: 5),
-                    Text(_typeLabels[i]),
-                  ],
-                ),
-              )),
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.zero,
+              tabs: _typeLabels.map((l) => Tab(height: 36, child: Text(l))).toList(),
             ),
           ),
-          const Divider(height: 1, color: _kGrey200),
           Expanded(
             child: TabBarView(
               controller: _tabCtrl,
-              children: _types.map((type) {
-                final loading = _loading[type] ?? false;
-                final error = _errors[type];
-                final filtered = _filtered(type);
-                final allItems = _cache[type] ?? [];
-                final levelOpts = _levelOptions(type);
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${allItems.length} ${_typeLabels[_types.indexOf(type)]} yaliyosajiliwa',
-                              style: TextStyle(fontSize: 13, color: _kGrey700),
-                            ),
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: () => _showAddEdit(type),
-                            icon: const Icon(Icons.add, size: 14),
-                            label: const Text('Ongeza', style: TextStyle(fontSize: 12)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _kBlue, foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: TextField(
-                        controller: _searchCtrls[type],
-                        decoration: InputDecoration(
-                          hintText: 'Tafuta...',
-                          prefixIcon: const Icon(Icons.search, color: _kGrey500, size: 18),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: _kGrey200),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: _kGrey200),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: _kBlue),
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (levelOpts.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 34,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          children: levelOpts.map((opt) {
-                            final selected = (_levelFilters[type] ?? '') == opt;
-                            final label = opt.isEmpty ? 'Zote' : opt;
-                            return GestureDetector(
-                              onTap: () { setState(() { _levelFilters[type] = opt; }); },
-                              child: Container(
-                                margin: const EdgeInsets.only(right: 8),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: selected ? _kBlueBg : Colors.white,
-                                  border: Border.all(color: selected ? _kBlue : _kGrey200),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(label,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: selected ? _kBlue : _kGrey700,
-                                      fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                                    )),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    if (loading)
-                      const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
-                    else if (error != null)
-                      Expanded(
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.error_outline, color: _kRed, size: 48),
-                              const SizedBox(height: 12),
-                              ElevatedButton.icon(
-                                onPressed: () { _cache.remove(type); _loadType(type); },
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Jaribu tena'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _kBlue, foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else if (filtered.isEmpty)
-                      Expanded(
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(_typeIcons[_types.indexOf(type)], color: _kGrey500, size: 48),
-                              const SizedBox(height: 12),
-                              Text('Hakuna data', style: TextStyle(color: _kGrey500)),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: () async {
-                            _cache.remove(type);
-                            await _loadType(type);
-                          },
-                          color: _kBlue,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
-                            itemBuilder: (ctx, i) {
-                              final item = filtered[i] as Map<String, dynamic>;
-                              final name = (item['name'] ?? item['display_name'] ?? '') as String? ?? '';
-                              final code = item['code'] as String? ?? '';
-                              final badge = _badgeLabel(type, item);
-                              final color = _itemColor(type, item);
-                              final bg = _itemBg(type, item);
-                              final icon = _itemIcon(type, item);
-                              return Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(color: _kGrey200),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 44, height: 44,
-                                      decoration: BoxDecoration(
-                                        color: bg,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(icon, color: color, size: 20),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(name,
-                                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey900)),
-                                          if (code.isNotEmpty)
-                                            Text(code, style: TextStyle(fontSize: 11, color: _kGrey500)),
-                                          if (badge.isNotEmpty) ...[
-                                            const SizedBox(height: 3),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: bg,
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(badge,
-                                                  style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w600)),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                    _EditBtn(onTap: () => _showAddEdit(type, item: item)),
-                                    const SizedBox(width: 4),
-                                    _DeleteBtn(onTap: () => _delete(type, item)),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              }).toList(),
+              children: _types.map(_buildTabContent).toList(),
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class _EditBtn extends StatelessWidget {
-  final VoidCallback onTap;
-  const _EditBtn({required this.onTap});
+  Widget _buildTabContent(String type) {
+    final loading  = _loading[type] ?? false;
+    final error    = _errors[type];
+    final filtered = _filtered(type);
 
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(
-          border: Border.all(color: _kGrey200),
-          borderRadius: BorderRadius.circular(8),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: _buildFilterArea(type, filtered.length),
         ),
-        child: const Icon(Icons.edit_outlined, size: 16, color: _kGrey700),
+        const SizedBox(height: 12),
+        if (loading)
+          const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
+        else if (error != null)
+          Expanded(
+            child: Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.error_outline, color: _kRed, size: 48),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () { _cache.remove(type); _loadType(type); },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Jaribu tena'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: _kBlue, foregroundColor: Colors.white),
+                ),
+              ]),
+            ),
+          )
+        else
+          Expanded(child: _buildList(type, filtered)),
+      ],
+    );
+  }
+
+  Widget _buildFilterArea(String type, int count) {
+    Widget searchRow = Row(
+      children: [
+        Expanded(child: _searchField(type)),
+        const SizedBox(width: 8),
+        _countBadge(count),
+        const SizedBox(width: 8),
+        _addBtn(type),
+      ],
+    );
+
+    switch (type) {
+      case 'subjects':
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _dropdownField(
+            value: _levelFilters['subjects'] ?? '',
+            items: const [
+              DropdownMenuItem(value: '', child: Text('Viwango vyote')),
+              DropdownMenuItem(value: 'primary',    child: Text('Primary (Msingi)')),
+              DropdownMenuItem(value: 'secondary',  child: Text('Secondary (Sekondari)')),
+            ],
+            onChanged: (v) => setState(() { _levelFilters['subjects'] = v ?? ''; }),
+          ),
+          const SizedBox(height: 8),
+          searchRow,
+        ]);
+      case 'districts':
+        final regions = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _dropdownField(
+            value: _regionFilters['districts'] ?? '',
+            items: [
+              const DropdownMenuItem(value: '', child: Text('Mikoa yote')),
+              ...regions.map((r) => DropdownMenuItem(
+                value: r['id'].toString(),
+                child: Text(r['name'] as String? ?? ''),
+              )),
+            ],
+            onChanged: (v) => setState(() { _regionFilters['districts'] = v ?? ''; }),
+          ),
+          const SizedBox(height: 8),
+          searchRow,
+        ]);
+      case 'facilities':
+        final regions = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _dropdownField(
+            value: _facCategory,
+            items: const [
+              DropdownMenuItem(value: 'health',     child: Text('Vituo vya Afya')),
+              DropdownMenuItem(value: 'education',  child: Text('Shule')),
+            ],
+            onChanged: (v) => setState(() { _facCategory = v ?? 'health'; _facDistrict = ''; }),
+          ),
+          const SizedBox(height: 8),
+          _dropdownField(
+            value: _facRegion,
+            items: [
+              const DropdownMenuItem(value: '', child: Text('Mikoa yote')),
+              ...regions.map((r) => DropdownMenuItem(
+                value: r['id'].toString(),
+                child: Text(r['name'] as String? ?? ''),
+              )),
+            ],
+            onChanged: (v) {
+              setState(() { _facRegion = v ?? ''; _facDistrict = ''; _facDistricts = []; });
+              if (v != null && v.isNotEmpty) _loadFacDistricts(v);
+            },
+          ),
+          const SizedBox(height: 8),
+          _dropdownField(
+            value: _facDistrict,
+            enabled: _facRegion.isNotEmpty,
+            items: [
+              const DropdownMenuItem(value: '', child: Text('Wilaya zote')),
+              ..._facDistricts.cast<Map<String, dynamic>>().map((d) => DropdownMenuItem(
+                value: d['id'].toString(),
+                child: Text(d['name'] as String? ?? ''),
+              )),
+            ],
+            onChanged: (v) => setState(() { _facDistrict = v ?? ''; }),
+          ),
+          const SizedBox(height: 8),
+          searchRow,
+        ]);
+      default:
+        return searchRow;
+    }
+  }
+
+  Widget _searchField(String type) => TextField(
+    controller: _searchCtrls[type],
+    style: const TextStyle(fontSize: 14, color: _kGrey900),
+    decoration: InputDecoration(
+      hintText: 'Tafuta...',
+      hintStyle: const TextStyle(fontSize: 14, color: _kGrey500),
+      prefixIcon: const Icon(Icons.search_rounded, size: 18, color: _kGrey500),
+      filled: true,
+      fillColor: Colors.white,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+      border:        OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue)),
+    ),
+  );
+
+  Widget _countBadge(int count) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(999)),
+    child: Text('$count',
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kBlue, height: 4 / 3)),
+  );
+
+  Widget _addBtn(String type) {
+    const labels = {
+      'departments': 'Idara',  'subjects': 'Somo',
+      'cadres': 'Kada',        'regions': 'Mkoa',
+      'districts': 'Wilaya',   'facilities': 'Kituo',
+    };
+    return OutlinedButton(
+      onPressed: () => _showAddEdit(type),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _kGrey700,
+        side: const BorderSide(color: _kGrey200),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text('+ ${labels[type] ?? 'Ongeza'}'),
+    );
+  }
+
+  Widget _dropdownField({
+    required String value,
+    required List<DropdownMenuItem<String>> items,
+    required void Function(String?) onChanged,
+    bool enabled = true,
+  }) => DropdownButtonFormField<String>(
+    value: value,
+    isExpanded: true,
+    decoration: InputDecoration(
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      filled: true,
+      fillColor: enabled ? Colors.white : _kGrey50,
+      border:          OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+      enabledBorder:   OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+      focusedBorder:   OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue)),
+      disabledBorder:  OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+    ),
+    style: const TextStyle(fontSize: 14, color: _kGrey900),
+    items: items,
+    onChanged: enabled ? onChanged : null,
+  );
+
+  Widget _buildList(String type, List<dynamic> items) {
+    if (items.isEmpty) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.inbox_outlined, size: 48, color: _kGrey500),
+          const SizedBox(height: 8),
+          const Text('Hakuna data',
+              style: TextStyle(fontSize: 14, color: _kGrey500)),
+        ]),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: _kGrey100),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: RefreshIndicator(
+          onRefresh: () async { _cache.remove(type); await _loadType(type); },
+          color: _kBlue,
+          child: ListView.separated(
+            itemCount: items.length,
+            separatorBuilder: (_, _r) => const Divider(height: 1, thickness: 1, color: _kGrey100),
+            itemBuilder: (ctx, i) => _buildItem(type, items[i] as Map<String, dynamic>),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItem(String type, Map<String, dynamic> item) {
+    final name    = (item['name'] ?? item['display_name'] ?? '') as String? ?? '';
+    final code    = item['code'] as String? ?? item['school_code'] as String? ?? item['id']?.toString() ?? '';
+    final badges  = _buildBadges(type, item);
+    final dimmed  = type == 'departments' && item['status'] == 'disabled';
+
+    // Facilities subtitle: region · district
+    final facSub = type == 'facilities'
+        ? [
+            _getRegionName(item),
+            (item['district_name'] ?? item['district']) as String? ?? '',
+          ].where((s) => s.isNotEmpty).join(' · ')
+        : '';
+
+    return Opacity(
+      opacity: dimmed ? 0.5 : 1.0,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Code + badges row
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (code.isNotEmpty)
+                        Text(code,
+                            style: const TextStyle(
+                                fontSize: 12, height: 4 / 3, color: _kGrey500,
+                                fontFamily: 'monospace')),
+                      ...badges,
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(name,
+                      style: const TextStyle(
+                          fontSize: 14, height: 10 / 7,
+                          fontWeight: FontWeight.w500, color: _kGrey900),
+                      overflow: TextOverflow.ellipsis),
+                  if (facSub.isNotEmpty)
+                    Text(facSub,
+                        style: const TextStyle(fontSize: 11, height: 1.5, color: _kGrey500),
+                        overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            _RowAction(
+              onView:   () => _showView(type, item),
+              onEdit:   () => _showAddEdit(type, item: item),
+              onDelete: () => _delete(type, item),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _DeleteBtn extends StatelessWidget {
-  final VoidCallback onTap;
-  const _DeleteBtn({required this.onTap});
+// ─── Row action buttons (Eye + Pencil + Trash) ───────────────────────────────
+
+class _RowAction extends StatelessWidget {
+  final VoidCallback onView;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  const _RowAction({required this.onView, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(
-          border: Border.all(color: _kRed.withValues(alpha: 0.4)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Icon(Icons.delete_outline, size: 16, color: _kRed),
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _btn(Icons.visibility_outlined,  _kGrey600, 14, onView),
+        _btn(Icons.edit_outlined,        _kBlue,    13, onEdit),
+        _btn(Icons.delete_outline,       _kRed,     13, onDelete),
+      ],
     );
   }
+
+  Widget _btn(IconData icon, Color color, double size, VoidCallback onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Icon(icon, size: size, color: color),
+        ),
+      );
 }
+
+// ─── Add / Edit form sheet ────────────────────────────────────────────────────
 
 class _DataFormSheet extends StatefulWidget {
   final String type;
   final Map<String, dynamic>? item;
   final VoidCallback onSaved;
-
   const _DataFormSheet({required this.type, this.item, required this.onSaved});
 
   @override
@@ -547,25 +773,24 @@ class _DataFormSheetState extends State<_DataFormSheet> {
   final _nameCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
   String _category = 'health';
-  String _level = 'Primary';
-  String _status = 'active';
-  bool _saving = false;
-  List<dynamic> _regions = [];
-  String? _selectedRegionId;
-  String? _selectedDistrictId;
-  List<dynamic> _districts = [];
-  List<dynamic> _departments = [];
+  String _level    = 'Primary';
+  String _status   = 'active';
+  bool   _saving   = false;
+  List<dynamic> _regions        = [];
+  String?       _selectedRegion;
+  String?       _selectedDistrict;
+  List<dynamic> _districts      = [];
+  List<dynamic> _departments    = [];
 
   @override
   void initState() {
     super.initState();
     if (widget.item != null) {
       final it = widget.item!;
-      // Kada zinasoma `display_name`; nyingine `name`.
       _nameCtrl.text = (it['display_name'] ?? it['name'] ?? '') as String? ?? '';
       _codeCtrl.text = it['code'] as String? ?? '';
-      _category = it['category'] as String? ?? 'health';
-      _status = it['status'] as String? ?? 'active';
+      _category      = it['category'] as String? ?? 'health';
+      _status        = it['status'] as String? ?? 'active';
       final lvl = (it['level'] ?? it['type'] ?? '') as String? ?? '';
       if (widget.type == 'subjects') {
         _level = lvl.toLowerCase() == 'secondary' ? 'Secondary' : 'Primary';
@@ -576,10 +801,9 @@ class _DataFormSheetState extends State<_DataFormSheet> {
       _level = widget.type == 'subjects' ? 'Primary' : 'dispensary';
     }
     if (widget.type == 'facilities') _loadRegions();
-    if (widget.type == 'cadres') _loadDepartments();
+    if (widget.type == 'cadres')     _loadDepartments();
   }
 
-  /// Code ya kiotomatiki kutoka jina — admin hahitaji kuiandika kwa mkono.
   static String _slug(String name) {
     final buf = StringBuffer();
     for (final ch in name.trim().toLowerCase().split('')) {
@@ -590,9 +814,7 @@ class _DataFormSheetState extends State<_DataFormSheet> {
       }
     }
     var code = buf.toString();
-    while (code.endsWith('_')) {
-      code = code.substring(0, code.length - 1);
-    }
+    while (code.endsWith('_')) { code = code.substring(0, code.length - 1); }
     return code.isEmpty ? 'item' : code;
   }
 
@@ -602,18 +824,9 @@ class _DataFormSheetState extends State<_DataFormSheet> {
       if (!mounted) return;
       final data = res.data;
       setState(() {
-        _departments = data is List
-            ? data
-            : ((data['results'] ?? data['items'] ?? []) as List);
+        _departments = data is List ? data : ((data['results'] ?? data['items'] ?? []) as List);
       });
     } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _codeCtrl.dispose();
-    super.dispose();
   }
 
   Future<void> _loadRegions() async {
@@ -638,6 +851,13 @@ class _DataFormSheetState extends State<_DataFormSheet> {
     } catch (_) {}
   }
 
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _codeCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
@@ -649,33 +869,27 @@ class _DataFormSheetState extends State<_DataFormSheet> {
 
       switch (widget.type) {
         case 'departments':
-          // Backend: code (slug) + name + status. `category` hazitumiki hapa.
-          data['code'] = slug.toLowerCase();
+          data['code']   = slug.toLowerCase();
           data['status'] = _status;
-          break;
         case 'subjects':
-          // Backend inataka level `Primary`/`Secondary` (capitalised).
-          data['code'] = slug.toUpperCase();
+          data['code']  = slug.toUpperCase();
           data['level'] = _level;
-          break;
         case 'cadres':
-          // Backend: code + display_name + category (code ya idara).
           data.remove('name');
-          data['code'] = slug.toUpperCase();
+          data['code']         = slug.toUpperCase();
           data['display_name'] = name;
-          data['category'] = _category;
+          data['category']     = _category;
           if (_level == 'Primary' || _level == 'Secondary') data['level'] = _level;
-          break;
         case 'regions':
-          // RegionIn ina `name` pekee (id inajiongeza yenyewe).
+          break;
+        case 'districts':
           break;
         case 'facilities':
-          // FacilityIn inahitaji category + region_id + district_id.
           data['category'] = 'health';
-          data['type'] = _level;
-          if (_selectedRegionId != null) data['region_id'] = int.parse(_selectedRegionId!);
-          if (_selectedDistrictId != null) data['district_id'] = int.parse(_selectedDistrictId!);
-          if (_selectedRegionId == null || _selectedDistrictId == null) {
+          data['type']     = _level;
+          if (_selectedRegion != null)   data['region_id']   = int.parse(_selectedRegion!);
+          if (_selectedDistrict != null) data['district_id'] = int.parse(_selectedDistrict!);
+          if (_selectedRegion == null || _selectedDistrict == null) {
             if (!mounted) return;
             setState(() { _saving = false; });
             ScaffoldMessenger.of(context).showSnackBar(
@@ -683,7 +897,6 @@ class _DataFormSheetState extends State<_DataFormSheet> {
             );
             return;
           }
-          break;
       }
 
       final id = widget.item?['id']?.toString() ?? widget.item?['code']?.toString();
@@ -704,24 +917,25 @@ class _DataFormSheetState extends State<_DataFormSheet> {
     }
   }
 
-  InputDecoration _inputDec(String hint) => InputDecoration(
+  InputDecoration _dec(String hint) => InputDecoration(
     hintText: hint,
     filled: true,
     fillColor: Colors.white,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
+    border:        OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue)),
   );
 
   String get _title {
     final action = widget.item != null ? 'Hariri' : 'Ongeza';
     switch (widget.type) {
       case 'departments': return '$action Idara';
-      case 'subjects': return '$action Somo';
-      case 'cadres': return '$action Kada';
-      case 'regions': return '$action Mkoa';
-      case 'facilities': return '$action Kituo';
+      case 'subjects':    return '$action Somo';
+      case 'cadres':      return '$action Kada';
+      case 'regions':     return '$action Mkoa';
+      case 'districts':   return '$action Wilaya';
+      case 'facilities':  return '$action Kituo';
       default: return action;
     }
   }
@@ -735,60 +949,57 @@ class _DataFormSheetState extends State<_DataFormSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(_title,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-              const Spacer(),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-            ],
-          ),
+          Row(children: [
+            Text(_title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
+            const Spacer(),
+            IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+          ]),
           const SizedBox(height: 16),
           if (widget.type == 'facilities') ...[
             DropdownButtonFormField<String>(
-              value: _regions.any((r) => r['id'].toString() == _selectedRegionId) ? _selectedRegionId : null,
-              decoration: _inputDec('Chagua mkoa'),
+              value: _regions.any((r) => r['id'].toString() == _selectedRegion) ? _selectedRegion : null,
+              decoration: _dec('Chagua mkoa'),
               items: _regions.map((r) => DropdownMenuItem<String>(
                 value: r['id'].toString(),
                 child: Text(r['name'] as String? ?? ''),
               )).toList(),
               onChanged: (v) {
-                setState(() { _selectedRegionId = v; _selectedDistrictId = null; _districts = []; });
+                setState(() { _selectedRegion = v; _selectedDistrict = null; _districts = []; });
                 if (v != null) _loadDistricts(v);
               },
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _districts.any((d) => d['id'].toString() == _selectedDistrictId) ? _selectedDistrictId : null,
-              decoration: _inputDec('Chagua wilaya'),
+              value: _districts.any((d) => d['id'].toString() == _selectedDistrict) ? _selectedDistrict : null,
+              decoration: _dec('Chagua wilaya'),
               items: _districts.map((d) => DropdownMenuItem<String>(
                 value: d['id'].toString(),
                 child: Text(d['name'] as String? ?? ''),
               )).toList(),
-              onChanged: (v) => setState(() { _selectedDistrictId = v; }),
+              onChanged: (v) => setState(() { _selectedDistrict = v; }),
             ),
             const SizedBox(height: 12),
           ],
           TextField(
             controller: _nameCtrl,
-            decoration: _inputDec(widget.type == 'cadres' ? 'Jina la kada *' : 'Jina *'),
+            decoration: _dec(widget.type == 'cadres' ? 'Jina la kada *' : 'Jina *'),
           ),
           const SizedBox(height: 12),
-          if (widget.type != 'facilities' && widget.type != 'regions')
+          if (widget.type != 'facilities' && widget.type != 'regions' &&
+              widget.type != 'districts')
             TextField(
               controller: _codeCtrl,
-              decoration: _inputDec('Code (ikiachiwa wazi tunautengeneza wenyewe)'),
+              decoration: _dec('Code (ikiachiwa wazi tunautengeneza wenyewe)'),
             ),
           if (widget.type == 'facilities') ...[
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              // Hifadhi ya kale ina `type` kwa herufi kubwa ("Dispensary") —
-              // lazima ilingane na items hapa chini, vinginevyo Flutter inacrash.
               value: ['dispensary', 'health_center', 'laboratory', 'hospital', 'clinic']
                       .contains(_level.toLowerCase())
                   ? _level.toLowerCase()
                   : 'dispensary',
-              decoration: _inputDec('Aina ya kituo'),
+              decoration: _dec('Aina ya kituo'),
               items: ['dispensary', 'health_center', 'laboratory', 'hospital', 'clinic']
                   .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                   .toList(),
@@ -797,25 +1008,20 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           ],
           if (widget.type == 'departments') ...[
             const SizedBox(height: 12),
-            // Hali ya idara: iliyozimwa (disabled) haionekani kwenye usajili.
-            Row(
-              children: [
-                _TogglePill(label: 'Hai', selected: _status == 'active',
-                    color: _kGreen, onTap: () => setState(() { _status = 'active'; })),
-                const SizedBox(width: 8),
-                _TogglePill(label: 'Imezimwa', selected: _status == 'disabled',
-                    color: _kAmber, onTap: () => setState(() { _status = 'disabled'; })),
-              ],
-            ),
+            Row(children: [
+              _TogglePill(label: 'Hai',      selected: _status == 'active',
+                  color: _kGreen, onTap: () => setState(() { _status = 'active'; })),
+              const SizedBox(width: 8),
+              _TogglePill(label: 'Imezimwa', selected: _status == 'disabled',
+                  color: _kAmber, onTap: () => setState(() { _status = 'disabled'; })),
+            ]),
           ],
           if (widget.type == 'cadres') ...[
             const SizedBox(height: 12),
-            // Kada inamilikiwa na IDARA halisi (code) — sio health/education
-            // tu, kwa kuwa admin anaweza kuongeza idara mpya.
             DropdownButtonFormField<String>(
               value: _departments.any((d) => d['code'] == _category) ? _category : null,
               isExpanded: true,
-              decoration: _inputDec('Chagua idara *'),
+              decoration: _dec('Chagua idara *'),
               items: _departments.map((d) => DropdownMenuItem<String>(
                 value: d['code'] as String,
                 child: Text(d['name'] as String? ?? d['code'] as String),
@@ -823,30 +1029,27 @@ class _DataFormSheetState extends State<_DataFormSheet> {
               onChanged: (v) => setState(() { _category = v ?? _category; }),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                _TogglePill(label: 'Bila kiwango', selected: _level != 'Primary' && _level != 'Secondary',
-                    color: _kGrey500, onTap: () => setState(() { _level = ''; })),
-                const SizedBox(width: 8),
-                _TogglePill(label: 'Primary', selected: _level == 'Primary',
-                    color: _kBlue, onTap: () => setState(() { _level = 'Primary'; })),
-                const SizedBox(width: 8),
-                _TogglePill(label: 'Secondary', selected: _level == 'Secondary',
-                    color: _kAmber, onTap: () => setState(() { _level = 'Secondary'; })),
-              ],
-            ),
+            Row(children: [
+              _TogglePill(label: 'Bila kiwango',
+                  selected: _level != 'Primary' && _level != 'Secondary',
+                  color: _kGrey500, onTap: () => setState(() { _level = ''; })),
+              const SizedBox(width: 8),
+              _TogglePill(label: 'Primary',   selected: _level == 'Primary',
+                  color: _kBlue,  onTap: () => setState(() { _level = 'Primary'; })),
+              const SizedBox(width: 8),
+              _TogglePill(label: 'Secondary', selected: _level == 'Secondary',
+                  color: _kAmber, onTap: () => setState(() { _level = 'Secondary'; })),
+            ]),
           ],
           if (widget.type == 'subjects') ...[
             const SizedBox(height: 12),
-            Row(
-              children: [
-                _TogglePill(label: 'Primary', selected: _level == 'Primary',
-                    color: _kBlue, onTap: () => setState(() { _level = 'Primary'; })),
-                const SizedBox(width: 8),
-                _TogglePill(label: 'Secondary', selected: _level == 'Secondary',
-                    color: _kAmber, onTap: () => setState(() { _level = 'Secondary'; })),
-              ],
-            ),
+            Row(children: [
+              _TogglePill(label: 'Primary',   selected: _level == 'Primary',
+                  color: _kBlue,  onTap: () => setState(() { _level = 'Primary'; })),
+              const SizedBox(width: 8),
+              _TogglePill(label: 'Secondary', selected: _level == 'Secondary',
+                  color: _kAmber, onTap: () => setState(() { _level = 'Secondary'; })),
+            ]),
           ],
           const SizedBox(height: 20),
           SizedBox(
@@ -869,6 +1072,8 @@ class _DataFormSheetState extends State<_DataFormSheet> {
     );
   }
 }
+
+// ─── Toggle pill (used in form sheet) ────────────────────────────────────────
 
 class _TogglePill extends StatelessWidget {
   final String label;

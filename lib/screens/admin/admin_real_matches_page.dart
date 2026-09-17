@@ -72,7 +72,7 @@ _ScoreBadge _scoreBadge(double score) {
   if (score >= 0.85) {
     return const _ScoreBadge('NZURI', Color(0xFF1D4ED8), Color(0xFFDBEAFE), Color(0xFF93C5FD));
   }
-  return const _ScoreBadge('POA', Color(0xFFB45309), Color(0xFFFEF9C3), Color(0xFFFDE047));
+  return const _ScoreBadge('POA', Color(0xFFA16207), Color(0xFFFEF9C3), Color(0xFFFDE047));
 }
 
 // ── Cadre options (kama web getCadreOptions) ───────────────────────────────
@@ -816,7 +816,7 @@ class _UserHalf extends StatelessWidget {
                 border: Border.all(color: _kGrey200),
               ),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                const Icon(Icons.phone_outlined, size: 10, color: _kGrey700), // Phone size=10
+                const Icon(Icons.phone_outlined, size: 10, color: _kGrey900), // Phone size=10
                 const SizedBox(width: 6), // gap-1.5
                 Text(phone, style: const TextStyle(
                   fontSize: 11,                // text-[11px]
