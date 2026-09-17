@@ -300,6 +300,11 @@ class _State extends State<AdminUsersPage> {
 
   // Inline message — exactly like web: bg-brand-blue-50 text-brand-blue text-sm rounded-lg p-3
   void _snack(String msg, [Color color = _blue]) {
+    if (_message == msg) {
+      _msgTimer?.cancel();
+      setState(() => _message = null);
+      return;
+    }
     _msgTimer?.cancel();
     setState(() => _message = msg);
     _msgTimer = Timer(const Duration(seconds: 5), () {
@@ -1496,84 +1501,40 @@ class _State extends State<AdminUsersPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Row 1: icon + title/subtitle + Ongeza button
-        Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          // Rounded square icon box (blue-50 bg)
-          Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(color: _blueBg, borderRadius: BorderRadius.circular(14)),
-            alignment: Alignment.center,
-            child: const Icon(Icons.group_rounded, color: _blue, size: 26),
-          ),
-          const SizedBox(width: 12),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Title + live text
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 const Text('Watumiaji',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _g900)),
                 const SizedBox(width: 8),
-                // LIVE badge — pill shape
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _live ? const Color(0xFFDCFCE7) : _g100,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Container(
-                      width: 6, height: 6,
-                      decoration: BoxDecoration(
-                        color: _live ? const Color(0xFF22C55E) : _g300,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text('LIVE',
-                        style: TextStyle(
-                          fontSize: 10, fontWeight: FontWeight.w800,
-                          color: _live ? _green : _g400,
-                          letterSpacing: 0.5,
-                        )),
-                  ]),
-                ),
+                Text('● Live',
+                    style: TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w700,
+                      color: _live ? const Color(0xFF22C55E) : _g300,
+                    )),
               ]),
               Text('${_loading ? '...' : _users.length} watumiaji wote',
-                  style: const TextStyle(fontSize: 13, color: _g500)),
+                  style: const TextStyle(fontSize: 12, color: _g500)),
             ]),
           ),
           const SizedBox(width: 8),
-          // Ongeza button — big blue
-          GestureDetector(
-            onTap: _showAdd,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-              decoration: BoxDecoration(
-                color: _blue,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.person_add_rounded, color: Colors.white, size: 16),
-                SizedBox(width: 6),
-                Text('Ongeza', style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-              ]),
-            ),
+          // Flex-wrap buttons: Trash, + Ongeza, Admin, Import
+          Wrap(
+            spacing: 6, runSpacing: 6,
+            alignment: WrapAlignment.end,
+            children: [
+              _hdrBtn(Icons.delete_outline_rounded, 'Trash', _red, _red50, _red100, () {
+                _snack('Orodha ya waliofutwa haijatekelezwa bado', _g700);
+              }),
+              _hdrBtn(Icons.person_add_rounded, '+ Ongeza', Colors.white, _blue, _blue, _showAdd),
+              _hdrBtn(Icons.shield_outlined, 'Admin', _g700, Colors.white, _g200, _showAddAdmin),
+              _hdrBtn(Icons.upload_file_rounded, 'Import', _g700, Colors.white, _g200, _showImport),
+            ],
           ),
         ]),
-        const SizedBox(height: 14),
-        // Row 2: 3 action buttons (Trash active=pink, Admin, Import outlined)
-        Row(children: [
-          Expanded(child: _hdrBtn(Icons.delete_outline_rounded, 'Trash', _red, _red50, _red100, () {
-            _snack('Orodha ya waliofutwa haijatekelezwa bado', _g700);
-          })),
-          const SizedBox(width: 8),
-          Expanded(child: _hdrBtn(Icons.shield_outlined, 'Admin', _g700, Colors.white, _g200,
-              _showAddAdmin)),
-          const SizedBox(width: 8),
-          Expanded(child: _hdrBtn(Icons.upload_file_rounded, 'Import', _g700, Colors.white, _g200,
-              _showImport)),
-        ]),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
       ]),
     );
   }
@@ -1629,72 +1590,69 @@ class _State extends State<AdminUsersPage> {
     );
   }
 
-  // ── Filters — 2×2 grid kama mockup ─────────────────────────────────────────
+  // ── Filters — vertical stack kama web ──────────────────────────────────────
   Widget _buildFilters() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        // Search — full width
-        TextField(
-          controller: _search,
-          style: const TextStyle(fontSize: _kInputFs, color: _g900),
-          decoration: InputDecoration(
-            hintText: 'Tafuta kwa jina, simu au...',
-            hintStyle: const TextStyle(color: _g400, fontSize: _kInputFs),
-            prefixIcon: const Icon(Icons.search_rounded, color: _g400, size: 18),
-            fillColor: Colors.white, filled: true,
-            isDense: true,
-            contentPadding: _kInputPad,
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: _g300)),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: _g300)),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: _blue, width: 1.5)),
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Row 1: Idara + Mkoa
+        // Row: search + idara/category
         Row(children: [
-          Expanded(child: _selBtn(
-            _catLabel,
-            _openCategoryPicker,
-            active: _category.isNotEmpty,
-          )),
-          const SizedBox(width: 8),
-          Expanded(child: _selBtn(
-            _regionName != null ? 'Mkoa: $_regionName' : 'Mkoa wote',
-            _openRegionPicker,
-            active: _regionId != null,
-          )),
-        ]),
-        const SizedBox(height: 8),
-        // Row 2: Wilaya + Masomo/Vituo
-        Row(children: [
-          Expanded(child: _selBtn(
-            _districtName ?? 'Wilaya zote',
-            _openDistrictPicker,
-            active: _districtId != null,
-            disabled: _regionId == null,
-          )),
-          const SizedBox(width: 8),
-          Expanded(child: _subjects.isNotEmpty
-            ? _selBtn(
-                _subjectName ?? 'Masomo yote',
-                _openSubjectPicker,
-                active: _subjectCode != null,
-              )
-            : _selBtn(
-                _facilityName ?? 'Vituo vyote',
-                _openFacilityPicker,
-                active: _facilityId != null,
-                disabled: _districtId == null,
+          Expanded(
+            child: TextField(
+              controller: _search,
+              style: const TextStyle(fontSize: _kInputFs, color: _g900),
+              decoration: InputDecoration(
+                hintText: 'Tafuta kwa jina, simu au...',
+                hintStyle: const TextStyle(color: _g400, fontSize: _kInputFs),
+                prefixIcon: const Icon(Icons.search_rounded, color: _g400, size: 18),
+                fillColor: Colors.white, filled: true,
+                isDense: true,
+                contentPadding: _kInputPad,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(_kInputRadius),
+                    borderSide: const BorderSide(color: _g300)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(_kInputRadius),
+                    borderSide: const BorderSide(color: _g300)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(_kInputRadius),
+                    borderSide: const BorderSide(color: _blue, width: 1.5)),
               ),
+            ),
           ),
+          const SizedBox(width: 8),
+          _selBtn(_catLabel, _openCategoryPicker, active: _category.isNotEmpty),
         ]),
+        const SizedBox(height: 6),
+        // Mkoa — full width
+        _selBtn(
+          _regionName != null ? 'Mkoa: $_regionName' : 'Mkoa wote',
+          _openRegionPicker,
+          active: _regionId != null,
+        ),
+        const SizedBox(height: 6),
+        // Wilaya — full width
+        _selBtn(
+          _districtName ?? 'Wilaya zote',
+          _openDistrictPicker,
+          active: _districtId != null,
+          disabled: _regionId == null,
+        ),
+        const SizedBox(height: 6),
+        // Vituo au Masomo — full width
+        if (_subjects.isNotEmpty)
+          _selBtn(
+            _subjectName ?? 'Masomo yote',
+            _openSubjectPicker,
+            active: _subjectCode != null,
+          )
+        else
+          _selBtn(
+            _facilityName ?? 'Vituo vyote',
+            _openFacilityPicker,
+            active: _facilityId != null,
+            disabled: _districtId == null,
+          ),
       ]),
     );
   }
@@ -1869,12 +1827,14 @@ class _UserCard extends StatelessWidget {
                   Expanded(child: _aBtn(
                     isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
                     isActive ? 'Funga' : 'Fungua', _org600, _org50, onSuspend)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _aBtn(
-                    Icons.phone_rounded,
-                    contact ? 'Ameruhusu' : 'Ruhusu',
-                    contact ? _green700 : _g600,
-                    contact ? _green50 : _g100, onContact)),
+                  if (!isPaid) ...[
+                    const SizedBox(width: 8),
+                    Expanded(child: _aBtn(
+                      Icons.phone_rounded,
+                      contact ? 'Ameruhusu' : 'Ruhusu',
+                      contact ? _green700 : _g600,
+                      contact ? _green50 : _g100, onContact)),
+                  ],
                 ]),
                 const SizedBox(height: 8),
                 SizedBox(width: double.infinity,

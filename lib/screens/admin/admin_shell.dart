@@ -126,12 +126,19 @@ class _AdminShellState extends State<AdminShell> {
           ),
         ),
         actions: [
-          // User avatar button — plain icon kama picha
+          // User avatar — circle button
           GestureDetector(
             onTap: () => _showUserMenu(context),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(Icons.person_rounded, color: _kBlue, size: 26),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Container(
+                width: 32, height: 32,
+                decoration: const BoxDecoration(
+                  color: _kBlueBg,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person_rounded, color: _kBlue, size: 18),
+              ),
             ),
           ),
           const SizedBox(width: 8),
