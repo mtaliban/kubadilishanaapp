@@ -612,7 +612,7 @@ class _AdminDataPageState extends State<AdminDataPage>
     required void Function(String?) onChanged,
     bool enabled = true,
   }) => DropdownButtonFormField<String>(
-    value: value,
+    initialValue: value,
     isExpanded: true,
     decoration: InputDecoration(
       isDense: true,
@@ -655,7 +655,7 @@ class _AdminDataPageState extends State<AdminDataPage>
           color: _kBlue,
           child: ListView.separated(
             itemCount: items.length,
-            separatorBuilder: (_, _r) => const Divider(height: 1, thickness: 1, color: _kGrey100),
+            separatorBuilder: (_, idx) => const Divider(height: 1, thickness: 1, color: _kGrey100),
             itemBuilder: (ctx, i) => _buildItem(type, items[i] as Map<String, dynamic>),
           ),
         ),
@@ -958,7 +958,7 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           const SizedBox(height: 16),
           if (widget.type == 'facilities') ...[
             DropdownButtonFormField<String>(
-              value: _regions.any((r) => r['id'].toString() == _selectedRegion) ? _selectedRegion : null,
+              initialValue: _regions.any((r) => r['id'].toString() == _selectedRegion) ? _selectedRegion : null,
               decoration: _dec('Chagua mkoa'),
               items: _regions.map((r) => DropdownMenuItem<String>(
                 value: r['id'].toString(),
@@ -971,7 +971,7 @@ class _DataFormSheetState extends State<_DataFormSheet> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _districts.any((d) => d['id'].toString() == _selectedDistrict) ? _selectedDistrict : null,
+              initialValue: _districts.any((d) => d['id'].toString() == _selectedDistrict) ? _selectedDistrict : null,
               decoration: _dec('Chagua wilaya'),
               items: _districts.map((d) => DropdownMenuItem<String>(
                 value: d['id'].toString(),
@@ -995,7 +995,7 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           if (widget.type == 'facilities') ...[
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: ['dispensary', 'health_center', 'laboratory', 'hospital', 'clinic']
+              initialValue: ['dispensary', 'health_center', 'laboratory', 'hospital', 'clinic']
                       .contains(_level.toLowerCase())
                   ? _level.toLowerCase()
                   : 'dispensary',
@@ -1019,7 +1019,7 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           if (widget.type == 'cadres') ...[
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _departments.any((d) => d['code'] == _category) ? _category : null,
+              initialValue: _departments.any((d) => d['code'] == _category) ? _category : null,
               isExpanded: true,
               decoration: _dec('Chagua idara *'),
               items: _departments.map((d) => DropdownMenuItem<String>(
