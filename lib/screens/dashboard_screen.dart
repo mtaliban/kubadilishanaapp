@@ -693,7 +693,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         (context.read<AuthProvider>().user?.contactEnabled ?? false);
 
     if (!isPaid) {
-      _showCardToast('Changia TZS 5,000 upate namba', uid);
+      _showCardToast('Changia TZS 2,500 upate namba', uid);
       return;
     }
     if (phone.isEmpty) return;
@@ -1025,7 +1025,7 @@ class _TrueMatchCard extends StatelessWidget {
               if (phone.isNotEmpty)
                 Expanded(child: _tmBtn(Icons.phone, 'Piga', () async {
                   final uid = c['user_id'] as String? ?? '';
-                  if (!isPaid) { onToast('Changia TZS 5,000 upate namba', uid); return; }
+                  if (!isPaid) { onToast('Changia TZS 2,500 upate namba', uid); return; }
                   onToast('Piga $name', uid);
                   try { await ApiService().logContact(uid, 'call'); } catch (_) {}
                   launchUrl(Uri.parse('tel:$phone'), mode: LaunchMode.externalApplication);

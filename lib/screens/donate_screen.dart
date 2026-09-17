@@ -71,7 +71,7 @@ class _DonateScreenState extends State<DonateScreen> {
   String _adminPhone = '';
   String _currency = 'TZS';
 
-  final _amountCtrl = TextEditingController(text: '5000');
+  final _amountCtrl = TextEditingController(text: '2500');
   final _phoneCtrl  = TextEditingController();
   final _smsCtrl    = TextEditingController();
 
@@ -332,7 +332,7 @@ class _DonateScreenState extends State<DonateScreen> {
                     keyboardType: TextInputType.number,
                     enabled: !_busy,
                     style: const TextStyle(fontSize: 12),
-                    decoration: _inputDec(hint: '5000'),
+                    decoration: _inputDec(hint: '2500'),
                   ),
                   const SizedBox(height: 12), // gap-3=12px
                   _label('Namba ya Simu'),
@@ -356,7 +356,7 @@ class _DonateScreenState extends State<DonateScreen> {
                     style: const TextStyle(fontSize: 12),
                     onChanged: (_) => setState(() => _error = ''),
                     decoration: _inputDec(
-                      hint: 'C2H8MZ3JX1 Confirmed. You have received TZS 5,000.00 from JOHN KAMWENDA...',
+                      hint: 'C2H8MZ3JX1 Confirmed. You have received TZS 2,500.00 from JOHN KAMWENDA...',
                     ).copyWith(
                       contentPadding: const EdgeInsets.all(10),
                       alignLabelWithHint: true,
