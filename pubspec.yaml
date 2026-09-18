@@ -30,7 +30,11 @@ dependencies:
   shared_preferences: ^2.3.3
 
   # --- UI ---
-  phosphor_flutter: ^2.1.0
+  # phosphor_flutter: VENDOR ndani ya repo (packages/phosphor_flutter).
+  # Toleo la pub.dev (2.1.0, May 2024) halijengi kwenye Flutter mpya kwa kuwa
+  # `IconData` ni `final class` — patched ndani (API ile ile, icons zile zile).
+  phosphor_flutter:
+    path: packages/phosphor_flutter
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10
   shimmer: ^3.0.0
