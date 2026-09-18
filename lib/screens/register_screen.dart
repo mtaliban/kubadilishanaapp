@@ -865,7 +865,29 @@ class _Step4KadaState extends State<_Step4Kada> {
 
       if (_loading)
         Center(child: _loadingRow())
-      else ...[
+      else if (_cadres.isEmpty) ...[
+        // Idara haijawekwa kada bado (k.m. Kilimo na Ufugaji) — mtu anaendelea
+        // bila kuchagua kada. Backend inaruhusu, na matching inamlinganisha na
+        // wenzake WOTE wa idara hii (kada tupu = wote wa idara hiyo).
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB), // amber-50
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFFDE68A)), // amber-200
+          ),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Icon(Icons.info_outline, size: 16, color: Color(0xFFB45309)),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Idara hii haijawekwa kada bado — unaweza kuendelea bila kuchagua kada. Utapatanishwa na wenzako wote wa idara hii.',
+                style: TextStyle(fontSize: 12, height: 1.45, color: Color(0xFF92400E)),
+              ),
+            ),
+          ]),
+        ),
+      ] else ...[
         const Text('Kada *',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 6),
@@ -982,7 +1004,9 @@ class _Step4KadaState extends State<_Step4Kada> {
       _btnRow(
         onBack: widget.onBack,
         onNext: () {
-          if (_cadreCode.isEmpty) { setState(() => _error = 'Chagua kada'); return; }
+          // Kada inahitajika TU kama idara ina kada. Idara mpya (Kilimo, Mifugo)
+          // inaweza kuwa haijawekwa kada — mtu anaendelea bila kada.
+          if (_cadres.isNotEmpty && _cadreCode.isEmpty) { setState(() => _error = 'Chagua kada'); return; }
           if (_needsSubjects && _selectedSubjects.length < 2) {
             setState(() => _error = 'Chagua masomo 2 — ni lazima kabisa');
             return;
@@ -990,7 +1014,7 @@ class _Step4KadaState extends State<_Step4Kada> {
           setState(() => _error = null);
           widget.onNext({'cadre_code': _cadreCode, 'subjects': _selectedSubjects});
         },
-        nextEnabled: _cadreCode.isNotEmpty,
+        nextEnabled: _loading ? false : (_cadres.isNotEmpty ? _cadreCode.isNotEmpty : true),
       ),
     ]);
   }

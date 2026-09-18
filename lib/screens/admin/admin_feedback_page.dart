@@ -1,24 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 
+// ─── Colors ──────────────────────────────────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg  = Color(0xFFEFF6FF);
 const _kGreen   = Color(0xFF16A34A);
 const _kGreenBg = Color(0xFFDCFCE7);
+const _kAmber   = Color(0xFFD97706);
+const _kAmberBg = Color(0xFFFEF3C7);
 const _kRed     = Color(0xFFDC2626);
 const _kRedBg   = Color(0xFFFEE2E2);
 const _kGrey900 = Color(0xFF111827);
 const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey400 = Color(0xFF9CA3AF);
+const _kGrey300 = Color(0xFFD1D5DB);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kGrey100 = Color(0xFFF3F4F6);
-
-const _kOrangeBg  = Color(0xFFFFF7ED);
-const _kOrangeFg  = Color(0xFFC2410C);
-const _kOrangeBdr = Color(0xFFFED7AA);
+const _kGrey50  = Color(0xFFF9FAFB);
 
 const _kPageSize = 5;
+
+String _fmtDate(String iso) {
+  if (iso.isEmpty) return '';
+  try {
+    final dt = DateTime.parse(iso).toLocal();
+    const months = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun',
+                    'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des'];
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}, $h:$m';
+  } catch (_) {
+    return iso;
+  }
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 class AdminFeedbackPage extends StatefulWidget {
   const AdminFeedbackPage({super.key});
@@ -99,16 +118,60 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   Future<void> _delete(String id) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Futa Maoni'),
-        content: const Text('Una uhakika unataka kufuta maoni haya?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Futa', style: TextStyle(color: _kRed)),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52, height: 52,
+                decoration: const BoxDecoration(color: _kRedBg, shape: BoxShape.circle),
+                child: Icon(PhosphorIcons.trash(PhosphorIconsStyle.fill),
+                    color: _kRed, size: 26),
+              ),
+              const SizedBox(height: 14),
+              Text('Futa Maoni',
+                  style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 8),
+              Text('Una uhakika unataka kufuta maoni haya?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(fontSize: 13.5, color: _kGrey500)),
+              const SizedBox(height: 20),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: const BorderSide(color: _kGrey200),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('Hapana',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _kGrey700)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _kRed,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('Futa',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ]),
+            ],
           ),
-        ],
+        ),
       ),
     );
     if (ok != true || !mounted) return;
@@ -151,107 +214,109 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44, height: 44,
-                          decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
-                          child: const Icon(Icons.feedback_outlined, color: _kBlue, size: 22),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Header ──
+                    Row(children: [
+                      Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          color: _kBlueBg,
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Maoni',
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                              Text('Maoni na malamiko ya watumiaji',
-                                  style: TextStyle(fontSize: 12, color: _kGrey500)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TextField(
+                        child: Icon(PhosphorIcons.chatCenteredDots(PhosphorIconsStyle.fill),
+                            color: _kBlue, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Maoni',
+                            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700)),
+                        Text('Maoni na malalamiko ya watumiaji',
+                            style: GoogleFonts.inter(fontSize: 12.5, color: _kGrey400)),
+                      ]),
+                    ]),
+                    const SizedBox(height: 16),
+
+                    // ── Search ──
+                    TextField(
                       controller: _searchCtrl,
-                      style: const TextStyle(fontSize: 13),
+                      style: GoogleFonts.inter(fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Tafuta maoni...',
-                        hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
-                        prefixIcon: const Icon(Icons.search, color: _kGrey400),
+                        hintStyle: GoogleFonts.inter(fontSize: 13, color: _kGrey400),
+                        prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
+                            color: _kGrey400, size: 18),
                         filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 9),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
+                        fillColor: _kGrey50,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: _kGrey200),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: _kGrey200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: _kBlue),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        _TabPill(label: 'Yote', selected: _tabIndex == 0, onTap: () => _setTab(0)),
+                    const SizedBox(height: 12),
+
+                    // ── Tab chips ──
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(children: [
+                        _Chip(label: 'Yote', isSelected: _tabIndex == 0,
+                            onTap: () => _setTab(0)),
                         const SizedBox(width: 8),
-                        _TabPill(label: 'Hayajajibiwa', selected: _tabIndex == 1, onTap: () => _setTab(1)),
+                        _Chip(label: 'Hayajajibiwa', isSelected: _tabIndex == 1,
+                            onTap: () => _setTab(1)),
                         const SizedBox(width: 8),
-                        _TabPill(label: 'Yamejibiwa', selected: _tabIndex == 2, onTap: () => _setTab(2)),
-                      ],
+                        _Chip(label: 'Yamejibiwa', isSelected: _tabIndex == 2,
+                            onTap: () => _setTab(2)),
+                      ]),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Divider(height: 1, color: _kGrey200),
-                ],
+                    const SizedBox(height: 14),
+                  ],
+                ),
               ),
             ),
-            // Flash message
+
+            // ── Flash message ──
             if (_flash != null)
               SliverToBoxAdapter(
                 child: Container(
-                  margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                   decoration: BoxDecoration(
                     color: _flash!['type'] == 'success' ? _kGreenBg : _kRedBg,
-                    border: Border.all(
-                      color: _flash!['type'] == 'success'
-                          ? const Color(0xFFBBF7D0)
-                          : const Color(0xFFFECACA),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(children: [
+                    Icon(
+                      _flash!['type'] == 'success'
+                          ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
+                          : PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
+                      size: 14,
+                      color: _flash!['type'] == 'success' ? _kGreen : _kRed,
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _flash!['type'] == 'success'
-                            ? Icons.check_circle_outline
-                            : Icons.warning_outlined,
-                        size: 13,
-                        color: _flash!['type'] == 'success' ? _kGreen : _kRed,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _flash!['msg']!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _flash!['type'] == 'success' ? _kGreen : _kRed,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_flash!['msg']!,
+                          style: GoogleFonts.inter(
+                              fontSize: 12, fontWeight: FontWeight.w600,
+                              color: _flash!['type'] == 'success' ? _kGreen : _kRed)),
+                    ),
+                  ]),
                 ),
               ),
+
             if (_loading)
               const SliverFillRemaining(
                 hasScrollBody: false,
@@ -261,40 +326,35 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline, color: _kRed, size: 48),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: _load,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Jaribu tena'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: _kBlue, foregroundColor: Colors.white),
-                      ),
-                    ],
-                  ),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
+                        color: _kRed, size: 48),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _load,
+                      icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
+                      label: Text('Jaribu tena', style: GoogleFonts.inter()),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: _kBlue, foregroundColor: Colors.white),
+                    ),
+                  ]),
                 ),
               )
             else if (_filtered.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.feedback_outlined, color: _kGrey500, size: 48),
-                      const SizedBox(height: 12),
-                      const Text('Hakuna maoni',
-                          style: TextStyle(color: _kGrey500)),
-                    ],
-                  ),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(PhosphorIcons.chatCenteredDots(), color: _kGrey400, size: 48),
+                    const SizedBox(height: 12),
+                    Text('Hakuna maoni',
+                        style: GoogleFonts.inter(color: _kGrey500)),
+                  ]),
                 ),
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (ctx, i) => _FeedbackCard(
@@ -308,29 +368,35 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                   ),
                 ),
               ),
-            // Pagination
+
+            // ── Pagination ──
             if (!_loading && _error == null && totalPages > 1)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _PageBtn(
-                        icon: Icons.chevron_left,
-                        onTap: _page > 0 ? () => setState(() => _page--) : null,
-                      ),
-                      for (int p = 0; p < totalPages; p++)
-                        _PageNum(
-                          n: p + 1,
-                          active: _page == p,
-                          onTap: () => setState(() => _page = p),
+                  child: Center(
+                    child: Wrap(
+                      spacing: 6,
+                      children: [
+                        _PaginationBtn(
+                          icon: PhosphorIcons.caretLeft(),
+                          enabled: _page > 0,
+                          onTap: _page > 0 ? () => setState(() => _page--) : null,
                         ),
-                      _PageBtn(
-                        icon: Icons.chevron_right,
-                        onTap: _page < totalPages - 1 ? () => setState(() => _page++) : null,
-                      ),
-                    ],
+                        ...List.generate(totalPages, (i) => _PaginationNum(
+                          n: i + 1,
+                          active: _page == i,
+                          onTap: () => setState(() => _page = i),
+                        )),
+                        _PaginationBtn(
+                          icon: PhosphorIcons.caretRight(),
+                          enabled: _page < totalPages - 1,
+                          onTap: _page < totalPages - 1
+                              ? () => setState(() => _page++)
+                              : null,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               )
@@ -342,6 +408,94 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     );
   }
 }
+
+// ─── Chip ─────────────────────────────────────────────────────────────────────
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  const _Chip({required this.label, required this.isSelected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? _kBlueBg : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? _kBlue : _kGrey200),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12.5,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? _kBlue : _kGrey500,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Pagination widgets ────────────────────────────────────────────────────────
+
+class _PaginationNum extends StatelessWidget {
+  final int n;
+  final bool active;
+  final VoidCallback onTap;
+  const _PaginationNum({required this.n, required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Container(
+        width: 30, height: 30,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? _kBlue : Colors.transparent,
+          shape: BoxShape.circle,
+        ),
+        child: Text('$n',
+            style: GoogleFonts.inter(
+                fontSize: 12.5, fontWeight: FontWeight.w600,
+                color: active ? Colors.white : _kGrey500)),
+      ),
+    );
+  }
+}
+
+class _PaginationBtn extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback? onTap;
+  const _PaginationBtn({required this.icon, required this.enabled, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Container(
+        width: 30, height: 30,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: enabled ? _kGrey200 : _kGrey100),
+        ),
+        child: Icon(icon, size: 14, color: enabled ? _kGrey700 : _kGrey300),
+      ),
+    );
+  }
+}
+
+// ─── Feedback card ─────────────────────────────────────────────────────────────
 
 class _FeedbackCard extends StatefulWidget {
   final int index;
@@ -363,6 +517,7 @@ class _FeedbackCard extends StatefulWidget {
 class _FeedbackCardState extends State<_FeedbackCard> {
   final _ctrl = TextEditingController();
   bool _sending = false;
+  bool _expanded = false;
 
   @override
   void dispose() {
@@ -382,296 +537,213 @@ class _FeedbackCardState extends State<_FeedbackCard> {
     final reply     = item['reply'] as String? ?? item['admin_reply'] as String?;
     final replied   = reply != null;
 
+    final fullText = subject.isNotEmpty
+        ? (msg.isNotEmpty ? '$subject\n$msg' : subject)
+        : msg;
+    final isLong = fullText.length > 90;
+    final displayText = (!_expanded && isLong)
+        ? '${fullText.substring(0, 90)}...'
+        : fullText;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: _kGrey200),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF1F1F1)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: index + name/phone | status badge + delete
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '${widget.index}',
-                style: const TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.bold, color: _kGrey400),
+              // Index circle
+              Container(
+                width: 24, height: 24,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+                child: Text('${widget.index}',
+                    style: GoogleFonts.inter(
+                        fontSize: 11, fontWeight: FontWeight.w700, color: _kGrey500)),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.bold, color: _kGrey900)),
-                    if (phone.isNotEmpty)
-                      Row(
-                        children: [
-                          const Icon(Icons.phone_outlined, size: 11, color: _kBlue),
-                          const SizedBox(width: 3),
-                          Text(phone,
-                              style: const TextStyle(
-                                  fontSize: 11, color: _kBlue, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(name,
+                      style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                  if (phone.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Row(children: [
+                      Icon(PhosphorIcons.phone(PhosphorIconsStyle.fill),
+                          size: 12, color: _kGrey400),
+                      const SizedBox(width: 4),
+                      Text(phone,
+                          style: GoogleFonts.inter(fontSize: 11.5, color: _kGrey400)),
+                    ]),
                   ],
+                ]),
+              ),
+              // Status badge (non-tappable)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: replied ? _kGreenBg : _kAmberBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(
+                    replied
+                        ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
+                        : PhosphorIcons.clock(PhosphorIconsStyle.fill),
+                    size: 12,
+                    color: replied ? _kGreen : _kAmber,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    replied ? 'Imejibiwa' : 'Hayajajibiwa',
+                    style: GoogleFonts.inter(
+                        fontSize: 10.5, fontWeight: FontWeight.w600,
+                        color: replied ? _kGreen : _kAmber),
+                  ),
+                ]),
+              ),
+              const SizedBox(width: 6),
+              // Delete — icon button, distinct from status
+              Material(
+                color: _kRedBg,
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => widget.onDelete(id),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(PhosphorIcons.trash(), size: 15, color: _kRed),
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: replied ? _kGreenBg : _kOrangeBg,
-                      border: Border.all(
-                          color: replied
-                              ? const Color(0xFFBBF7D0)
-                              : _kOrangeBdr),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          replied ? Icons.check_circle_outline : Icons.access_time,
-                          size: 10,
-                          color: replied ? _kGreen : _kOrangeFg,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          replied ? 'Imejibiwa' : 'Wazi',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: replied ? _kGreen : _kOrangeFg,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () => widget.onDelete(id),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: _kRedBg,
-                        border: Border.all(color: const Color(0xFFFECACA)),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(Icons.delete_outline, size: 12, color: _kRed),
-                    ),
-                  ),
-                ],
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Message
+          Text(displayText,
+              style: GoogleFonts.inter(fontSize: 13, color: _kGrey700, height: 1.5)),
+          if (isLong)
+            GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(_expanded ? 'Ficha' : 'Soma zaidi',
+                    style: GoogleFonts.inter(
+                        fontSize: 12, fontWeight: FontWeight.w600, color: _kBlue)),
               ),
-            ],
-          ),
-          if (subject.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(subject,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1F2937))),
-          ],
-          if (msg.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(msg,
-                style: const TextStyle(
-                    fontSize: 13, color: _kGrey700, height: 1.4)),
-          ],
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(Icons.access_time, size: 10, color: _kGrey400),
-              const SizedBox(width: 3),
-              Text(createdAt, style: const TextStyle(fontSize: 11, color: _kGrey400)),
-            ],
-          ),
+            ),
+          const SizedBox(height: 8),
+          Row(children: [
+            Icon(PhosphorIcons.clock(), size: 12, color: _kGrey400),
+            const SizedBox(width: 4),
+            Text(_fmtDate(createdAt),
+                style: GoogleFonts.inter(fontSize: 10.5, color: _kGrey400)),
+          ]),
+
           // Admin reply box
           if (reply != null) ...[
             const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: _kBlueBg,
-                border: Border.all(color: const Color(0xFFBFDBFE)),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFDBEAFE)),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: const [
-                      Icon(Icons.verified_user_outlined, size: 11, color: _kBlue),
-                      SizedBox(width: 4),
-                      Text('JIBU LAKO',
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: _kBlue,
-                              letterSpacing: 0.5)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(reply,
-                      style: const TextStyle(
-                          fontSize: 12, color: _kGrey700, height: 1.4)),
-                ],
-              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
+                      size: 13, color: _kBlue),
+                  const SizedBox(width: 5),
+                  Text('JIBU LAKO',
+                      style: GoogleFonts.inter(
+                          fontSize: 10.5, fontWeight: FontWeight.w700,
+                          color: _kBlue, letterSpacing: 0.4)),
+                ]),
+                const SizedBox(height: 5),
+                Text(reply,
+                    style: GoogleFonts.inter(
+                        fontSize: 12.5, color: const Color(0xFF1E3A8A))),
+              ]),
             ),
           ],
-          // Inline reply input (always visible)
+
           const SizedBox(height: 10),
-          const Divider(height: 1, color: _kGrey100),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _ctrl,
-                  style: const TextStyle(fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText: 'Andika jibu...',
-                    hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
-                  ),
+          Row(children: [
+            Expanded(
+              child: TextField(
+                controller: _ctrl,
+                style: GoogleFonts.inter(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Andika jibu...',
+                  hintStyle: GoogleFonts.inter(fontSize: 13, color: _kGrey400),
+                  filled: true,
+                  fillColor: _kGrey50,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _kGrey200)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _kGrey200)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _kBlue)),
                 ),
               ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: _sending ? null : () async {
-                  final text = _ctrl.text.trim();
-                  if (text.isEmpty) return;
-                  setState(() => _sending = true);
-                  await widget.onReply(id, text);
-                  if (mounted) {
-                    _ctrl.clear();
-                    setState(() => _sending = false);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: _kBlue,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: _sending
-                      ? const SizedBox(
-                          width: 14, height: 14,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.send, color: Colors.white, size: 12),
-                            SizedBox(width: 4),
-                            Text('Jibu',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: _sending
+                  ? null
+                  : () async {
+                      final text = _ctrl.text.trim();
+                      if (text.isEmpty) return;
+                      setState(() => _sending = true);
+                      await widget.onReply(id, text);
+                      if (mounted) {
+                        _ctrl.clear();
+                        setState(() => _sending = false);
+                      }
+                    },
+              icon: _sending
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : Icon(PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill),
+                      size: 14),
+              label: Text('Jibu',
+                  style: GoogleFonts.inter(
+                      fontSize: 12.5, fontWeight: FontWeight.w600)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kBlue,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
-            ],
-          ),
+            ),
+          ]),
         ],
-      ),
-    );
-  }
-}
-
-class _TabPill extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _TabPill({required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? _kBlueBg : Colors.white,
-          border: Border.all(color: selected ? _kBlue : _kGrey200),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: selected ? _kBlue : _kGrey700,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PageNum extends StatelessWidget {
-  final int n;
-  final bool active;
-  final VoidCallback onTap;
-  const _PageNum({required this.n, required this.active, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32, height: 32,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          color: active ? _kBlue : Colors.white,
-          border: Border.all(color: active ? _kBlue : _kGrey200),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Center(
-          child: Text('$n',
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: active ? Colors.white : _kGrey700)),
-        ),
-      ),
-    );
-  }
-}
-
-class _PageBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onTap;
-  const _PageBtn({required this.icon, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32, height: 32,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: onTap != null ? _kBlue : _kGrey200),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Icon(icon, size: 16, color: onTap != null ? _kBlue : _kGrey200),
       ),
     );
   }

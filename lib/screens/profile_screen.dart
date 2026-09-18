@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -16,6 +18,7 @@ const _kGrey50  = Color(0xFFF9FAFB); // brand-grey-50
 const _kGrey100 = Color(0xFFF3F4F6); // brand-grey-100
 const _kGrey400 = Color(0xFF9CA3AF); // brand-grey-400
 const _kRed     = Color(0xFFDC2626); // brand-red
+const _kGreen   = Color(0xFF16A34A); // brand-green
 const _kGold200 = Color(0xFFFDE68A); // brand-gold-200 (amber-200)
 const _kAmber   = Color(0xFFF59E0B); // amber-500
 const _kAmberLight = Color(0xFFFBBF24); // amber-400
@@ -231,15 +234,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
               child: Row(children: [
-                GestureDetector(
-                  onTap: () => Navigator.maybePop(context),
-                  child: Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(10),
+                Material(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => Navigator.maybePop(context),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(PhosphorIcons.caretLeft(), size: 18,
+                          color: const Color(0xFF374151)),
                     ),
-                    child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF374151)),
                   ),
                 ),
               ]),
@@ -265,17 +270,68 @@ class _ViewAdmin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final emailVerified = profile['email_verified'] == true;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _InfoCard(
-        title: 'Utambulisho wa Admin',
-        borderColor: _kGold200,
-        rows: [
-          _InfoRow('Jina Kamili', profile['full_name']),
-          _InfoRow('Barua Pepe', profile['email']),
-          _InfoRow('Namba ya Simu', profile['phone_primary']),
-          _InfoRow('Email Imethibitishwa', profile['email_verified'] == true ? 'Ndiyo ✓' : 'Hapana'),
-          _InfoRow('Wajibu', 'Administrator'),
-        ],
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF1F1F1)),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3)),
+          ],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Accent bar
+          Container(
+            height: 4,
+            decoration: const BoxDecoration(
+              color: _kBlue,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Icon(PhosphorIcons.identificationBadge(PhosphorIconsStyle.fill),
+                    size: 17, color: _kBlue),
+                const SizedBox(width: 8),
+                Text('Utambulisho wa Admin',
+                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700)),
+              ]),
+              const SizedBox(height: 18),
+              _AdminInfoRow(
+                label: 'Jina kamili',
+                value: profile['full_name']?.toString() ?? '',
+                icon: PhosphorIcons.user(),
+              ),
+              _AdminInfoRow(
+                label: 'Barua pepe',
+                value: profile['email']?.toString() ?? '',
+                icon: PhosphorIcons.envelope(),
+              ),
+              _AdminInfoRow(
+                label: 'Namba ya simu',
+                value: profile['phone_primary']?.toString() ?? '',
+                icon: PhosphorIcons.phone(),
+              ),
+              _AdminInfoRowStatus(
+                label: 'Email imethibitishwa',
+                isVerified: emailVerified,
+              ),
+              _AdminInfoRow(
+                label: 'Wajibu',
+                value: 'Administrator',
+                icon: PhosphorIcons.shield(),
+                isLast: true,
+              ),
+            ]),
+          ),
+        ]),
       ),
       const SizedBox(height: 60),
     ]);
@@ -406,51 +462,135 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       if (_error != null) _ErrBox(_error!),
 
-      // ── Form card (.card p-6) ──
+      // ── Form card ──
       Container(
-        padding: const EdgeInsets.all(24),
-        decoration: _cardDec(borderColor: _kGold200),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          // Card header
-          Row(children: const [
-            Icon(Icons.manage_accounts_rounded, size: 18, color: _kAmber),
-            SizedBox(width: 8),
-            Text('Utambulisho wa Admin',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: _kGrey900)),
-          ]),
-          const SizedBox(height: 20),
-
-          // Jina
-          _label('Jina Kamili'),
-          TextField(
-            controller: _nameCtrl,
-            style: const TextStyle(fontSize: 12),
-            decoration: _inputDec(hint: 'Jina lako kamili'),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF1F1F1)),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3)),
+          ],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Accent bar
+          Container(
+            height: 4,
+            decoration: const BoxDecoration(
+              color: _kBlue,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
           ),
-          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(children: [
+                Icon(PhosphorIcons.identificationBadge(PhosphorIconsStyle.fill),
+                    size: 17, color: _kBlue),
+                const SizedBox(width: 8),
+                Text('Utambulisho wa Admin',
+                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700)),
+              ]),
+              const SizedBox(height: 20),
 
-          // Simu ya pili
-          _label('Namba ya Simu (Pili / WhatsApp)'),
-          TextField(
-            controller: _altCtrl,
-            keyboardType: TextInputType.phone,
-            style: const TextStyle(fontSize: 12),
-            decoration: _inputDec(hint: 'Hiari'),
-          ),
-          const SizedBox(height: 20),
+              // Jina
+              Text('Jina kamili',
+                  style: GoogleFonts.inter(
+                      fontSize: 12.5, fontWeight: FontWeight.w600, color: _kGrey700)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _nameCtrl,
+                style: GoogleFonts.inter(fontSize: 14),
+                decoration: InputDecoration(
+                  prefixIcon:
+                      Icon(PhosphorIcons.user(), size: 19, color: _kGrey400),
+                  hintText: 'Jina lako kamili',
+                  hintStyle: GoogleFonts.inter(color: _kGrey400),
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kGrey200)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kGrey200)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+                ),
+              ),
+              const SizedBox(height: 16),
 
-          // Email (disabled)
-          _label('Barua Pepe'),
-          TextField(
-            controller: TextEditingController(text: widget.profile['email'] ?? ''),
-            enabled: false,
-            style: const TextStyle(fontSize: 12),
-            decoration: _inputDec(disabled: true),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Email haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
-            style: TextStyle(fontSize: 12, color: _kGrey500),
+              // Simu ya pili
+              Text('Namba ya simu (Pili / WhatsApp)',
+                  style: GoogleFonts.inter(
+                      fontSize: 12.5, fontWeight: FontWeight.w600, color: _kGrey700)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _altCtrl,
+                keyboardType: TextInputType.phone,
+                style: GoogleFonts.inter(fontSize: 14),
+                decoration: InputDecoration(
+                  prefixIcon:
+                      Icon(PhosphorIcons.phone(), size: 19, color: _kGrey400),
+                  hintText: 'Hiari',
+                  hintStyle: GoogleFonts.inter(color: _kGrey400),
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kGrey200)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kGrey200)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Email (disabled)
+              Text('Barua pepe',
+                  style: GoogleFonts.inter(
+                      fontSize: 12.5, fontWeight: FontWeight.w600, color: _kGrey700)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: TextEditingController(text: widget.profile['email'] ?? ''),
+                enabled: false,
+                style: GoogleFonts.inter(fontSize: 14, color: _kGrey400),
+                decoration: InputDecoration(
+                  prefixIcon:
+                      Icon(PhosphorIcons.envelope(), size: 19, color: const Color(0xFFD1D5DB)),
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kGrey200)),
+                  disabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kGrey200)),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(children: [
+                Icon(PhosphorIcons.info(PhosphorIconsStyle.fill),
+                    size: 13, color: _kGrey400),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    'Email haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
+                    style: GoogleFonts.inter(fontSize: 11.5, color: _kGrey400),
+                  ),
+                ),
+              ]),
+            ]),
           ),
         ]),
       ),
@@ -458,29 +598,25 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
       const SizedBox(height: 16),
 
       // ── Save button ──
-      Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          ElevatedButton(
-            onPressed: _saving ? null : _save,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kBlue,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: _kBlue,
-              disabledForegroundColor: Colors.white,
-              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              elevation: 0,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: _saving
-                ? const SizedBox(width: 18, height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                : const Text('Hifadhi Mabadiliko'),
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _saving ? null : _save,
+          icon: _saving
+              ? const SizedBox(
+                  width: 16, height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Icon(PhosphorIcons.floppyDisk(PhosphorIconsStyle.fill), size: 16),
+          label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi mabadiliko',
+              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-        ],
+        ),
       ),
 
       const SizedBox(height: 60),
@@ -1239,4 +1375,99 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
 String _parseErr(dynamic e) {
   try { final d = (e as dynamic).response?.data?['detail']; if (d is String) return d; } catch (_) {}
   return 'Imeshindikana';
+}
+
+// ── Admin-specific info row widgets ──────────────────────────────────────────
+
+class _AdminInfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final bool isLast;
+  const _AdminInfoRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (value.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : const Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, size: 16, color: _kGrey400),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 110,
+          child: Text(label,
+              style: GoogleFonts.inter(fontSize: 13, color: _kGrey500)),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: GoogleFonts.inter(
+                fontSize: 13.5, fontWeight: FontWeight.w700, color: _kGrey900),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+class _AdminInfoRowStatus extends StatelessWidget {
+  final String label;
+  final bool isVerified;
+  const _AdminInfoRowStatus({required this.label, required this.isVerified});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+      ),
+      child: Row(children: [
+        Icon(PhosphorIcons.shieldCheck(), size: 16, color: _kGrey400),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(label,
+              style: GoogleFonts.inter(fontSize: 13, color: _kGrey500)),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: isVerified
+                ? const Color(0xFFDCFCE7)
+                : const Color(0xFFFEE2E2),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(
+              isVerified
+                  ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
+                  : PhosphorIcons.xCircle(PhosphorIconsStyle.fill),
+              size: 13,
+              color: isVerified ? _kGreen : _kRed,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              isVerified ? 'Ndiyo' : 'Hapana',
+              style: GoogleFonts.inter(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: isVerified ? _kGreen : _kRed),
+            ),
+          ]),
+        ),
+      ]),
+    );
+  }
 }

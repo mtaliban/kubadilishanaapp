@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 
 const _kBlue     = Color(0xFF1E40AF);
@@ -15,6 +16,7 @@ const _kGrey700  = Color(0xFF374151);
 const _kGrey600  = Color(0xFF4B5563);
 const _kGrey500  = Color(0xFF6B7280);
 const _kGrey400  = Color(0xFF9CA3AF);
+const _kGrey300  = Color(0xFFD1D5DB);
 const _kGrey200  = Color(0xFFE5E7EB);
 const _kGrey100  = Color(0xFFF3F4F6);
 const _kGrey50   = Color(0xFFF9FAFB);
@@ -35,11 +37,10 @@ class _AdminDataPageState extends State<AdminDataPage>
   final Map<String, String>                _levelFilters = {};
   final Map<String, String>                _regionFilters = {};
 
-  // Facilities level chip filter ('': Zote, 'Dispensary': ...etc)
   String _facLevelFilter = '';
 
   static const _types      = ['departments', 'subjects', 'cadres', 'regions', 'districts', 'facilities'];
-  static const _typeLabels  = ['Idara', 'Masomo', 'Kada', 'Mikoa', 'Wilaya', 'Vituo'];
+  static const _typeLabels = ['Idara', 'Masomo', 'Kada', 'Mikoa', 'Wilaya', 'Vituo'];
 
   @override
   void initState() {
@@ -177,8 +178,8 @@ class _AdminDataPageState extends State<AdminDataPage>
 
   List<Widget> _buildBadges(String type, Map<String, dynamic> item) {
     Widget pill(String label, Color bg, Color fg) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
       child: Text(label,
           style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, height: 1.5, color: fg)),
     );
@@ -186,8 +187,30 @@ class _AdminDataPageState extends State<AdminDataPage>
     switch (type) {
       case 'departments':
         final disabled = item['status'] == 'disabled';
-        return [pill(disabled ? 'Imezimwa' : '● Hai',
-            disabled ? _kRedBg : _kGreenBg, disabled ? _kRed : _kGreen)];
+        return [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: disabled ? _kRedBg : _kGreenBg,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: disabled ? const Color(0xFFFCA5A5) : const Color(0xFFBBF7D0)),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              if (!disabled) Container(
+                width: 5, height: 5,
+                decoration: const BoxDecoration(color: _kGreen, shape: BoxShape.circle),
+              ),
+              if (!disabled) const SizedBox(width: 4),
+              Text(
+                disabled ? 'Imezimwa' : 'Hai',
+                style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w700, height: 1.5,
+                  color: disabled ? _kRed : _kGreen,
+                ),
+              ),
+            ]),
+          ),
+        ];
       case 'subjects':
         final level = (item['level'] as String? ?? '').toLowerCase();
         if (level.isEmpty) return [];
@@ -217,15 +240,6 @@ class _AdminDataPageState extends State<AdminDataPage>
 
   // ─── BUILD ──────────────────────────────────────────────────────────────────
 
-  static const _tabIcons = [
-    Icons.domain_rounded,        // Idara
-    Icons.menu_book_rounded,     // Masomo
-    Icons.work_outline_rounded,  // Kada
-    Icons.terrain_rounded,       // Mikoa
-    Icons.map_outlined,          // Wilaya
-    Icons.local_hospital_outlined, // Vituo
-  ];
-
   Widget _tabBar() => Container(
     color: Colors.white,
     decoration: const BoxDecoration(
@@ -237,22 +251,36 @@ class _AdminDataPageState extends State<AdminDataPage>
       tabAlignment: TabAlignment.start,
       labelColor: _kBlue,
       unselectedLabelColor: _kGrey500,
-      labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-      indicator: const UnderlineTabIndicator(
-        borderSide: BorderSide(color: _kBlue, width: 2),
+      labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+      indicator: BoxDecoration(
+        color: _kBlueBg,
+        borderRadius: BorderRadius.circular(20),
       ),
       indicatorSize: TabBarIndicatorSize.tab,
+      indicatorPadding: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+      dividerColor: Colors.transparent,
       labelPadding: const EdgeInsets.symmetric(horizontal: 10),
       padding: EdgeInsets.zero,
-      tabs: List.generate(_typeLabels.length, (i) => Tab(
-        height: 40,
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(_tabIcons[i], size: 14),
-          const SizedBox(width: 5),
-          Text(_typeLabels[i]),
-        ]),
-      )),
+      tabs: List.generate(_typeLabels.length, (i) {
+        final isActive = _tabCtrl.index == i;
+        final icons = [
+          PhosphorIcons.buildings(isActive ? PhosphorIconsStyle.fill : PhosphorIconsStyle.regular),
+          PhosphorIcons.bookOpen(isActive ? PhosphorIconsStyle.fill : PhosphorIconsStyle.regular),
+          PhosphorIcons.briefcase(isActive ? PhosphorIconsStyle.fill : PhosphorIconsStyle.regular),
+          PhosphorIcons.mountains(isActive ? PhosphorIconsStyle.fill : PhosphorIconsStyle.regular),
+          PhosphorIcons.mapTrifold(isActive ? PhosphorIconsStyle.fill : PhosphorIconsStyle.regular),
+          PhosphorIcons.hospital(isActive ? PhosphorIconsStyle.fill : PhosphorIconsStyle.regular),
+        ];
+        return Tab(
+          height: 40,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icons[i], size: 14),
+            const SizedBox(width: 5),
+            Text(_typeLabels[i]),
+          ]),
+        );
+      }),
     ),
   );
 
@@ -273,7 +301,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                     borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(Icons.dns_rounded, color: _kBlue, size: 26),
+                  child: Icon(PhosphorIcons.database(PhosphorIconsStyle.fill), color: _kBlue, size: 26),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -345,11 +373,11 @@ class _AdminDataPageState extends State<AdminDataPage>
               hasScrollBody: false,
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.error_outline, color: _kRed, size: 48),
+                  Icon(PhosphorIcons.warningCircle(), color: _kRed, size: 48),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
                     onPressed: () { _cache.remove(type); _loadType(type); },
-                    icon: const Icon(Icons.refresh),
+                    icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
                     label: const Text('Jaribu tena'),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: _kBlue, foregroundColor: Colors.white),
@@ -358,13 +386,13 @@ class _AdminDataPageState extends State<AdminDataPage>
               ),
             )
           else if (filtered.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.inbox_outlined, size: 48, color: _kGrey400),
-                  SizedBox(height: 8),
-                  Text('Hakuna data', style: TextStyle(fontSize: 14, color: _kGrey500)),
+                  Icon(PhosphorIcons.tray(), size: 48, color: _kGrey400),
+                  const SizedBox(height: 8),
+                  const Text('Hakuna data', style: TextStyle(fontSize: 14, color: _kGrey500)),
                 ]),
               ),
             )
@@ -377,8 +405,10 @@ class _AdminDataPageState extends State<AdminDataPage>
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border.all(color: _kGrey200),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
+                      ],
                     ),
                     child: _buildItem(type, filtered[i] as Map<String, dynamic>),
                   ),
@@ -405,7 +435,6 @@ class _AdminDataPageState extends State<AdminDataPage>
     final hint  = searchHints[type] ?? 'Tafuta...';
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      // Row 1: count + Ongeza
       Row(children: [
         Expanded(
           child: Text('$count $label zilizosajiliwa',
@@ -414,24 +443,23 @@ class _AdminDataPageState extends State<AdminDataPage>
         _addBtn(type),
       ]),
       const SizedBox(height: 10),
-      // Row 2: search
       TextField(
         controller: _searchCtrls[type],
         style: const TextStyle(fontSize: 13, color: _kGrey900),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
-          prefixIcon: const Icon(Icons.search_rounded, size: 16, color: _kGrey400),
+          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 16, color: _kGrey400),
+          prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 0),
           filled: true,
           fillColor: _kGrey50,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
         ),
       ),
-      // Row 3: chips or dropdown depending on type
       if (type == 'subjects') ...[
         const SizedBox(height: 6),
         _chipRow(
@@ -451,7 +479,6 @@ class _AdminDataPageState extends State<AdminDataPage>
     ]);
   }
 
-  // Chips for subjects / simple option sets
   Widget _chipRow({
     required Map<String, String> options,
     required String selected,
@@ -465,7 +492,7 @@ class _AdminDataPageState extends State<AdminDataPage>
             behavior: HitTestBehavior.opaque,
             onTap: () => onSelect(e.key),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: selected == e.key ? _kBlueBg : Colors.white,
                 border: Border.all(
@@ -485,7 +512,6 @@ class _AdminDataPageState extends State<AdminDataPage>
     );
   }
 
-  // Dynamic chips from facility level values in data
   Widget _facChips() {
     final seen = <String>{};
     final levels = <String>[''];
@@ -501,7 +527,7 @@ class _AdminDataPageState extends State<AdminDataPage>
             behavior: HitTestBehavior.opaque,
             onTap: () => setState(() => _facLevelFilter = lvl),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: _facLevelFilter == lvl ? _kBlueBg : Colors.white,
                 border: Border.all(
@@ -522,16 +548,18 @@ class _AdminDataPageState extends State<AdminDataPage>
   }
 
   Widget _addBtn(String type) {
-    return GestureDetector(
-      onTap: () => _showAddEdit(type),
-      child: Container(
+    return ElevatedButton.icon(
+      onPressed: () => _showAddEdit(type),
+      icon: Icon(PhosphorIcons.plus(), size: 15, color: Colors.white),
+      label: const Text('Ongeza',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _kBlue,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        minimumSize: Size.zero,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(color: _kBlue, borderRadius: BorderRadius.circular(12)),
-        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.add_rounded, color: Colors.white, size: 15),
-          SizedBox(width: 4),
-          Text('Ongeza', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-        ]),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -552,7 +580,7 @@ class _AdminDataPageState extends State<AdminDataPage>
         onPick: (v) => setState(() => _regionFilters['districts'] = v),
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           color: selId.isEmpty ? Colors.white : _kBlueBg,
           border: Border.all(color: selId.isEmpty ? _kGrey200 : _kBlue, width: 1.5),
@@ -565,7 +593,7 @@ class _AdminDataPageState extends State<AdminDataPage>
             color: selId.isEmpty ? _kGrey700 : _kBlue,
           )),
           const SizedBox(width: 4),
-          Icon(Icons.keyboard_arrow_down_rounded, size: 14,
+          Icon(PhosphorIcons.caretDown(), size: 12,
               color: selId.isEmpty ? _kGrey400 : _kBlue),
         ]),
       ),
@@ -604,7 +632,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                   child: Container(
                     width: 30, height: 30,
                     decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
-                    child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700),
+                    child: Icon(PhosphorIcons.x(), size: 14, color: _kGrey700),
                   ),
                 ),
               ]),
@@ -621,7 +649,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                 decoration: InputDecoration(
                   hintText: 'Tafuta...',
                   hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
-                  prefixIcon: const Icon(Icons.search_rounded, color: _kGrey400, size: 18),
+                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: _kGrey400, size: 16),
                   fillColor: _kGrey100, filled: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
@@ -656,27 +684,55 @@ class _AdminDataPageState extends State<AdminDataPage>
     );
   }
 
-  // Colored icon kwa kila aina ya data (kama mockup)
   (IconData, Color, Color) _itemIcon(String type, Map<String, dynamic> item) {
+    if (type == 'departments') {
+      final code = (item['code'] as String? ?? '').toLowerCase();
+      switch (code) {
+        case 'health':
+          return (PhosphorIcons.heartbeat(PhosphorIconsStyle.fill),
+              const Color(0xFFDC2626), const Color(0xFFFEE2E2));
+        case 'education':
+          return (PhosphorIcons.graduationCap(PhosphorIconsStyle.fill),
+              const Color(0xFF2563EB), const Color(0xFFEFF6FF));
+        case 'kilimo':
+          return (PhosphorIcons.plant(PhosphorIconsStyle.fill),
+              const Color(0xFF16A34A), const Color(0xFFF0FDF4));
+        case 'watumishi_wa_umma':
+          return (PhosphorIcons.usersThree(PhosphorIconsStyle.fill),
+              const Color(0xFF9333EA), const Color(0xFFF5F3FF));
+        default:
+          return (PhosphorIcons.buildings(PhosphorIconsStyle.fill),
+              _kBlue, _kBlueBg);
+      }
+    }
     if (type == 'facilities') {
       final hasSchool = item['school_code'] != null;
       final lvl = (item['level'] as String? ?? '').toLowerCase();
       final isEdu = hasSchool || lvl == 'primary' || lvl == 'secondary';
-      return isEdu
-          ? (Icons.school_outlined, const Color(0xFF15803D), const Color(0xFFF0FDF4))
-          : (Icons.local_hospital_outlined, _kRed, _kRedBg);
+      if (isEdu) {
+        return (PhosphorIcons.graduationCap(PhosphorIconsStyle.fill),
+            const Color(0xFF15803D), const Color(0xFFF0FDF4));
+      }
+      switch (lvl) {
+        case 'hospital':
+          return (PhosphorIcons.hospital(PhosphorIconsStyle.fill), _kRed, _kRedBg);
+        case 'health_center':
+          return (PhosphorIcons.firstAidKit(PhosphorIconsStyle.fill), _kRed, _kRedBg);
+        default:
+          return (PhosphorIcons.firstAid(PhosphorIconsStyle.fill), _kRed, _kRedBg);
+      }
     }
     if (type == 'cadres') {
       final cat = (item['category'] as String? ?? '').toLowerCase();
       return cat == 'education'
-          ? (Icons.menu_book_rounded, const Color(0xFF15803D), const Color(0xFFF0FDF4))
-          : (Icons.medical_services_outlined, _kRed, _kRedBg);
+          ? (PhosphorIcons.graduationCap(PhosphorIconsStyle.fill),
+              const Color(0xFF15803D), const Color(0xFFF0FDF4))
+          : (PhosphorIcons.stethoscope(PhosphorIconsStyle.fill), _kRed, _kRedBg);
     }
-    if (type == 'subjects') return (Icons.menu_book_rounded, _kAmber, _kAmberBg);
-    if (type == 'departments') return (Icons.domain_rounded, _kBlue, _kBlueBg);
-    if (type == 'regions') return (Icons.terrain_rounded, _kBlue, _kBlueBg);
-    if (type == 'districts') return (Icons.map_outlined, _kBlue, _kBlueBg);
-    return (Icons.circle_outlined, _kGrey600, _kGrey100);
+    if (type == 'subjects') return (PhosphorIcons.bookOpen(PhosphorIconsStyle.fill), _kAmber, _kAmberBg);
+    if (type == 'regions') return (PhosphorIcons.mountains(PhosphorIconsStyle.fill), _kBlue, _kBlueBg);
+    if (type == 'districts') return (PhosphorIcons.mapTrifold(PhosphorIconsStyle.fill), _kBlue, _kBlueBg);
+    return (PhosphorIcons.circle(), _kGrey600, _kGrey100);
   }
 
   Widget _buildItem(String type, Map<String, dynamic> item) {
@@ -695,7 +751,6 @@ class _AdminDataPageState extends State<AdminDataPage>
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          // Colored icon box
           Container(
             width: 44, height: 44,
             decoration: BoxDecoration(color: icoBg, borderRadius: BorderRadius.circular(12)),
@@ -731,7 +786,7 @@ class _AdminDataPageState extends State<AdminDataPage>
   }
 }
 
-// ─── Row action buttons — outlined square [✎][🗑] kama mockup ────────────────
+// ─── Row action buttons ───────────────────────────────────────────────────────
 
 class _RowAction extends StatelessWidget {
   final VoidCallback onEdit;
@@ -741,25 +796,24 @@ class _RowAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      _sq(Icons.edit_rounded, _kGrey600, onEdit),
+      _sq(PhosphorIcons.pencilSimple(), _kBlue, _kBlueBg, onEdit),
       const SizedBox(width: 6),
-      _sq(Icons.delete_outline_rounded, _kRed, onDelete),
+      _sq(PhosphorIcons.trash(), _kRed, _kRedBg, onDelete),
     ]);
   }
 
-  Widget _sq(IconData icon, Color color, VoidCallback onTap) =>
+  Widget _sq(IconData icon, Color iconColor, Color bgColor, VoidCallback onTap) =>
       GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Container(
-          width: 44, height: 44,
+          width: 36, height: 36,
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: _kGrey200),
-            borderRadius: BorderRadius.circular(10),
+            color: bgColor,
+            borderRadius: BorderRadius.circular(9),
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 19, color: color),
+          child: Icon(icon, size: 16, color: iconColor),
         ),
       );
 }
@@ -942,7 +996,6 @@ class _DataFormSheetState extends State<_DataFormSheet> {
     }
   }
 
-  // ── Display helpers ───────────────────────────────────────────────────────
   String get _deptLabel {
     if (_category.isEmpty || _departments.isEmpty) return '';
     final d = _departments.firstWhere(
@@ -968,18 +1021,20 @@ class _DataFormSheetState extends State<_DataFormSheet> {
     return _selectedDistrict;
   }
 
-  // ── Tappable picker button ────────────────────────────────────────────────
   Widget _pickerBtn({required String hint, String? value, required VoidCallback onTap, bool disabled = false}) {
     return GestureDetector(
       onTap: disabled ? null : onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: disabled ? _kGrey50 : Colors.white,
+          color: _kGrey50,
           border: Border.all(color: _kGrey200),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(children: [
+          Icon(PhosphorIcons.mapPin(), size: 16,
+              color: disabled ? _kGrey300 : (value != null ? _kGrey500 : _kGrey400)),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value ?? hint,
@@ -987,14 +1042,13 @@ class _DataFormSheetState extends State<_DataFormSheet> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Icon(Icons.keyboard_arrow_down_rounded, size: 18,
+          Icon(PhosphorIcons.caretDown(), size: 14,
               color: value != null ? _kGrey500 : _kGrey400),
         ]),
       ),
     );
   }
 
-  // ── Bottom-sheet picker ───────────────────────────────────────────────────
   void _openPicker({
     required String title,
     required List<({String label, String value})> items,
@@ -1027,7 +1081,7 @@ class _DataFormSheetState extends State<_DataFormSheet> {
                   child: Container(
                     width: 30, height: 30,
                     decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
-                    child: const Icon(Icons.close_rounded, size: 16, color: _kGrey700),
+                    child: Icon(PhosphorIcons.x(), size: 14, color: _kGrey700),
                   ),
                 ),
               ]),
@@ -1044,7 +1098,7 @@ class _DataFormSheetState extends State<_DataFormSheet> {
                 decoration: InputDecoration(
                   hintText: 'Tafuta...',
                   hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
-                  prefixIcon: const Icon(Icons.search_rounded, color: _kGrey400, size: 18),
+                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: _kGrey400, size: 16),
                   fillColor: _kGrey100, filled: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
@@ -1079,14 +1133,23 @@ class _DataFormSheetState extends State<_DataFormSheet> {
     );
   }
 
-  InputDecoration _dec(String hint) => InputDecoration(
+  InputDecoration _dec(String hint, {IconData? prefixIcon}) => InputDecoration(
     hintText: hint,
+    prefixIcon: prefixIcon != null
+        ? Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Icon(prefixIcon, size: 16, color: _kGrey400),
+          )
+        : null,
+    prefixIconConstraints: prefixIcon != null
+        ? const BoxConstraints(minWidth: 44, minHeight: 0)
+        : null,
     filled: true,
-    fillColor: Colors.white,
+    fillColor: _kGrey50,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    border:        OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kGrey200)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBlue)),
+    border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
   );
 
   String get _title {
@@ -1111,11 +1174,19 @@ class _DataFormSheetState extends State<_DataFormSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Modal header with grey circle close button
           Row(children: [
             Text(_title,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
             const Spacer(),
-            IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 30, height: 30,
+                decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+                child: Icon(PhosphorIcons.x(), size: 14, color: _kGrey700),
+              ),
+            ),
           ]),
           const SizedBox(height: 16),
           if (widget.type == 'facilities') ...[
@@ -1152,33 +1223,38 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           ],
           TextField(
             controller: _nameCtrl,
-            decoration: _dec(widget.type == 'cadres' ? 'Jina la kada *' : 'Jina *'),
+            decoration: _dec(
+              widget.type == 'cadres' ? 'Jina la kada *' : 'Jina *',
+              prefixIcon: PhosphorIcons.tag(),
+            ),
           ),
           const SizedBox(height: 12),
           if (widget.type != 'facilities' && widget.type != 'regions' &&
               widget.type != 'districts')
             TextField(
               controller: _codeCtrl,
-              decoration: _dec('Code (ikiachiwa wazi tunautengeneza wenyewe)'),
+              decoration: _dec(
+                'Code (ikiachiwa wazi tunautengeneza wenyewe)',
+                prefixIcon: PhosphorIcons.hash(),
+              ),
             ),
           if (widget.type == 'facilities') ...[
             const SizedBox(height: 12),
             Row(children: [
-              _TogglePill(label: 'Afya',  selected: _category == 'health',
-                  color: _kRed,  onTap: () => setState(() => _category = 'health')),
+              _SelectableChip(label: 'Afya',  selected: _category == 'health',
+                  onTap: () => setState(() => _category = 'health')),
               const SizedBox(width: 8),
-              _TogglePill(label: 'Elimu', selected: _category == 'education',
-                  color: _kBlue, onTap: () => setState(() => _category = 'education')),
+              _SelectableChip(label: 'Elimu', selected: _category == 'education',
+                  onTap: () => setState(() => _category = 'education')),
             ]),
             const SizedBox(height: 12),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(children: [
                 for (final t in const ['dispensary', 'health_center', 'hospital', 'laboratory', 'clinic']) ...[
-                  _TogglePill(
+                  _SelectableChip(
                     label: t,
                     selected: _level.toLowerCase() == t,
-                    color: _kBlue,
                     onTap: () => setState(() => _level = t),
                   ),
                   const SizedBox(width: 8),
@@ -1194,11 +1270,11 @@ class _DataFormSheetState extends State<_DataFormSheet> {
             ),
             const SizedBox(height: 12),
             Row(children: [
-              _TogglePill(label: 'Hai',      selected: _status == 'active',
-                  color: _kGreen, onTap: () => setState(() { _status = 'active'; })),
+              _SelectableChip(label: 'Hai',      selected: _status == 'active',
+                  onTap: () => setState(() { _status = 'active'; })),
               const SizedBox(width: 8),
-              _TogglePill(label: 'Imezimwa', selected: _status == 'disabled',
-                  color: _kAmber, onTap: () => setState(() { _status = 'disabled'; })),
+              _SelectableChip(label: 'Imezimwa', selected: _status == 'disabled',
+                  onTap: () => setState(() { _status = 'disabled'; })),
             ]),
           ],
           if (widget.type == 'cadres') ...[
@@ -1217,36 +1293,55 @@ class _DataFormSheetState extends State<_DataFormSheet> {
             ),
             const SizedBox(height: 12),
             Row(children: [
-              _TogglePill(label: 'Bila kiwango',
+              _SelectableChip(label: 'Bila kiwango',
                   selected: _level != 'Primary' && _level != 'Secondary',
-                  color: _kGrey500, onTap: () => setState(() { _level = ''; })),
+                  onTap: () => setState(() { _level = ''; })),
               const SizedBox(width: 8),
-              _TogglePill(label: 'Primary',   selected: _level == 'Primary',
-                  color: _kBlue,  onTap: () => setState(() { _level = 'Primary'; })),
+              _SelectableChip(label: 'Primary',   selected: _level == 'Primary',
+                  onTap: () => setState(() { _level = 'Primary'; })),
               const SizedBox(width: 8),
-              _TogglePill(label: 'Secondary', selected: _level == 'Secondary',
-                  color: _kAmber, onTap: () => setState(() { _level = 'Secondary'; })),
+              _SelectableChip(label: 'Secondary', selected: _level == 'Secondary',
+                  onTap: () => setState(() { _level = 'Secondary'; })),
             ]),
             const SizedBox(height: 10),
-            Row(children: [
-              Checkbox(
-                value: _requiresSubjects,
-                activeColor: _kBlue,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                onChanged: (v) => setState(() { _requiresSubjects = v ?? false; }),
+            // Custom checkbox row
+            GestureDetector(
+              onTap: () => setState(() => _requiresSubjects = !_requiresSubjects),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: _kGrey50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _kGrey200),
+                ),
+                child: Row(children: [
+                  Container(
+                    width: 18, height: 18,
+                    decoration: BoxDecoration(
+                      color: _requiresSubjects ? _kBlue : Colors.white,
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(
+                          color: _requiresSubjects ? _kBlue : _kGrey300, width: 1.5),
+                    ),
+                    child: _requiresSubjects
+                        ? Icon(PhosphorIcons.check(), size: 11, color: Colors.white)
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  const Text('Inahitaji masomo',
+                      style: TextStyle(fontSize: 13, color: _kGrey700)),
+                ]),
               ),
-              const SizedBox(width: 4),
-              const Text('Inahitaji masomo', style: TextStyle(fontSize: 13, color: _kGrey700)),
-            ]),
+            ),
           ],
           if (widget.type == 'subjects') ...[
             const SizedBox(height: 12),
             Row(children: [
-              _TogglePill(label: 'Primary',   selected: _level == 'Primary',
-                  color: _kBlue,  onTap: () => setState(() { _level = 'Primary'; })),
+              _SelectableChip(label: 'Primary',   selected: _level == 'Primary',
+                  onTap: () => setState(() { _level = 'Primary'; })),
               const SizedBox(width: 8),
-              _TogglePill(label: 'Secondary', selected: _level == 'Secondary',
-                  color: _kAmber, onTap: () => setState(() { _level = 'Secondary'; })),
+              _SelectableChip(label: 'Secondary', selected: _level == 'Secondary',
+                  onTap: () => setState(() { _level = 'Secondary'; })),
             ]),
           ],
           const SizedBox(height: 20),
@@ -1258,6 +1353,7 @@ class _DataFormSheetState extends State<_DataFormSheet> {
                 backgroundColor: _kBlue, foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
               ),
               child: _saving
                   ? const SizedBox(width: 20, height: 20,
@@ -1271,31 +1367,30 @@ class _DataFormSheetState extends State<_DataFormSheet> {
   }
 }
 
-// ─── Toggle pill (used in form sheet) ────────────────────────────────────────
+// ─── Selectable chip — uniform blue primary selected state ────────────────────
 
-class _TogglePill extends StatelessWidget {
+class _SelectableChip extends StatelessWidget {
   final String label;
   final bool selected;
-  final Color color;
   final VoidCallback onTap;
-  const _TogglePill({required this.label, required this.selected, required this.color, required this.onTap});
+  const _SelectableChip({required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.12) : Colors.white,
-          border: Border.all(color: selected ? color : _kGrey200, width: selected ? 1.5 : 1),
+          color: selected ? _kBlueBg : Colors.white,
+          border: Border.all(color: selected ? _kBlue : _kGrey200, width: selected ? 1.5 : 1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(label,
             style: TextStyle(
-              fontSize: 13,
-              color: selected ? color : _kGrey700,
-              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 12,
+              color: selected ? _kBlue : _kGrey700,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             )),
       ),
     );
