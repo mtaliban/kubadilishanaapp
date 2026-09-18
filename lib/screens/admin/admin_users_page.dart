@@ -1274,7 +1274,7 @@ class _State extends State<AdminUsersPage> {
         Icon(icon, size: 16, color: sel ? _blue : _g600),
         const SizedBox(width: 6),
         Text(t, style: TextStyle(
-          color: sel ? _blue : _g800,
+          color: sel ? _blue : _g900,
           fontWeight: FontWeight.w700, fontSize: 13)),
       ]),
     ),
