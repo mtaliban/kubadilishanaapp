@@ -653,6 +653,7 @@ class _State extends State<AdminUsersPage> {
     bool saving = false;
     bool isAdmin = false;
     String? catCode; String? cadreCode; String? regId; String? distId;
+    String? jinsia; String? njiaArifa;
     List<dynamic> cadres = []; List<dynamic> dists = [];
 
     showModalBottomSheet(
@@ -687,6 +688,23 @@ class _State extends State<AdminUsersPage> {
               const SizedBox(height: 12),
               _lbl('Nywila *'),
               _inp(passCtrl, '••••••', icon: Icons.lock_outline_rounded, obscure: true),
+
+              const SizedBox(height: 12),
+              _lbl('Jinsia'),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                _chipSel(jinsia == 'm', 'Mume',       Icons.male_rounded,      () => ss(() => jinsia = 'm')),
+                _chipSel(jinsia == 'f', 'Mwanamke',   Icons.female_rounded,    () => ss(() => jinsia = 'f')),
+                _chipSel(jinsia == 'n', 'Sisi',        Icons.transgender_rounded, () => ss(() => jinsia = 'n')),
+              ]),
+              const SizedBox(height: 12),
+              _lbl('Njia ya Arifa'),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                _chipSel(njiaArifa == 'sms',      'SMS',      Icons.sms_outlined,            () => ss(() => njiaArifa = 'sms')),
+                _chipSel(njiaArifa == 'whatsapp', 'WhatsApp', Icons.chat_outlined,           () => ss(() => njiaArifa = 'whatsapp')),
+                _chipSel(njiaArifa == 'zote',     'Zote',     Icons.dns_outlined,            () => ss(() => njiaArifa = 'zote')),
+              ]),
+              const SizedBox(height: 12),
+
               const SizedBox(height: 12),
               _lbl('Idara *'),
               SelectField(
@@ -1242,6 +1260,25 @@ class _State extends State<AdminUsersPage> {
         Text(label, style: const TextStyle(fontSize: 13, color: _g700)),
       ]);
 
+  Widget _chipSel(bool sel, String t, IconData icon, VoidCallback onTap) => InkWell(
+    borderRadius: BorderRadius.circular(10),
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: sel ? _blueBg : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: sel ? _blue : _g200, width: sel ? 1.5 : 1),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 16, color: sel ? _blue : _g600),
+        const SizedBox(width: 6),
+        Text(t, style: TextStyle(
+          color: sel ? _blue : _g800,
+          fontWeight: FontWeight.w700, fontSize: 13)),
+      ]),
+    ),
+  );
   Widget _chip2(String t, Color fg, Color bg) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
