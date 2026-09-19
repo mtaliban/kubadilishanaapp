@@ -1,61 +1,117 @@
+// ============================================================================
+// WALIOPIGIANA — orodha ya mawasiliano kati ya watumiaji (Simu, SMS, WhatsApp)
+// Design (kama reference):
+//  - Kadi ina watu WAWILI juu→chini (Mtumaji -> Mpokeaji); majina yanashuka
+//    mstari badala ya kukatwa.
+//  - Maandishi makubwa, sentence case (MISABO EVARIST -> Misabo Evarist).
+//  - Role za mfumo zinasafishwa (TEACHER_SECONDARY -> Teacher secondary).
+//  - Orodha imepangwa kwa siku (Leo, Jana, 17 Sep 2026); muda ni saa tu.
+//  - Rangi za njia: Simu (bluu), SMS (njano), WhatsApp (kijani).
+//  - Search ya kweli (jina au namba) + "Onyesha zaidi".
+//  - Gusa kadi kuona namba za simu na kuzinakili.
+// Data halisi: GET /messages/admin/contacts (ApiService.getContactActivity)
+// ============================================================================
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 
-const _kBlue      = Color(0xFF1E40AF);
-const _kBlueBg    = Color(0xFFEFF6FF);
-const _kGreen     = Color(0xFF16A34A);
-const _kGreenBg   = Color(0xFFDCFCE7);
-const _kEmerald   = Color(0xFF047857);
-const _kEmeraldBg = Color(0xFFECFDF5);
-const _kGrey900   = Color(0xFF111827);
-const _kGrey500   = Color(0xFF6B7280);
-const _kGrey400   = Color(0xFF9CA3AF);
-const _kGrey200   = Color(0xFFE5E7EB);
-const _kGrey50    = Color(0xFFF9FAFB);
-const _kRed       = Color(0xFFDC2626);
+const _kPrimary = Color(0xFF1E40AF);
+const _kBg      = Color(0xFFF8FAFC);
+const _kInk     = Color(0xFF0F172A);
+const _kMuted   = Color(0xFF64748B);
+const _kLine    = Color(0xFFE2E8F0);
+const _kSoft    = Color(0xFFF1F5F9);
+const _kBlueBg  = Color(0xFFEFF6FF);
+const _kGreenBg = Color(0xFFDCFCE7);
 
-const _kPageSize = 20;
+const _kStep = 25;
 
-Color _typeColor(String t) {
-  switch (t) {
-    case 'sms':      return _kBlue;
-    case 'whatsapp': return _kEmerald;
-    default:         return _kGreen;
+// ───────────────────────── Channel styling ─────────────────────────
+({Color fg, Color bg, IconData icon, String label}) _channelStyle(String type, bool sw) {
+  switch (type) {
+    case 'sms':
+      return (
+        fg: const Color(0xFFB45309),
+        bg: const Color(0xFFFEF3C7),
+        icon: Icons.sms_rounded,
+        label: 'SMS',
+      );
+    case 'whatsapp':
+      return (
+        fg: const Color(0xFF15803D),
+        bg: _kGreenBg,
+        icon: Icons.chat_rounded,
+        label: 'WhatsApp',
+      );
+    default:
+      return (
+        fg: const Color(0xFF1D4ED8),
+        bg: const Color(0xFFDBEAFE),
+        icon: Icons.call_rounded,
+        label: sw ? 'Simu' : 'Call',
+      );
   }
 }
 
-Color _typeBg(String t) {
-  switch (t) {
-    case 'sms':      return _kBlueBg;
-    case 'whatsapp': return _kEmeraldBg;
-    default:         return _kGreenBg;
+// ───────────────────────── Helpers ─────────────────────────
+String _titleCase(String s) => s
+    .trim()
+    .toLowerCase()
+    .split(RegExp(r'\s+'))
+    .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+    .join(' ');
+
+String _prettyRole(String r) {
+  if (r.isEmpty || !r.contains('_')) return r;
+  final s = r.replaceAll('_', ' ').toLowerCase();
+  return '${s[0].toUpperCase()}${s.substring(1)}';
+}
+
+String _catLabel(String? c) {
+  switch (c) {
+    case 'education':         return 'Elimu';
+    case 'health':            return 'Afya';
+    case 'kilimo':            return 'Kilimo na Ufugaji';
+    case 'watumishi_wa_umma': return 'Watumishi wa Umma';
+    default:                  return c == null || c.isEmpty ? '' : _titleCase(c);
   }
 }
 
-Color _typeBorder(String t) {
-  switch (t) {
-    case 'sms':      return const Color(0xFFBFDBFE);
-    case 'whatsapp': return const Color(0xFFD1FAE5);
-    default:         return const Color(0xFFBBF7D0);
+String _initials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  return (parts.first[0] + (parts.length > 1 ? parts[1][0] : '')).toUpperCase();
+}
+
+String _two(int n) => n.toString().padLeft(2, '0');
+String _hm(DateTime d) => '${_two(d.hour)}:${_two(d.minute)}';
+
+const _monthsSw = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des'];
+const _monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+String _dateText(DateTime d, bool sw) =>
+    '${d.day} ${(sw ? _monthsSw : _monthsEn)[d.month - 1]} ${d.year}';
+
+String _dayLabel(DateTime d, bool sw) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(d.year, d.month, d.day);
+  final diff = today.difference(day).inDays;
+  if (diff == 0) return sw ? 'Leo' : 'Today';
+  if (diff == 1) return sw ? 'Jana' : 'Yesterday';
+  return _dateText(d, sw);
+}
+
+DateTime? _parseTs(String ts) {
+  if (ts.isEmpty) return null;
+  try {
+    return DateTime.parse(ts).toLocal();
+  } catch (_) {
+    return null;
   }
 }
 
-IconData _typeIcon(String t) {
-  switch (t) {
-    case 'sms':      return Icons.sms_outlined;
-    case 'whatsapp': return Icons.chat_outlined;
-    default:         return Icons.phone_outlined;
-  }
-}
-
-String _typeLabel(String t) {
-  switch (t) {
-    case 'sms':      return 'SMS';
-    case 'whatsapp': return 'WhatsApp';
-    default:         return 'Simu';
-  }
-}
-
+// ───────────────────────── Page ─────────────────────────
 class AdminContactsPage extends StatefulWidget {
   const AdminContactsPage({super.key});
   @override
@@ -63,24 +119,46 @@ class AdminContactsPage extends StatefulWidget {
 }
 
 class _AdminContactsPageState extends State<AdminContactsPage> {
+  final _searchCtrl = TextEditingController();
+  final _scroll = ScrollController();
+
   bool _loading = true;
   String? _error;
-  List<dynamic> _all = [];
-  List<dynamic> _filtered = [];
-  final _searchCtrl = TextEditingController();
-  String _filterType = '';
-  int _page = 0;
+  List<Map<String, dynamic>> _all = [];
+  String _channel = ''; // '' = zote, 'call' | 'sms' | 'whatsapp'
+  String _query = '';
+  int _shown = _kStep;
+
+  String t(String sw, String en) => sw;
+
+  int _countOf(String c) => _all.where((e) => (e['contact_type'] as String? ?? 'call') == c).length;
+
+  List<Map<String, dynamic>> get _filtered {
+    final q = _query.trim().toLowerCase();
+    final digits = q.replaceAll(RegExp(r'[^0-9+]'), '');
+    return _all.where((e) {
+      if (_channel.isNotEmpty && (e['contact_type'] as String? ?? 'call') != _channel) return false;
+      if (q.isEmpty) return true;
+      final fromName = ((e['from_full_name'] as String?) ?? '').toLowerCase();
+      final toName = ((e['to_full_name'] as String?) ?? '').toLowerCase();
+      final fromPhone = ((e['from_phone'] as String?) ?? '').toLowerCase();
+      final toPhone = ((e['to_phone'] as String?) ?? '').toLowerCase();
+      final byName = fromName.contains(q) || toName.contains(q);
+      final byPhone = digits.isNotEmpty && (fromPhone.contains(digits) || toPhone.contains(digits));
+      return byName || byPhone;
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
     _load();
-    _searchCtrl.addListener(_applyFilter);
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -92,9 +170,9 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
       final data = res.data;
       final raw = data is List ? data : ((data['contacts'] ?? data['results']) as List? ?? []);
       setState(() {
-        _all = raw;
-        _applyFilter();
+        _all = raw.whereType<Map<String, dynamic>>().toList();
         _loading = false;
+        _shown = _kStep;
       });
     } catch (e) {
       if (!mounted) return;
@@ -102,462 +180,590 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
     }
   }
 
-  void _applyFilter() {
-    final q = _searchCtrl.text.toLowerCase();
+  void _setChannel(String c) => setState(() {
+        _channel = (_channel == c) ? '' : c;
+        _shown = _kStep;
+      });
+
+  void _copy(String phone) {
+    Clipboard.setData(ClipboardData(text: phone));
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: const Text('Namba imenakiliwa'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ));
+  }
+
+  void _clearSearch() {
+    _searchCtrl.clear();
     setState(() {
-      _filtered = _all.where((item) {
-        final m = item as Map<String, dynamic>;
-        final fromName  = (m['from_full_name'] as String? ?? m['caller_name'] as String? ?? m['full_name'] as String? ?? '').toLowerCase();
-        final toName    = (m['to_full_name'] as String? ?? '').toLowerCase();
-        final fromPhone = (m['from_phone'] as String? ?? '').toLowerCase();
-        final toPhone   = (m['to_phone'] as String? ?? '').toLowerCase();
-        final type      = (m['contact_type'] as String? ?? m['type'] as String? ?? '').toLowerCase();
-        final matchQ    = q.isEmpty || fromName.contains(q) || toName.contains(q) || fromPhone.contains(q) || toPhone.contains(q);
-        final matchType = _filterType.isEmpty || type == _filterType;
-        return matchQ && matchType;
-      }).toList();
-      _page = 0;
+      _query = '';
+      _channel = '';
+      _shown = _kStep;
     });
   }
 
-  void _setType(String t) {
-    setState(() { _filterType = t; });
-    _applyFilter();
+  void _goToPage(int p) {
+    setState(() => _shown = p);
+    _scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
   }
 
-  int _countType(String t) => _all.where((item) {
-    final m = item as Map;
-    final ct = m['contact_type'] as String? ?? m['type'] as String? ?? '';
-    return ct == t;
-  }).length;
+  void _openDetails(Map<String, dynamic> e, bool sw) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) => _DetailSheet(e: e, sw: sw, onCopy: _copy),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final totalPages = (_filtered.length / _kPageSize).ceil().clamp(0, 9999);
-    final pageItems = _loading || _error != null
-        ? <dynamic>[]
-        : _filtered.skip(_page * _kPageSize).take(_kPageSize).toList();
+    final filtered = _filtered;
+    final visible = filtered.take(_shown).toList();
+    final remaining = filtered.length - visible.length;
+
+    // Makundi kwa siku (Leo / Jana / tarehe)
+    final rows = <Widget>[];
+    String? lastDay;
+    for (final e in visible) {
+      final at = _parseTs(e['initiated_at'] as String? ?? '') ?? DateTime.now();
+      final day = _dayLabel(at, true);
+      if (day != lastDay) {
+        rows.add(Padding(
+          padding: EdgeInsets.only(top: lastDay == null ? 4 : 14, bottom: 10),
+          child: Text(day,
+              style: const TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.w700, color: _kMuted)),
+        ));
+        lastDay = day;
+      }
+      rows.add(Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: _InteractionCard(
+          e: e,
+          at: at,
+          onTap: () => _openDetails(e, true),
+        ),
+      ));
+    }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _kBg,
       body: RefreshIndicator(
         onRefresh: _load,
-        color: _kBlue,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44, height: 44,
-                          decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
-                          child: const Icon(Icons.phone_in_talk_outlined, color: _kBlue, size: 22),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Waliopigiana',
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                              Text('Historia ya mawasiliano',
-                                  style: TextStyle(fontSize: 12, color: _kGrey500)),
-                            ],
-                          ),
-                        ),
-                        if (!_loading)
-                          Text('${_filtered.length}/${_all.length}',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kGrey500)),
-                      ],
-                    ),
-                  ),
-                  // Stat-filter pills
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        _StatPill(
-                          icon: Icons.trending_up,
-                          label: 'Zote',
-                          count: _all.length,
-                          active: _filterType.isEmpty,
-                          color: _kBlue,
-                          bg: _kBlueBg,
-                          border: const Color(0xFFBFDBFE),
-                          onTap: () => _setType(''),
-                        ),
-                        const SizedBox(width: 6),
-                        _StatPill(
-                          icon: Icons.phone_outlined,
-                          label: 'Simu',
-                          count: _countType('call'),
-                          active: _filterType == 'call',
-                          color: _kGreen,
-                          bg: _kGreenBg,
-                          border: const Color(0xFFBBF7D0),
-                          onTap: () => _setType(_filterType == 'call' ? '' : 'call'),
-                        ),
-                        const SizedBox(width: 6),
-                        _StatPill(
-                          icon: Icons.sms_outlined,
-                          label: 'SMS',
-                          count: _countType('sms'),
-                          active: _filterType == 'sms',
-                          color: _kBlue,
-                          bg: _kBlueBg,
-                          border: const Color(0xFFBFDBFE),
-                          onTap: () => _setType(_filterType == 'sms' ? '' : 'sms'),
-                        ),
-                        const SizedBox(width: 6),
-                        _StatPill(
-                          icon: Icons.chat_outlined,
-                          label: 'WhatsApp',
-                          count: _countType('whatsapp'),
-                          active: _filterType == 'whatsapp',
-                          color: _kEmerald,
-                          bg: _kEmeraldBg,
-                          border: const Color(0xFFD1FAE5),
-                          onTap: () => _setType(_filterType == 'whatsapp' ? '' : 'whatsapp'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TextField(
-                      controller: _searchCtrl,
-                      style: const TextStyle(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Tafuta kwa jina au namba...',
-                        hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
-                        prefixIcon: const Icon(Icons.filter_list_outlined, color: _kGrey400, size: 16),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 9),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
+        color: _kPrimary,
+        child: ListView(
+          controller: _scroll,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+          children: [
+            // ── Header ──
+            Row(children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                    color: const Color(0xFFDBEAFE), borderRadius: BorderRadius.circular(14)),
+                child: const Icon(Icons.phone_in_talk_rounded, color: _kPrimary),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text('Waliopigiana',
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: _kInk)),
+              ),
+              const _StatusChip(online: true),
+            ]),
+            const SizedBox(height: 8),
+            Text(
+              t('Watumiaji waliowasiliana kwa simu, SMS na WhatsApp.',
+                  'Users who contacted each other by call, SMS, and WhatsApp.'),
+              style: const TextStyle(fontSize: 15, color: _kMuted, height: 1.4),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Search ──
+            TextField(
+              controller: _searchCtrl,
+              textInputAction: TextInputAction.search,
+              onChanged: (v) => setState(() {
+                _query = v;
+                _shown = _kStep;
+              }),
+              style: const TextStyle(fontSize: 16),
+              decoration: InputDecoration(
+                hintText: 'Tafuta kwa jina au namba ya simu',
+                prefixIcon: const Icon(Icons.search_rounded, color: _kMuted),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Futa',
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => setState(() {
+                          _searchCtrl.clear();
+                          _query = '';
+                          _shown = _kStep;
+                        }),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Divider(height: 1, color: _kGrey200),
-                ],
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: _kLine)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: _kLine)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: _kPrimary, width: 1.6)),
               ),
             ),
+            const SizedBox(height: 12),
+
+            // ── Channel chips (na idadi) ──
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(children: [
+                _chip('Zote', _all.length, null, null, _channel.isEmpty, () => _setChannel('')),
+                for (final c in const ['call', 'sms', 'whatsapp'])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Builder(builder: (_) {
+                      final st = _channelStyle(c, true);
+                      return _chip(st.label, _countOf(c), st.icon, st.fg,
+                          _channel == c, () => _setChannel(c));
+                    }),
+                  ),
+              ]),
+            ),
+            const SizedBox(height: 14),
+
+            if (!_loading && _error == null)
+              Text(
+                'Inaonyesha ${visible.length} kati ya ${filtered.length}',
+                style: const TextStyle(fontSize: 13, color: _kMuted),
+              ),
+            const SizedBox(height: 10),
+
+            // ── Body ──
             if (_loading)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator(color: _kBlue)),
+              const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(child: CircularProgressIndicator(color: _kPrimary)),
               )
             else if (_error != null)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline, color: _kRed, size: 48),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: _load,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Jaribu tena'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: _kBlue, foregroundColor: Colors.white),
-                      ),
-                    ],
+              _ErrorState(onRetry: _load)
+            else if (filtered.isEmpty)
+              _EmptyState(onClear: _clearSearch)
+            else ...[
+              ...rows,
+              if (remaining > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: OutlinedButton(
+                    onPressed: () => _goToPage(_shown + _kStep),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      foregroundColor: _kPrimary,
+                      side: const BorderSide(color: Color(0xFFBFDBFE)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text(
+                      'Onyesha zaidi ($remaining zimebaki)',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
                   ),
                 ),
-              )
-            else if (_filtered.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.phone_outlined, color: _kGrey500, size: 48),
-                      const SizedBox(height: 12),
-                      const Text('Hakuna mawasiliano bado',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _kGrey500)),
-                      const SizedBox(height: 4),
-                      const Text('Watumiaji wataonekana hapa wanapopigiana simu',
-                          style: TextStyle(fontSize: 11, color: _kGrey400)),
-                    ],
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (ctx, i) => _buildCard(pageItems[i] as Map<String, dynamic>),
-                    childCount: pageItems.length,
-                  ),
-                ),
-              ),
-            if (!_loading && _error == null && totalPages > 1)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _PageBtn(
-                        icon: Icons.chevron_left,
-                        onTap: _page > 0 ? () => setState(() => _page--) : null,
-                      ),
-                      for (int p = 0; p < totalPages.clamp(0, 10); p++)
-                        _PageNum(
-                          n: p + 1,
-                          active: _page == p,
-                          onTap: () => setState(() => _page = p),
-                        ),
-                      if (totalPages > 10)
-                        const Text('...', style: TextStyle(color: _kGrey400, fontSize: 12)),
-                      _PageBtn(
-                        icon: Icons.chevron_right,
-                        onTap: _page < totalPages - 1 ? () => setState(() => _page++) : null,
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCard(Map<String, dynamic> item) {
-    final fromName   = item['from_full_name'] as String? ?? item['caller_name'] as String? ?? item['full_name'] as String? ?? '—';
-    final toName     = item['to_full_name'] as String? ?? '—';
-    final fromCadre  = item['from_cadre'] as String? ?? '';
-    final toCadre    = item['to_cadre'] as String? ?? '';
-    final fromRegion = item['from_region'] as String? ?? '';
-    final toRegion   = item['to_region'] as String? ?? '';
-    final fromCat    = (item['from_category'] as String? ?? '') == 'education' ? 'Elimu' : 'Afya';
-    final toCat      = (item['to_category'] as String? ?? '') == 'education' ? 'Elimu' : 'Afya';
-    final type       = item['contact_type'] as String? ?? item['type'] as String? ?? 'call';
-    final ts         = item['initiated_at'] as String? ?? item['created_at'] as String? ?? item['timestamp'] as String? ?? '';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kGrey200),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _typeBg(type),
-                  border: Border.all(color: _typeBorder(type)),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(_typeIcon(type), size: 11, color: _typeColor(type)),
-                    const SizedBox(width: 4),
-                    Text(_typeLabel(type),
-                        style: TextStyle(
-                            fontSize: 11, color: _typeColor(type), fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              if (ts.isNotEmpty)
-                Row(
-                  children: [
-                    const Icon(Icons.access_time, size: 10, color: _kGrey400),
-                    const SizedBox(width: 3),
-                    Text(ts, style: const TextStyle(fontSize: 10, color: _kGrey400)),
-                  ],
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _kGrey50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('MTUMAJI',
-                          style: TextStyle(
-                              fontSize: 9, color: _kGrey400, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
-                      Text(fromName,
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold, color: _kGrey900),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text('$fromCat · ${fromCadre.isNotEmpty ? fromCadre : '—'}',
-                          style: const TextStyle(fontSize: 10, color: _kGrey500)),
-                      if (fromRegion.isNotEmpty)
-                        Text(fromRegion,
-                            style: const TextStyle(
-                                fontSize: 10, color: _kBlue, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _kBlueBg,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('MPOKEAJI',
-                          style: TextStyle(
-                              fontSize: 9, color: _kBlue, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
-                      Text(toName,
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold, color: _kGrey900),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text('$toCat · ${toCadre.isNotEmpty ? toCadre : '—'}',
-                          style: const TextStyle(fontSize: 10, color: _kGrey500)),
-                      if (toRegion.isNotEmpty)
-                        Text(toRegion,
-                            style: const TextStyle(
-                                fontSize: 10, color: _kBlue, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+  Widget _chip(String label, int count, IconData? icon, Color? color, bool selected,
+      VoidCallback onTap) {
+    final c = color ?? _kPrimary;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        avatar: icon == null ? null : Icon(icon, size: 18, color: selected ? Colors.white : c),
+        label: Text('$label  $count'),
+        selected: selected,
+        showCheckmark: false,
+        selectedColor: c,
+        backgroundColor: Colors.white,
+        side: BorderSide(color: selected ? c : _kLine),
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        labelStyle: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: selected ? Colors.white : _kInk),
+        onSelected: (_) => onTap(),
       ),
     );
   }
 }
 
-class _StatPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int count;
-  final bool active;
-  final Color color;
-  final Color bg;
-  final Color border;
+// ───────────────────────── Widgets ─────────────────────────
+class _StatusChip extends StatelessWidget {
+  final bool online;
+  const _StatusChip({required this.online});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: online ? _kGreenBg : _kSoft,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: online ? const Color(0xFF16A34A) : const Color(0xFF94A3B8),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(online ? 'Live' : 'Offline',
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: online ? const Color(0xFF166534) : _kMuted)),
+      ]),
+    );
+  }
+}
+
+class _ChannelPill extends StatelessWidget {
+  final String type;
+  const _ChannelPill({required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    final st = _channelStyle(type, true);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(color: st.bg, borderRadius: BorderRadius.circular(20)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(st.icon, size: 16, color: st.fg),
+        const SizedBox(width: 6),
+        Text(st.label,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: st.fg)),
+      ]),
+    );
+  }
+}
+
+class _InteractionCard extends StatelessWidget {
+  final Map<String, dynamic> e;
+  final DateTime at;
   final VoidCallback onTap;
-  const _StatPill({
-    required this.icon, required this.label, required this.count,
-    required this.active, required this.color, required this.bg,
-    required this.border, required this.onTap,
+  const _InteractionCard({required this.e, required this.at, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final type = e['contact_type'] as String? ?? 'call';
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: _kLine),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              _ChannelPill(type: type),
+              const Spacer(),
+              const Icon(Icons.schedule, size: 16, color: _kMuted),
+              const SizedBox(width: 5),
+              Text(_hm(at),
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600, color: _kMuted)),
+            ]),
+            const SizedBox(height: 14),
+            _PersonBlock(
+              label: 'Mtumaji',
+              name: e['from_full_name'] as String? ?? '—',
+              phone: e['from_phone'] as String? ?? '',
+              sector: _catLabel(e['from_category'] as String?),
+              role: e['from_cadre'] as String? ?? '',
+              region: e['from_region'] as String? ?? '',
+              recipient: false,
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 4),
+              child: Center(child: Icon(Icons.arrow_downward_rounded, size: 20, color: _kMuted)),
+            ),
+            _PersonBlock(
+              label: 'Mpokeaji',
+              name: e['to_full_name'] as String? ?? '—',
+              phone: e['to_phone'] as String? ?? '',
+              sector: _catLabel(e['to_category'] as String?),
+              role: e['to_cadre'] as String? ?? '',
+              region: e['to_region'] as String? ?? '',
+              recipient: true,
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class _PersonBlock extends StatelessWidget {
+  final String label;
+  final String name;
+  final String phone;
+  final String sector;
+  final String role;
+  final String region;
+  final bool recipient;
+  const _PersonBlock({
+    required this.label,
+    required this.name,
+    required this.phone,
+    required this.sector,
+    required this.role,
+    required this.region,
+    required this.recipient,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: active ? bg : Colors.white,
-          border: Border.all(color: active ? color : _kGrey200),
-          borderRadius: BorderRadius.circular(20),
+    final sub = [
+      if (sector.isNotEmpty) sector,
+      if (role.isNotEmpty) _prettyRole(role),
+    ].join(' · ');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: recipient ? _kBlueBg : _kBg,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        CircleAvatar(
+          radius: 22,
+          backgroundColor: recipient ? const Color(0xFFDBEAFE) : _kSoft,
+          child: Text(_initials(name),
+              style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: recipient ? _kPrimary : _kInk)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: active ? color : _kGrey400),
-            const SizedBox(width: 5),
-            Text('$count',
-                style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.bold,
-                    color: active ? color : const Color(0xFF374151))),
-            const SizedBox(width: 4),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             Text(label,
                 style: TextStyle(
-                    fontSize: 10,
-                    color: active ? color : const Color(0xFF6B7280))),
-          ],
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: recipient ? _kPrimary : _kMuted)),
+            const SizedBox(height: 2),
+            // Jina linashuka mstari unaofuata — hakuna ellipsis
+            Text(_titleCase(name),
+                style: const TextStyle(
+                    fontSize: 17, fontWeight: FontWeight.w700, color: _kInk, height: 1.25)),
+            if (sub.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(sub, style: const TextStyle(fontSize: 14, color: _kMuted, height: 1.3)),
+            ],
+            if (region.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Row(children: [
+                const Icon(Icons.location_on_outlined, size: 17, color: _kPrimary),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(region,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600, color: _kPrimary)),
+                ),
+              ]),
+            ],
+          ]),
         ),
-      ),
+      ]),
     );
   }
 }
 
-class _PageNum extends StatelessWidget {
-  final int n;
-  final bool active;
-  final VoidCallback onTap;
-  const _PageNum({required this.n, required this.active, required this.onTap});
+class _ErrorState extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _ErrorState({required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32, height: 32,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          color: active ? _kBlue : Colors.white,
-          border: Border.all(color: active ? _kBlue : _kGrey200),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Center(
-          child: Text('$n',
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.bold,
-                  color: active ? Colors.white : const Color(0xFF374151))),
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _kLine),
       ),
+      child: Column(children: [
+        const Icon(Icons.cloud_off_rounded, size: 40, color: Color(0xFFCBD5E1)),
+        const SizedBox(height: 12),
+        const Text('Imeshindikana kupakia mawasiliano',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 14),
+        FilledButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh_rounded, size: 18),
+          label: const Text('Jaribu tena',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+          style: FilledButton.styleFrom(
+            backgroundColor: _kPrimary,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-class _PageBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onTap;
-  const _PageBtn({required this.icon, this.onTap});
+class _EmptyState extends StatelessWidget {
+  final VoidCallback onClear;
+  const _EmptyState({required this.onClear});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32, height: 32,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: onTap != null ? _kBlue : _kGrey200),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Icon(icon, size: 16, color: onTap != null ? _kBlue : _kGrey200),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _kLine),
       ),
+      child: Column(children: [
+        const Icon(Icons.search_off_rounded, size: 40, color: Color(0xFFCBD5E1)),
+        const SizedBox(height: 12),
+        const Text('Hakuna matokeo',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        const Text('Jaribu jina au namba nyingine.',
+            style: TextStyle(color: _kMuted, fontSize: 15)),
+        const SizedBox(height: 14),
+        TextButton(onPressed: onClear, child: const Text('Futa utafutaji')),
+      ]),
+    );
+  }
+}
+
+class _DetailSheet extends StatelessWidget {
+  final Map<String, dynamic> e;
+  final bool sw;
+  final ValueChanged<String> onCopy;
+  const _DetailSheet({required this.e, required this.sw, required this.onCopy});
+
+  @override
+  Widget build(BuildContext context) {
+    final type = e['contact_type'] as String? ?? 'call';
+    final at = _parseTs(e['initiated_at'] as String? ?? '');
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+        child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+          Center(
+            child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: _kLine, borderRadius: BorderRadius.circular(2))),
+          ),
+          const SizedBox(height: 16),
+          Row(children: [
+            _ChannelPill(type: type),
+            const Spacer(),
+            Text(
+              at == null ? '' : '${_dateText(at, sw)}, ${_hm(at)}',
+              style: const TextStyle(
+                  fontSize: 15, color: _kMuted, fontWeight: FontWeight.w600),
+            ),
+          ]),
+          const SizedBox(height: 16),
+          _contact(
+            'Mtumaji',
+            name: e['from_full_name'] as String? ?? '—',
+            sector: _catLabel(e['from_category'] as String?),
+            role: e['from_cadre'] as String? ?? '',
+            region: e['from_region'] as String? ?? '',
+            phone: e['from_phone'] as String? ?? '',
+          ),
+          const SizedBox(height: 12),
+          _contact(
+            'Mpokeaji',
+            name: e['to_full_name'] as String? ?? '—',
+            sector: _catLabel(e['to_category'] as String?),
+            role: e['to_cadre'] as String? ?? '',
+            region: e['to_region'] as String? ?? '',
+            phone: e['to_phone'] as String? ?? '',
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _contact(String label,
+      {required String name,
+      required String sector,
+      required String role,
+      required String region,
+      required String phone}) {
+    final sub = [
+      if (sector.isNotEmpty) sector,
+      if (role.isNotEmpty) _prettyRole(role),
+      if (region.isNotEmpty) region,
+    ].join(' · ');
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: _kBg, borderRadius: BorderRadius.circular(18)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label,
+            style: const TextStyle(
+                fontSize: 13, color: _kMuted, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 2),
+        Text(_titleCase(name),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kInk)),
+        if (sub.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(sub, style: const TextStyle(fontSize: 14, color: _kMuted)),
+        ],
+        if (phone.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Row(children: [
+            const Icon(Icons.phone_outlined, size: 18, color: _kPrimary),
+            const SizedBox(width: 8),
+            Text(phone,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: _kPrimary)),
+            const Spacer(),
+            IconButton.filledTonal(
+              tooltip: 'Nakili namba',
+              onPressed: () => onCopy(phone),
+              icon: const Icon(Icons.copy_rounded, size: 18),
+            ),
+          ]),
+        ],
+      ]),
     );
   }
 }
