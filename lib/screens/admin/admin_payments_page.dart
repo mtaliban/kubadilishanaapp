@@ -20,6 +20,9 @@ const _kGrey300 = Color(0xFFD1D5DB);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kGrey100 = Color(0xFFF3F4F6);
 const _kGrey50  = Color(0xFFF9FAFB);
+const _kHero1   = Color(0xFF0F3D73);
+const _kHero2   = Color(0xFF1D6FBF);
+const _kBlue2   = Color(0xFF378ADD);
 
 const _kPageSize = 10;
 
@@ -193,32 +196,59 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
 
-            // ── Header ──────────────────────────────────────────────────────
+            // ── HERO ya gradient ──────────────────────────────────────────
             SliverToBoxAdapter(
               child: Container(
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [_kHero1, _kHero2],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
                       Container(
-                        width: 44, height: 44,
+                        width: 42, height: 42,
                         decoration: BoxDecoration(
-                          color: _kBlueBg,
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(PhosphorIcons.wallet(PhosphorIconsStyle.fill),
-                            color: _kBlue, size: 22),
+                            color: Colors.white, size: 21),
                       ),
                       const SizedBox(width: 12),
-                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Malipo',
-                            style: GoogleFonts.inter(
-                                fontSize: 20, fontWeight: FontWeight.w800, color: _kGrey900)),
-                        Text('Simamia michango ya watumiaji',
-                            style: GoogleFonts.inter(fontSize: 12.5, color: _kGrey400)),
-                      ]),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('Malipo',
+                              style: GoogleFonts.inter(
+                                  fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+                          Text('Simamia michango ya watumiaji',
+                              style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+                        ]),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Container(width: 7, height: 7,
+                              decoration: const BoxDecoration(
+                                  color: Color(0xFF4ADE80), shape: BoxShape.circle)),
+                          const SizedBox(width: 5),
+                          Text('LIVE',
+                              style: GoogleFonts.inter(
+                                  fontSize: 10.5, fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8, color: Colors.white)),
+                        ]),
+                      ),
                     ]),
                     const SizedBox(height: 16),
 
@@ -228,24 +258,21 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                         icon: PhosphorIcons.trendUp(PhosphorIconsStyle.fill),
                         label: 'Jumla Iliyolipwa',
                         value: _fmtTotal(),
-                        iconColor: _kGreen,
-                        iconBg: _kGreenBg,
+                        colors: const [_kGreen, Color(0xFF34D399)],
                       )),
                       const SizedBox(width: 10),
                       Expanded(child: _StatCard(
                         icon: PhosphorIcons.clock(PhosphorIconsStyle.fill),
                         label: 'Yanasubiri',
                         value: '${_count('pending')}',
-                        iconColor: _kAmber,
-                        iconBg: _kAmberBg,
+                        colors: const [_kAmber, Color(0xFFFBBF24)],
                       )),
                       const SizedBox(width: 10),
                       Expanded(child: _StatCard(
                         icon: PhosphorIcons.receipt(PhosphorIconsStyle.fill),
                         label: 'Kuonyesha',
                         value: '${items.length}',
-                        iconColor: _kBlue,
-                        iconBg: _kBlueBg,
+                        colors: const [_kBlue, _kBlue2],
                       )),
                     ]),
                     const SizedBox(height: 16),
@@ -308,8 +335,6 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                         }).toList(),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Container(height: 1, color: _kGrey200),
                   ],
                 ),
               ),
@@ -471,11 +496,10 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final Color iconColor;
-  final Color iconBg;
+  final List<Color> colors;
   const _StatCard({
     required this.icon, required this.label,
-    required this.value, required this.iconColor, required this.iconBg,
+    required this.value, required this.colors,
   });
 
   @override
@@ -494,8 +518,11 @@ class _StatCard extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
           width: 32, height: 32,
-          decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(8)),
-          child: Icon(icon, size: 16, color: iconColor),
+          decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors,
+                  begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(9)),
+          child: Icon(icon, size: 16, color: Colors.white),
         ),
         const SizedBox(height: 10),
         Text(value,

@@ -12,7 +12,6 @@ const _kAmber   = Color(0xFFD97706);
 const _kAmberBg = Color(0xFFFEF3C7);
 const _kRed     = Color(0xFFDC2626);
 const _kRedBg   = Color(0xFFFEE2E2);
-const _kGrey900 = Color(0xFF111827);
 const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey400 = Color(0xFF9CA3AF);
@@ -206,16 +205,25 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
         : _filtered.skip(_page * _kPageSize).take(_kPageSize).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF2F5F9),
       body: RefreshIndicator(
         onRefresh: _load,
         color: _kBlue,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
+            // ── HERO ya gradient ──
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF0F3D73), Color(0xFF1D6FBF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -224,45 +232,66 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                       Container(
                         width: 40, height: 40,
                         decoration: BoxDecoration(
-                          color: _kBlueBg,
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(PhosphorIcons.chatCenteredDots(PhosphorIconsStyle.fill),
-                            color: _kBlue, size: 20),
+                            color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: 12),
-                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Maoni',
-                            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700)),
-                        Text('Maoni na malalamiko ya watumiaji',
-                            style: GoogleFonts.inter(fontSize: 12.5, color: _kGrey400)),
-                      ]),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('Maoni',
+                              style: GoogleFonts.inter(fontSize: 19, fontWeight: FontWeight.w800,
+                                  color: Colors.white)),
+                          Text('Maoni na malalamiko ya watumiaji',
+                              style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+                        ]),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Container(width: 7, height: 7,
+                              decoration: const BoxDecoration(
+                                  color: Color(0xFF4ADE80), shape: BoxShape.circle)),
+                          const SizedBox(width: 5),
+                          Text('LIVE',
+                              style: GoogleFonts.inter(
+                                  fontSize: 10.5, fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8, color: Colors.white)),
+                        ]),
+                      ),
                     ]),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
                     // ── Search ──
                     TextField(
                       controller: _searchCtrl,
-                      style: GoogleFonts.inter(fontSize: 13),
+                      style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF141A2E)),
                       decoration: InputDecoration(
                         hintText: 'Tafuta maoni...',
-                        hintStyle: GoogleFonts.inter(fontSize: 13, color: _kGrey400),
+                        hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.white60),
                         prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
-                            color: _kGrey400, size: 18),
+                            color: Colors.white60, size: 18),
                         filled: true,
-                        fillColor: _kGrey50,
+                        fillColor: Colors.white.withValues(alpha: 0.12),
                         contentPadding: const EdgeInsets.symmetric(vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _kGrey200),
+                          borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _kGrey200),
+                          borderSide: BorderSide.none,
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _kBlue),
+                          borderSide: const BorderSide(color: Colors.white54),
                         ),
                       ),
                     ),
