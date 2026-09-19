@@ -1,14 +1,41 @@
-// Statistiki — muundo unafanana na web/admin/page.tsx kwa mobile:
-//  1. Vitendo 3 kuu (Users, Verified, Mikoa) — kutoka adminStats
-//  2. Matukio ya Hivi Karibuni
-//  3. Tabs: Muhtasari | Watumiaji
-//  4. Muhtasari: filters (Mkoa/Idara/Ngazi) + namba 4 + majedwali sahihi
-//  5. Watumiaji: search + orodha
+// Statistics — redesign kama reference mpya:
+//  - Background grey (#F6F7F9), kadi white zenye border
+//  - Live badge ya kijani + subtitle "real-time"
+//  - Filter CHIPS (Mkoa/Idara/Ngazi) na icons — picker sheets zenye search
+//  - KPI GRID yenye icons (Watumiaji waliopo +N wiki 7, Imethibitishwa,
+//    Mikoa yote, Wilaya zote, Wanaohamia wote)
+//  - Kwa idara / Walimu kwa ngazi → progress bars (%)
+//  - Kwa kada → ranked list (1,2,3…)
+//  - Kwa hali → progress bar
+//  - Waliopo na wanaohamia kwa mkoa → # | Mkoa | Waliopo | Wanaohamia + bar
+//  - Wanaohamia wanatoka wapi → # | Kutoka → Kwenda | hesabu
+//  - Watu kwa wilaya → jedwali (Wilaya/Waliopo/Hamia/Jumla)
+//  - Matukio ya hivi karibuni
+//  - Tab ya Watumiaji: search + orodha (Jina/Simu/Mkoa/Hali)
+//  - Data yote halisi kutoka API (adminStats + adminReports + adminUsers)
 
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
-import '../../widgets/select_sheet.dart';
+
+const _kBlue    = Color(0xFF185FA5);
+const _kBlueSel = Color(0xFF378ADD);
+const _kBlueBg  = Color(0xFFE6F1FB);
+const _kGreen   = Color(0xFF1D9E75);
+const _kGreenBg = Color(0xFFE6F6EC);
+const _kGreenTx = Color(0xFF0F6E56);
+const _kOrangeTx = Color(0xFFBA7517);
+const _kRed     = Color(0xFFDC2626);
+const _kRedBg   = Color(0xFFFCEBEB);
+const _kRedTx   = Color(0xFF791F1F);
+const _kPageBg  = Color(0xFFF6F7F9);
+const _kBorder  = Color(0xFFE7E7E5);
+const _kBarBg   = Color(0xFFF0F0EE);
+const _kT900    = Color(0xFF1F2937);
+const _kT600    = Color(0xFF4B5563);
+const _kT500    = Color(0xFF6B7280);
+const _kT400    = Color(0xFF9CA3AF);
+const _kT300    = Color(0xFFD1D5DB);
 
 class AdminReportsPage extends StatefulWidget {
   const AdminReportsPage({super.key});
@@ -24,7 +51,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   List<dynamic> _events = [];
   String _tab = 'overview';
 
-  // Filters
+  // Filters — label inaonekana kwenye chips
   String? _region;
   String? _regionId;
   String? _category;
@@ -65,13 +92,14 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       final r = await ApiService().adminListDepartments();
       if (!mounted) return;
       final raw = r.data;
-      setState(() => _departments = raw is List ? raw : (raw['departments'] ?? raw['data'] ?? []));
+      final list = raw is List ? raw : (raw['departments'] ?? raw['data'] ?? []);
+      setState(() => _departments = list
+          .where((d) => '${d['is_active'] ?? d['active'] ?? true}' != 'false')
+          .toList());
     } catch (_) {}
   }
 
   Future<void> _load({bool refresh = false}) async {
-    // Kama web: spinner ya full-screen iko MARA YA KWANZA tu; filter ikibadilika
-    // au RefreshIndicator ikivutwa — data inasasisha KIMYA KIMYA (content inabaki).
     final firstLoad = _data.isEmpty;
     setState(() { if (firstLoad) _loading = true; _error = null; });
     try {
@@ -129,10 +157,8 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     }
   }
 
-  // ── Pickers ───────────────────────────────────────────────────────────────
+  // ── Pickers (bottom sheet + search, kama reference) ────────────────────────
   Future<void> _pickRegion() async {
-    // Kama web: orodha ina mikoa iliyo kwenye takwimu (waliopo + wanaohamia)
-    // — sio mikoa yote ya TZ. Hakuna data →anguka kwenye orodha ya mikoa yote.
     final inData = <String>{
       for (final r in _list('users_by_region')) if ((r['region'] ?? '').toString().isNotEmpty) '${r['region']}',
       for (final r in _list('incoming_by_region')) if ((r['region'] ?? '').toString().isNotEmpty) '${r['region']}',
@@ -140,16 +166,17 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     final source = inData.isNotEmpty
         ? inData.map((n) => {'name': n}).toList()
         : _regions;
-    final items = <({String value, String label, String? subtitle})>[
-      (value: '__all__', label: 'Mkoa wote', subtitle: 'Onyesha mikoa yote'),
+    final items = <_PickerItem>[
+      _PickerItem('Mkoa wote', 'Onyesha mikoa yote', '__all__', _regionId == null || _regionId!.isEmpty),
       for (final r in source)
-        (value: '${r['id'] ?? r['region_id'] ?? r['name']}',
-         label: '${r['name'] ?? r['region_name'] ?? ''}',
-         subtitle: null),
+        _PickerItem(
+          '${r['name'] ?? r['region_name'] ?? ''}',
+          null,
+          '${r['id'] ?? r['region_id'] ?? r['name']}',
+          '${r['id'] ?? r['region_id'] ?? r['name']}' == (_regionId ?? ''),
+        ),
     ];
-    final picked = await showSelectSheet<String>(context,
-        title: 'Chagua Mkoa', items: items,
-        selected: _regionId ?? '__all__', searchable: true);
+    final picked = await _showPickerSheet('Chagua mkoa', items, _regionId == null || _regionId!.isEmpty);
     if (picked == null || !mounted) return;
     final r = source.firstWhere(
         (x) => '${x['id'] ?? x['region_id'] ?? x['name']}' == picked, orElse: () => null);
@@ -161,37 +188,137 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   }
 
   Future<void> _pickCategory() async {
-    final items = <({String value, String label, String? subtitle})>[
-      (value: '__all__', label: 'Idara zote', subtitle: 'Onyesha idara zote'),
+    final items = <_PickerItem>[
+      const _PickerItem('Idara zote', 'Onyesha idara zote', '__all__', true),
       for (final d in _departments)
-        (value: '${d['code']}',
-         label: '${d['name'] ?? d['code']}',
-         subtitle: '${d['code']}'),
+        _PickerItem(
+          '${d['name'] ?? d['display_name'] ?? d['code']}',
+          null,
+          '${d['code']}',
+          _category == '${d['code']}',
+        ),
     ];
-    final picked = await showSelectSheet<String>(context,
-        title: 'Chagua Idara', items: items,
-        selected: _category ?? '__all__', searchable: true);
+    final picked = await _showPickerSheet('Chagua idara', items, _category == null);
     if (picked == null || !mounted) return;
     final d = _departments.firstWhere(
         (x) => '${x['code']}' == picked, orElse: () => null);
     setState(() {
       _category = picked == '__all__' ? null : picked;
-      _categoryName = picked == '__all__' ? '' : '${d?['name'] ?? picked}';
+      _categoryName = picked == '__all__' ? '' : '${d?['name'] ?? d?['display_name'] ?? picked}';
     });
     _load();
   }
 
   Future<void> _pickLevel() async {
-    final items = <({String value, String label, String? subtitle})>[
-      (value: '', label: 'Ngazi zote', subtitle: 'Primary na Secondary'),
-      (value: 'Primary', label: 'Primary (Msingi)', subtitle: null),
-      (value: 'Secondary', label: 'Secondary (Sekondari)', subtitle: null),
+    final items = <_PickerItem>[
+      const _PickerItem('Ngazi zote', 'Primary na Secondary', '', true),
+      const _PickerItem('Primary (Msingi)', null, 'Primary', false),
+      const _PickerItem('Secondary (Sekondari)', null, 'Secondary', false),
     ];
-    final picked = await showSelectSheet<String>(context,
-        title: 'Chagua Ngazi', items: items, selected: _level);
+    final picked = await _showPickerSheet('Chagua ngazi', items, _level.isEmpty);
     if (picked == null || !mounted) return;
     setState(() => _level = picked);
     _load();
+  }
+
+  Future<String?> _showPickerSheet(String title, List<_PickerItem> items, bool allSelected) {
+    final ctrl = TextEditingController();
+    List<_PickerItem> filtered = List.from(items);
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, ss) => SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.65,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const SizedBox(height: 6),
+            Center(child: Container(width: 36, height: 4,
+                decoration: BoxDecoration(color: _kT300, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: _kT900)),
+                IconButton(
+                  icon: Icon(PhosphorIcons.x(), size: 18, color: _kT500),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: ctrl,
+                onChanged: (q) {
+                  final ql = q.toLowerCase();
+                  ss(() => filtered = items.where((i) => i.label.toLowerCase().contains(ql)).toList());
+                },
+                decoration: InputDecoration(
+                  hintText: 'Tafuta...',
+                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 18, color: _kT400),
+                  filled: true,
+                  fillColor: _kPageBg,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  for (final item in filtered)
+                    _pickerTile(item.label, item.sub,
+                        (item.value == '__all__' || item.value == '') ? allSelected : item.selected,
+                        () => Navigator.pop(ctx, item.value)),
+                ],
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _pickerTile(String label, String? sub, bool selected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? _kBlueBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: selected ? Border.all(color: _kBlueSel) : null,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: selected ? _kBlue : _kT900,
+                      )),
+                  if (sub != null)
+                    Text(sub, style: const TextStyle(fontSize: 12, color: _kT400)),
+                ],
+              ),
+            ),
+            if (selected) Icon(PhosphorIcons.check(), color: _kBlue, size: 18),
+          ],
+        ),
+      ),
+    );
   }
 
   // ── Data helpers ──────────────────────────────────────────────────────────
@@ -239,520 +366,6 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     return d == null ? code : '${d['name'] ?? code}';
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-  @override
-  Widget build(BuildContext context) {
-    final totals = _stats['totals'] as Map<String, dynamic>? ?? {};
-    return Container(
-      color: Colors.white,
-      child: RefreshIndicator(
-        onRefresh: () => _load(refresh: true),
-        color: AppColors.primary,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(child: _header()),
-            if (_loading)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-              )
-            else ...[
-              // ── 3 global cards (grid-cols-2 md:grid-cols-3, kama web) ─────
-              // grid-cols-2 gap-3 — mobile: 2 kwa safu, ya 3 chini peke yake
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                  child: Column(children: [
-                    Row(children: [
-                      Expanded(child: _topCard(
-                        '${totals['users'] ?? '—'}', 'Watumiaji',
-                        AppColors.primary,
-                        sub: '+${totals['users_active_7d'] ?? 0} wanatumia siku 7',
-                      )),
-                      const SizedBox(width: 12),
-                      Expanded(child: _topCard(
-                        '${totals['users_verified'] ?? '—'}', 'Imethibitishwa',
-                        _kAmber,
-                      )),
-                    ]),
-                    const SizedBox(height: 12),
-                    Row(children: [
-                      Expanded(child: _topCard(
-                        '${_int('regions_total')}', 'Mikoa yote',
-                        AppColors.success,
-                      )),
-                      const SizedBox(width: 12),
-                      const Expanded(child: SizedBox()),
-                    ]),
-                  ]),
-                ),
-              ),
-              // ── Matukio ya Hivi Karibuni ──────────────────────────────────
-              SliverToBoxAdapter(child: _recentActivity()),
-              // ── Tabs ──────────────────────────────────────────────────────
-              SliverToBoxAdapter(child: _tabBar()),
-              // ── Tab content ───────────────────────────────────────────────
-              if (_tab == 'overview')
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      if (_error != null) _errorBanner(),
-                      _filters(),
-                      ..._sections(),
-                    ]),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate(_usersTabContent()),
-                  ),
-                ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Header — kama web: flex items-center justify-between, h1 text-2xl font-bold + p text-sm + Live badge ──
-  Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // h1 text-2xl (24px) font-bold text-brand-grey-900 — sawa na web
-              Text('Statistics',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              SizedBox(height: 4),
-              // p text-sm (14px) text-brand-grey-500 — sawa na web
-              Text('Takwimu za mfumo mzima — mikoa, idara, kada, michango (real-time)',
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-            ]),
-          ),
-          const SizedBox(width: 8),
-          // Live badge — inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5(10px) py-1.5(6px) rounded-full border
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.grey50,
-              borderRadius: BorderRadius.circular(100),
-              border: Border.all(color: AppColors.grey200),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              // w-2 h-2 rounded-full bg-brand-grey-300
-              Container(
-                width: 8, height: 8,
-                decoration: const BoxDecoration(color: AppColors.grey300, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 6),
-              const Text('Live',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textLight)),
-            ]),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Top 3 global cards (kama web Big component) ───────────────────────────
-  // Web: text-3xl (30px) value, text-xs (12px) label — card class (16px radius, grey100 border, shadow)
-  Widget _topCard(String value, String label, Color color, {String? sub}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: AppColors.cardDecoration(),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(value,
-            style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: color),
-            maxLines: 1, overflow: TextOverflow.ellipsis),
-        const SizedBox(height: 4),
-        Text(label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-        if (sub != null) ...[
-          const SizedBox(height: 4),
-          Text(sub,
-              style: const TextStyle(fontSize: 10, color: AppColors.textLight)),
-        ],
-      ]),
-    );
-  }
-
-  // ── Recent Activity (kama web RecentActivity component) ───────────────────
-  Widget _recentActivity() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: AppColors.cardDecoration(),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Row(children: [
-            Icon(Icons.notifications_rounded, size: 15, color: AppColors.textPrimary),
-            SizedBox(width: 6),
-            Text('Matukio ya Hivi Karibuni',
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-          ]),
-          const SizedBox(height: 8),
-          if (_events.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('Hakuna matukio ya hivi karibuni',
-                  style: TextStyle(fontSize: 12, color: AppColors.textLight)),
-            ),
-          ..._events.take(6).map((e) {
-            final m = e as Map<String, dynamic>;
-            final type = m['event_type'] as String? ?? '';
-            final title = m['title'] as String? ?? _eventTitle(type);
-            final time = m['occurred_at'] as String? ?? '';
-            return Container(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              decoration: const BoxDecoration(
-                  border: Border(
-                      bottom: BorderSide(color: Color(0xFFF9FAFB), width: 1))),
-              child: Row(children: [
-                _eventIcon(type),
-                const SizedBox(width: 8),
-                Expanded(
-                    child: Text(title,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.grey700),
-                        overflow: TextOverflow.ellipsis)),
-                const SizedBox(width: 6),
-                Text(_fmtTime(time),
-                    style: const TextStyle(fontSize: 10, color: AppColors.textLight)),
-              ]),
-            );
-          }),
-        ]),
-      ),
-    );
-  }
-
-  // ── Tabs (kama web: px-4 py-2 text-sm font-semibold border-b-2) ──────────
-  Widget _tabBar() {
-    return Container(
-      decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.grey200))),
-      child: Row(children: [
-        for (final (idx, (lbl, key)) in [('Statistics', 'overview'), ('Watumiaji', 'users')].indexed) ...[
-          if (idx > 0) const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => setState(() => _tab = key),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: _tab == key ? AppColors.primary : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Text(lbl,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _tab == key ? AppColors.primary : AppColors.textSecondary,
-                  )),
-            ),
-          ),
-        ]
-      ]),
-    );
-  }
-
-  // ── Filters (3 stacked selects kama web flex-col sm:flex-row) ─────────────
-  // Maelezo kama web: 'Mkoa wote' / 'Idara zote' / 'Ngazi zote'
-  Widget _filters() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(children: [
-        SelectField(
-          hint: 'Mkoa wote',
-          value: _region == null || _region!.isEmpty ? 'Mkoa wote' : _region,
-          onTap: _pickRegion,
-          leading: const Icon(Icons.map_outlined, size: 15, color: AppColors.textLight),
-        ),
-        const SizedBox(height: 8),
-        SelectField(
-          hint: 'Idara zote',
-          value: _category == null ? 'Idara zote' : _categoryName,
-          onTap: _pickCategory,
-          leading: const Icon(Icons.category_outlined, size: 15, color: AppColors.textLight),
-        ),
-        const SizedBox(height: 8),
-        SelectField(
-          hint: 'Ngazi zote',
-          value: _level.isEmpty ? 'Ngazi zote' : _level,
-          onTap: _pickLevel,
-          leading: const Icon(Icons.school_outlined, size: 15, color: AppColors.textLight),
-        ),
-      ]),
-    );
-  }
-
-  Widget _errorBanner() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFFECACA)),
-      ),
-      child: Row(children: [
-        const Icon(Icons.error_outline_rounded, size: 16, color: AppColors.error),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            'Hitilafu kupakua takwimu — tena.',
-            style: const TextStyle(fontSize: 12, color: AppColors.error),
-          ),
-        ),
-        GestureDetector(
-          onTap: () => _load(refresh: true),
-          child: const Text('Jaribu tena',
-              style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
-        ),
-      ]),
-    );
-  }
-
-  // ── Overview sections (mpangilio kama web) ────────────────────────────────
-  List<Widget> _sections() {
-    final incomingTotal = _list('incoming_by_region')
-        .fold<int>(0, (s, r) => s + ((r['count'] as num?)?.toInt() ?? 0));
-
-    final byCadreAll = _list('users_by_cadre');
-    final priCount = byCadreAll
-        .where((c) => (c['level'] ?? '') == 'Primary')
-        .fold(0, (s, c) => s + ((c['count'] as num?)?.toInt() ?? 0));
-    final secCount = byCadreAll
-        .where((c) => (c['level'] ?? '') == 'Secondary')
-        .fold(0, (s, c) => s + ((c['count'] as num?)?.toInt() ?? 0));
-    final noneCount = byCadreAll
-        .where((c) => (c['level'] ?? '').toString().isEmpty)
-        .fold(0, (s, c) => s + ((c['count'] as num?)?.toInt() ?? 0));
-
-    return [
-      // ── 4 filtered big cards (gap-3 = 12px) — MPANGILIO KAMA WEB: mikoa, wilaya, watumiaji, wanaohamia ──
-      Row(children: [
-        Expanded(child: _bigCard('Mikoa yote', _int('regions_total'), AppColors.primary)),
-        const SizedBox(width: 12),
-        Expanded(child: _bigCard('Wilaya zote', _int('districts_total'), _kAmber)),
-      ]),
-      const SizedBox(height: 12),
-      Row(children: [
-        Expanded(child: _bigCard('Watumiaji waliopo', _reportUsersTotal, AppColors.success)),
-        const SizedBox(width: 12),
-        Expanded(child: _bigCard('Wanaohamia wote', incomingTotal, _kOrange)),
-      ]),
-      const SizedBox(height: 16),
-
-      // ── Idara + Status (web: grid-cols-2) ──
-      _card(
-        title: 'Kwa Idara',
-        child: _numTable([
-          for (final c in _list('users_by_category')
-              ..sort((a, b) => ((b['count'] as num?)?.toInt() ?? 0)
-                  .compareTo((a['count'] as num?)?.toInt() ?? 0)))
-            ('${c['name'] ?? _deptLabel('${c['category']}')}',
-             (c['count'] as num?)?.toInt() ?? 0),
-        ]),
-      ),
-
-      _card(
-        title: 'Kwa Hali',
-        child: _numTable([
-          for (final s in _list('users_by_status')
-              ..sort((a, b) => ((b['count'] as num?)?.toInt() ?? 0)
-                  .compareTo((a['count'] as num?)?.toInt() ?? 0)))
-            (_statusLabel('${s['status']}'), (s['count'] as num?)?.toInt() ?? 0),
-        ]),
-      ),
-
-      // ── Mikoa: # | Mkoa | Waliopo | Wanaohamia | Bar (vichwa kama web: MKOA/WALIOPO/WANAOHAMIA) ──
-      _card(
-        title: 'Waliopo na Wanaohamia kwa Mkoa',
-        hint: 'Walio (kijani-bluu) + Wanaohamia (chungwa) — kila mkoa',
-        child: _regTable(_byRegion.take(40).toList()),
-      ),
-
-      // ── Wilaya: # | Wilaya | Waliopo | Wanaohamia | JUMLA (vichwa kama web) ──
-      _card(
-        title: 'Watu kwa Wilaya${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
-        child: _districtTable(_byDistrict()),
-      ),
-
-      // ── Ngazi: Primary / Secondary / Hakuna ngazi (matare kama web) ──
-      _card(
-        title: 'Walimu kwa Ngazi (Primary/Secondary)',
-        child: _numTable([
-          ('Walimu wa Msingi', priCount),
-          ('Walimu wa Sekondari', secCount),
-          if (noneCount > 0) ('Hakuna ngazi', noneCount),
-        ]),
-      ),
-
-      // ── Kada (max 20 kama web) ──
-      _card(
-        title: 'Kwa Kada',
-        child: _numTable([
-          for (final c in (_list('users_by_cadre').toList()
-                ..sort((a, b) => ((b['count'] as num?)?.toInt() ?? 0)
-                    .compareTo((a['count'] as num?)?.toInt() ?? 0)))
-              .take(20))
-            ('${c['cadre_name'] ?? c['cadre']}${(c['level'] ?? '').toString().isEmpty ? '' : ' (${c['level']})'}',
-             (c['count'] as num?)?.toInt() ?? 0),
-        ]),
-      ),
-
-      // ── Wanaohamia sources ──
-      if (_list('incoming_sources').isNotEmpty)
-        _card(
-          title: 'Wanaohamia wanatoka wapi${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
-          hint: 'Kila mkoa wanaohamia — wanatoka mikoa ipi',
-          child: _sourcesTable(_list('incoming_sources').take(30).toList()),
-        ),
-
-    ];
-  }
-
-  // ── Users Tab ─────────────────────────────────────────────────────────────
-  List<Widget> _usersTabContent() {
-    return [
-      TextField(
-        controller: _usersCtrl,
-        decoration: AppColors.inputDecoration('Tafuta mtumiaji...'),
-        style: const TextStyle(fontSize: 13),
-        onChanged: (v) => _loadUsers(q: v),
-      ),
-      const SizedBox(height: 8),
-      Text('Jumla: ${_usersLoading ? '...' : _usersTotal}',
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-      const SizedBox(height: 8),
-      if (_usersLoading)
-        const Center(child: Padding(
-          padding: EdgeInsets.all(24),
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ))
-      else if (_users.isEmpty)
-        const Center(child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('Hakuna watumiaji', style: TextStyle(color: AppColors.textLight)),
-        ))
-      else
-        _usersTable(),
-    ];
-  }
-
-  Widget _usersTable() {
-    const hs = TextStyle(
-        fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: AppColors.textLight);
-    const w0 = 160.0; // Jina
-    const w1 = 120.0; // Simu
-    const w2 = 110.0; // Kada
-    const w3 = 110.0; // Mkoa
-    const w4 = 80.0;  // Hali
-
-    Widget headerCell(String t, double w) =>
-        SizedBox(width: w, child: Text(t, style: hs));
-    Widget sep() => const SizedBox(width: 12);
-
-    final rowsCol = Column(children: [
-      for (final u in _users) _tableRow(u as Map<String, dynamic>, w0, w1, w2, w3, w4),
-    ]);
-
-    return Container(
-      decoration: AppColors.cardDecoration(),
-      padding: const EdgeInsets.all(12),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            headerCell('JINA',  w0), sep(),
-            headerCell('SIMU',  w1), sep(),
-            headerCell('KADA',  w2), sep(),
-            headerCell('MKOA',  w3), sep(),
-            headerCell('HALI',  w4),
-          ]),
-          const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
-          if (_users.length > 15)
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 480),
-              child: SingleChildScrollView(child: rowsCol),
-            )
-          else
-            rowsCol,
-        ]),
-      ),
-    );
-  }
-
-  Widget _tableRow(Map<String, dynamic> u,
-      double w0, double w1, double w2, double w3, double w4) {
-    final name    = (u['full_name'] ?? '') as String;
-    final phone   = (u['phone_primary'] ?? u['phone'] ?? '') as String;
-    final cadre   = (u['cadre_code'] ?? u['cadre_display'] ?? '') as String;
-    final station = (u['current_station'] as Map?) ?? {};
-    final region  = (station['region_name'] ?? '') as String;
-    final isAdmin = (u['is_admin'] as bool?) ?? false;
-    final st      = '${u['status'] ?? 'active'}'.toLowerCase();
-    final isActive = st == 'active';
-    final stColor  = isActive ? AppColors.success : AppColors.error;
-    final stBg     = isActive ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2);
-    final stLabel  = isActive ? 'Hai'
-        : st == 'matched'  ? 'Amepata'
-        : st == 'inactive' ? 'Pending'
-        : 'Imesitishwa';
-
-    return Container(
-      decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.borderLight, width: 1))),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        SizedBox(width: w0, child: Row(children: [
-          if (isAdmin) const Padding(
-            padding: EdgeInsets.only(right: 4),
-            child: Icon(Icons.verified_user_rounded, size: 11, color: AppColors.primary),
-          ),
-          Expanded(child: Text(name,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary),
-              maxLines: 1, overflow: TextOverflow.ellipsis)),
-        ])),
-        const SizedBox(width: 12),
-        SizedBox(width: w1, child: Text(phone,
-            style: const TextStyle(fontSize: 12, color: AppColors.primary),
-            maxLines: 1, overflow: TextOverflow.ellipsis)),
-        const SizedBox(width: 12),
-        SizedBox(width: w2, child: Text(cadre,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-            maxLines: 1, overflow: TextOverflow.ellipsis)),
-        const SizedBox(width: 12),
-        SizedBox(width: w3, child: Text(region,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-            maxLines: 1, overflow: TextOverflow.ellipsis)),
-        const SizedBox(width: 12),
-        SizedBox(width: w4, child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(color: stBg, borderRadius: BorderRadius.circular(4)),
-          child: Text(stLabel,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: stColor)),
-        )),
-      ]),
-    );
-  }
-
   String _statusLabel(String s) {
     switch (s) {
       case 'active': return 'Hai (active)';
@@ -761,24 +374,6 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       case 'suspended': return 'Imesitishwa';
       default: return s.isEmpty ? 'Unknown' : s;
     }
-  }
-
-  // ── Widget helpers ────────────────────────────────────────────────────────
-
-  // 4 overview filtered cards (kama web Big component ndani ya Overview)
-  Widget _bigCard(String label, int value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: AppColors.cardDecoration(),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(
-          value >= 1000 ? _thousands(value) : '$value',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: color),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-      ]),
-    );
   }
 
   static String _thousands(int n) {
@@ -791,355 +386,765 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     return buf.toString();
   }
 
-  // Section card wrapper — margin 16px (space-y-4 kama web)
-  Widget _card({
-    required String title,
-    String? hint,
-    required Widget child,
-  }) {
+  // ── Build ─────────────────────────────────────────────────────────────────
+  @override
+  Widget build(BuildContext context) {
+    final totals = _stats['totals'] as Map<String, dynamic>? ?? {};
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: AppColors.cardDecoration(),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title,
-            style: const TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-        if (hint != null) ...[
-          const SizedBox(height: 4),
-          Text(hint, style: const TextStyle(fontSize: 11, color: AppColors.textLight)),
-        ],
-        const SizedBox(height: 10),
-        const Divider(height: 1, thickness: 1, color: AppColors.borderLight),
-        const SizedBox(height: 4),
-        child,
+      color: _kPageBg,
+      child: RefreshIndicator(
+        onRefresh: () => _load(refresh: true),
+        color: _kBlue,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _header()),
+            if (_loading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator(color: _kBlue)),
+              )
+            else ...[
+              SliverToBoxAdapter(child: _tab == 'users'
+                  ? _usersTab()
+                  : _overviewBody(totals)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Overview body (live row + chips + KPI grid + sections) ─────────────
+  Widget _overviewBody(Map<String, dynamic> totals) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (_error != null) _errorBanner(),
+        _liveRow(),
+        const SizedBox(height: 12),
+        _filterChips(),
+        const SizedBox(height: 14),
+        _kpiGrid(totals),
+        const SizedBox(height: 14),
+        ..._overviewSections(totals),
+        const SizedBox(height: 24),
       ]),
     );
   }
 
-  // ── NumberTable: # | Jina | % | Idadi + jumla (kama web NumberTable) ──────
-  // Web: row py-2(8px), label text-sm(14px), count text-lg(18px) font-bold, % text-xs(12px)
-  Widget _numTable(List<(String, int)> rows) {
-    if (rows.isEmpty) return _empty();
-    final total = rows.fold<int>(0, (s, r) => s + r.$2);
-    const hs = TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textLight,
-        letterSpacing: 0.5);
-
-    final rowsCol = Column(children: [
-      for (final (i, row) in rows.indexed)
+  // ── Header (Statistics + subtitle) ────────────────────────────────────────
+  Widget _header() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Statistics',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: _kT900)),
+        const SizedBox(height: 2),
+        const Text('Takwimu za mfumo mzima — mikoa, idara, kada (real-time)',
+            style: TextStyle(fontSize: 12.5, color: _kT500)),
+        const SizedBox(height: 10),
         Container(
           decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.borderLight, width: 1))),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+              border: Border(bottom: BorderSide(color: _kBorder))),
           child: Row(children: [
-            SizedBox(
-              width: 24,
-              child: Text('${i + 1}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textLight)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Text(row.$1,
-                    style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                    maxLines: 1, overflow: TextOverflow.ellipsis)),
-            SizedBox(
-              width: 40,
-              child: Text(
-                  total > 0 ? '${((row.$2 / total) * 100).round()}%' : '—',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textLight)),
-            ),
-            SizedBox(
-              width: 48,
-              child: Text(
-                  row.$2 >= 1000 ? _thousands(row.$2) : '${row.$2}',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
-            ),
-          ]),
-        ),
-    ]);
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        const SizedBox(width: 24),
-        const SizedBox(width: 12),
-        const Expanded(child: Text('JINA', style: hs)),
-        const SizedBox(width: 40, child: Text('%', textAlign: TextAlign.right, style: hs)),
-        const SizedBox(width: 48, child: Text('HESABU', textAlign: TextAlign.right, style: hs)),
-      ]),
-      const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
-      if (rows.length > 12)
-        ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 384),
-            child: SingleChildScrollView(child: rowsCol))
-      else
-        rowsCol,
-      const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
-      Row(children: [
-        const Expanded(
-            child: Text('Jumla:',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
-        Text(total >= 1000 ? _thousands(total) : '$total',
-            style: const TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-      ]),
-    ]);
-  }
-
-  // ── Mikoa table: # | Mkoa | Waliopo (grey-700) | Wanaohamia (orange) | Bar ─
-  // Web: current=text-brand-grey-700, incoming=text-brand-orange, bar=rounded-full h-1.5(6px)
-  Widget _regTable(List<({String region, int current, int incoming})> rows) {
-    if (rows.isEmpty) return _empty();
-    final maxTotal = rows.fold<int>(1, (m, r) {
-      final t = r.current + r.incoming;
-      return t > m ? t : m;
-    });
-    // header: text-[10px] uppercase tracking-wider font-bold text-brand-grey-400
-    const hs = TextStyle(
-        fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: AppColors.textLight);
-
-    final rowsCol = Column(children: [
-      for (final (i, r) in rows.indexed)
-        Container(
-          decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.borderLight, width: 1))),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(children: [
-            SizedBox(
-              width: 24,
-              child: Text('${i + 1}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textLight)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Text(r.region,
-                    style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                    maxLines: 1, overflow: TextOverflow.ellipsis)),
-            const SizedBox(width: 12),
-            // Waliopo: text-brand-grey-700 font-semibold (kama web)
-            SizedBox(
-              width: 64,
-              child: Text('${r.current}',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.grey700)),
-            ),
-            const SizedBox(width: 12),
-            // Wanaohamia: text-brand-orange font-semibold
-            SizedBox(
-              width: 64,
-              child: Text('${r.incoming}',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: _kOrange)),
-            ),
-            const SizedBox(width: 12),
-            // Bar: rounded-full h-1.5(6px) bg-brand-grey-100/blue
-            SizedBox(
-              width: 56,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(100),
-                child: LinearProgressIndicator(
-                  value: maxTotal > 0 ? (r.current + r.incoming) / maxTotal : 0,
-                  backgroundColor: AppColors.borderLight,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                  minHeight: 6,
+            for (final (idx, (lbl, key)) in [('Statistics', 'overview'), ('Watumiaji', 'users')].indexed) ...[
+              if (idx > 0) const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => setState(() => _tab = key),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: _tab == key ? _kBlue : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  child: Text(lbl,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _tab == key ? _kBlue : _kT500,
+                      )),
                 ),
               ),
-            ),
+            ],
           ]),
         ),
-    ]);
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        const SizedBox(width: 24),
-        const SizedBox(width: 12),
-        const Expanded(child: Text('MKOA', style: hs)),
-        const SizedBox(width: 12),
-        const SizedBox(width: 64, child: Text('WALIOPO', textAlign: TextAlign.right, style: hs)),
-        const SizedBox(width: 12),
-        const SizedBox(width: 64, child: Text('WANAOHAMIA', textAlign: TextAlign.right, style: hs)),
-        const SizedBox(width: 68),
       ]),
-      const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
-      if (rows.length > 12)
-        ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 384),
-            child: SingleChildScrollView(child: rowsCol))
-      else
-        rowsCol,
-    ]);
+    );
   }
 
-  // ── Wilaya table: # | Wilaya | Waliopo | Wanaoingia | JUMLA (text-lg) ──────
-  // Web: jumla = text-lg font-bold text-brand-blue (18px)
-  Widget _districtTable(List<({String region, int current, int incoming})> rows) {
-    if (rows.isEmpty) return _empty();
-    const hs = TextStyle(
-        fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: AppColors.textLight);
-
-    final rowsCol = Column(children: [
-      for (final (i, r) in rows.indexed)
+  // ── Live row (kama reference: subtitle + green Live pill) ─────────────────
+  Widget _liveRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Expanded(
+          child: Text('Takwimu za mfumo mzima — real-time',
+              style: TextStyle(fontSize: 13, color: _kT500)),
+        ),
         Container(
-          decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.borderLight, width: 1))),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(children: [
-            SizedBox(
-              width: 24,
-              child: Text('${i + 1}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textLight)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Text(r.region,
-                    style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                    maxLines: 1, overflow: TextOverflow.ellipsis)),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 64,
-              child: Text('${r.current}',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.grey700)),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 64,
-              child: Text('${r.incoming}',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: _kOrange)),
-            ),
-            const SizedBox(width: 12),
-            // JUMLA: text-lg font-bold text-brand-blue (kama web)
-            SizedBox(
-              width: 56,
-              child: Text('${r.current + r.incoming}',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: _kGreenBg,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(PhosphorIcons.circle(PhosphorIconsStyle.fill),
+                size: 8, color: _kGreen),
+            const SizedBox(width: 4),
+            const Text('Live',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGreenTx)),
           ]),
         ),
-    ]);
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        const SizedBox(width: 24),
-        const SizedBox(width: 12),
-        const Expanded(child: Text('WILAYA', style: hs)),
-        const SizedBox(width: 12),
-        const SizedBox(width: 64, child: Text('WALIOPO', textAlign: TextAlign.right, style: hs)),
-        const SizedBox(width: 12),
-        const SizedBox(width: 64, child: Text('WANAOHAMIA', textAlign: TextAlign.right, style: hs)),
-        const SizedBox(width: 12),
-        const SizedBox(width: 56, child: Text('JUMLA', textAlign: TextAlign.right, style: hs)),
-      ]),
-      const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
-      if (rows.length > 12)
-        ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 384),
-            child: SingleChildScrollView(child: rowsCol))
-      else
-        rowsCol,
-    ]);
+      ],
+    );
   }
 
-  // ── Sources table: # | Kutoka | → | Kwenda (orange) | N (text-lg) ─────────
-  Widget _sourcesTable(List<Map<String, dynamic>> rows) {
-    if (rows.isEmpty) return _empty();
-    const hs = TextStyle(
-        fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: AppColors.textLight);
-
-    final rowsCol = Column(children: [
-      for (final (i, s) in rows.indexed)
-        Container(
-          decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.borderLight, width: 1))),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(children: [
-            SizedBox(
-              width: 24,
-              child: Text('${i + 1}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textLight)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Text('${s['from']}',
-                    style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                    maxLines: 1, overflow: TextOverflow.ellipsis)),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 64,
-              child: Text('${s['to']}',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(fontSize: 14, color: _kOrange),
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 48,
-              child: Text('${s['count']}',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
-            ),
+  // ── Filter chips (Mkoa / Idara / Ngazi) — kama reference ──────────────────
+  Widget _filterChips() {
+    Widget chip(IconData icon, String label, bool active, VoidCallback onTap) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: active ? _kBlueBg : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: active ? _kBlueSel : _kBorder),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 15, color: active ? _kBlue : _kT500),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(
+                fontSize: 13, color: active ? _kBlue : _kT900,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w400)),
+            const SizedBox(width: 4),
+            Icon(PhosphorIcons.caretDown(), size: 13, color: active ? _kBlue : _kT400),
           ]),
         ),
-    ]);
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        const SizedBox(width: 24),
-        const SizedBox(width: 12),
-        const Expanded(child: Text('WANATOKA', style: hs)),
-        const SizedBox(width: 12),
-        const SizedBox(width: 64, child: Text('WANAELEKEA', textAlign: TextAlign.right, style: hs)),
-        const SizedBox(width: 12),
-        const SizedBox(width: 48, child: Text('HESABU', textAlign: TextAlign.right, style: hs)),
+      );
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(children: [
+        chip(PhosphorIcons.mapPin(),
+            _region == null || _region!.isEmpty ? 'Mkoa wote' : _region!,
+            _regionId != null, _pickRegion),
+        const SizedBox(width: 8),
+        chip(PhosphorIcons.buildings(),
+            _category == null ? 'Idara zote' : _categoryName,
+            _category != null, _pickCategory),
+        const SizedBox(width: 8),
+        chip(PhosphorIcons.graduationCap(),
+            _level.isEmpty ? 'Ngazi zote' : _level,
+            _level.isNotEmpty, _pickLevel),
       ]),
-      const Divider(height: 8, thickness: 1, color: AppColors.borderLight),
-      if (rows.length > 12)
-        ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 384),
-            child: SingleChildScrollView(child: rowsCol))
-      else
-        rowsCol,
-    ]);
+    );
+  }
+
+  // ── KPI GRID yenye icons (2 kwa safu) ─────────────────────────────────────
+  Widget _kpiGrid(Map<String, dynamic> totals) {
+    final incomingTotal = _list('incoming_by_region')
+        .fold<int>(0, (s, r) => s + ((r['count'] as num?)?.toInt() ?? 0));
+    final items = [
+      _KpiItem(PhosphorIcons.users(), 'Watumiaji waliopo',
+          '${_reportUsersTotal >= 1000 ? _thousands(_reportUsersTotal) : _reportUsersTotal}',
+          '+${totals['users_active_7d'] ?? 0} wiki 7', _kGreen),
+      _KpiItem(PhosphorIcons.shieldCheck(), 'Imethibitishwa',
+          '${totals['users_verified'] ?? '—'}', null, null),
+      _KpiItem(PhosphorIcons.mapPin(), 'Mikoa yote',
+          '${_int('regions_total')}', null, null),
+      _KpiItem(PhosphorIcons.mapTrifold(), 'Wilaya zote',
+          '${_int('districts_total')}', null, null),
+      _KpiItem(PhosphorIcons.arrowsLeftRight(), 'Wanaohamia wote',
+          '${incomingTotal >= 1000 ? _thousands(incomingTotal) : incomingTotal}', null, null),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1.55,
+      ),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _kBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(item.icon, size: 18, color: _kBlue),
+              const Spacer(),
+              Text(item.value,
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.w700, color: _kT900)),
+              Text(item.label, style: const TextStyle(fontSize: 12, color: _kT500)),
+              if (item.sub != null) ...[
+                const SizedBox(height: 2),
+                Text(item.sub!,
+                    style: const TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w600, color: _kGreen)),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Overview sections ─────────────────────────────────────────────────────
+  List<Widget> _overviewSections(Map<String, dynamic> totals) {
+    final byCadreAll = _list('users_by_cadre');
+    final priCount = byCadreAll
+        .where((c) => (c['level'] ?? '') == 'Primary')
+        .fold(0, (s, c) => s + ((c['count'] as num?)?.toInt() ?? 0));
+    final secCount = byCadreAll
+        .where((c) => (c['level'] ?? '') == 'Secondary')
+        .fold(0, (s, c) => s + ((c['count'] as num?)?.toInt() ?? 0));
+    final noneCount = byCadreAll
+        .where((c) => (c['level'] ?? '').toString().isEmpty)
+        .fold(0, (s, c) => s + ((c['count'] as num?)?.toInt() ?? 0));
+
+    final byDept = _list('users_by_category')
+        ..sort((a, b) => ((b['count'] as num?)?.toInt() ?? 0)
+            .compareTo((a['count'] as num?)?.toInt() ?? 0));
+    final byStatus = _list('users_by_status')
+        ..sort((a, b) => ((b['count'] as num?)?.toInt() ?? 0)
+            .compareTo((a['count'] as num?)?.toInt() ?? 0));
+    final byCadre = (byCadreAll.toList()
+          ..sort((a, b) => ((b['count'] as num?)?.toInt() ?? 0)
+              .compareTo((a['count'] as num?)?.toInt() ?? 0)));
+
+    return [
+      // ── Kwa idara — progress bars ──
+      _card('Kwa idara', child: _progressList([
+        for (final c in byDept)
+          (
+            '${c['name'] ?? _deptLabel('${c['category']}')}',
+            (c['count'] as num?)?.toInt() ?? 0,
+          ),
+      ])),
+
+      // ── Walimu kwa ngazi — progress bars ──
+      _card('Walimu kwa ngazi', child: _progressList([
+        ('Walimu wa Msingi', priCount),
+        ('Walimu wa Sekondari', secCount),
+        if (noneCount > 0) ('Hakuna ngazi', noneCount),
+      ])),
+
+      // ── Kwa kada — ranked list ──
+      _card('Kwa kada', child: _rankedList([
+        for (final c in byCadre.take(20))
+          (
+            '${c['cadre_name'] ?? c['cadre']}${(c['level'] ?? '').toString().isEmpty ? '' : ' (${c['level']})'}',
+            (c['count'] as num?)?.toInt() ?? 0,
+          ),
+      ])),
+
+      // ── Kwa hali — progress bars ──
+      _card('Kwa hali', child: _progressList([
+        for (final s in byStatus)
+          (_statusLabel('${s['status']}'), (s['count'] as num?)?.toInt() ?? 0),
+      ])),
+
+      // ── Waliopo na wanaohamia kwa mkoa ──
+      _card('Waliopo na wanaohamia kwa mkoa',
+          child: _mkoaMigrationList(_byRegion.take(30).toList())),
+
+      // ── Wanaohamia wanatoka wapi ──
+      if (_list('incoming_sources').isNotEmpty)
+        _card(
+          'Wanaohamia wanatoka wapi${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
+          child: _migrationFlowTable(_list('incoming_sources').take(15).toList()),
+        ),
+
+      // ── Watu kwa wilaya ──
+      _card(
+        'Watu kwa wilaya${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
+        child: _wilayaTable(_byDistrict().take(20).toList()),
+      ),
+
+      // ── Matukio ya hivi karibuni ──
+      _eventsCard(),
+    ];
+  }
+
+  // ── Progress list (kama reference: label + hesabu + blue bar) ─────────────
+  Widget _progressList(List<(String, int)> data) {
+    if (data.isEmpty) return _empty();
+    final total = data.fold<int>(0, (s, d) => s + d.$2);
+    return Column(
+      children: data.map((d) {
+        final pct = total > 0 ? (d.$2 / total * 100).round() : 0;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(child: Text(d.$1, style: const TextStyle(fontSize: 13, color: _kT900))),
+                  Text('${d.$2 >= 1000 ? _thousands(d.$2) : d.$2}  ·  $pct%',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: (pct / 100).clamp(0, 1).toDouble(),
+                  minHeight: 6,
+                  backgroundColor: _kBarBg,
+                  valueColor: const AlwaysStoppedAnimation(_kBlueSel),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ── Ranked list (1,2,3…) kama reference ───────────────────────────────────
+  Widget _rankedList(List<(String, int)> data) {
+    if (data.isEmpty) return _empty();
+    return Column(
+      children: List.generate(data.length, (i) {
+        final d = data[i];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 22,
+                child: Text('${i + 1}',
+                    style: const TextStyle(fontSize: 12, color: _kT400)),
+              ),
+              Expanded(
+                child: Text(d.$1,
+                    style: const TextStyle(fontSize: 13, color: _kT900),
+                    overflow: TextOverflow.ellipsis),
+              ),
+              Text(d.$2 >= 1000 ? _thousands(d.$2) : '${d.$2}',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900)),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  // ── Mkoa migration list (# | Mkoa | Waliopo | Wanaohamia + bar) ───────────
+  Widget _mkoaMigrationList(List<({String region, int current, int incoming})> data) {
+    if (data.isEmpty) return _empty();
+    final maxIncoming = data.map((e) => e.incoming).reduce((a, b) => a > b ? a : b);
+    return Column(
+      children: [
+        // header
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(children: [
+            const SizedBox(width: 22),
+            const Expanded(flex: 3, child: Text('MKOA',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: _kT400))),
+            const Expanded(flex: 2, child: Text('WALIOPO',
+                textAlign: TextAlign.right,
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: _kT400))),
+            const SizedBox(width: 10),
+            const Expanded(flex: 5, child: Text('WANAOHAMIA',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: _kT400))),
+          ]),
+        ),
+        for (final (i, m) in data.indexed)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 22,
+                  child: Text('${i + 1}',
+                      style: const TextStyle(fontSize: 12, color: _kT400)),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text(m.region,
+                      style: const TextStyle(fontSize: 13, color: _kT900),
+                      overflow: TextOverflow.ellipsis),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text('${m.current}',
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(fontSize: 13, color: _kT900)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 5,
+                  child: Row(
+                    children: [
+                      Text('${m.incoming}',
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600, color: _kOrangeTx)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: maxIncoming > 0 ? m.incoming / maxIncoming : 0,
+                            minHeight: 6,
+                            backgroundColor: _kBarBg,
+                            valueColor: const AlwaysStoppedAnimation(_kBlueSel),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ── Migration flow (# | Kutoka → Kwenda | hesabu) ─────────────────────────
+  Widget _migrationFlowTable(List<Map<String, dynamic>> data) {
+    if (data.isEmpty) return _empty();
+    return Column(
+      children: List.generate(data.length, (i) {
+        final f = data[i];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 22,
+                child: Text('${i + 1}',
+                    style: const TextStyle(fontSize: 12, color: _kT400)),
+              ),
+              Expanded(
+                  child: Text('${f['from']}',
+                      style: const TextStyle(fontSize: 13, color: _kT900),
+                      overflow: TextOverflow.ellipsis)),
+              Icon(PhosphorIcons.arrowRight(), size: 14, color: _kT400),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text('${f['to']}',
+                    style: const TextStyle(fontSize: 13, color: _kOrangeTx),
+                    overflow: TextOverflow.ellipsis),
+              ),
+              Text('${f['count'] ?? 0}',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900)),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  // ── Wilaya table (Wilaya / Waliopo / Hamia / Jumla) ───────────────────────
+  Widget _wilayaTable(List<({String region, int current, int incoming})> data) {
+    if (data.isEmpty) return _empty();
+    const hs = TextStyle(
+        fontSize: 12, color: _kT500);
+    return Column(
+      children: [
+        Table(
+          columnWidths: const {
+            0: FlexColumnWidth(3),
+            1: FlexColumnWidth(1.5),
+            2: FlexColumnWidth(1.5),
+            3: FlexColumnWidth(1.5),
+          },
+          children: [
+            const TableRow(children: [
+              Padding(padding: EdgeInsets.symmetric(vertical: 6),
+                  child: Text('Wilaya', style: hs)),
+              Padding(padding: EdgeInsets.symmetric(vertical: 6),
+                  child: Text('Waliopo', textAlign: TextAlign.right, style: hs)),
+              Padding(padding: EdgeInsets.symmetric(vertical: 6),
+                  child: Text('Hamia', textAlign: TextAlign.right, style: hs)),
+              Padding(padding: EdgeInsets.symmetric(vertical: 6),
+                  child: Text('Jumla', textAlign: TextAlign.right, style: hs)),
+            ]),
+            for (final w in data)
+              TableRow(
+                decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: _kBarBg))),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(w.region,
+                        style: const TextStyle(fontSize: 13, color: _kT900),
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text('${w.current}', textAlign: TextAlign.right,
+                        style: const TextStyle(fontSize: 13, color: _kT900)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text('${w.incoming}', textAlign: TextAlign.right,
+                        style: const TextStyle(fontSize: 13, color: _kOrangeTx)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text('${w.current + w.incoming}', textAlign: TextAlign.right,
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700, color: _kBlue)),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ── Matukio ya hivi karibuni ──────────────────────────────────────────────
+  Widget _eventsCard() {
+    return _card('', child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          Icon(PhosphorIcons.bell(), size: 16, color: _kT900),
+          const SizedBox(width: 8),
+          const Text('Matukio ya hivi karibuni',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kT900)),
+        ]),
+        const SizedBox(height: 8),
+        if (_events.isEmpty)
+          const Text('Hakuna matukio ya hivi karibuni.',
+              style: TextStyle(fontSize: 13, color: _kT400)),
+        ..._events.take(6).map((e) {
+          final m = e as Map<String, dynamic>;
+          final type = m['event_type'] as String? ?? '';
+          final title = m['title'] as String? ?? _eventTitle(type);
+          final time = m['occurred_at'] as String? ?? '';
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _kBarBg, width: 1))),
+            child: Row(children: [
+              _eventIcon(type),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: Text(title,
+                      style: const TextStyle(fontSize: 12, color: _kT600),
+                      overflow: TextOverflow.ellipsis)),
+              const SizedBox(width: 6),
+              Text(_fmtTime(time),
+                  style: const TextStyle(fontSize: 10, color: _kT400)),
+            ]),
+          );
+        }),
+      ],
+    ));
+  }
+
+  // ── Card wrapper (white, border, radius 14) ───────────────────────────────
+  Widget _card(String title, {required Widget child}) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title.isNotEmpty) ...[
+            Text(title, style: const TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w600, color: _kT900)),
+            const SizedBox(height: 10),
+          ],
+          child,
+        ],
+      ),
+    );
   }
 
   Widget _empty() => const Padding(
         padding: EdgeInsets.symmetric(vertical: 10),
         child: Text('Hakuna data kwa kipindi hiki',
-            style: TextStyle(fontSize: 13, color: AppColors.textLight)),
+            style: TextStyle(fontSize: 13, color: _kT400)),
       );
+
+  Widget _errorBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: _kRedBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Row(children: [
+        Icon(PhosphorIcons.warningCircle(), size: 16, color: _kRed),
+        const SizedBox(width: 8),
+        const Expanded(
+          child: Text('Hitilafu kupakua takwimu — jaribu tena.',
+              style: TextStyle(fontSize: 12, color: _kRed)),
+        ),
+        GestureDetector(
+          onTap: () => _load(refresh: true),
+          child: const Text('Jaribu tena',
+              style: TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w600)),
+        ),
+      ]),
+    );
+  }
+
+  // ── TAB: WATUMIAJI (kama reference: Jina / Simu / Mkoa / Hali) ────────────
+  Widget _usersTab() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      child: Column(children: [
+        TextField(
+          controller: _usersCtrl,
+          decoration: InputDecoration(
+            hintText: 'Tafuta mtumiaji...',
+            hintStyle: const TextStyle(color: _kT400, fontSize: 13),
+            prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 18, color: _kT400),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: _kBlue)),
+          ),
+          onChanged: (v) => _loadUsers(q: v),
+        ),
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text('Jumla: ${_usersLoading ? '...' : _usersTotal}',
+              style: const TextStyle(fontSize: 13, color: _kT500)),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _kBorder),
+          ),
+          child: _usersLoading
+              ? const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator(color: _kBlue)),
+                )
+              : _users.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('Hakuna watumiaji',
+                          style: TextStyle(color: _kT400), textAlign: TextAlign.center),
+                    )
+                  : Column(children: [
+                      const Row(children: [
+                        Expanded(flex: 3, child: Text('Jina',
+                            style: TextStyle(fontSize: 12, color: _kT500))),
+                        Expanded(flex: 3, child: Text('Simu',
+                            style: TextStyle(fontSize: 12, color: _kT500))),
+                        Expanded(flex: 2, child: Text('Mkoa',
+                            style: TextStyle(fontSize: 12, color: _kT500))),
+                        Expanded(flex: 2, child: Text('Hali',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(fontSize: 12, color: _kT500))),
+                      ]),
+                      const Divider(height: 16, color: _kBarBg),
+                      for (final u in _users.take(50))
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _userRow(u as Map<String, dynamic>),
+                        ),
+                    ]),
+        ),
+      ]),
+    );
+  }
+
+  Widget _userRow(Map<String, dynamic> u) {
+    final name    = (u['full_name'] ?? '') as String;
+    final phone   = (u['phone_primary'] ?? u['phone'] ?? '') as String;
+    final station = (u['current_station'] as Map?) ?? {};
+    final region  = (station['region_name'] ?? '') as String;
+    final st      = '${u['status'] ?? 'active'}'.toLowerCase();
+    final hai     = st == 'active';
+    return Row(children: [
+      Expanded(
+        flex: 3,
+        child: Text(name,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900),
+            overflow: TextOverflow.ellipsis),
+      ),
+      Expanded(
+        flex: 3,
+        child: Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue)),
+      ),
+      Expanded(
+        flex: 2,
+        child: Text(region,
+            style: const TextStyle(fontSize: 12, color: _kT600),
+            overflow: TextOverflow.ellipsis),
+      ),
+      Expanded(
+        flex: 2,
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: hai ? _kGreenBg : _kRedBg,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              hai ? 'Hai' : 'Haipo',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: hai ? _kGreenTx : _kRedTx,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ]);
+  }
 
   // Event helpers
   static Widget _eventIcon(String type) {
     const s = 14.0;
-    if (type == 'user.registered') return const Icon(Icons.person_add_rounded, size: s, color: Color(0xFF3B82F6));
-    if (type.startsWith('payment.')) return const Icon(Icons.payments_rounded, size: s, color: Color(0xFF22C55E));
-    if (type.startsWith('feedback.')) return const Icon(Icons.assignment_rounded, size: s, color: Color(0xFFF97316));
-    if (type.startsWith('password_reset.')) return const Icon(Icons.key_rounded, size: s, color: Color(0xFFA855F7));
-    if (type.startsWith('match.')) return const Icon(Icons.favorite_rounded, size: s, color: Color(0xFF22C55E));
-    if (type == 'data.changed' || type.startsWith('data.')) return const Icon(Icons.bolt_rounded, size: s, color: Color(0xFFEAB308));
-    return const Icon(Icons.notifications_rounded, size: s, color: Color(0xFF9CA3AF));
+    if (type == 'user.registered') return Icon(PhosphorIcons.userPlus(), size: s, color: const Color(0xFF3B82F6));
+    if (type.startsWith('payment.')) return Icon(PhosphorIcons.wallet(), size: s, color: const Color(0xFF22C55E));
+    if (type.startsWith('feedback.')) return Icon(PhosphorIcons.chatCircleText(), size: s, color: const Color(0xFFF97316));
+    if (type.startsWith('password_reset.')) return Icon(PhosphorIcons.lock(), size: s, color: const Color(0xFFA855F7));
+    if (type.startsWith('match.')) return Icon(PhosphorIcons.heart(PhosphorIconsStyle.fill), size: s, color: const Color(0xFF22C55E));
+    if (type == 'data.changed' || type.startsWith('data.')) return Icon(PhosphorIcons.lightning(PhosphorIconsStyle.fill), size: s, color: const Color(0xFFEAB308));
+    return Icon(PhosphorIcons.bell(), size: s, color: const Color(0xFF9CA3AF));
   }
 
   static String _eventTitle(String type) {
@@ -1168,5 +1173,19 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   }
 }
 
-const _kAmber  = Color(0xFFD97706);
-const _kOrange = Color(0xFFF97316);
+class _KpiItem {
+  final IconData icon;
+  final String label;
+  final String value;
+  final String? sub;
+  final Color? subColor;
+  const _KpiItem(this.icon, this.label, this.value, this.sub, this.subColor);
+}
+
+class _PickerItem {
+  final String label;
+  final String? sub;
+  final String value;
+  final bool selected;
+  const _PickerItem(this.label, this.sub, this.value, this.selected);
+}
