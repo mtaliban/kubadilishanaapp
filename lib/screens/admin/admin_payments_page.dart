@@ -1,4 +1,7 @@
+import 'dart:math' show max, min;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
@@ -22,11 +25,18 @@ const _kGrey100 = Color(0xFFF3F4F6);
 const _kGrey50  = Color(0xFFF9FAFB);
 const _kHero1   = Color(0xFF0F3D73);
 const _kHero2   = Color(0xFF1D6FBF);
-const _kBlue2   = Color(0xFF378ADD);
 
 const _kPageSize = 10;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+String _initials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  final first = parts.first[0];
+  final second = parts.length > 1 ? parts[1][0] : '';
+  return (first + second).toUpperCase();
+}
 
 String _fmtAmt(int n) {
   final s = n.toString();
@@ -85,6 +95,63 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   String _status = 'pending';
   int _page = 0;
   final Map<String, List<dynamic>> _cache = {};
+  final _scroll = ScrollController();
+  final Set<String> _smsOpen = {};
+
+  void _goToPage(int p) {
+    setState(() => _page = p);
+    if (_scroll.hasClients) {
+      _scroll.animateTo(0,
+          duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    }
+  }
+
+  void _toggleSms(String id) => setState(() {
+        _smsOpen.contains(id) ? _smsOpen.remove(id) : _smsOpen.add(id);
+      });
+
+  Future<bool> _ask({
+    required String title,
+    required String body,
+    required String action,
+    bool danger = false,
+  }) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(title, style: GoogleFonts.inter(
+            fontSize: 16, fontWeight: FontWeight.w800, color: _kGrey900)),
+        content: Text(body, style: GoogleFonts.inter(
+            fontSize: 13.5, height: 1.5, color: _kGrey700)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Ghairi', style: GoogleFonts.inter(color: _kGrey500))),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: danger ? _kRed : _kGreen,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(action, style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
+  void _showSnack(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+      backgroundColor: color,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.all(12),
+    ));
+  }
 
   static const _tabs = [
     ('pending',  'Inasubiri',    _kAmber),
@@ -117,6 +184,13 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 
   Future<void> _approve(String orderId) async {
+    // Uthibitisho wa dialog kabla ya kitendo cha pesa (kama reference)
+    final ok = await _ask(
+      title: 'Thibitisha malipo?',
+      body: 'Hakikisha pesa imefika kwenye simu yako kabla ya kuthibitisha.',
+      action: 'Thibitisha',
+    );
+    if (!ok) return;
     try {
       await ApiService().adminApproveDonation(orderId);
       if (!mounted) return;
@@ -130,6 +204,13 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 
   Future<void> _reject(String orderId) async {
+    final ok = await _ask(
+      title: 'Kataa malipo?',
+      body: 'Mchangiaji ataarifiwa kuwa malipo yake yamekataliwa.',
+      action: 'Kataa',
+      danger: true,
+    );
+    if (!ok) return;
     try {
       await ApiService().adminRejectDonation(orderId);
       if (!mounted) return;
@@ -151,16 +232,6 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       if (!mounted) return;
       _showSnack('Kosa: $e', _kRed);
     }
-  }
-
-  void _showSnack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-      backgroundColor: color,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.all(12),
-    ));
   }
 
   int _count(String s) => _cache[s]?.length ?? 0;
@@ -193,6 +264,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
         },
         color: _kBlue,
         child: CustomScrollView(
+          controller: _scroll,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
 
@@ -251,30 +323,6 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                       ),
                     ]),
                     const SizedBox(height: 16),
-
-                    // ── Stat cards ───────────────────────────────────────────
-                    Row(children: [
-                      Expanded(child: _StatCard(
-                        icon: PhosphorIcons.trendUp(PhosphorIconsStyle.fill),
-                        label: 'Jumla Iliyolipwa',
-                        value: _fmtTotal(),
-                        colors: const [_kGreen, Color(0xFF34D399)],
-                      )),
-                      const SizedBox(width: 10),
-                      Expanded(child: _StatCard(
-                        icon: PhosphorIcons.clock(PhosphorIconsStyle.fill),
-                        label: 'Yanasubiri',
-                        value: '${_count('pending')}',
-                        colors: const [_kAmber, Color(0xFFFBBF24)],
-                      )),
-                      const SizedBox(width: 10),
-                      Expanded(child: _StatCard(
-                        icon: PhosphorIcons.receipt(PhosphorIconsStyle.fill),
-                        label: 'Kuonyesha',
-                        value: '${items.length}',
-                        colors: const [_kBlue, _kBlue2],
-                      )),
-                    ]),
                     const SizedBox(height: 16),
 
                     // ── Tab filter ───────────────────────────────────────────
@@ -337,6 +385,89 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                     ),
                   ],
                 ),
+              ),
+            ),
+
+            // ── HeroStat + MiniStats (kama reference) ─────────────────────────
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(children: [
+                  // Jumla kubwa — container ya blue (kama reference _HeroStat)
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                          colors: [_kHero1, _kHero2]),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(color: _kHero2.withValues(alpha: 0.35),
+                            blurRadius: 16, offset: const Offset(0, 6)),
+                      ],
+                    ),
+                    child: Row(children: [
+                      Container(
+                        width: 44, height: 44,
+                        decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(13)),
+                        child: Icon(PhosphorIcons.trendUp(PhosphorIconsStyle.fill),
+                            color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('Jumla ya michango iliyoidhinishwa',
+                              style: GoogleFonts.inter(
+                                  color: Colors.white70, fontSize: 12)),
+                          const SizedBox(height: 2),
+                          Text(_fmtTotal(),
+                              style: GoogleFonts.inter(
+                                  color: Colors.white, fontSize: 24,
+                                  fontWeight: FontWeight.w800)),
+                        ]),
+                      ),
+                    ]),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(children: [
+                    Expanded(child: _MiniStat(
+                      icon: PhosphorIcons.clock(PhosphorIconsStyle.fill),
+                      color: _kAmber,
+                      value: _count('pending'),
+                      label: 'Inasubiri uthibitisho wako',
+                    )),
+                    const SizedBox(width: 10),
+                    Expanded(child: _MiniStat(
+                      icon: PhosphorIcons.receipt(PhosphorIconsStyle.fill),
+                      color: _kBlue,
+                      value: items.length,
+                      label: 'Kwenye orodha hii',
+                    )),
+                  ]),
+                  const SizedBox(height: 12),
+                  // InfoBanner — maelekezo ya mfumo (kama reference)
+                  Container(
+                    padding: const EdgeInsets.all(13),
+                    decoration: BoxDecoration(
+                      color: _kBlueBg,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Icon(PhosphorIcons.info(PhosphorIconsStyle.fill),
+                          color: _kBlue, size: 18),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          'Angalia SMS, kisha thibitisha kwenye simu yako kwamba pesa imefika — kisha bofya "Idhinisha".',
+                          style: GoogleFonts.inter(
+                              fontSize: 12.5, height: 1.45,
+                              color: const Color(0xFF1E3A8A)),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ]),
               ),
             ),
 
@@ -444,6 +575,8 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                       key: ValueKey(pageItems[i]['id'] ?? i),
                       item: pageItems[i] as Map<String, dynamic>,
                       status: _status,
+                      smsOpen: _smsOpen.contains('${pageItems[i]['id'] ?? i}'),
+                      onToggleSms: () => _toggleSms('${pageItems[i]['id'] ?? i}'),
                       onApprove: _approve,
                       onReject: _reject,
                       onReply: _sendReply,
@@ -463,18 +596,19 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                       _PgBtn(
                         icon: PhosphorIcons.caretLeft(),
                         enabled: _page > 0,
-                        onTap: _page > 0 ? () => setState(() => _page--) : null,
+                        onTap: _page > 0 ? () => _goToPage(_page - 1) : null,
                       ),
-                      ...List.generate(totalPages, (i) => _PgNum(
+                      // Dirisha la kurasa 5 (kama reference — max/min)
+                      ...List.generate(totalPages, (i) => i).skip(max(0, min(_page - 2, totalPages - 5))).take(min(5, totalPages)).map((i) => _PgNum(
                         n: i + 1,
                         active: _page == i,
-                        onTap: () => setState(() => _page = i),
+                        onTap: () => _goToPage(i),
                       )),
                       _PgBtn(
                         icon: PhosphorIcons.caretRight(),
                         enabled: _page < totalPages - 1,
                         onTap: _page < totalPages - 1
-                            ? () => setState(() => _page++)
+                            ? () => _goToPage(_page + 1)
                             : null,
                       ),
                     ]),
@@ -490,61 +624,52 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+// ─── Mini stat (kama reference _MiniStat) ─────────────────────────────────────
 
-class _StatCard extends StatelessWidget {
+class _MiniStat extends StatelessWidget {
   final IconData icon;
+  final Color color;
+  final int value;
   final String label;
-  final String value;
-  final List<Color> colors;
-  const _StatCard({
-    required this.icon, required this.label,
-    required this.value, required this.colors,
+  const _MiniStat({
+    required this.icon, required this.color,
+    required this.value, required this.label,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kGrey200),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8, offset: const Offset(0, 2)),
-        ],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(
-          width: 32, height: 32,
-          decoration: BoxDecoration(
-              gradient: LinearGradient(colors: colors,
-                  begin: Alignment.topLeft, end: Alignment.bottomRight),
-              borderRadius: BorderRadius.circular(9)),
-          child: Icon(icon, size: 16, color: Colors.white),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('$value',
+                style: GoogleFonts.inter(
+                    fontSize: 20, fontWeight: FontWeight.w800, color: _kGrey900)),
+            Text(label,
+                style: GoogleFonts.inter(fontSize: 10.5, color: _kGrey400, height: 1.3)),
+          ]),
         ),
-        const SizedBox(height: 10),
-        Text(value,
-            style: GoogleFonts.inter(
-                fontSize: 15, fontWeight: FontWeight.w800, color: _kGrey900),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis),
-        const SizedBox(height: 2),
-        Text(label,
-            style: GoogleFonts.inter(fontSize: 10.5, color: _kGrey400),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis),
       ]),
     );
   }
 }
+
 
 // ─── Payment Card ─────────────────────────────────────────────────────────────
 
 class _PaymentCard extends StatefulWidget {
   final Map<String, dynamic> item;
   final String status;
+  final bool smsOpen;
+  final VoidCallback onToggleSms;
   final Future<void> Function(String) onApprove;
   final Future<void> Function(String) onReject;
   final Future<void> Function(String, String) onReply;
@@ -552,6 +677,7 @@ class _PaymentCard extends StatefulWidget {
   const _PaymentCard({
     super.key,
     required this.item, required this.status,
+    required this.smsOpen, required this.onToggleSms,
     required this.onApprove, required this.onReject, required this.onReply,
   });
 
@@ -560,7 +686,18 @@ class _PaymentCard extends StatefulWidget {
 }
 
 class _PaymentCardState extends State<_PaymentCard> {
-  bool _showSms  = false;
+  void _copyCard(BuildContext ctx, String text, String what) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+      content: Text('$what imenakiliwa',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+      backgroundColor: _kBlue,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.all(12),
+    ));
+  }
+
   bool _showChat = false;
   bool _approving = false;
   bool _rejecting = false;
@@ -602,15 +739,14 @@ class _PaymentCardState extends State<_PaymentCard> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar
+              // Avatar na initials (kama reference)
               Container(
                 width: 42, height: 42,
-                decoration: BoxDecoration(
-                  color: _kBlueBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(PhosphorIcons.user(PhosphorIconsStyle.fill),
-                    color: _kBlue, size: 20),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: ss.bg, shape: BoxShape.circle),
+                child: Text(_initials(name),
+                    style: GoogleFonts.inter(
+                        color: ss.color, fontWeight: FontWeight.w800, fontSize: 14)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -622,14 +758,19 @@ class _PaymentCardState extends State<_PaymentCard> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                   if (phone.isNotEmpty)
-                    Row(children: [
-                      Icon(PhosphorIcons.phone(PhosphorIconsStyle.fill),
-                          size: 11, color: _kGrey400),
-                      const SizedBox(width: 4),
-                      Text(phone,
-                          style: GoogleFonts.inter(
-                              fontSize: 12, color: _kGrey400)),
-                    ]),
+                    // Simu — gusa kunakili (kama reference)
+                    GestureDetector(
+                      onTap: () => _copyCard(context, phone, 'Namba'),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(PhosphorIcons.phone(PhosphorIconsStyle.fill),
+                            size: 11, color: _kBlue),
+                        const SizedBox(width: 4),
+                        Text(phone,
+                            style: GoogleFonts.inter(
+                                fontSize: 12, color: _kBlue,
+                                fontWeight: FontWeight.w700)),
+                      ]),
+                    ),
                 ]),
               ),
               // Status badge
@@ -684,20 +825,28 @@ class _PaymentCardState extends State<_PaymentCard> {
                 ]),
               ),
               if (orderId.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _kGrey50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _kGrey200),
-                  ),
-                  child: Text(
-                    orderId.length > 16
-                        ? '${orderId.substring(0, 16)}…'
-                        : orderId,
-                    style: GoogleFonts.inter(
-                        fontSize: 10.5, color: _kGrey500,
-                        fontWeight: FontWeight.w500),
+                // Reference — gusa kunakili (kama reference)
+                GestureDetector(
+                  onTap: () => _copyCard(context, orderId, 'Reference'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _kGrey50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _kGrey200),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text(
+                        orderId.length > 16
+                            ? '${orderId.substring(0, 16)}…'
+                            : orderId,
+                        style: GoogleFonts.inter(
+                            fontSize: 10.5, color: _kGrey700,
+                            fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(PhosphorIcons.copy(), size: 11, color: _kGrey400),
+                    ]),
                   ),
                 ),
             ],
@@ -766,9 +915,9 @@ class _PaymentCardState extends State<_PaymentCard> {
                 if (smsText.isNotEmpty)
                   _Pill(
                     icon: PhosphorIcons.deviceMobile(PhosphorIconsStyle.fill),
-                    label: _showSms ? 'Ficha SMS' : 'SMS',
-                    active: _showSms,
-                    onTap: () => setState(() => _showSms = !_showSms),
+                    label: widget.smsOpen ? 'Ficha SMS' : 'SMS',
+                    active: widget.smsOpen,
+                    onTap: widget.onToggleSms,
                   ),
                 if (smsText.isNotEmpty) const SizedBox(width: 8),
                 _Pill(
@@ -782,7 +931,7 @@ class _PaymentCardState extends State<_PaymentCard> {
               ]),
 
               // SMS content
-              if (_showSms && smsText.isNotEmpty) ...[
+              if (widget.smsOpen && smsText.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
