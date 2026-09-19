@@ -17,7 +17,6 @@ const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey200 = Color(0xFFE5E7EB);
-const _kGrey100 = Color(0xFFF3F4F6);
 const _kGrey50  = Color(0xFFF9FAFB);
 
 const _kPageSize = 6;
@@ -93,6 +92,9 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   List<dynamic> _items = [];
   int _page = 0;
 
+  final _formKey = GlobalKey<FormState>();
+  final _scroll  = ScrollController();
+
   List<dynamic> _departments = [];
 
   final _titleCtrl = TextEditingController();
@@ -120,7 +122,16 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     _titleCtrl.dispose();
     _msgCtrl.dispose();
     _userSearchCtrl.dispose();
+    _scroll.dispose();
     super.dispose();
+  }
+
+  void _goToPage(int p) {
+    setState(() => _page = p);
+    if (_scroll.hasClients) {
+      _scroll.animateTo(0,
+          duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    }
   }
 
   Future<void> _load() async {
@@ -176,7 +187,8 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   }
 
   Future<void> _send() async {
-    if (_titleCtrl.text.trim().isEmpty || _msgCtrl.text.trim().isEmpty) return;
+    // Validation yenye maonyesho ya makosa (kama reference)
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() { _sending = true; _sendResult = null; });
     try {
       final payload = <String, dynamic>{
@@ -296,9 +308,11 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
               blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Header
           Row(children: [
             Container(
@@ -315,21 +329,28 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
           ]),
           const SizedBox(height: 14),
 
-          // Title field
-          TextField(
+          // Title field (na validator)
+          TextFormField(
             controller: _titleCtrl,
             style: GoogleFonts.inter(fontSize: 13),
+            textInputAction: TextInputAction.next,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Andika kichwa cha tangazo'
+                : null,
             decoration: _inputDec('Kichwa cha habari',
                 prefixIcon: PhosphorIcons.textAa()),
           ),
           const SizedBox(height: 10),
 
-          // Message field
-          TextField(
+          // Message field (na validator)
+          TextFormField(
             controller: _msgCtrl,
             minLines: 3,
             maxLines: 6,
             style: GoogleFonts.inter(fontSize: 13),
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Andika ujumbe wa tangazo'
+                : null,
             decoration: _inputDec('Ujumbe wa tangazo...'),
           ),
           const SizedBox(height: 14),
@@ -404,97 +425,16 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
             ]),
           ),
 
-          // User search (only when "Mtu Mmoja" selected)
-          if (_audience == 'user') ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: _userSearchCtrl,
-              style: GoogleFonts.inter(fontSize: 13),
-              decoration: _inputDec(
-                'Tafuta mtumiaji...',
-                prefixIcon: PhosphorIcons.magnifyingGlass(),
-                suffix: _searchingUsers
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(width: 16, height: 16,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: _kBlue)),
-                      )
-                    : null,
-              ),
-            ),
-            if (_selectedUser != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(color: _kBlueBg,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Row(children: [
-                  Icon(PhosphorIcons.user(PhosphorIconsStyle.fill),
-                      color: _kBlue, size: 15),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _selectedUser!['full_name'] as String? ?? '',
-                      style: GoogleFonts.inter(fontSize: 13, color: _kBlue,
-                          fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => setState(() {
-                      _selectedUser = null;
-                      _userSearchCtrl.clear();
-                      _userResults = [];
-                    }),
-                    child: Icon(PhosphorIcons.x(), color: _kBlue, size: 15),
-                  ),
-                ]),
-              ),
-            ],
-            if (_userResults.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Container(
-                constraints: const BoxConstraints(maxHeight: 160),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: _kGrey200),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _userResults.length,
-                  itemBuilder: (_, i) {
-                    final u = _userResults[i] as Map<String, dynamic>;
-                    return InkWell(
-                      onTap: () => setState(() {
-                        _selectedUser = u;
-                        _userSearchCtrl.text = u['full_name'] as String? ?? '';
-                        _userResults = [];
-                      }),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        child: Row(children: [
-                          Icon(PhosphorIcons.user(), size: 14, color: _kGrey500),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(
-                            u['full_name'] as String? ?? '',
-                            style: GoogleFonts.inter(fontSize: 13, color: _kGrey900),
-                          )),
-                          Text(u['phone'] as String? ?? '',
-                              style: GoogleFonts.inter(fontSize: 11,
-                                  color: _kGrey500)),
-                        ]),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ],
+          // User search (only when "Mtu Mmoja" selected) — AnimatedSize kama reference
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            alignment: Alignment.topCenter,
+            child: _audience == 'user'
+                ? _buildUserSearch()
+                : const SizedBox.shrink(),
+          ),
 
           const SizedBox(height: 14),
-
           // Send result feedback
           if (_sendResult != null) ...[
             Container(
@@ -553,6 +493,102 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
           ),
         ],
       ),
+      ),
+    );
+  }
+
+  // ── USER SEARCH (Mtu Mmoja) ─────────────────────────────────────────────
+
+  Widget _buildUserSearch() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        TextField(
+          controller: _userSearchCtrl,
+          style: GoogleFonts.inter(fontSize: 13),
+          decoration: _inputDec(
+            'Tafuta mtumiaji...',
+            prefixIcon: PhosphorIcons.magnifyingGlass(),
+            suffix: _searchingUsers
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(width: 16, height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: _kBlue)),
+                  )
+                : null,
+          ),
+        ),
+        if (_selectedUser != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(color: _kBlueBg,
+                borderRadius: BorderRadius.circular(10)),
+            child: Row(children: [
+              Icon(PhosphorIcons.user(PhosphorIconsStyle.fill),
+                  color: _kBlue, size: 15),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _selectedUser!['full_name'] as String? ?? '',
+                  style: GoogleFonts.inter(fontSize: 13, color: _kBlue,
+                      fontWeight: FontWeight.w600),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => setState(() {
+                  _selectedUser = null;
+                  _userSearchCtrl.clear();
+                  _userResults = [];
+                }),
+                child: Icon(PhosphorIcons.x(), color: _kBlue, size: 15),
+              ),
+            ]),
+          ),
+        ],
+        if (_userResults.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Container(
+            constraints: const BoxConstraints(maxHeight: 160),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: _kGrey200),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _userResults.length,
+              itemBuilder: (_, i) {
+                final u = _userResults[i] as Map<String, dynamic>;
+                return InkWell(
+                  onTap: () => setState(() {
+                    _selectedUser = u;
+                    _userSearchCtrl.text = u['full_name'] as String? ?? '';
+                    _userResults = [];
+                  }),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    child: Row(children: [
+                      Icon(PhosphorIcons.user(), size: 14, color: _kGrey500),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(
+                        u['full_name'] as String? ?? '',
+                        style: GoogleFonts.inter(fontSize: 13, color: _kGrey900),
+                      )),
+                      Text(u['phone'] as String? ?? '',
+                          style: GoogleFonts.inter(fontSize: 11,
+                              color: _kGrey500)),
+                    ]),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -695,7 +731,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
         : _items.skip(_page * _kPageSize).take(_kPageSize).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF2F5F9),
       body: RefreshIndicator(
         onRefresh: _load,
         color: _kBlue,
@@ -706,30 +742,61 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Page header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                  // ── HERO ya gradient ──
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF0F3D73), Color(0xFF1D6FBF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     child: Row(children: [
                       Container(
-                        width: 46, height: 46,
-                        decoration: BoxDecoration(color: _kBlueBg,
-                            borderRadius: BorderRadius.circular(13)),
+                        width: 42, height: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         child: Icon(
                             PhosphorIcons.megaphone(PhosphorIconsStyle.fill),
-                            color: _kBlue, size: 22),
+                            color: Colors.white, size: 21),
                       ),
-                      const SizedBox(width: 14),
-                      Column(crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                        Text('Matangazo',
-                            style: GoogleFonts.inter(fontSize: 20,
-                                fontWeight: FontWeight.w800, color: _kGrey900)),
-                        Text('Tuma taarifa kwa watumiaji',
-                            style: GoogleFonts.inter(fontSize: 12.5,
-                                color: _kGrey500)),
-                      ]),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                          Text('Matangazo',
+                              style: GoogleFonts.inter(fontSize: 19,
+                                  fontWeight: FontWeight.w800, color: Colors.white)),
+                          Text('Tuma taarifa kwa watumiaji wote, idara, au mtu mmoja',
+                              style: GoogleFonts.inter(fontSize: 12,
+                                  color: Colors.white70)),
+                        ]),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Container(width: 7, height: 7,
+                              decoration: const BoxDecoration(
+                                  color: Color(0xFF4ADE80), shape: BoxShape.circle)),
+                          const SizedBox(width: 5),
+                          Text('LIVE',
+                              style: GoogleFonts.inter(
+                                  fontSize: 10.5, fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8, color: Colors.white)),
+                        ]),
+                      ),
                     ]),
                   ),
+                  const SizedBox(height: 14),
                   _buildSendForm(),
                   const SizedBox(height: 20),
                   Padding(
@@ -817,18 +884,18 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                       _PageBtn(
                         icon: PhosphorIcons.caretLeft(),
                         enabled: _page > 0,
-                        onTap: () => setState(() => _page--),
+                        onTap: () => _goToPage(_page - 1),
                       ),
                       for (int p = 0; p < totalPages; p++)
                         _PageNum(
                           n: p + 1,
                           active: _page == p,
-                          onTap: () => setState(() => _page = p),
+                          onTap: () => _goToPage(p),
                         ),
                       _PageBtn(
                         icon: PhosphorIcons.caretRight(),
                         enabled: _page < totalPages - 1,
-                        onTap: () => setState(() => _page++),
+                        onTap: () => _goToPage(_page + 1),
                       ),
                     ],
                   ),
