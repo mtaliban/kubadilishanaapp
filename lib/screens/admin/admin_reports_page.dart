@@ -1,41 +1,44 @@
-// Statistics — redesign kama reference mpya:
-//  - Background grey (#F6F7F9), kadi white zenye border
-//  - Live badge ya kijani + subtitle "real-time"
-//  - Filter CHIPS (Mkoa/Idara/Ngazi) na icons — picker sheets zenye search
-//  - KPI GRID yenye icons (Watumiaji waliopo +N wiki 7, Imethibitishwa,
-//    Mikoa yote, Wilaya zote, Wanaohamia wote)
-//  - Kwa idara / Walimu kwa ngazi → progress bars (%)
-//  - Kwa kada → ranked list (1,2,3…)
-//  - Kwa hali → progress bar
-//  - Waliopo na wanaohamia kwa mkoa → # | Mkoa | Waliopo | Wanaohamia + bar
-//  - Wanaohamia wanatoka wapi → # | Kutoka → Kwenda | hesabu
-//  - Watu kwa wilaya → jedwali (Wilaya/Waliopo/Hamia/Jumla)
-//  - Matukio ya hivi karibuni
-//  - Tab ya Watumiaji: search + orodha (Jina/Simu/Mkoa/Hali)
-//  - Data yote halisi kutoka API (adminStats + adminReports + adminUsers)
+// STATISTICS — PREMIUM DESIGN
+// ─────────────────────────────────────────────────────────────────────────────
+// Interface ya kisomi: hero ya gradient, segmented tabs, KPI cards zenye
+// icon-badges za rangi, progress bars zenye gradient + animation, rank
+// badges za dhahabu/fedha/shaba, filters kama chips za glass.
+// Data yote ni halisi kutoka API (adminStats + adminReports + adminUsers).
+// ─────────────────────────────────────────────────────────────────────────────
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 
-const _kBlue    = Color(0xFF185FA5);
-const _kBlueSel = Color(0xFF378ADD);
-const _kBlueBg  = Color(0xFFE6F1FB);
-const _kGreen   = Color(0xFF1D9E75);
-const _kGreenBg = Color(0xFFE6F6EC);
-const _kGreenTx = Color(0xFF0F6E56);
-const _kOrangeTx = Color(0xFFBA7517);
-const _kRed     = Color(0xFFDC2626);
-const _kRedBg   = Color(0xFFFCEBEB);
-const _kRedTx   = Color(0xFF791F1F);
-const _kPageBg  = Color(0xFFF6F7F9);
-const _kBorder  = Color(0xFFE7E7E5);
-const _kBarBg   = Color(0xFFF0F0EE);
-const _kT900    = Color(0xFF1F2937);
-const _kT600    = Color(0xFF4B5563);
-const _kT500    = Color(0xFF6B7280);
-const _kT400    = Color(0xFF9CA3AF);
-const _kT300    = Color(0xFFD1D5DB);
+// ── Palette ya premium ──────────────────────────────────────────────────────
+const _kPrimary    = Color(0xFF185FA5);
+const _kPrimary2   = Color(0xFF378ADD);
+const _kPageBg     = Color(0xFFF2F5F9);
+const _kCard       = Colors.white;
+const _kBorder     = Color(0xFFE3E9F0);
+const _kHero1      = Color(0xFF0F3D73); // gradient kushoto
+const _kHero2      = Color(0xFF1D6FBF); // gradient kulia
+const _kGreen      = Color(0xFF0E9F6E);
+const _kGreenBg    = Color(0xFFE8F9F1);
+const _kGreenTx    = Color(0xFF0B7A55);
+const _kOrangeTx   = Color(0xFFC2700E);
+const _kOrange     = Color(0xFFF59E0B);
+const _kRed        = Color(0xFFDC2626);
+const _kRedBg      = Color(0xFFFCEBEB);
+const _kRedTx      = Color(0xFF791F1F);
+const _kGold       = Color(0xFFB8860B);
+const _kGoldBg     = Color(0xFFFFF7DF);
+const _kSilver     = Color(0xFF5B6478);
+const _kSilverBg   = Color(0xFFEFF1F5);
+const _kBronze     = Color(0xFF9A5B1F);
+const _kBronzeBg   = Color(0xFFF9EDE2);
+const _kT900       = Color(0xFF141A2E);
+const _kT700       = Color(0xFF374151);
+const _kT500       = Color(0xFF6B7280);
+const _kT400       = Color(0xFF9CA3AF);
+const _kBarTrack   = Color(0xFFEDF0F4);
 
 class AdminReportsPage extends StatefulWidget {
   const AdminReportsPage({super.key});
@@ -43,7 +46,8 @@ class AdminReportsPage extends StatefulWidget {
   State<AdminReportsPage> createState() => _AdminReportsPageState();
 }
 
-class _AdminReportsPageState extends State<AdminReportsPage> {
+class _AdminReportsPageState extends State<AdminReportsPage>
+    with SingleTickerProviderStateMixin {
   bool _loading = true;
   String? _error;
   Map<String, dynamic> _data = {};
@@ -51,7 +55,10 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   List<dynamic> _events = [];
   String _tab = 'overview';
 
-  // Filters — label inaonekana kwenye chips
+  late final AnimationController _stagger = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 550));
+
+  // Filters
   String? _region;
   String? _regionId;
   String? _category;
@@ -63,6 +70,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   // Users tab
   final _usersCtrl = TextEditingController();
+  Timer? _usersDebounce;
   List<dynamic> _users = [];
   int _usersTotal = 0;
   bool _usersLoading = false;
@@ -73,11 +81,16 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     _load();
     _loadRefs();
     _loadUsers();
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) _stagger.forward();
+    });
   }
 
   @override
   void dispose() {
+    _stagger.dispose();
     _usersCtrl.dispose();
+    _usersDebounce?.cancel();
     super.dispose();
   }
 
@@ -157,7 +170,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     }
   }
 
-  // ── Pickers (bottom sheet + search, kama reference) ────────────────────────
+  // ── Pickers ────────────────────────────────────────────────────────────────
   Future<void> _pickRegion() async {
     final inData = <String>{
       for (final r in _list('users_by_region')) if ((r['region'] ?? '').toString().isNotEmpty) '${r['region']}',
@@ -167,7 +180,8 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         ? inData.map((n) => {'name': n}).toList()
         : _regions;
     final items = <_PickerItem>[
-      _PickerItem('Mkoa wote', 'Onyesha mikoa yote', '__all__', _regionId == null || _regionId!.isEmpty),
+      _PickerItem('Mkoa wote', 'Onyesha mikoa yote', '__all__',
+          _regionId == null || _regionId!.isEmpty),
       for (final r in source)
         _PickerItem(
           '${r['name'] ?? r['region_name'] ?? ''}',
@@ -176,7 +190,8 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
           '${r['id'] ?? r['region_id'] ?? r['name']}' == (_regionId ?? ''),
         ),
     ];
-    final picked = await _showPickerSheet('Chagua mkoa', items, _regionId == null || _regionId!.isEmpty);
+    final picked = await _showPickerSheet('Chagua mkoa', items,
+        _regionId == null || _regionId!.isEmpty);
     if (picked == null || !mounted) return;
     final r = source.firstWhere(
         (x) => '${x['id'] ?? x['region_id'] ?? x['name']}' == picked, orElse: () => null);
@@ -189,7 +204,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   Future<void> _pickCategory() async {
     final items = <_PickerItem>[
-      const _PickerItem('Idara zote', 'Onyesha idara zote', '__all__', true),
+      _PickerItem('Idara zote', 'Onyesha idara zote', '__all__', _category == null),
       for (final d in _departments)
         _PickerItem(
           '${d['name'] ?? d['display_name'] ?? d['code']}',
@@ -229,27 +244,37 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, ss) => SizedBox(
-          height: MediaQuery.of(ctx).size.height * 0.65,
+          height: MediaQuery.of(ctx).size.height * 0.68,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const SizedBox(height: 6),
-            Center(child: Container(width: 36, height: 4,
-                decoration: BoxDecoration(color: _kT300, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+            Center(child: Container(width: 40, height: 4,
+                decoration: BoxDecoration(color: _kBorder, borderRadius: BorderRadius.circular(99)))),
+            const SizedBox(height: 14),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: _kT900)),
-                IconButton(
-                  icon: Icon(PhosphorIcons.x(), size: 18, color: _kT500),
-                  onPressed: () => Navigator.pop(ctx),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(children: [
+                Container(width: 34, height: 34,
+                    decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [_kHero1, _kHero2]),
+                        borderRadius: BorderRadius.circular(10)),
+                    child: Icon(PhosphorIcons.magnifyingGlass(), size: 16, color: Colors.white)),
+                const SizedBox(width: 10),
+                Expanded(child: Text(title,
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kT900))),
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(width: 30, height: 30,
+                      decoration: const BoxDecoration(color: _kBarTrack, shape: BoxShape.circle),
+                      child: Icon(PhosphorIcons.x(), size: 14, color: _kT700)),
                 ),
               ]),
             ),
+            const SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               child: TextField(
                 controller: ctrl,
                 onChanged: (q) {
@@ -258,19 +283,20 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                 },
                 decoration: InputDecoration(
                   hintText: 'Tafuta...',
-                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 18, color: _kT400),
+                  hintStyle: const TextStyle(color: _kT400, fontSize: 13),
+                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 17, color: _kT400),
                   filled: true,
                   fillColor: _kPageBg,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
                 children: [
                   for (final item in filtered)
                     _pickerTile(item.label, item.sub,
@@ -286,16 +312,17 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   }
 
   Widget _pickerTile(String label, String? sub, bool selected, VoidCallback onTap) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
-          color: selected ? _kBlueBg : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: selected ? Border.all(color: _kBlueSel) : null,
+          color: selected ? _kPrimary.withValues(alpha: 0.07) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: selected ? _kPrimary2 : _kBorder,
+              width: selected ? 1.4 : 1),
         ),
         child: Row(
           children: [
@@ -303,18 +330,20 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: selected ? _kBlue : _kT900,
-                      )),
+                  Text(label, style: TextStyle(
+                      fontSize: 13.5, fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: selected ? _kPrimary : _kT900)),
                   if (sub != null)
-                    Text(sub, style: const TextStyle(fontSize: 12, color: _kT400)),
+                    Text(sub, style: const TextStyle(fontSize: 11, color: _kT400)),
                 ],
               ),
             ),
-            if (selected) Icon(PhosphorIcons.check(), color: _kBlue, size: 18),
+            if (selected)
+              Container(width: 22, height: 22,
+                  decoration: const BoxDecoration(
+                      gradient: LinearGradient(colors: [_kHero1, _kHero2]),
+                      shape: BoxShape.circle),
+                  child: Icon(PhosphorIcons.check(), size: 12, color: Colors.white)),
           ],
         ),
       ),
@@ -394,20 +423,33 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       color: _kPageBg,
       child: RefreshIndicator(
         onRefresh: () => _load(refresh: true),
-        color: _kBlue,
+        color: _kPrimary,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(child: _header()),
+            // ── HERO ya gradient (imeunganisha header + live + chips) ──
+            SliverToBoxAdapter(child: _hero(totals)),
             if (_loading)
               const SliverFillRemaining(
                 hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator(color: _kBlue)),
+                child: Center(child: CircularProgressIndicator(color: _kPrimary)),
               )
             else ...[
-              SliverToBoxAdapter(child: _tab == 'users'
-                  ? _usersTab()
-                  : _overviewBody(totals)),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    if (_error != null) _errorBanner(),
+                    _segmentedTabs(),
+                    const SizedBox(height: 14),
+                    AnimatedBuilder(
+                        animation: _stagger,
+                        builder: (context, _) => _tab == 'users'
+                            ? _usersTab()
+                            : _overviewBody(totals)),
+                  ]),
+                ),
+              ),
             ],
           ],
         ),
@@ -415,154 +457,178 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     );
   }
 
-  // ── Overview body (live row + chips + KPI grid + sections) ─────────────
-  Widget _overviewBody(Map<String, dynamic> totals) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (_error != null) _errorBanner(),
-        _liveRow(),
-        const SizedBox(height: 12),
-        _filterChips(),
-        const SizedBox(height: 14),
-        _kpiGrid(totals),
-        const SizedBox(height: 14),
-        ..._overviewSections(totals),
-        const SizedBox(height: 24),
-      ]),
-    );
-  }
-
-  // ── Header (Statistics + subtitle) ────────────────────────────────────────
-  Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Statistics',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: _kT900)),
-        const SizedBox(height: 2),
-        const Text('Takwimu za mfumo mzima — mikoa, idara, kada (real-time)',
-            style: TextStyle(fontSize: 12.5, color: _kT500)),
-        const SizedBox(height: 10),
-        Container(
-          decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _kBorder))),
-          child: Row(children: [
-            for (final (idx, (lbl, key)) in [('Statistics', 'overview'), ('Watumiaji', 'users')].indexed) ...[
-              if (idx > 0) const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => setState(() => _tab = key),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: _tab == key ? _kBlue : Colors.transparent,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  child: Text(lbl,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: _tab == key ? _kBlue : _kT500,
-                      )),
+  // ── HERO: gradient + title + live pill + filter chips ────────────────────
+  Widget _hero(Map<String, dynamic> totals) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [_kHero1, _kHero2],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Icon(PhosphorIcons.chartBar(PhosphorIconsStyle.fill),
+                    color: Colors.white, size: 20),
               ),
-            ],
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Statistics',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+                  SizedBox(height: 2),
+                  Text('Takwimu za mfumo mzima — mikoa, idara, kada',
+                      style: TextStyle(fontSize: 12, color: Colors.white70)),
+                ]),
+              ),
+              // Live pill ya glass
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(width: 7, height: 7,
+                      decoration: const BoxDecoration(color: Color(0xFF4ADE80), shape: BoxShape.circle)),
+                  const SizedBox(width: 5),
+                  const Text('LIVE',
+                      style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8, color: Colors.white)),
+                ]),
+              ),
+            ]),
+            const SizedBox(height: 14),
+            // Chips za glass
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(children: [
+                _heroChip(PhosphorIcons.mapPin(),
+                    _region == null || _region!.isEmpty ? 'Mkoa wote' : _region!,
+                    _regionId != null, _pickRegion),
+                const SizedBox(width: 8),
+                _heroChip(PhosphorIcons.buildings(),
+                    _category == null ? 'Idara zote' : _categoryName,
+                    _category != null, _pickCategory),
+                const SizedBox(width: 8),
+                _heroChip(PhosphorIcons.graduationCap(),
+                    _level.isEmpty ? 'Ngazi zote' : _level,
+                    _level.isNotEmpty, _pickLevel),
+              ]),
+            ),
           ]),
         ),
+      ),
+    );
+  }
+
+  Widget _heroChip(IconData icon, String label, bool active, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? Colors.white : Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: active ? Colors.white : Colors.white24),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 14, color: active ? _kPrimary : Colors.white),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(
+              fontSize: 12.5, fontWeight: FontWeight.w700,
+              color: active ? _kPrimary : Colors.white)),
+          const SizedBox(width: 4),
+          Icon(PhosphorIcons.caretDown(), size: 12,
+              color: active ? _kPrimary : Colors.white70),
+        ]),
+      ),
+    );
+  }
+
+  // ── Segmented tabs (pills ndani ya track) ────────────────────────────────
+  Widget _segmentedTabs() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _kBarTrack,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(children: [
+        _segTab(PhosphorIcons.chartBar(), 'Statistics', 'overview'),
+        _segTab(PhosphorIcons.usersThree(), 'Watumiaji', 'users'),
       ]),
     );
   }
 
-  // ── Live row (kama reference: subtitle + green Live pill) ─────────────────
-  Widget _liveRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Expanded(
-          child: Text('Takwimu za mfumo mzima — real-time',
-              style: TextStyle(fontSize: 13, color: _kT500)),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+  Widget _segTab(IconData icon, String label, String key) {
+    final active = _tab == key;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _tab = key),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
-            color: _kGreenBg,
-            borderRadius: BorderRadius.circular(20),
+            color: active ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: active ? [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 8, offset: const Offset(0, 2)),
+            ] : null,
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(PhosphorIcons.circle(PhosphorIconsStyle.fill),
-                size: 8, color: _kGreen),
-            const SizedBox(width: 4),
-            const Text('Live',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGreenTx)),
-          ]),
-        ),
-      ],
-    );
-  }
-
-  // ── Filter chips (Mkoa / Idara / Ngazi) — kama reference ──────────────────
-  Widget _filterChips() {
-    Widget chip(IconData icon, String label, bool active, VoidCallback onTap) {
-      return InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: active ? _kBlueBg : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: active ? _kBlueSel : _kBorder),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 15, color: active ? _kBlue : _kT500),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(icon, size: 14, color: active ? _kPrimary : _kT500),
             const SizedBox(width: 6),
             Text(label, style: TextStyle(
-                fontSize: 13, color: active ? _kBlue : _kT900,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w400)),
-            const SizedBox(width: 4),
-            Icon(PhosphorIcons.caretDown(), size: 13, color: active ? _kBlue : _kT400),
+                fontSize: 13, fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                color: active ? _kPrimary : _kT500)),
           ]),
         ),
-      );
-    }
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(children: [
-        chip(PhosphorIcons.mapPin(),
-            _region == null || _region!.isEmpty ? 'Mkoa wote' : _region!,
-            _regionId != null, _pickRegion),
-        const SizedBox(width: 8),
-        chip(PhosphorIcons.buildings(),
-            _category == null ? 'Idara zote' : _categoryName,
-            _category != null, _pickCategory),
-        const SizedBox(width: 8),
-        chip(PhosphorIcons.graduationCap(),
-            _level.isEmpty ? 'Ngazi zote' : _level,
-            _level.isNotEmpty, _pickLevel),
-      ]),
+      ),
     );
   }
 
-  // ── KPI GRID yenye icons (2 kwa safu) ─────────────────────────────────────
+  // ── OVERVIEW BODY ─────────────────────────────────────────────────────────
+  Widget _overviewBody(Map<String, dynamic> totals) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _kpiGrid(totals),
+      const SizedBox(height: 4),
+      ..._overviewSections(totals),
+      const SizedBox(height: 10),
+    ]);
+  }
+
+  // ── KPI GRID yenye icon-badges za rangi ───────────────────────────────────
   Widget _kpiGrid(Map<String, dynamic> totals) {
     final incomingTotal = _list('incoming_by_region')
         .fold<int>(0, (s, r) => s + ((r['count'] as num?)?.toInt() ?? 0));
+    final users7d = (totals['users_active_7d'] as num?)?.toInt() ?? 0;
     final items = [
-      _KpiItem(PhosphorIcons.users(), 'Watumiaji waliopo',
-          '${_reportUsersTotal >= 1000 ? _thousands(_reportUsersTotal) : _reportUsersTotal}',
-          '+${totals['users_active_7d'] ?? 0} wiki 7', _kGreen),
-      _KpiItem(PhosphorIcons.shieldCheck(), 'Imethibitishwa',
-          '${totals['users_verified'] ?? '—'}', null, null),
-      _KpiItem(PhosphorIcons.mapPin(), 'Mikoa yote',
-          '${_int('regions_total')}', null, null),
-      _KpiItem(PhosphorIcons.mapTrifold(), 'Wilaya zote',
-          '${_int('districts_total')}', null, null),
-      _KpiItem(PhosphorIcons.arrowsLeftRight(), 'Wanaohamia wote',
-          '${incomingTotal >= 1000 ? _thousands(incomingTotal) : incomingTotal}', null, null),
+      _KpiItem(PhosphorIcons.users(PhosphorIconsStyle.fill), 'Watumiaji waliopo',
+          _reportUsersTotal, const [_kHero1, _kHero2],
+          sub: '+$users7d wiki 7', subColor: _kGreenTx),
+      _KpiItem(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill), 'Imethibitishwa',
+          (totals['users_verified'] as num?)?.toInt() ?? 0, [_kGreen, const Color(0xFF34D399)]),
+      _KpiItem(PhosphorIcons.mapPin(PhosphorIconsStyle.fill), 'Mikoa yote',
+          _int('regions_total'), [_kOrange, const Color(0xFFFBBF24)]),
+      _KpiItem(PhosphorIcons.mapTrifold(PhosphorIconsStyle.fill), 'Wilaya zote',
+          _int('districts_total'), const [Color(0xFF7C3AED), Color(0xFFA78BFA)]),
+      _KpiItem(PhosphorIcons.arrowsLeftRight(PhosphorIconsStyle.fill), 'Wanaohamia wote',
+          incomingTotal, [const Color(0xFFDC2626), const Color(0xFFF87171)]),
     ];
 
     return GridView.builder(
@@ -573,33 +639,57 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         crossAxisCount: 2,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        childAspectRatio: 1.55,
+        childAspectRatio: 1.42,
       ),
       itemBuilder: (context, index) {
         final item = items[index];
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _kBorder),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(item.icon, size: 18, color: _kBlue),
-              const Spacer(),
-              Text(item.value,
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.w700, color: _kT900)),
-              Text(item.label, style: const TextStyle(fontSize: 12, color: _kT500)),
-              if (item.sub != null) ...[
-                const SizedBox(height: 2),
-                Text(item.sub!,
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w600, color: _kGreen)),
-              ],
-            ],
+        final t = _stagger.value.clamp(0.0, 1.0);
+        final delay = (index * 0.08).clamp(0.0, 0.6);
+        final appear = ((t - delay) / 0.4).clamp(0.0, 1.0);
+        return Opacity(
+          opacity: appear,
+          child: Transform.translate(
+            offset: Offset(0, (1 - appear) * 14),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _kCard,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _kBorder),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10, offset: const Offset(0, 3)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 30, height: 30,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: item.colors),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(item.icon, size: 15, color: Colors.white),
+                  ),
+                  const Spacer(),
+                  Text(item.value >= 1000 ? _thousands(item.value) : '${item.value}',
+                      style: const TextStyle(
+                          fontSize: 22, fontWeight: FontWeight.w800, color: _kT900)),
+                  const SizedBox(height: 2),
+                  Text(item.label,
+                      style: const TextStyle(fontSize: 11.5, color: _kT500),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  if (item.sub != null) ...[
+                    const SizedBox(height: 2),
+                    Text(item.sub!,
+                        style: TextStyle(
+                            fontSize: 10.5, fontWeight: FontWeight.w700,
+                            color: item.subColor ?? _kGreenTx)),
+                  ],
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -630,60 +720,102 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
               .compareTo((a['count'] as num?)?.toInt() ?? 0)));
 
     return [
-      // ── Kwa idara — progress bars ──
-      _card('Kwa idara', child: _progressList([
-        for (final c in byDept)
-          (
-            '${c['name'] ?? _deptLabel('${c['category']}')}',
-            (c['count'] as num?)?.toInt() ?? 0,
-          ),
-      ])),
+      _section('Kwa Idara', PhosphorIcons.buildings(),
+          child: _progressList([
+            for (final c in byDept)
+              ('${c['name'] ?? _deptLabel('${c['category']}')}',
+               (c['count'] as num?)?.toInt() ?? 0),
+          ])),
 
-      // ── Walimu kwa ngazi — progress bars ──
-      _card('Walimu kwa ngazi', child: _progressList([
-        ('Walimu wa Msingi', priCount),
-        ('Walimu wa Sekondari', secCount),
-        if (noneCount > 0) ('Hakuna ngazi', noneCount),
-      ])),
+      _section('Walimu kwa Ngazi', PhosphorIcons.graduationCap(),
+          child: _progressList([
+            ('Walimu wa Msingi', priCount),
+            ('Walimu wa Sekondari', secCount),
+            if (noneCount > 0) ('Hakuna ngazi', noneCount),
+          ])),
 
-      // ── Kwa kada — ranked list ──
-      _card('Kwa kada', child: _rankedList([
-        for (final c in byCadre.take(20))
-          (
-            '${c['cadre_name'] ?? c['cadre']}${(c['level'] ?? '').toString().isEmpty ? '' : ' (${c['level']})'}',
-            (c['count'] as num?)?.toInt() ?? 0,
-          ),
-      ])),
+      _section('Kwa Kada', PhosphorIcons.identificationBadge(),
+          child: _rankedList([
+            for (final c in byCadre.take(15))
+              (
+                '${c['cadre_name'] ?? c['cadre']}${(c['level'] ?? '').toString().isEmpty ? '' : ' (${c['level']})'}',
+                (c['count'] as num?)?.toInt() ?? 0,
+              ),
+          ])),
 
-      // ── Kwa hali — progress bars ──
-      _card('Kwa hali', child: _progressList([
-        for (final s in byStatus)
-          (_statusLabel('${s['status']}'), (s['count'] as num?)?.toInt() ?? 0),
-      ])),
+      _section('Kwa Hali', PhosphorIcons.checkCircle(),
+          child: _progressList([
+            for (final s in byStatus)
+              (_statusLabel('${s['status']}'), (s['count'] as num?)?.toInt() ?? 0),
+          ])),
 
-      // ── Waliopo na wanaohamia kwa mkoa ──
-      _card('Waliopo na wanaohamia kwa mkoa',
+      _section('Waliopo na Wanaohamia kwa Mkoa', PhosphorIcons.mapPin(),
+          hint: 'Walio (bluu) + Wanaohamia (chungwa) — kila mkoa',
           child: _mkoaMigrationList(_byRegion.take(30).toList())),
 
-      // ── Wanaohamia wanatoka wapi ──
       if (_list('incoming_sources').isNotEmpty)
-        _card(
-          'Wanaohamia wanatoka wapi${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
+        _section(
+          'Wanaohamia Wanatoka Wapi${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
+          PhosphorIcons.arrowsLeftRight(),
           child: _migrationFlowTable(_list('incoming_sources').take(15).toList()),
         ),
 
-      // ── Watu kwa wilaya ──
-      _card(
-        'Watu kwa wilaya${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
+      _section(
+        'Watu kwa Wilaya${_region != null && _region!.isNotEmpty ? ' — $_region' : ''}',
+        PhosphorIcons.mapTrifold(),
         child: _wilayaTable(_byDistrict().take(20).toList()),
       ),
 
-      // ── Matukio ya hivi karibuni ──
-      _eventsCard(),
+      _section('Matukio ya Hivi Karibuni', PhosphorIcons.bell(),
+          child: _eventsList()),
     ];
   }
 
-  // ── Progress list (kama reference: label + hesabu + blue bar) ─────────────
+  // ── Section card yenye icon badge ─────────────────────────────────────────
+  Widget _section(String title, IconData icon, {String? hint, required Widget child}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _kCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kBorder),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10, offset: const Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              width: 28, height: 28,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [_kHero1, _kHero2]),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 14, color: Colors.white),
+            ),
+            const SizedBox(width: 9),
+            Expanded(child: Text(title, style: const TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w800, color: _kT900))),
+          ]),
+          if (hint != null) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(left: 37),
+              child: Text(hint, style: const TextStyle(fontSize: 11, color: _kT400)),
+            ),
+          ],
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
+  // ── Progress bars zenye gradient + % pill ─────────────────────────────────
   Widget _progressList(List<(String, int)> data) {
     if (data.isEmpty) return _empty();
     final total = data.fold<int>(0, (s, d) => s + d.$2);
@@ -691,26 +823,39 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       children: data.map((d) {
         final pct = total > 0 ? (d.$2 / total * 100).round() : 0;
         return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(child: Text(d.$1, style: const TextStyle(fontSize: 13, color: _kT900))),
-                  Text('${d.$2 >= 1000 ? _thousands(d.$2) : d.$2}  ·  $pct%',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900)),
+                  Expanded(child: Text(d.$1,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900),
+                      overflow: TextOverflow.ellipsis)),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                        color: _kPrimary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6)),
+                    child: Text('$pct%',
+                        style: const TextStyle(
+                            fontSize: 10.5, fontWeight: FontWeight.w800, color: _kPrimary)),
+                  ),
+                  const SizedBox(width: 8),
+                  Text('${d.$2 >= 1000 ? _thousands(d.$2) : d.$2}',
+                      style: const TextStyle(
+                          fontSize: 13.5, fontWeight: FontWeight.w800, color: _kT900)),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(99),
                 child: LinearProgressIndicator(
                   value: (pct / 100).clamp(0, 1).toDouble(),
-                  minHeight: 6,
-                  backgroundColor: _kBarBg,
-                  valueColor: const AlwaysStoppedAnimation(_kBlueSel),
+                  minHeight: 7,
+                  backgroundColor: _kBarTrack,
+                  valueColor: const AlwaysStoppedAnimation(_kPrimary2),
                 ),
               ),
             ],
@@ -720,9 +865,11 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     );
   }
 
-  // ── Ranked list (1,2,3…) kama reference ───────────────────────────────────
+  // ── Ranked list na badges za dhahabu/fedha/shaba ─────────────────────────
   Widget _rankedList(List<(String, int)> data) {
     if (data.isEmpty) return _empty();
+    Color rankColor(int i) => i == 0 ? _kGold : i == 1 ? _kSilver : i == 2 ? _kBronze : _kT400;
+    Color rankBg(int i) => i == 0 ? _kGoldBg : i == 1 ? _kSilverBg : i == 2 ? _kBronzeBg : _kBarTrack;
     return Column(
       children: List.generate(data.length, (i) {
         final d = data[i];
@@ -730,18 +877,22 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
           padding: const EdgeInsets.only(bottom: 8),
           child: Row(
             children: [
-              SizedBox(
-                width: 22,
+              Container(
+                width: 26, height: 26,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: rankBg(i), shape: BoxShape.circle),
                 child: Text('${i + 1}',
-                    style: const TextStyle(fontSize: 12, color: _kT400)),
+                    style: TextStyle(
+                        fontSize: 11.5, fontWeight: FontWeight.w800, color: rankColor(i))),
               ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(d.$1,
-                    style: const TextStyle(fontSize: 13, color: _kT900),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900),
                     overflow: TextOverflow.ellipsis),
               ),
               Text(d.$2 >= 1000 ? _thousands(d.$2) : '${d.$2}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900)),
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: _kT900)),
             ],
           ),
         );
@@ -749,48 +900,47 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     );
   }
 
-  // ── Mkoa migration list (# | Mkoa | Waliopo | Wanaohamia + bar) ───────────
+  // ── Mkoa migration (# | Mkoa | Waliopo | Wanaohamia + gradient bar) ───────
   Widget _mkoaMigrationList(List<({String region, int current, int incoming})> data) {
     if (data.isEmpty) return _empty();
     final maxIncoming = data.map((e) => e.incoming).reduce((a, b) => a > b ? a : b);
+    const hs = TextStyle(
+        fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: _kT400);
     return Column(
       children: [
-        // header
         Padding(
           padding: const EdgeInsets.only(bottom: 6),
           child: Row(children: [
-            const SizedBox(width: 22),
-            const Expanded(flex: 3, child: Text('MKOA',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: _kT400))),
+            const SizedBox(width: 26),
+            const Expanded(flex: 3, child: Text('MKOA', style: hs)),
             const Expanded(flex: 2, child: Text('WALIOPO',
-                textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: _kT400))),
+                textAlign: TextAlign.right, style: hs)),
             const SizedBox(width: 10),
-            const Expanded(flex: 5, child: Text('WANAOHAMIA',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: _kT400))),
+            const Expanded(flex: 5, child: Text('WANAOHAMIA', style: hs)),
           ]),
         ),
         for (final (i, m) in data.indexed)
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 9),
             child: Row(
               children: [
                 SizedBox(
-                  width: 22,
+                  width: 26,
                   child: Text('${i + 1}',
-                      style: const TextStyle(fontSize: 12, color: _kT400)),
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _kT400)),
                 ),
                 Expanded(
                   flex: 3,
                   child: Text(m.region,
-                      style: const TextStyle(fontSize: 13, color: _kT900),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _kT900),
                       overflow: TextOverflow.ellipsis),
                 ),
                 Expanded(
                   flex: 2,
                   child: Text('${m.current}',
                       textAlign: TextAlign.right,
-                      style: const TextStyle(fontSize: 13, color: _kT900)),
+                      style: const TextStyle(
+                          fontSize: 13.5, fontWeight: FontWeight.w700, color: _kT700)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -799,16 +949,16 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                     children: [
                       Text('${m.incoming}',
                           style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600, color: _kOrangeTx)),
+                              fontSize: 13, fontWeight: FontWeight.w800, color: _kOrangeTx)),
                       const SizedBox(width: 6),
                       Expanded(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(99),
                           child: LinearProgressIndicator(
                             value: maxIncoming > 0 ? m.incoming / maxIncoming : 0,
                             minHeight: 6,
-                            backgroundColor: _kBarBg,
-                            valueColor: const AlwaysStoppedAnimation(_kBlueSel),
+                            backgroundColor: _kBarTrack,
+                            valueColor: const AlwaysStoppedAnimation(_kOrange),
                           ),
                         ),
                       ),
@@ -822,7 +972,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     );
   }
 
-  // ── Migration flow (# | Kutoka → Kwenda | hesabu) ─────────────────────────
+  // ── Migration flow (Kutoka → Kwenda | hesabu) ────────────────────────────
   Widget _migrationFlowTable(List<Map<String, dynamic>> data) {
     if (data.isEmpty) return _empty();
     return Column(
@@ -833,23 +983,37 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
           child: Row(
             children: [
               SizedBox(
-                width: 22,
+                width: 26,
                 child: Text('${i + 1}',
-                    style: const TextStyle(fontSize: 12, color: _kT400)),
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _kT400)),
               ),
               Expanded(
                   child: Text('${f['from']}',
-                      style: const TextStyle(fontSize: 13, color: _kT900),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900),
                       overflow: TextOverflow.ellipsis)),
-              Icon(PhosphorIcons.arrowRight(), size: 14, color: _kT400),
-              const SizedBox(width: 6),
+              Container(
+                width: 24, height: 24,
+                decoration: BoxDecoration(
+                    color: _kOrange.withValues(alpha: 0.12),
+                    shape: BoxShape.circle),
+                child: Icon(PhosphorIcons.arrowRight(), size: 12, color: _kOrangeTx),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text('${f['to']}',
-                    style: const TextStyle(fontSize: 13, color: _kOrangeTx),
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700, color: _kOrangeTx),
                     overflow: TextOverflow.ellipsis),
               ),
-              Text('${f['count'] ?? 0}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(
+                    color: _kOrange.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8)),
+                child: Text('${f['count'] ?? 0}',
+                    style: const TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w800, color: _kOrangeTx)),
+              ),
             ],
           ),
         );
@@ -857,57 +1021,66 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     );
   }
 
-  // ── Wilaya table (Wilaya / Waliopo / Hamia / Jumla) ───────────────────────
+  // ── Wilaya table (Wilaya / Waliopo / Hamia / Jumla) ──────────────────────
   Widget _wilayaTable(List<({String region, int current, int incoming})> data) {
     if (data.isEmpty) return _empty();
-    const hs = TextStyle(
-        fontSize: 12, color: _kT500);
+    const hs = TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
+        letterSpacing: 0.4, color: _kT400);
     return Column(
       children: [
         Table(
           columnWidths: const {
             0: FlexColumnWidth(3),
-            1: FlexColumnWidth(1.5),
-            2: FlexColumnWidth(1.5),
-            3: FlexColumnWidth(1.5),
+            1: FlexColumnWidth(1.4),
+            2: FlexColumnWidth(1.4),
+            3: FlexColumnWidth(1.4),
           },
           children: [
             const TableRow(children: [
               Padding(padding: EdgeInsets.symmetric(vertical: 6),
-                  child: Text('Wilaya', style: hs)),
+                  child: Text('WILAYA', style: hs)),
               Padding(padding: EdgeInsets.symmetric(vertical: 6),
-                  child: Text('Waliopo', textAlign: TextAlign.right, style: hs)),
+                  child: Text('WALIOPO', textAlign: TextAlign.right, style: hs)),
               Padding(padding: EdgeInsets.symmetric(vertical: 6),
-                  child: Text('Hamia', textAlign: TextAlign.right, style: hs)),
+                  child: Text('HAMIA', textAlign: TextAlign.right, style: hs)),
               Padding(padding: EdgeInsets.symmetric(vertical: 6),
-                  child: Text('Jumla', textAlign: TextAlign.right, style: hs)),
+                  child: Text('JUMLA', textAlign: TextAlign.right, style: hs)),
             ]),
             for (final w in data)
               TableRow(
                 decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: _kBarBg))),
+                    border: Border(top: BorderSide(color: _kBarTrack))),
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
                     child: Text(w.region,
-                        style: const TextStyle(fontSize: 13, color: _kT900),
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600, color: _kT900),
                         overflow: TextOverflow.ellipsis),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
                     child: Text('${w.current}', textAlign: TextAlign.right,
-                        style: const TextStyle(fontSize: 13, color: _kT900)),
+                        style: const TextStyle(fontSize: 13, color: _kT700)),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
                     child: Text('${w.incoming}', textAlign: TextAlign.right,
-                        style: const TextStyle(fontSize: 13, color: _kOrangeTx)),
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700, color: _kOrangeTx)),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text('${w.current + w.incoming}', textAlign: TextAlign.right,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w700, color: _kBlue)),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                          color: _kPrimary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(7)),
+                      child: Text('${w.current + w.incoming}', textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontSize: 12.5, fontWeight: FontWeight.w800, color: _kPrimary)),
+                    ),
                   ),
                 ],
               ),
@@ -917,69 +1090,217 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     );
   }
 
-  // ── Matukio ya hivi karibuni ──────────────────────────────────────────────
-  Widget _eventsCard() {
-    return _card('', child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  // ── Matukio ───────────────────────────────────────────────────────────────
+  Widget _eventsList() {
+    if (_events.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text('Hakuna matukio ya hivi karibuni.',
+            style: TextStyle(fontSize: 13, color: _kT400)),
+      );
+    }
+    return Column(
       children: [
-        Row(children: [
-          Icon(PhosphorIcons.bell(), size: 16, color: _kT900),
-          const SizedBox(width: 8),
-          const Text('Matukio ya hivi karibuni',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kT900)),
-        ]),
-        const SizedBox(height: 8),
-        if (_events.isEmpty)
-          const Text('Hakuna matukio ya hivi karibuni.',
-              style: TextStyle(fontSize: 13, color: _kT400)),
-        ..._events.take(6).map((e) {
-          final m = e as Map<String, dynamic>;
-          final type = m['event_type'] as String? ?? '';
-          final title = m['title'] as String? ?? _eventTitle(type);
-          final time = m['occurred_at'] as String? ?? '';
-          return Container(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: _kBarBg, width: 1))),
-            child: Row(children: [
-              _eventIcon(type),
-              const SizedBox(width: 8),
-              Expanded(
-                  child: Text(title,
-                      style: const TextStyle(fontSize: 12, color: _kT600),
-                      overflow: TextOverflow.ellipsis)),
-              const SizedBox(width: 6),
-              Text(_fmtTime(time),
-                  style: const TextStyle(fontSize: 10, color: _kT400)),
-            ]),
-          );
-        }),
+        for (final e in _events.take(6))
+          Builder(builder: (_) {
+            final m = e as Map<String, dynamic>;
+            final type = m['event_type'] as String? ?? '';
+            final title = m['title'] as String? ?? _eventTitle(type);
+            final time = m['occurred_at'] as String? ?? '';
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 7),
+              decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: _kBarTrack, width: 1))),
+              child: Row(children: [
+                _eventIcon(type),
+                const SizedBox(width: 9),
+                Expanded(
+                    child: Text(title,
+                        style: const TextStyle(
+                            fontSize: 12.5, fontWeight: FontWeight.w500, color: _kT700),
+                        overflow: TextOverflow.ellipsis)),
+                const SizedBox(width: 6),
+                Text(_fmtTime(time),
+                    style: const TextStyle(fontSize: 10.5, color: _kT400)),
+              ]),
+            );
+          }),
       ],
-    ));
+    );
   }
 
-  // ── Card wrapper (white, border, radius 14) ───────────────────────────────
-  Widget _card(String title, {required Widget child}) {
+  // ── TAB: WATUMIAJI (cards premium) ────────────────────────────────────────
+  Widget _usersTab() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // Search bar ya premium
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _kBorder),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10, offset: const Offset(0, 3)),
+          ],
+        ),
+        child: Row(children: [
+          Icon(PhosphorIcons.magnifyingGlass(), size: 17, color: _kT400),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _usersCtrl,
+              style: const TextStyle(fontSize: 13.5, color: _kT900),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 13),
+                hintText: 'Tafuta mtumiaji...',
+                hintStyle: TextStyle(color: _kT400, fontSize: 13),
+              ),
+              onChanged: (v) {
+                _usersDebounce?.cancel();
+                _usersDebounce = Timer(const Duration(milliseconds: 400),
+                    () => _loadUsers(q: v));
+              },
+            ),
+          ),
+          if (_usersCtrl.text.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                _usersCtrl.clear();
+                _loadUsers();
+              },
+              child: Icon(PhosphorIcons.x(), size: 15, color: _kT400),
+            ),
+        ]),
+      ),
+      const SizedBox(height: 10),
+      Row(children: [
+        Text('Jumla: ${_usersLoading ? '...' : _usersTotal}',
+            style: const TextStyle(fontSize: 12.5, color: _kT500,
+                fontWeight: FontWeight.w600)),
+      ]),
+      const SizedBox(height: 10),
+      if (_usersLoading && _users.isEmpty)
+        const Padding(
+          padding: EdgeInsets.all(32),
+          child: Center(child: CircularProgressIndicator(color: _kPrimary)),
+        )
+      else if (_users.isEmpty)
+        Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _kBorder)),
+          child: Column(children: [
+            Icon(PhosphorIcons.usersThree(), size: 40, color: _kT400),
+            const SizedBox(height: 10),
+            const Text('Hakuna watumiaji',
+                style: TextStyle(color: _kT500, fontSize: 14,
+                    fontWeight: FontWeight.w600)),
+          ]),
+        )
+      else
+        ..._users.take(50).map((u) => _userCard(u as Map<String, dynamic>)),
+    ]);
+  }
+
+  Widget _userCard(Map<String, dynamic> u) {
+    final name    = (u['full_name'] ?? '') as String;
+    final phone   = (u['phone_primary'] ?? u['phone'] ?? '') as String;
+    final cadre   = (u['cadre_display'] ?? u['cadre_code'] ?? '') as String;
+    final station = (u['current_station'] as Map?) ?? {};
+    final region  = (station['region_name'] ?? '') as String;
+    final st      = '${u['status'] ?? 'active'}'.toLowerCase();
+    final hai     = st == 'active';
+    final isPaid  = (u['is_verified'] as bool?) ?? false;
+    final isAdmin = (u['is_admin'] as bool?) ?? false;
+    final init    = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(color: _kBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (title.isNotEmpty) ...[
-            Text(title, style: const TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600, color: _kT900)),
-            const SizedBox(height: 10),
-          ],
-          child,
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
+      child: Row(children: [
+        // Avatar na gradient
+        Container(
+          width: 42, height: 42,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [_kHero1, _kHero2]),
+              shape: BoxShape.circle),
+          child: Text(init,
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(child: Text(name,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700, color: _kT900),
+                  overflow: TextOverflow.ellipsis)),
+              if (isAdmin) ...[
+                const SizedBox(width: 4),
+                Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
+                    size: 13, color: _kPrimary),
+              ],
+            ]),
+            const SizedBox(height: 3),
+            Row(children: [
+              Icon(PhosphorIcons.phone(), size: 11, color: _kT400),
+              const SizedBox(width: 4),
+              Text(phone, style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, color: _kPrimary)),
+              if (region.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Icon(PhosphorIcons.mapPin(), size: 11, color: _kT400),
+                const SizedBox(width: 3),
+                Flexible(child: Text(region,
+                    style: const TextStyle(fontSize: 11.5, color: _kT500),
+                    overflow: TextOverflow.ellipsis)),
+              ],
+            ]),
+          ]),
+        ),
+        const SizedBox(width: 8),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          // Hali badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: hai ? _kGreenBg : _kRedBg,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Text(hai ? 'Hai' : 'Haipo',
+                style: TextStyle(
+                    fontSize: 10.5, fontWeight: FontWeight.w800,
+                    color: hai ? _kGreenTx : _kRedTx)),
+          ),
+          if (cadre.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(cadre,
+                style: const TextStyle(fontSize: 10, color: _kT400),
+                overflow: TextOverflow.ellipsis),
+          ],
+          if (isPaid) ...[
+            const SizedBox(height: 4),
+            Icon(PhosphorIcons.sealCheck(PhosphorIconsStyle.fill),
+                size: 13, color: _kGreen),
+          ],
+        ]),
+      ]),
     );
   }
 
@@ -995,11 +1316,12 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: _kRedBg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFFECACA)),
       ),
       child: Row(children: [
-        Icon(PhosphorIcons.warningCircle(), size: 16, color: _kRed),
+        Icon(PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
+            size: 16, color: _kRed),
         const SizedBox(width: 8),
         const Expanded(
           child: Text('Hitilafu kupakua takwimu — jaribu tena.',
@@ -1008,136 +1330,15 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         GestureDetector(
           onTap: () => _load(refresh: true),
           child: const Text('Jaribu tena',
-              style: TextStyle(fontSize: 12, color: _kBlue, fontWeight: FontWeight.w600)),
+              style: TextStyle(fontSize: 12, color: _kPrimary, fontWeight: FontWeight.w700)),
         ),
       ]),
     );
-  }
-
-  // ── TAB: WATUMIAJI (kama reference: Jina / Simu / Mkoa / Hali) ────────────
-  Widget _usersTab() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-      child: Column(children: [
-        TextField(
-          controller: _usersCtrl,
-          decoration: InputDecoration(
-            hintText: 'Tafuta mtumiaji...',
-            hintStyle: const TextStyle(color: _kT400, fontSize: 13),
-            prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 18, color: _kT400),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: _kBorder)),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: _kBlue)),
-          ),
-          onChanged: (v) => _loadUsers(q: v),
-        ),
-        const SizedBox(height: 10),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text('Jumla: ${_usersLoading ? '...' : _usersTotal}',
-              style: const TextStyle(fontSize: 13, color: _kT500)),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _kBorder),
-          ),
-          child: _usersLoading
-              ? const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator(color: _kBlue)),
-                )
-              : _users.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('Hakuna watumiaji',
-                          style: TextStyle(color: _kT400), textAlign: TextAlign.center),
-                    )
-                  : Column(children: [
-                      const Row(children: [
-                        Expanded(flex: 3, child: Text('Jina',
-                            style: TextStyle(fontSize: 12, color: _kT500))),
-                        Expanded(flex: 3, child: Text('Simu',
-                            style: TextStyle(fontSize: 12, color: _kT500))),
-                        Expanded(flex: 2, child: Text('Mkoa',
-                            style: TextStyle(fontSize: 12, color: _kT500))),
-                        Expanded(flex: 2, child: Text('Hali',
-                            textAlign: TextAlign.right,
-                            style: TextStyle(fontSize: 12, color: _kT500))),
-                      ]),
-                      const Divider(height: 16, color: _kBarBg),
-                      for (final u in _users.take(50))
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: _userRow(u as Map<String, dynamic>),
-                        ),
-                    ]),
-        ),
-      ]),
-    );
-  }
-
-  Widget _userRow(Map<String, dynamic> u) {
-    final name    = (u['full_name'] ?? '') as String;
-    final phone   = (u['phone_primary'] ?? u['phone'] ?? '') as String;
-    final station = (u['current_station'] as Map?) ?? {};
-    final region  = (station['region_name'] ?? '') as String;
-    final st      = '${u['status'] ?? 'active'}'.toLowerCase();
-    final hai     = st == 'active';
-    return Row(children: [
-      Expanded(
-        flex: 3,
-        child: Text(name,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kT900),
-            overflow: TextOverflow.ellipsis),
-      ),
-      Expanded(
-        flex: 3,
-        child: Text(phone, style: const TextStyle(fontSize: 12, color: _kBlue)),
-      ),
-      Expanded(
-        flex: 2,
-        child: Text(region,
-            style: const TextStyle(fontSize: 12, color: _kT600),
-            overflow: TextOverflow.ellipsis),
-      ),
-      Expanded(
-        flex: 2,
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: hai ? _kGreenBg : _kRedBg,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              hai ? 'Hai' : 'Haipo',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: hai ? _kGreenTx : _kRedTx,
-              ),
-            ),
-          ),
-        ),
-      ),
-    ]);
   }
 
   // Event helpers
   static Widget _eventIcon(String type) {
-    const s = 14.0;
+    const s = 13.0;
     if (type == 'user.registered') return Icon(PhosphorIcons.userPlus(), size: s, color: const Color(0xFF3B82F6));
     if (type.startsWith('payment.')) return Icon(PhosphorIcons.wallet(), size: s, color: const Color(0xFF22C55E));
     if (type.startsWith('feedback.')) return Icon(PhosphorIcons.chatCircleText(), size: s, color: const Color(0xFFF97316));
@@ -1176,10 +1377,12 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 class _KpiItem {
   final IconData icon;
   final String label;
-  final String value;
+  final int value;
+  final List<Color> colors;
   final String? sub;
   final Color? subColor;
-  const _KpiItem(this.icon, this.label, this.value, this.sub, this.subColor);
+  const _KpiItem(this.icon, this.label, this.value, this.colors,
+      {this.sub, this.subColor});
 }
 
 class _PickerItem {
