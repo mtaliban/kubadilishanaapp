@@ -612,7 +612,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // ── BOARD ──
                   if (_loading)
-                    const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()))
+                    Builder(builder: (ctx) {
+                      final cols = MediaQuery.of(ctx).size.width - 32 >= 568 ? 2 : 1;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: List.generate(
+                            cols == 2 ? 4 : 3, (_) => const _SkeletonCard()),
+                      );
+                    })
                   else if (_candidates.isEmpty)
                     _EmptyBoard(regionName: myRegionName)
                   else ...[
@@ -1355,6 +1362,14 @@ class _FiltersBar extends StatelessWidget {
   }
 }
 
+// ── normPlace: "mbinga Dc" → "Mbinga DC", "dar ES salaam" → "Dar es Salaam" ───
+String _normPlace(String v) => v.trim().split(RegExp(r'\s+')).map((w) {
+      final l = w.toLowerCase();
+      if (const {'dc', 'tc', 'mc', 'cc'}.contains(l)) return l.toUpperCase();
+      if (l == 'es') return 'es';
+      return w.isEmpty ? w : w[0].toUpperCase() + w.substring(1).toLowerCase();
+    }).join(' ');
+
 // ── Board Card ────────────────────────────────────────────────────────────────
 class _BoardCard extends StatelessWidget {
   final dynamic card;
@@ -1388,7 +1403,11 @@ class _BoardCard extends StatelessWidget {
     final ago = _timeAgo(card['created_at'] ?? card['joined_at']);
     final fullDate = _fullDate(card['created_at'] ?? card['joined_at']);
     final subjects = (card['subjects'] as List?)?.map((s) => s.toString()).toList() ?? [];
-    final anySubjectMatch = subjects.any((s) => mySubjects.contains(s));
+    // ── Kiwango cha match (kama reference ya Dashibodi): ──
+    // Inalingana = masomo yangu YOTE yake anayo · Kiasi = baadhi tu
+    final matchedSubjects = subjects.where((s) => mySubjects.contains(s)).toList();
+    final allMatch = mySubjects.isNotEmpty && matchedSubjects.length >= mySubjects.length;
+    final someMatch = matchedSubjects.isNotEmpty && !allMatch;
     final years = card['years_of_service'];
     final isEdu = category != 'health';
     final isMe = myUserId.isNotEmpty && (card['user_id'] ?? '') == myUserId;
@@ -1459,6 +1478,29 @@ class _BoardCard extends StatelessWidget {
                       style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
+                // ── Level badge: Inalingana (kijani) / Kiasi (chungwa) ──
+                if (allMatch)
+                  Container(
+                    margin: const EdgeInsets.only(left: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF16A34A),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text('✓ INALINGANA',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+                  )
+                else if (someMatch)
+                  Container(
+                    margin: const EdgeInsets.only(left: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFB26A00),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text('≈ KIASI',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
               ]),
               const SizedBox(height: 3),
               Text(
@@ -1482,12 +1524,12 @@ class _BoardCard extends StatelessWidget {
               Expanded(child: Text.rich(
                 TextSpan(children: [
                   TextSpan(
-                    text: station['region_name']?.toString() ?? '',
+                    text: _normPlace(station['region_name']?.toString() ?? ''),
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
                   ),
                   if ((station['district_name'] ?? '').toString().isNotEmpty)
                     TextSpan(
-                      text: ', ${station['district_name']}',
+                      text: ', ${_normPlace(station['district_name']?.toString() ?? '')}',
                       style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF374151)),
                     ),
                 ]),
@@ -1503,12 +1545,12 @@ class _BoardCard extends StatelessWidget {
                 Expanded(child: Text.rich(
                   TextSpan(children: [
                     TextSpan(
-                      text: activeDest['region_name']?.toString() ?? '',
+                      text: _normPlace(activeDest['region_name']?.toString() ?? ''),
                       style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
                     ),
                     if ((activeDest['district_name'] ?? '').toString().isNotEmpty)
                       TextSpan(
-                        text: ', ${activeDest['district_name']}',
+                        text: ', ${_normPlace(activeDest['district_name']?.toString() ?? '')}',
                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF374151)),
                       ),
                   ]),
@@ -1529,11 +1571,23 @@ class _BoardCard extends StatelessWidget {
             ],
           ],
 
-          // Miaka ya kazi
+          // Uzoefu (kama reference: icon + maneno mazuri)
           if (years != null) ...[
             const SizedBox(height: 8),
-            Text('Miaka ya kazi: ${years == 3 ? "3+ (miaka 3 au zaidi)" : "$years ${years == 1 ? 'mwaka' : 'miaka'}"}',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+            Row(children: [
+              const Icon(Icons.work_outline_rounded, size: 13, color: Color(0xFF6B7280)),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  years == 3
+                      ? 'Uzoefu: miaka 3 au zaidi'
+                      : years == 1
+                          ? 'Uzoefu: mwaka 1'
+                          : 'Uzoefu: miaka $years',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                ),
+              ),
+            ]),
           ],
 
           // Masomo
@@ -1556,20 +1610,47 @@ class _BoardCard extends StatelessWidget {
                           color: matched ? Colors.white : const Color(0xFF374151))),
                 );
               }),
-              // Match badge — kama web: bg-blue-50 text-blue-700 border-blue/20
-              if (anySubjectMatch)
+              // Check row yenye idadi (kama reference): "Masomo yote yanalingana (2)"
+              if (allMatch)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF), // brand-blue-50
+                    color: const Color(0xFFDCFCE7),
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: const Color(0xFF1E40AF).withValues(alpha: 0.2)),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF16A34A)),
+                    const SizedBox(width: 4),
+                    Text('Masomo yote ${mySubjects.length} yanalingana',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF15803D))),
+                  ]),
+                )
+              else if (someMatch)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.timelapse_rounded, size: 12, color: Color(0xFFB26A00)),
+                    const SizedBox(width: 4),
+                    Text('Somo ${matchedSubjects.length} kati ya ${mySubjects.length} linalingana',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFB26A00))),
+                  ]),
+                )
+              else if (mySubjects.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                   child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.adjust, size: 12, color: Color(0xFF1D4ED8)),
+                    Icon(Icons.cancel_outlined, size: 12, color: Color(0xFF9CA3AF)),
                     SizedBox(width: 4),
-                    Text('Masomo yanalingana',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1D4ED8))),
+                    Text('Hakuna somo linalolingana',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
                   ]),
                 ),
             ]),
@@ -1879,4 +1960,71 @@ class _PulseBadgeState extends State<_PulseBadge> with SingleTickerProviderState
       child: Text(widget.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: widget.textColor)),
     ),
   );
+}
+
+// ── Skeleton card — inang'aa badala ya spinner (kama reference ya Dashibodi) ──
+class _SkeletonCard extends StatefulWidget {
+  const _SkeletonCard();
+  @override
+  State<_SkeletonCard> createState() => _SkeletonCardState();
+}
+
+class _SkeletonCardState extends State<_SkeletonCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _a = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 900))
+    ..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _a.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget bar(double w, double h) => Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(8)),
+        );
+    return FadeTransition(
+      opacity: Tween<double>(begin: .45, end: 1).animate(_a),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFF3F4F6), shape: BoxShape.circle)),
+                const SizedBox(width: 10),
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  bar(140, 13),
+                  const SizedBox(height: 8),
+                  bar(90, 11),
+                ]),
+              ]),
+              const SizedBox(height: 14),
+              bar(double.infinity, 14),
+              const SizedBox(height: 8),
+              bar(double.infinity, 14),
+              const SizedBox(height: 12),
+              Wrap(spacing: 6, runSpacing: 6, children: [bar(70, 22), bar(90, 22), bar(60, 22)]),
+              const SizedBox(height: 14),
+              bar(double.infinity, 40),
+            ]),
+      ),
+    );
+  }
 }
