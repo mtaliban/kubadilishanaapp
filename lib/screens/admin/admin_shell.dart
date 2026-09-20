@@ -21,6 +21,7 @@ import 'admin_password_resets_page.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg  = Color(0xFFEFF6FF);
+const _kNavy    = Color(0xFF1D2F6F);
 const _kRed     = Color(0xFFDC2626);
 const _kRedBg   = Color(0xFFFEE2E2);
 const _kGrey900 = Color(0xFF111827);
@@ -175,9 +176,13 @@ class _AdminShellState extends State<AdminShell> {
             padding: const EdgeInsets.only(left: 4),
             child: Container(
               width: 34, height: 34,
+              alignment: Alignment.center,
               decoration: const BoxDecoration(color: _kBlueBg, shape: BoxShape.circle),
-              child: Icon(PhosphorIcons.user(PhosphorIconsStyle.fill),
-                  color: _kBlue, size: 18),
+              child: Text(
+                initial.isEmpty ? 'A' : initial.toUpperCase(),
+                style: const TextStyle(
+                    color: _kBlue, fontWeight: FontWeight.w700, fontSize: 15),
+              ),
             ),
           ),
         ),
@@ -190,9 +195,11 @@ class _AdminShellState extends State<AdminShell> {
               onTap: () => LanguageProvider().setLang(sw ? 'en' : 'sw'),
               child: Container(
                 margin: const EdgeInsets.only(right: 14),
+                height: 32,
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  color: _kBlue,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _kNavy.withValues(alpha: 0.35)),
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   _langChip('SW', sw),
@@ -213,12 +220,12 @@ class _AdminShellState extends State<AdminShell> {
   Widget _langChip(String label, bool active) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
     decoration: BoxDecoration(
-      color: active ? Colors.white : Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
+      color: active ? _kNavy : Colors.transparent,
+      borderRadius: BorderRadius.circular(7),
     ),
     child: Text(label, style: TextStyle(
-      fontSize: 12, fontWeight: FontWeight.w700,
-      color: active ? _kBlue : Colors.white,
+      fontSize: 12.5, fontWeight: FontWeight.w700,
+      color: active ? Colors.white : _kNavy,
     )),
   );
 
