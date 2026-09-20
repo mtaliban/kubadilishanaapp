@@ -60,6 +60,71 @@ String _initials(String name) {
   return (parts.first[0] + (parts.length > 1 ? parts[1][0] : '')).toUpperCase();
 }
 
+String _titleCase(String v) => v
+    .trim()
+    .split(RegExp(r'\s+'))
+    .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1).toLowerCase())
+    .join(' ');
+
+String _ago(dynamic iso) {
+  if (iso == null) return '';
+  try {
+    final d = DateTime.parse('$iso').toLocal();
+    final diff = DateTime.now().difference(d);
+    if (diff.inMinutes < 1) return 'sasa hivi';
+    if (diff.inMinutes < 60) return 'dakika ${diff.inMinutes} zilizopita';
+    if (diff.inHours < 24) return 'saa ${diff.inHours} zilizopita';
+    return 'siku ${diff.inDays} zilizopita';
+  } catch (_) {
+    return '';
+  }
+}
+
+// ─── SMS analyzer: inamsaidia admin kuhukumu kwa haraka ──────────────────
+enum _Verdict { ok, warning, danger }
+
+class _SmsCheck {
+  final _Verdict verdict;
+  final String text;
+  const _SmsCheck(this.verdict, this.text);
+}
+
+final _smsAmountRe = RegExp(
+    r'(?:paid|sent|umetuma|umelipa)\s+([\d,]+(?:\.\d+)?)\s*tzs',
+    caseSensitive: false);
+
+String _normSms(String v) => v.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+
+List<_SmsCheck> _smsChecks(String sms, int amount,
+    List<Map<String, dynamic>> all, String orderId) {
+  final checks = <_SmsCheck>[];
+  if (sms.trim().isEmpty) return checks;
+  final m = _smsAmountRe.firstMatch(sms);
+  if (m == null) {
+    checks.add(const _SmsCheck(
+        _Verdict.danger, 'Haionekani kama SMS ya muamala'));
+  } else {
+    final paid = double.parse(m.group(1)!.replaceAll(',', '')).round();
+    if (paid == amount) {
+      checks.add(_SmsCheck(
+          _Verdict.ok, 'Kiasi kinalingana (${_fmt(paid)} TZS)'));
+    } else {
+      checks.add(_SmsCheck(
+          _Verdict.danger,
+          'Kiasi hakilingani: SMS ${_fmt(paid)}, kilichoandikwa ${_fmt(amount)}'));
+    }
+  }
+  final k = _normSms(sms);
+  if (k.length >= 40 &&
+      all.any((o) =>
+          '${o['order_id'] ?? ''}' != orderId &&
+          _normSms('${o['sms_text'] ?? ''}') == k)) {
+    checks.add(const _SmsCheck(
+        _Verdict.warning, 'SMS inafanana na ya malipo mengine'));
+  }
+  return checks;
+}
+
 class AdminPaymentsPage extends StatefulWidget {
   const AdminPaymentsPage({super.key});
   @override
@@ -142,43 +207,65 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 
   // ── Vitendo (dialog ya uthibitisho kwa pesa) ───────────────────────────────
-  Future<bool> _ask({
-    required String title,
-    required String body,
-    required String action,
-    bool danger = false,
-  }) async {
+
+  Future<void> _approve(Map<String, dynamic> p) async {
+    final checks = _smsChecks('${p['sms_text'] ?? ''}',
+        (p['amount'] as num?)?.toInt() ?? 0, _payments, '${p['order_id'] ?? ''}');
+    final risky = checks.where((c) => c.verdict != _Verdict.ok).toList();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-        content: Text(body, style: const TextStyle(height: 1.4)),
+        icon: Icon(risky.isEmpty ? Icons.verified_outlined : Icons.warning_amber_rounded,
+            color: risky.isEmpty ? _cGreen : _cAmber),
+        title: const Text('Thibitisha malipo haya?',
+            style: TextStyle(fontWeight: FontWeight.w800)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                '${_titleCase('${p['user_name'] ?? ''}')} · ${_fmt((p['amount'] as num?)?.toInt() ?? 0)} TZS',
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            const Text(
+                'Hakikisha pesa imefika kwenye simu yako kabla ya kuthibitisha.'),
+            if (risky.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              for (final c in risky)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                            c.verdict == _Verdict.danger
+                                ? Icons.error_outline_rounded
+                                : Icons.warning_amber_rounded,
+                            size: 16,
+                            color: c.verdict == _Verdict.danger ? _cRed : _cAmber),
+                        const SizedBox(width: 6),
+                        Expanded(child: Text(c.text)),
+                      ]),
+                ),
+            ],
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Ghairi'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(
-                backgroundColor: danger ? _cRed : _cBlue),
+            style: FilledButton.styleFrom(backgroundColor: _cGreen),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(action, style: const TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text('Thibitisha',
+                style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
     );
-    return ok == true;
-  }
-
-  Future<void> _approve(Map<String, dynamic> p) async {
-    final ok = await _ask(
-      title: 'Thibitisha malipo?',
-      body: 'Hakikisha pesa imefika kwenye simu yako kabla ya kuthibitisha. '
-          'Ukithibitisha, mtumiaji ataweza kuona namba za wenzake.',
-      action: 'Thibitisha',
-    );
-    if (!ok) return;
+    if (ok != true) return;
     try {
       await ApiService().adminApproveDonation('${p['order_id']}');
       if (!mounted) return;
@@ -191,15 +278,58 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 
   Future<void> _reject(Map<String, dynamic> p) async {
-    final ok = await _ask(
-      title: 'Kataa malipo?',
-      body: 'Mchangiaji ataarifiwa kuwa malipo yake yamekataliwa.',
-      action: 'Kataa',
-      danger: true,
+    final reasons = [
+      'SMS si halisi',
+      'Kiasi hakilingani',
+      'Pesa haijaingia',
+      'Malipo yamerudiwa',
+    ];
+    String? selected;
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Kataa malipo haya?',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Chagua sababu ya kukataa.'),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final r in reasons)
+                    ChoiceChip(
+                      label: Text(r),
+                      selected: selected == r,
+                      onSelected: (_) => setLocal(() => selected = r),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Ghairi'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: _cRed),
+              onPressed: selected == null ? null : () => Navigator.pop(ctx, selected),
+              child: const Text('Kataa',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      ),
     );
-    if (!ok) return;
+    if (reason == null) return;
     try {
-      await ApiService().adminRejectDonation('${p['order_id']}');
+      await ApiService().adminRejectDonation('${p['order_id']}', note: reason);
       if (!mounted) return;
       _showSnack('Malipo yamekataliwa', _cAmber);
       await _load();
@@ -358,10 +488,10 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
 
             // ── Body ──
             if (_loading)
-              const Padding(
-                padding: EdgeInsets.all(48),
-                child: Center(child: CircularProgressIndicator(color: _cBlue)),
-              )
+              ...List.generate(3, (_) => const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: _SkeletonCard(),
+                  ))
             else if (_error != null)
               _errorCard()
             else if (filtered.isEmpty)
@@ -372,6 +502,9 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _PaymentCard(
                     p: p,
+                    checks: _smsChecks('${p['sms_text'] ?? ''}',
+                        (p['amount'] as num?)?.toInt() ?? 0, _payments,
+                        '${p['order_id'] ?? ''}'),
                     smsOpen: _smsOpen.contains('${p['order_id']}'),
                     onToggleSms: () => setState(() {
                       final id = '${p['order_id']}';
@@ -605,6 +738,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
 // ═══ PAYMENT CARD ════════════════════════════════════════════════════════════
 class _PaymentCard extends StatelessWidget {
   final Map<String, dynamic> p;
+  final List<_SmsCheck> checks;
   final bool smsOpen;
   final VoidCallback onToggleSms;
   final void Function(String text, String what) onCopy;
@@ -614,6 +748,7 @@ class _PaymentCard extends StatelessWidget {
 
   const _PaymentCard({
     required this.p,
+    required this.checks,
     required this.smsOpen,
     required this.onToggleSms,
     required this.onCopy,
@@ -662,7 +797,7 @@ class _PaymentCard extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name.isEmpty ? '(bila jina)' : name,
+              Text(name.isEmpty ? '(bila jina)' : _titleCase(name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -725,8 +860,12 @@ class _PaymentCard extends StatelessWidget {
         Row(children: [
           const Icon(Icons.schedule_rounded, size: 15, color: _cTextGrey),
           const SizedBox(width: 5),
-          Text(_fmtDate(p['created_at']),
-              style: const TextStyle(fontSize: 12.5, color: _cTextGrey)),
+          Flexible(
+            child: Text(
+                '${_fmtDate(p['created_at'])}${_ago(p['created_at']).isEmpty ? '' : ' · ${_ago(p['created_at'])}'}',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12.5, color: _cTextGrey)),
+          ),
           if (phone.isNotEmpty) ...[
             const SizedBox(width: 14),
             const Icon(Icons.phone_outlined, size: 14, color: _cTextGrey),
@@ -739,6 +878,31 @@ class _PaymentCard extends StatelessWidget {
             ),
           ],
         ]),
+
+        // ── Ukaguzi wa SMS (inasubiri) — kama reference ya Michango ──
+        if (status == 'verifying' && checks.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [for (final c in checks) _CheckChip(c)]),
+        ],
+
+        // ── Sababu ya kukataliwa ──
+        if (status == 'rejected' && note.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(children: [
+            const Icon(Icons.flag_rounded, size: 15, color: _cRed),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text('Sababu: $note',
+                  style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: _cRed)),
+            ),
+          ]),
+        ],
 
         // ── SMS ya mchangiaji (expandable) ──
         if (sms.isNotEmpty) ...[
@@ -779,18 +943,32 @@ class _PaymentCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: _cBorder),
                       ),
-                      child: SelectableText(sms,
-                          style: const TextStyle(
-                              fontSize: 12.5, height: 1.55,
-                              color: _cTextDark, fontFamily: 'monospace')),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SelectableText(sms,
+                              style: const TextStyle(
+                                  fontSize: 12.5, height: 1.55,
+                                  color: _cTextDark, fontFamily: 'monospace')),
+                          if (checks.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  for (final c in checks) _CheckChip(c)
+                                ]),
+                          ],
+                        ],
+                      ),
                     ),
                   )
                 : const SizedBox(width: double.infinity),
           ),
         ],
 
-        // ── Note ya mfumo ──
-        if (note.isNotEmpty) ...[
+        // ── Note ya mfumo (si kwa zilizokataliwa — zina 'Sababu' juu) ──
+        if (note.isNotEmpty && status != 'rejected') ...[
           const SizedBox(height: 8),
           Row(children: [
             const Icon(Icons.info_outline_rounded, size: 15, color: _cAmber),
@@ -925,6 +1103,103 @@ class _StatusDropdown extends StatelessWidget {
           ),
           const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _cTextGrey),
         ]),
+      ),
+    );
+  }
+}
+
+// ─── Chip ya matokeo ya ukaguzi wa SMS (kijani/njano/nyekundu) ────────────
+
+class _CheckChip extends StatelessWidget {
+  final _SmsCheck check;
+  const _CheckChip(this.check);
+
+  @override
+  Widget build(BuildContext context) {
+    final (fg, bg, icon) = switch (check.verdict) {
+      _Verdict.ok      => (_cGreen, _cGreenBg, Icons.check_circle_outline_rounded),
+      _Verdict.warning => (_cAmber, _cAmberBg, Icons.warning_amber_rounded),
+      _Verdict.danger  => (_cRed, _cRedBg, Icons.error_outline_rounded),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+          color: bg, borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 13, color: fg),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(check.text,
+                style: TextStyle(
+                    fontSize: 11.5, fontWeight: FontWeight.w600, color: fg)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Skeleton loading (inang'aa badala ya spinner) ────────────────────
+
+class _SkeletonCard extends StatefulWidget {
+  const _SkeletonCard();
+  @override
+  State<_SkeletonCard> createState() => _SkeletonCardState();
+}
+
+class _SkeletonCardState extends State<_SkeletonCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _a = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 900))
+    ..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _a.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget bar(double w, double h) => Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+              color: _cCardBg, borderRadius: BorderRadius.circular(8)),
+        );
+    return FadeTransition(
+      opacity: Tween<double>(begin: .45, end: 1).animate(_a),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _cBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _cBorder),
+        ),
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                        color: _cCardBg, shape: BoxShape.circle)),
+                const SizedBox(width: 10),
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  bar(140, 13),
+                  const SizedBox(height: 8),
+                  bar(100, 11),
+                ]),
+              ]),
+              const SizedBox(height: 14),
+              bar(double.infinity, 52),
+              const SizedBox(height: 12),
+              bar(180, 12),
+            ]),
       ),
     );
   }
