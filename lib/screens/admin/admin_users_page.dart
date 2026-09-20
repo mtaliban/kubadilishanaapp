@@ -38,8 +38,6 @@ const _amb700  = Color(0xFFB45309);
 const _red     = Color(0xFFDC2626);
 const _red50   = Color(0xFFFEF2F2);
 const _red100  = Color(0xFFFEE2E2);
-const _red400  = Color(0xFFF87171);
-const _emerald = Color(0xFF10B981);
 const _g900 = Color(0xFF111827);
 const _g700 = Color(0xFF374151);
 const _g600 = Color(0xFF4B5563);
@@ -1486,20 +1484,27 @@ class _State extends State<AdminUsersPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              const Text('Watumiaji',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _g900)),
-              const SizedBox(width: 8),
-              Text('● Live',
-                  style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w700,
-                    color: _live ? const Color(0xFF22C55E) : _g300,
-                  )),
-            ]),
-            const Text('Mfumo wa Usimamizi',
-                style: TextStyle(fontSize: 11.5, color: _g500)),
+        const Expanded(
+          child: Text('Watumiaji',
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: _g900)),
+        ),
+        // LIVE pill (kama esstranfer.com)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: _live ? const Color(0xFFDCFCE7) : _g100,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Container(width: 8, height: 8,
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _live ? const Color(0xFF16A34A) : _g300)),
+            const SizedBox(width: 6),
+            Text(_live ? 'Live' : 'Offline',
+                style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w700,
+                    color: _live ? const Color(0xFF15803D) : _g500)),
           ]),
         ),
       ]),
@@ -1519,30 +1524,34 @@ class _State extends State<AdminUsersPage> {
       if ((u['is_admin'] as bool? ?? false)) admins++;
     }
     Widget stat(String n, String l, Color c) => Container(
-      margin: const EdgeInsets.only(right: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _cardBorder),
+        color: const Color(0xFFF7F8FA),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(n, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19, color: c)),
-          const SizedBox(height: 2),
-          Text(l, style: const TextStyle(fontSize: 11, color: _g500)),
+          Text(n, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: c)),
+          const SizedBox(height: 3),
+          Text(l, style: const TextStyle(fontSize: 12, color: _g500),
+              overflow: TextOverflow.ellipsis, maxLines: 1),
         ],
       ),
     );
-    return SizedBox(
-      height: 70,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 12, 6, 6),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: GridView.count(
+        crossAxisCount: 3,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 2.2,
         children: [
           stat('${_loading ? '...' : _users.length}', 'Watumiaji wote', _g900),
-          stat('$active', 'Hai', _green),
+          stat('$active', 'Hai', const Color(0xFF15803D)),
           stat('$blocked', 'Wamesitishwa', _red),
           stat('$admins', 'Admins', _blue),
           stat('${_departments.isEmpty ? '—' : _departments.length}', 'Idara', _blue700),
@@ -1560,36 +1569,34 @@ class _State extends State<AdminUsersPage> {
         child: GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
             decoration: BoxDecoration(
               color: bg,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: border != null ? Border.all(color: border) : null,
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 15, color: fg),
+              Icon(icon, size: 16, color: fg),
               const SizedBox(width: 7),
-              Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 12.5)),
+              Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 13.5)),
             ]),
           ),
         ),
       );
     }
-    return SizedBox(
-      height: 46,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 4, 6, 6),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 10, 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
         children: [
-          pill(PhosphorIcons.plus(PhosphorIconsStyle.bold), 'Ongeza Mtumiaji', _blue, Colors.white,
+          // KITUFE CHIKUU — Ongeza Mtumiaji (kubwa, bluu, wazi)
+          pill(PhosphorIcons.plus(PhosphorIconsStyle.bold), 'Mtumiaji Mpya', _blue, Colors.white,
               onTap: _showAdd),
           pill(PhosphorIcons.uploadSimple(), 'Import Excel', Colors.white, _g700,
               border: _g200, onTap: _showImport),
           pill(PhosphorIcons.shieldCheck(), 'Ongeza Admin', Colors.white, _g700,
               border: _g200, onTap: _showAddAdmin),
-          pill(PhosphorIcons.trash(), 'Futa (${_selected.length})', _red50, _red,
-              border: _red100,
-              onTap: _selected.isEmpty ? null : _bulkDelete),
         ],
       ),
     );
@@ -1679,12 +1686,12 @@ class _State extends State<AdminUsersPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 6, 0, 4),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        // Idara chips — dynamic
-        SizedBox(
-          height: 42,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+        // Idara chips — dynamic, zinawrap (zinaunganishwa)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               chip('Zote', _category.isEmpty, () {
                 setState(() { _category = ''; _page = 1; });
@@ -1855,18 +1862,18 @@ class _UserCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: _cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Row 1: checkbox + avatar + jina/simu + paid + menu ────────
+            // Mstari 1: checkbox + avatar + jina + simu + hali + menu
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 16, height: 16,
+                  width: 18, height: 18,
                   child: Checkbox(
                     value: selected,
                     onChanged: isAdmin ? null : (_) => onToggle(),
@@ -1888,50 +1895,25 @@ class _UserCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(children: [
-                        Expanded(child: Text(name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 14.5, color: _g900),
-                            overflow: TextOverflow.ellipsis)),
-                        if (isAdmin) ...[
-                          const SizedBox(width: 4),
-                          Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
-                              size: 13, color: _blue),
-                        ],
-                        const SizedBox(width: 6),
-                        // Malipo badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                              color: isPaid ? _emerald : _red400,
-                              borderRadius: BorderRadius.circular(100)),
-                          child: Text(isPaid ? '✓' : '✗',
-                              style: const TextStyle(
-                                  fontSize: 10, height: 1.4, fontWeight: FontWeight.w700,
-                                  color: Colors.white)),
-                        ),
-                      ]),
+                      Text(name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 14.5, color: _g900)),
                       const SizedBox(height: 2),
                       if (phone.isNotEmpty)
-                        GestureDetector(
-                          onTap: () async {
-                            try {
-                              await launchUrl(Uri.parse('tel:$phone'),
-                                  mode: LaunchMode.externalApplication);
-                            } catch (_) {}
-                          },
-                          child: Row(children: [
-                            Icon(PhosphorIcons.phone(), size: 12, color: _g500),
-                            const SizedBox(width: 4),
-                            Text(phone, style: const TextStyle(
-                                fontSize: 12.5, color: _blue, fontWeight: FontWeight.w600)),
-                          ]),
-                        ),
+                        Text(phone, style: const TextStyle(
+                            fontSize: 12.5, color: _blue, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
+                _statusTag(st),
                 const SizedBox(width: 6),
-                // Menu ya vitu vingine (admin/contact)
+                if (isAdmin)
+                  Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
+                      size: 15, color: _blue),
+                const SizedBox(width: 6),
                 GestureDetector(
                   onTap: () => _showMoreMenu(context, isAdmin: isAdmin, contact: contact,
                       isActive: isActive, isPaid: isPaid),
@@ -1940,65 +1922,69 @@ class _UserCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 9),
 
-            // ── Row 2: tags (kada, idara, mkoa, hali) ─────────────────────
+            // Mstari 2: chips (kada, idara, mkoa) + malipo
             Wrap(spacing: 6, runSpacing: 6, children: [
               if (cadre.isNotEmpty) _tag(cadre, PhosphorIcons.bookOpen(), _blueBg, _blue700),
               if (deptName.isNotEmpty)
                 _tag(deptName, deptIcon, const Color(0xFFF0F2F7), _g600),
               if (region.isNotEmpty)
                 _tag(region, PhosphorIcons.mapPin(), _g100, _g500),
-              _statusTag(st),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                    color: isPaid ? const Color(0xFFDCFCE7) : _red50,
+                    borderRadius: BorderRadius.circular(8)),
+                child: Text(isPaid ? 'Amelipa' : 'Hajalipa',
+                    style: TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w700,
+                        color: isPaid ? const Color(0xFF15803D) : _red)),
+              ),
             ]),
 
-            const Divider(height: 20, color: _cardBorder),
+            const SizedBox(height: 10),
 
-            // ── Row 3: safu MOJA ya action icons ──────────────────────────
-            Row(
-              children: [
-                _actionBtn(PhosphorIcons.eye(), 'Angalia', _g100, _g700, onView),
-                const SizedBox(width: 6),
-                _actionBtn(PhosphorIcons.pencilSimple(), 'Hariri', _blueBg, _blue, onEdit),
-                const SizedBox(width: 6),
-                if (isAdmin)
-                  _actionBtn(PhosphorIcons.prohibit(), 'Ondoa Admin', _red50, _red, onAdmin)
-                else ...[
-                  Expanded(
-                    child: _smallActionBtn(
-                      isActive ? PhosphorIcons.prohibit() : PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
-                      isActive ? 'Funga' : 'Ruhusu',
-                      isActive ? _amb100 : _green50,
-                      isActive ? _amb600 : _green,
-                      onSuspend,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  if (!isPaid)
-                    _iconOnlyBtn(
-                      PhosphorIcons.phoneCall(),
-                      contact ? _green50 : _g100,
-                      contact ? _green : _g600,
-                      onContact,
-                    )
-                  else
-                    _iconOnlyBtn(PhosphorIcons.whatsappLogo(), _green50, _green, () async {
-                      try {
-                        await launchUrl(Uri.parse('https://wa.me/$phone'),
-                            mode: LaunchMode.externalApplication);
-                      } catch (_) {}
-                    }),
-                  const SizedBox(width: 6),
-                ],
-                _iconOnlyBtn(PhosphorIcons.trash(), _red50, _red, onDelete),
-              ],
-            ),
+            // Mstari 3: vitufe vya haraka (safu moja ya icons)
+            Row(children: [
+              _sqBtn(PhosphorIcons.eye(), 'Angalia', _g100, _g700, onView),
+              const SizedBox(width: 6),
+              _sqBtn(PhosphorIcons.pencilSimple(), 'Hariri', _blueBg, _blue, onEdit),
+              const SizedBox(width: 6),
+              if (!isAdmin)
+                _sqBtn(
+                  isActive ? PhosphorIcons.prohibit() : PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
+                  isActive ? 'Funga' : 'Ruhusu',
+                  isActive ? _amb100 : _green50,
+                  isActive ? _amb600 : _green,
+                  onSuspend,
+                )
+              else
+                _sqBtn(PhosphorIcons.prohibit(), 'Ondoa Admin', _red50, _red, onAdmin),
+              const SizedBox(width: 6),
+              if (!isPaid)
+                _sqBtn(
+                  PhosphorIcons.phoneCall(),
+                  'Ruhusu kupiga simu',
+                  contact ? _green50 : _g100,
+                  contact ? _green : _g600,
+                  onContact,
+                )
+              else
+                _sqBtn(PhosphorIcons.whatsappLogo(), 'WhatsApp', _green50, _green, () async {
+                  try {
+                    await launchUrl(Uri.parse('https://wa.me/$phone'),
+                        mode: LaunchMode.externalApplication);
+                  } catch (_) {}
+                }),
+              const Spacer(),
+              _sqBtn(PhosphorIcons.trash(), 'Futa', _red50, _red, onDelete),
+            ]),
           ],
         ),
       ),
     );
   }
-
   void _showMoreMenu(BuildContext context,
       {required bool isAdmin, required bool contact, required bool isActive, required bool isPaid}) {
     showModalBottomSheet(
@@ -2073,57 +2059,20 @@ class _UserCard extends StatelessWidget {
     return _tag(label, icon, bg, fg);
   }
 
-  // Kitufe kidogo: icon + label (wima) — Expanded
-  Widget _actionBtn(IconData icon, String label, Color bg, Color fg, VoidCallback onTap) =>
-      Expanded(
+  // Kitufe cha square (icon pekee) — ukubwa uleule kwa vitufe vyote
+  Widget _sqBtn(IconData icon, String tooltip, Color bg, Color fg, VoidCallback? onTap) =>
+      Tooltip(
+        message: tooltip,
         child: Material(
           color: bg,
-          borderRadius: BorderRadius.circular(11),
+          borderRadius: BorderRadius.circular(10),
           child: InkWell(
-            borderRadius: BorderRadius.circular(11),
+            borderRadius: BorderRadius.circular(10),
             onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 9),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(icon, size: 16, color: fg),
-                const SizedBox(height: 2),
-                Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: fg),
-                    overflow: TextOverflow.ellipsis, maxLines: 1),
-              ]),
+            child: SizedBox(
+              width: 38, height: 38,
+              child: Icon(icon, size: 17, color: fg),
             ),
-          ),
-        ),
-      );
-
-  // Kitufe kidogo bila Expanded (kwa ajili ya kati ya Expanded zingine)
-  Widget _smallActionBtn(IconData icon, String label, Color bg, Color fg, VoidCallback onTap) =>
-      Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(11),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(11),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 16, color: fg),
-              const SizedBox(height: 2),
-              Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: fg)),
-            ]),
-          ),
-        ),
-      );
-
-  Widget _iconOnlyBtn(IconData icon, Color bg, Color fg, VoidCallback onTap) =>
-      Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(11),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(11),
-          onTap: onTap,
-          child: SizedBox(
-            width: 40, height: 42,
-            child: Icon(icon, size: 17, color: fg),
           ),
         ),
       );
