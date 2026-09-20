@@ -293,30 +293,22 @@ class _ViewAdmin extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Icon(PhosphorIcons.identificationBadge(PhosphorIconsStyle.fill),
-                    size: 17, color: _kBlue),
-                const SizedBox(width: 8),
-                Text('Utambulisho wa Admin',
-                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700)),
-              ]),
-              const SizedBox(height: 18),
+              Text('Utambulisho wa Admin',
+                  style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 20),
               _AdminInfoRow(
-                label: 'Jina kamili',
+                label: 'Jina Kamili',
                 value: profile['full_name']?.toString() ?? '',
-                icon: PhosphorIcons.user(),
               ),
               _AdminInfoRow(
-                label: 'Barua pepe',
+                label: 'Barua Pepe',
                 value: profile['email']?.toString() ?? '',
-                icon: PhosphorIcons.envelope(),
               ),
               _AdminInfoRow(
-                label: 'Namba ya simu',
+                label: 'Namba ya Simu',
                 value: profile['phone_primary']?.toString() ?? '',
-                icon: PhosphorIcons.phone(),
               ),
               _AdminInfoRowStatus(
                 label: 'Email imethibitishwa',
@@ -325,8 +317,6 @@ class _ViewAdmin extends StatelessWidget {
               _AdminInfoRow(
                 label: 'Wajibu',
                 value: 'Administrator',
-                icon: PhosphorIcons.shield(),
-                isLast: true,
               ),
             ]),
           ),
@@ -484,21 +474,16 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Row(children: [
-                Icon(PhosphorIcons.identificationBadge(PhosphorIconsStyle.fill),
-                    size: 17, color: _kBlue),
-                const SizedBox(width: 8),
-                Text('Utambulisho wa Admin',
-                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700)),
-              ]),
+              Text('Utambulisho wa Admin',
+                  style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800)),
               const SizedBox(height: 20),
 
               // Jina
-              Text('Jina kamili',
+              Text('Jina Kamili',
                   style: GoogleFonts.inter(
-                      fontSize: 12.5, fontWeight: FontWeight.w600, color: _kGrey700)),
+                      fontSize: 15, fontWeight: FontWeight.w600, color: _kGrey900)),
               const SizedBox(height: 6),
               TextField(
                 controller: _nameCtrl,
@@ -525,9 +510,9 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
               const SizedBox(height: 16),
 
               // Simu ya pili
-              Text('Namba ya simu (Pili / WhatsApp)',
+              Text('Simu ya pili',
                   style: GoogleFonts.inter(
-                      fontSize: 12.5, fontWeight: FontWeight.w600, color: _kGrey700)),
+                      fontSize: 15, fontWeight: FontWeight.w600, color: _kGrey900)),
               const SizedBox(height: 6),
               TextField(
                 controller: _altCtrl,
@@ -555,9 +540,9 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
               const SizedBox(height: 16),
 
               // Email (disabled)
-              Text('Barua pepe',
+              Text('Barua Pepe',
                   style: GoogleFonts.inter(
-                      fontSize: 12.5, fontWeight: FontWeight.w600, color: _kGrey700)),
+                      fontSize: 15, fontWeight: FontWeight.w600, color: _kGrey900)),
               const SizedBox(height: 6),
               TextField(
                 controller: TextEditingController(text: widget.profile['email'] ?? ''),
@@ -594,11 +579,11 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
         ]),
       ),
 
-      const SizedBox(height: 16),
+      const SizedBox(height: 20),
 
-      // ── Save button ──
-      SizedBox(
-        width: double.infinity,
+      // ── Save button (pembeni kama web) ──
+      Align(
+        alignment: Alignment.centerRight,
         child: ElevatedButton.icon(
           onPressed: _saving ? null : _save,
           icon: _saving
@@ -606,14 +591,14 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
                   width: 16, height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Icon(PhosphorIcons.floppyDisk(PhosphorIconsStyle.fill), size: 16),
-          label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi mabadiliko',
-              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
+          label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi Mabadiliko',
+              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700)),
           style: ElevatedButton.styleFrom(
             backgroundColor: _kBlue,
             foregroundColor: Colors.white,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
       ),
@@ -1381,42 +1366,29 @@ String _parseErr(dynamic e) {
 class _AdminInfoRow extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
-  final bool isLast;
   const _AdminInfoRow({
     required this.label,
     required this.value,
-    required this.icon,
-    this.isLast = false,
   });
 
   @override
   Widget build(BuildContext context) {
     if (value.isEmpty) return const SizedBox.shrink();
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : const Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
-      ),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: 16, color: _kGrey400),
-        const SizedBox(width: 10),
-        SizedBox(
-          width: 110,
-          child: Text(label,
-              style: GoogleFonts.inter(fontSize: 13, color: _kGrey500)),
-        ),
-        Expanded(
-          child: Text(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text('$label:',
+              style: GoogleFonts.inter(fontSize: 15, color: _kGrey500)),
+          const SizedBox(width: 10),
+          Text(
             value,
-            textAlign: TextAlign.right,
             style: GoogleFonts.inter(
-                fontSize: 13.5, fontWeight: FontWeight.w700, color: _kGrey900),
+                fontSize: 15, fontWeight: FontWeight.w700, color: _kGrey900),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -1428,18 +1400,12 @@ class _AdminInfoRowStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(children: [
-        Icon(PhosphorIcons.shieldCheck(), size: 16, color: _kGrey400),
+        Text('$label:',
+            style: GoogleFonts.inter(fontSize: 15, color: _kGrey500)),
         const SizedBox(width: 10),
-        Expanded(
-          child: Text(label,
-              style: GoogleFonts.inter(fontSize: 13, color: _kGrey500)),
-        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
           decoration: BoxDecoration(
