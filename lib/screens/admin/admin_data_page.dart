@@ -20,6 +20,7 @@ const _kGrey300  = Color(0xFFD1D5DB);
 const _kGrey200  = Color(0xFFE5E7EB);
 const _kGrey100  = Color(0xFFF3F4F6);
 const _kGrey50   = Color(0xFFF9FAFB);
+const _kBgSoft   = Color(0xFFF8FAFC);
 
 class AdminDataPage extends StatefulWidget {
   const AdminDataPage({super.key});
@@ -287,7 +288,7 @@ class _AdminDataPageState extends State<AdminDataPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _kBgSoft,
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [
           SliverToBoxAdapter(
@@ -312,13 +313,17 @@ class _AdminDataPageState extends State<AdminDataPage>
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(20)),
+                        decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(20)),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Container(width: 6, height: 6,
-                              decoration: const BoxDecoration(color: _kGrey500, shape: BoxShape.circle)),
+                              decoration: const BoxDecoration(
+                                  color: Color(0xFF16A34A), shape: BoxShape.circle)),
                           const SizedBox(width: 4),
-                          const Text('LIVE', style: TextStyle(
-                              fontSize: 10, fontWeight: FontWeight.w800, color: _kGrey500, letterSpacing: 0.5)),
+                          const Text('Live', style: TextStyle(
+                              fontSize: 10, fontWeight: FontWeight.w800,
+                              color: Color(0xFF15803D), letterSpacing: 0.5)),
                         ]),
                       ),
                     ]),
@@ -402,12 +407,13 @@ class _AdminDataPageState extends State<AdminDataPage>
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (ctx, i) => Container(
-                    margin: const EdgeInsets.only(bottom: 8),
+                    margin: const EdgeInsets.only(bottom: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: _kGrey200),
                       boxShadow: const [
-                        BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
+                        BoxShadow(color: Color(0x08000000), blurRadius: 10, offset: Offset(0, 4)),
                       ],
                     ),
                     child: _buildItem(type, filtered[i] as Map<String, dynamic>),
@@ -452,7 +458,7 @@ class _AdminDataPageState extends State<AdminDataPage>
           prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 16, color: _kGrey400),
           prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 0),
           filled: true,
-          fillColor: _kGrey50,
+          fillColor: Colors.white,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
           border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -861,10 +867,12 @@ class _DataFormSheetState extends State<_DataFormSheet> {
         _level = lvl.toLowerCase() == 'secondary' ? 'Secondary' : 'Primary';
       } else {
         _level = lvl.isNotEmpty ? lvl : 'dispensary';
-      }
-    } else {
+      }    } else {
       _level = widget.type == 'subjects' ? 'Primary' : 'dispensary';
     }
+    // Kada mpya: HAKUNA idara ya default — mtumiaji lazima achague (kama web fix)
+    if (widget.type == 'cadres' && widget.item == null) _category = '';
+
     if (widget.type == 'facilities') {
       _loadRegions();
       if (widget.item != null) {
@@ -953,6 +961,14 @@ class _DataFormSheetState extends State<_DataFormSheet> {
           data['code']  = slug.toUpperCase();
           data['level'] = _level;
         case 'cadres':
+          if (_category.isEmpty) {
+            if (!mounted) return;
+            setState(() { _saving = false; });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Chagua idara ya kada'), backgroundColor: _kAmber),
+            );
+            return;
+          }
           data.remove('name');
           data['code']              = slug.toUpperCase();
           data['display_name']      = name;
