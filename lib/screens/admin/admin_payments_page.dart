@@ -75,19 +75,22 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   Map<String, dynamic> _counts = {};
   int _totalApprovedTzs = 0;
 
-  String _status = 'verifying'; // backend: verifying | approved | rejected
+  String _status = 'all'; // all | verifying | approved | rejected
   int _page = 0;
   final Set<String> _smsOpen = {};
+  final _searchCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _load();
+    _searchCtrl.addListener(() { if (mounted) setState(() => _page = 0); });
   }
 
   @override
   void dispose() {
     _scroll.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -114,8 +117,21 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
     }
   }
 
-  List<Map<String, dynamic>> get _filtered =>
-      _payments.where((p) => '${p['status'] ?? ''}' == _status).toList();
+  int get _totalAll => _payments.length;
+
+  List<Map<String, dynamic>> get _filtered {
+    final q = _searchCtrl.text.toLowerCase().trim();
+    return _payments.where((p) {
+      final st = '${p['status'] ?? ''}';
+      if (_status != 'all' && st != _status) return false;
+      if (q.isEmpty) return true;
+      final name  = '${p['user_name'] ?? ''}'.toLowerCase();
+      final phone = '${p['phone'] ?? ''}';
+      final order = '${p['order_id'] ?? ''}'.toLowerCase();
+      final sms   = '${p['sms_text'] ?? ''}'.toLowerCase();
+      return name.contains(q) || phone.contains(q) || order.contains(q) || sms.contains(q);
+    }).toList();
+  }
 
   int get _totalPages => _filtered.isEmpty ? 1 : (_filtered.length / _kPageSize).ceil();
   int get _safePage => _page.clamp(0, _totalPages - 1);
@@ -289,30 +305,54 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                 ),
               ]),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
-            // ── Counts: Inasubiri / Imeidhinishwa / Imekataliwa ──
+            // ── Hali (dropdown yenye counts) + Tafuta — kama ukurasa wa Maoni ──
             Row(children: [
-              Expanded(child: _miniStat('Inasubiri', _countOf('verifying'), _cAmber, _cAmberBg,
-                  Icons.hourglass_top_rounded)),
-              const SizedBox(width: 10),
-              Expanded(child: _miniStat('Imeidhinishwa', _countOf('approved'), _cGreen, _cGreenBg,
-                  Icons.check_circle_outline_rounded)),
-              const SizedBox(width: 10),
-              Expanded(child: _miniStat('Imekataliwa', _countOf('rejected'), _cRed, _cRedBg,
-                  Icons.cancel_outlined)),
-            ]),
-            const SizedBox(height: 16),
-
-            // ── Filter chips ──
-            Wrap(spacing: 8, runSpacing: 8, children: [
-              _statusChip('verifying', 'Inasubiri', Icons.hourglass_top_rounded, _cAmber),
-              _statusChip('approved', 'Imeidhinishwa', Icons.check_circle_outline_rounded, _cGreen),
-              _statusChip('rejected', 'Imekataliwa', Icons.cancel_outlined, _cRed),
+              Expanded(
+                child: _StatusDropdown(
+                  value: _status,
+                  total: _totalAll,
+                  counts: _counts,
+                  onChanged: (v) => setState(() { _status = v; _page = 0; }),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _searchCtrl,
+                  style: const TextStyle(fontSize: 14, color: _cTextDark),
+                  decoration: InputDecoration(
+                    hintText: 'Tafuta...',
+                    hintStyle: const TextStyle(fontSize: 14, color: _cFaint),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: _cTextGrey),
+                    suffixIcon: _searchCtrl.text.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Futa',
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            onPressed: () => _searchCtrl.clear(),
+                          ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: _cBorder)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: _cBorder)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: _cBlue, width: 1.4)),
+                  ),
+                ),
+              ),
             ]),
             const SizedBox(height: 14),
 
-            Text('Inaonyesha ${pageItems.length} kati ya ${filtered.length}',
+            Text('Inaonyesha ${pageItems.length} kati ya ${filtered.length} michango',
                 style: const TextStyle(fontSize: 13, color: _cTextGrey)),
             const SizedBox(height: 10),
 
@@ -347,61 +387,6 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  int _countOf(String s) => (_counts[s] as num?)?.toInt() ?? 0;
-
-  Widget _miniStat(String label, int n, Color fg, Color bg, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _cCardBg,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(children: [
-        Container(
-          width: 34, height: 34,
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(9)),
-          child: Icon(icon, size: 17, color: fg),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('$n',
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w800, color: _cTextDark)),
-            Text(label,
-                style: const TextStyle(fontSize: 11.5, color: _cTextGrey),
-                overflow: TextOverflow.ellipsis, maxLines: 1),
-          ]),
-        ),
-      ]),
-    );
-  }
-
-  Widget _statusChip(String slug, String label, IconData icon, Color color) {
-    final active = _status == slug;
-    final count = _countOf(slug);
-    return GestureDetector(
-      onTap: () => setState(() { _status = slug; _page = 0; }),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-        decoration: BoxDecoration(
-          color: active ? color : _cBg,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: active ? color : _cBorder),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 14, color: active ? Colors.white : color),
-          const SizedBox(width: 6),
-          Text('$label ($count)',
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: active ? Colors.white : _cTextDark)),
-        ]),
       ),
     );
   }
@@ -871,6 +856,76 @@ class _PaymentCard extends StatelessWidget {
           ),
         ),
       ]),
+    );
+  }
+}
+
+// ─── Dropdown ya hali yenye counts (kama ukurasa wa Maoni) ────────────────────
+
+class _StatusDropdown extends StatelessWidget {
+  final String value;
+  final int total;
+  final Map<String, dynamic> counts;
+  final ValueChanged<String> onChanged;
+  const _StatusDropdown({
+    required this.value,
+    required this.total,
+    required this.counts,
+    required this.onChanged,
+  });
+
+  int _of(String s) => (counts[s] as num?)?.toInt() ?? 0;
+
+  String _label(String v) => switch (v) {
+        'all' => 'Zote ($total)',
+        'verifying' => 'Zinasubiri (${_of('verifying')})',
+        'approved' => 'Zimeidhinishwa (${_of('approved')})',
+        'rejected' => 'Zimekataliwa (${_of('rejected')})',
+        _ => v,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      onSelected: onChanged,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      itemBuilder: (_) => [
+        for (final v in ['all', 'verifying', 'approved', 'rejected'])
+          PopupMenuItem<String>(
+            value: v,
+            child: Row(children: [
+              if (value == v) ...[
+                const Icon(Icons.check_rounded, size: 16, color: _cBlue),
+                const SizedBox(width: 6),
+              ],
+              Text(_label(v),
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: value == v ? FontWeight.w700 : FontWeight.w400,
+                      color: value == v ? _cBlue : _cTextDark)),
+            ]),
+          ),
+      ],
+      child: Container(
+        height: 46,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _cBorder),
+        ),
+        child: Row(children: [
+          Expanded(
+            child: Text(
+              _label(value),
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 14, color: _cTextDark),
+            ),
+          ),
+          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _cTextGrey),
+        ]),
+      ),
     );
   }
 }
