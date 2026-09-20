@@ -154,48 +154,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Row(children: [
                       Text(
                         isAdmin ? 'Wasifu wa Admin' : 'Wasifu Wangu',
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2),
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: _kGrey900, height: 1.2),
                       ),
                       if (isAdmin) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: const Color(0xFFEAF1FF),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
                           ),
                           child: const Text('Admin',
-                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: _kBlue)),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _kBlue)),
                         ),
                       ],
                     ]),
-                    const Text('Taarifa za akaunti yako', style: TextStyle(fontSize: 11, color: _kGrey500)),
+                    const Text('Taarifa za akaunti yako', style: TextStyle(fontSize: 13, color: _kGrey500)),
                   ])),
                   const SizedBox(width: 8),
                   if (!_editing)
                     GestureDetector(
                       onTap: () => setState(() => _editing = true),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
                           color: _kBlue,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text('Hariri', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                        child: const Text('Hariri', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
                       ),
                     )
                   else
                     GestureDetector(
                       onTap: () => setState(() => _editing = false),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: _kGrey300),
                         ),
-                        child: const Text('Ghairi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGrey700)),
+                        child: const Text('Ghairi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kGrey700)),
                       ),
                     ),
                 ]),

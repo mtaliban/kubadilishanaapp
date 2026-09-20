@@ -83,6 +83,9 @@ class _State extends State<AdminUsersPage> {
 
   bool _showFilters = false;
 
+  // Kichujio cha stat cards (kugusika): all | active | disabled | admin
+  String _statFilter = 'all';
+
   int _page = 1;
   static const _ps = 5;
 
@@ -193,11 +196,48 @@ class _State extends State<AdminUsersPage> {
   }
 
   // ── Pagination ─────────────────────────────────────────────────────────────
-  int get _totalPages => (_users.isEmpty ? 1 : (_users.length / _ps).ceil());
+  // Stat cards zinachuja orodha (kama reference): Hai / Wamesitishwa / Admin
+  List<dynamic> get _statFiltered {
+    if (_statFilter == 'all') return _users;
+    return _users.where((u) {
+      final m = u as Map;
+      final st = '${m['status'] ?? 'active'}'.toLowerCase();
+      switch (_statFilter) {
+        case 'active':   return st != 'disabled';
+        case 'disabled': return st == 'disabled';
+        case 'admin':    return m['is_admin'] == true;
+      }
+      return true;
+    }).toList();
+  }
+
+  int get _totalPages => (_statFiltered.isEmpty ? 1 : (_statFiltered.length / _ps).ceil());
   int get _safePage   => _page.clamp(1, _totalPages);
   List<dynamic> get _pageItems {
+    final list = _statFiltered;
     final s = (_safePage - 1) * _ps;
-    return _users.sublist(s, (s + _ps).clamp(0, _users.length));
+    return list.sublist(s, (s + _ps).clamp(0, list.length));
+  }
+
+  int get _activeFilterCount => [
+        _category.isNotEmpty,
+        _regionId != null,
+        _districtId != null,
+        _facilityId != null,
+        _subjectCode != null,
+      ].where((e) => e).length;
+
+  void _clearAllFilters() {
+    setState(() {
+      _category = '';
+      _regionId = null;  _regionName = null;
+      _districtId = null; _districtName = null;
+      _facilityId = null; _facilityName = null;
+      _subjectCode = null; _subjectName = null;
+      _statFilter = 'all';
+      _page = 1;
+    });
+    _load();
   }
 
   // ── Selection ──────────────────────────────────────────────────────────────
@@ -547,7 +587,7 @@ class _State extends State<AdminUsersPage> {
     String cat = _category.isNotEmpty ? _category : 'education';
     bool busy = false;
     showModalBottomSheet(
-      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      context: context, isScrollControlled: true, backgroundColor: const Color(0xFFF7F8FA),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => StatefulBuilder(
@@ -663,7 +703,7 @@ class _State extends State<AdminUsersPage> {
     List<dynamic> cadres = []; List<dynamic> dists = [];
 
     showModalBottomSheet(
-      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      context: context, isScrollControlled: true, backgroundColor: const Color(0xFFF7F8FA),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => StatefulBuilder(
@@ -893,7 +933,7 @@ class _State extends State<AdminUsersPage> {
     bool saving     = false;
 
     showModalBottomSheet(
-      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      context: context, isScrollControlled: true, backgroundColor: const Color(0xFFF7F8FA),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => StatefulBuilder(
@@ -1012,7 +1052,7 @@ class _State extends State<AdminUsersPage> {
     final passCtrl  = TextEditingController();
     bool saving = false;
     showModalBottomSheet(
-      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      context: context, isScrollControlled: true, backgroundColor: const Color(0xFFF7F8FA),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => StatefulBuilder(
@@ -1100,7 +1140,7 @@ class _State extends State<AdminUsersPage> {
     final catLabel = category.isEmpty ? '' : _deptName(category);
 
     showModalBottomSheet(
-      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      context: context, isScrollControlled: true, backgroundColor: const Color(0xFFF7F8FA),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => DraggableScrollableSheet(
@@ -1187,37 +1227,41 @@ class _State extends State<AdminUsersPage> {
   // ── Sheet helpers ──────────────────────────────────────────────────────────
   Widget _sheetHeader(BuildContext ctx, IconData icon, String title, String? sub) =>
       Row(children: [
-        Container(width: 38, height: 38,
-            decoration: BoxDecoration(color: _blueBg, borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: _blue, size: 20)),
-        const SizedBox(width: 10),
+        Container(width: 44, height: 44,
+            decoration: BoxDecoration(color: _blueBg, borderRadius: BorderRadius.circular(14)),
+            child: Icon(icon, color: _blue, size: 22)),
+        const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _g900)),
-          if (sub != null) Text(sub, style: const TextStyle(fontSize: 12, color: _g500)),
+          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _g900)),
+          if (sub != null) Text(sub, style: const TextStyle(fontSize: 12.5, color: _g500)),
         ])),
         GestureDetector(
           onTap: () => Navigator.pop(ctx),
-          child: Container(width: 30, height: 30,
-              decoration: const BoxDecoration(color: _g100, shape: BoxShape.circle),
-              child: Icon(PhosphorIcons.x(), size: 14, color: _g700)),
+          child: Container(width: 34, height: 34,
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _g200)),
+              child: Icon(PhosphorIcons.x(), size: 15, color: _g700)),
         ),
       ]);
 
   Widget _lbl(String t) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
+    padding: const EdgeInsets.only(bottom: 7),
     child: Text(t, style: const TextStyle(
-        fontSize: 11, fontWeight: FontWeight.w700, color: _g500, letterSpacing: 0.8)),
+        fontSize: 12, fontWeight: FontWeight.w700, color: _g700, letterSpacing: 0.3)),
   );
 
   Widget _inp(TextEditingController ctrl, String hint,
       {IconData? icon, TextInputType keyboard = TextInputType.text, bool obscure = false}) =>
       TextField(
         controller: ctrl, keyboardType: keyboard, obscureText: obscure,
+        style: const TextStyle(fontSize: 14, color: _g900),
         decoration: InputDecoration(
-          hintText: hint, hintStyle: const TextStyle(color: _g400, fontSize: 13),
+          hintText: hint, hintStyle: const TextStyle(color: _g400, fontSize: 13.5),
           prefixIcon: icon != null ? Icon(icon, size: 17, color: _g400) : null,
           fillColor: Colors.white, filled: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: _g200)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
@@ -1387,8 +1431,12 @@ class _State extends State<AdminUsersPage> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
                   child: Text(
-                    'Jumla ${_loading ? '...' : _users.length}',
-                    style: const TextStyle(fontSize: 12, color: _g500),
+                    _loading
+                        ? 'Inapakia...'
+                        : (_statFilter != 'all' || _activeFilterCount > 0
+                            ? 'Inaonyesha ${_statFiltered.length} kati ya ${_users.length} watumiaji'
+                            : 'Jumla: ${_users.length} watumiaji'),
+                    style: const TextStyle(fontSize: 12.5, color: _g500),
                   ),
                 ),
               ),
@@ -1523,23 +1571,30 @@ class _State extends State<AdminUsersPage> {
       }
       if ((u['is_admin'] as bool? ?? false)) admins++;
     }
-    Widget stat(String n, String l, Color c) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(n, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: c)),
-          const SizedBox(height: 3),
-          Text(l, style: const TextStyle(fontSize: 12, color: _g500),
-              overflow: TextOverflow.ellipsis, maxLines: 1),
-        ],
-      ),
-    );
+    Widget stat(String n, String l, Color c, {bool sel = false, VoidCallback? onTap}) =>
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: sel ? _blueBg : const Color(0xFFF7F8FA),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: sel ? _blue : Colors.transparent, width: 1.4),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(n, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: c)),
+                const SizedBox(height: 3),
+                Text(l, style: TextStyle(
+                    fontSize: 12, color: sel ? _blue : _g500,
+                    fontWeight: sel ? FontWeight.w700 : FontWeight.w400),
+                    overflow: TextOverflow.ellipsis, maxLines: 1),
+              ],
+            ),
+          ),
+        );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: GridView.count(
@@ -1550,10 +1605,25 @@ class _State extends State<AdminUsersPage> {
         crossAxisSpacing: 10,
         childAspectRatio: 2.2,
         children: [
-          stat('${_loading ? '...' : _users.length}', 'Watumiaji wote', _g900),
-          stat('$active', 'Hai', const Color(0xFF15803D)),
-          stat('$blocked', 'Wamesitishwa', _red),
-          stat('$admins', 'Admins', _blue),
+          // Kila kadi inagusika kuchuja (kama reference)
+          stat('${_loading ? '...' : _users.length}', 'Wote', _g900,
+              sel: _statFilter == 'all',
+              onTap: () => setState(() { _statFilter = 'all'; _page = 1; })),
+          stat('$active', 'Hai', const Color(0xFF15803D),
+              sel: _statFilter == 'active',
+              onTap: () => setState(() {
+                _statFilter = _statFilter == 'active' ? 'all' : 'active'; _page = 1;
+              })),
+          stat('$blocked', 'Wamesitishwa', _red,
+              sel: _statFilter == 'disabled',
+              onTap: () => setState(() {
+                _statFilter = _statFilter == 'disabled' ? 'all' : 'disabled'; _page = 1;
+              })),
+          stat('$admins', 'Admins', _blue,
+              sel: _statFilter == 'admin',
+              onTap: () => setState(() {
+                _statFilter = _statFilter == 'admin' ? 'all' : 'admin'; _page = 1;
+              })),
           stat('${_departments.isEmpty ? '—' : _departments.length}', 'Idara', _blue700),
         ],
       ),
@@ -1638,17 +1708,40 @@ class _State extends State<AdminUsersPage> {
             ),
           ),
           const SizedBox(width: 8),
+          // Funnel button — badge ya idadi ya vichujio vinavyofanya kazi
           GestureDetector(
             onTap: () => setState(() => _showFilters = !_showFilters),
-            child: Container(
-              width: 42, height: 42,
-              decoration: BoxDecoration(
-                color: _showFilters ? _blueBg : Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _showFilters ? _blue : _cardBorder),
-              ),
-              child: Icon(PhosphorIcons.funnelSimple(),
-                  color: _showFilters ? _blue : _g500, size: 17),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 42, height: 42,
+                  decoration: BoxDecoration(
+                    color: (_showFilters || _activeFilterCount > 0) ? _blueBg : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: (_showFilters || _activeFilterCount > 0) ? _blue : _cardBorder),
+                  ),
+                  child: Icon(PhosphorIcons.funnelSimple(),
+                      color: (_showFilters || _activeFilterCount > 0) ? _blue : _g500, size: 17),
+                ),
+                if (_activeFilterCount > 0)
+                  Positioned(
+                    top: -5,
+                    right: -5,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _blue,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                      child: Text('$_activeFilterCount',
+                          style: const TextStyle(
+                              fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -1697,6 +1790,9 @@ class _State extends State<AdminUsersPage> {
                 setState(() { _category = ''; _page = 1; });
                 _loadRefs(); _load();
               }),
+              // Futa vyote — inaonekana tu kuna kichujio chochote kinachofanya kazi
+              if (_activeFilterCount > 0 || _statFilter != 'all')
+                chip('✕ Futa vyote', false, _clearAllFilters),
               for (final d in _departments)
                 chip(
                   '${d['display_name'] ?? d['name'] ?? d['code']}',
