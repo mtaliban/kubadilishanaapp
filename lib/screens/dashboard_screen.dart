@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
@@ -427,7 +428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         if (myRegionName.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Icon(Icons.location_on, size: 11, color: Color(0xFF3B82F6)),
+                            Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill), size: 11, color: const Color(0xFF3B82F6)),
                             const SizedBox(width: 2),
                             Flexible(child: Text(
                               [station['district_name'], myRegionName]
@@ -510,7 +511,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                           decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(20)),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Icon(Icons.people, size: 12, color: Color(0xFF1D4ED8)),
+                            Icon(PhosphorIcons.usersThree(PhosphorIconsStyle.fill), size: 12, color: const Color(0xFF1D4ED8)),
                             const SizedBox(width: 3),
                             Text('$_boardTotal', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF1D4ED8))),
                           ]),
@@ -926,7 +927,7 @@ class _TrueMatchCard extends StatelessWidget {
             if ((from['region_name'] ?? '').isNotEmpty) ...[
               const SizedBox(height: 10),
               Row(children: [
-                const Icon(Icons.location_on, size: 13, color: Color(0xFFEF4444)),
+                Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill), size: 13, color: const Color(0xFFEF4444)),
                 const SizedBox(width: 5),
                 const Text('Kutoka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
                 Expanded(child: Text.rich(
@@ -947,7 +948,7 @@ class _TrueMatchCard extends StatelessWidget {
               if (to != null && (to['region_name'] ?? '').isNotEmpty) ...[
                 const SizedBox(height: 5),
                 Row(children: [
-                  const Icon(Icons.gps_fixed, size: 13, color: Color(0xFF1E40AF)),
+                  Icon(PhosphorIcons.crosshair(PhosphorIconsStyle.bold), size: 13, color: const Color(0xFF1E40AF)),
                   const SizedBox(width: 5),
                   const Text('Anataka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
                   Expanded(child: Text.rich(
@@ -1028,7 +1029,7 @@ class _TrueMatchCard extends StatelessWidget {
             // Buttons: Piga + WhatsApp — kama web
             Row(children: [
               if (phone.isNotEmpty)
-                Expanded(child: _tmBtn(Icons.phone, 'Piga', () async {
+                Expanded(child: _tmBtn(PhosphorIcons.phoneCall(PhosphorIconsStyle.bold), 'Piga', () async {
                   final uid = c['user_id'] as String? ?? '';
                   if (!isPaid) { onToast('Changia TZS 2,500 upate namba', uid); return; }
                   onToast('Piga $name', uid);
@@ -1038,7 +1039,7 @@ class _TrueMatchCard extends StatelessWidget {
               // WhatsApp — onyesha tu kama amelipa (canContact) kama web
               if (phoneAlt.isNotEmpty && isPaid) ...[
                 const SizedBox(width: 8),
-                Expanded(child: _tmBtn(Icons.chat, 'WhatsApp', () async {
+                Expanded(child: _tmBtn(PhosphorIcons.whatsappLogo(PhosphorIconsStyle.bold), 'WhatsApp', () async {
                   final uid = c['user_id'] as String? ?? '';
                   final firstName = name.split(' ').first;
                   final introMsg = 'Habari $firstName, nina furaha kukupata hapa. Nina hamu ya kubadilishana nafasi na wewe.';
@@ -1168,7 +1169,7 @@ class _FiltersBar extends StatelessWidget {
     hintText: hint, isDense: true,
     contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     filled: true, fillColor: Colors.white,
-    prefixIcon: const Icon(Icons.search, size: 15, color: Color(0xFF9CA3AF)),
+    prefixIcon: Icon(PhosphorIcons.magnifyingGlass(PhosphorIconsStyle.bold), size: 15, color: const Color(0xFF9CA3AF)),
     prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 0),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(7), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(7), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
@@ -1266,7 +1267,7 @@ class _FiltersBar extends StatelessWidget {
         // ── Footer: MapPin + label (kushoto) · Futa kichujio (kulia) kama web ──
         const SizedBox(height: 8),
         Row(children: [
-          const Icon(Icons.location_on, size: 12, color: Color(0xFF6B7280)), // grey-600 kama web
+          Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill), size: 12, color: const Color(0xFF6B7280)), // grey-600 kama web
           const SizedBox(width: 3),
           Expanded(child: Text(
             facilityLabel ?? districtLabel ?? regionLabel ?? 'Mikoa yote',
@@ -1320,7 +1321,7 @@ class _FiltersBar extends StatelessWidget {
             controller: subjectQCtrl,
             decoration: _searchDec('Tafuta masomo (k.m. MATH, KISWAHILI — unaweza kuweka mawili au zaidi)...').copyWith(
               suffixIcon: subjectQ.isNotEmpty
-                  ? IconButton(icon: const Icon(Icons.clear, size: 13, color: Color(0xFF9CA3AF)),
+                  ? IconButton(icon: Icon(PhosphorIcons.x(PhosphorIconsStyle.bold), size: 13, color: const Color(0xFF9CA3AF)),
                       onPressed: () { subjectQCtrl.clear(); onSubjectQChanged(''); onSubjectQSubmitted(''); })
                   : null,
             ),
@@ -1478,29 +1479,7 @@ class _BoardCard extends StatelessWidget {
                       style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
-                // ── Level badge: Inalingana (kijani) / Kiasi (chungwa) ──
-                if (allMatch)
-                  Container(
-                    margin: const EdgeInsets.only(left: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF16A34A),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: const Text('✓ INALINGANA',
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
-                  )
-                else if (someMatch)
-                  Container(
-                    margin: const EdgeInsets.only(left: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFB26A00),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: const Text('≈ KIASI',
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
+                // ── Kiwango cha match kinaonekana kwenye pill ya masomo (chini) — badge ya juu imeondolewa ili row isijazike ──
               ]),
               const SizedBox(height: 3),
               Text(
@@ -1518,7 +1497,7 @@ class _BoardCard extends StatelessWidget {
           if ((station['region_name'] ?? '').isNotEmpty) ...[
             const SizedBox(height: 10),
             Row(children: [
-              const Icon(Icons.location_on, size: 13, color: Color(0xFFEF4444)),
+              Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill), size: 13, color: const Color(0xFFEF4444)),
               const SizedBox(width: 5),
               const Text('Kutoka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
               Expanded(child: Text.rich(
@@ -1539,7 +1518,7 @@ class _BoardCard extends StatelessWidget {
             if (activeDest != null && (activeDest['region_name'] ?? '').isNotEmpty) ...[
               const SizedBox(height: 5),
               Row(children: [
-                const Icon(Icons.gps_fixed, size: 13, color: Color(0xFF1E40AF)),
+                Icon(PhosphorIcons.crosshair(PhosphorIconsStyle.bold), size: 13, color: const Color(0xFF1E40AF)),
                 const SizedBox(width: 5),
                 const Text('Anataka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
                 Expanded(child: Text.rich(
@@ -1575,7 +1554,7 @@ class _BoardCard extends StatelessWidget {
           if (years != null) ...[
             const SizedBox(height: 8),
             Row(children: [
-              const Icon(Icons.work_outline_rounded, size: 13, color: Color(0xFF6B7280)),
+              Icon(PhosphorIcons.briefcase(), size: 13, color: const Color(0xFF6B7280)),
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
@@ -1619,7 +1598,7 @@ class _BoardCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF16A34A)),
+                    Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill), size: 12, color: const Color(0xFF16A34A)),
                     const SizedBox(width: 4),
                     Text('Masomo yote ${mySubjects.length} yanalingana',
                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF15803D))),
@@ -1633,7 +1612,7 @@ class _BoardCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.timelapse_rounded, size: 12, color: Color(0xFFB26A00)),
+                    Icon(PhosphorIcons.hourglassMedium(PhosphorIconsStyle.fill), size: 12, color: const Color(0xFFB26A00)),
                     const SizedBox(width: 4),
                     Text('Somo ${matchedSubjects.length} kati ya ${mySubjects.length} linalingana',
                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFB26A00))),
@@ -1646,10 +1625,10 @@ class _BoardCard extends StatelessWidget {
                     color: const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.cancel_outlined, size: 12, color: Color(0xFF9CA3AF)),
-                    SizedBox(width: 4),
-                    Text('Hakuna somo linalolingana',
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(PhosphorIcons.xCircle(), size: 12, color: const Color(0xFF9CA3AF)),
+                    const SizedBox(width: 4),
+                    const Text('Hakuna somo linalolingana',
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
                   ]),
                 ),
@@ -1660,7 +1639,7 @@ class _BoardCard extends StatelessWidget {
           if (ago.isNotEmpty) ...[
             const SizedBox(height: 8), // gap-2 = 8px
             Row(children: [
-              Icon(fresh ? Icons.bolt : Icons.access_time, size: 13,
+              Icon(fresh ? PhosphorIcons.lightning(PhosphorIconsStyle.fill) : PhosphorIcons.clock(), size: 13,
                   color: fresh ? AppColors.primary : const Color(0xFF9CA3AF)),
               const SizedBox(width: 4),
               Expanded(child: Text(fresh ? 'Mpya · $ago' : ago,
@@ -1679,10 +1658,10 @@ class _BoardCard extends StatelessWidget {
 
           // Buttons: Piga / SMS / WA — wote grey-900 kama web
           Row(children: [
-            Expanded(child: _contactBtn(Icons.phone, 'Piga',
+            Expanded(child: _contactBtn(PhosphorIcons.phoneCall(PhosphorIconsStyle.bold), 'Piga',
                 phoneOk ? () => onContact('call') : null)),
             const SizedBox(width: 6), // gap-1.5 = 6px
-            Expanded(child: _contactBtn(Icons.chat_bubble_outline, 'SMS',
+            Expanded(child: _contactBtn(PhosphorIcons.envelopeSimple(PhosphorIconsStyle.bold), 'SMS',
                 phoneOk ? () => onContact('sms') : null)),
             if (altOk) ...[
               const SizedBox(width: 6), // gap-1.5 = 6px
@@ -1748,7 +1727,7 @@ class _BoardCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        SvgPicture.string(_kWaSvg, width: 14, height: 14),
+        Icon(PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill), size: 14, color: Colors.white),
         const SizedBox(width: 4),
         const Text('WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
       ]),
@@ -1800,7 +1779,7 @@ class _EmptyBoard extends StatelessWidget {
             color: const Color(0xFFF3F4F6),
             border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
-          child: const Icon(Icons.people_outline, size: 28, color: AppColors.textLight),
+          child: Icon(PhosphorIcons.usersThree(), size: 28, color: AppColors.textLight),
         ),
         const SizedBox(height: 12),
         Text(title,
@@ -1858,9 +1837,9 @@ class _AnnouncementBanner extends StatelessWidget {
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Megaphone icon — grey-400, mt-0.5 kama web
-        const Padding(
-          padding: EdgeInsets.only(top: 1),
-          child: Icon(Icons.campaign_outlined, size: 16, color: Color(0xFF9CA3AF)), // grey-400
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(PhosphorIcons.megaphoneSimple(), size: 16, color: const Color(0xFF9CA3AF)), // grey-400
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
