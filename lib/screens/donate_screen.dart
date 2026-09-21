@@ -94,6 +94,7 @@ class _DonateScreenState extends State<DonateScreen> {
 
   @override
   void dispose() {
+    WebSocketService().off('notification', _onWsNotification);
     _amountCtrl.dispose();
     _phoneCtrl.dispose();
     _smsCtrl.dispose();
@@ -131,21 +132,22 @@ class _DonateScreenState extends State<DonateScreen> {
   }
 
   void _setupRealtime() {
-    final ws = WebSocketService();
-    ws.on('notification', (payload) {
-      final type = payload['type'] ?? '';
-      if (type == 'payment.approved') {
-        _setFlash({'type': 'success', 'msg': '✓ Malipo yamethibitishwa'});
-        _loadHistory();
-        // Sasisha session — is_verified=True → mtu aweze kupiga SMS/WA (kama web)
-        context.read<AuthProvider>().refreshUser();
-      } else if (type == 'payment.rejected') {
-        _setFlash({'type': 'info', 'msg': '✗ Malipo yamekataliwa'});
-        _loadHistory();
-      } else if (type == 'payment.reply' || type == 'payment.submitted') {
-        _loadHistory();
-      }
-    });
+    WebSocketService().on('notification', _onWsNotification);
+  }
+
+  void _onWsNotification(Map<String, dynamic> payload) {
+    final type = payload['type'] ?? '';
+    if (type == 'payment.approved') {
+      _setFlash({'type': 'success', 'msg': '✓ Malipo yamethibitishwa'});
+      _loadHistory();
+      // Sasisha session — is_verified=True → mtu aweze kupiga SMS/WA (kama web)
+      context.read<AuthProvider>().refreshUser();
+    } else if (type == 'payment.rejected') {
+      _setFlash({'type': 'info', 'msg': '✗ Malipo yamekataliwa'});
+      _loadHistory();
+    } else if (type == 'payment.reply' || type == 'payment.submitted') {
+      _loadHistory();
+    }
   }
 
   void _setFlash(Map<String, dynamic> f) {

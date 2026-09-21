@@ -107,8 +107,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _globalToast;
   Timer? _globalToastTimer;
 
+  // ── WS listeners zilizopewa jina — kwa kuzifuta kwenye dispose ─────────
+  // (bila hii, kila ukifungua dashboard listeners mpya 9 zinajongezwa —
+  //  events zinakua, API calls zinajirudia, toasts zinatokea mara mbili)
+  void _onMatchFound(Map<String, dynamic> _) { _loadBoard(); _loadTrueMatches(); }
+  void _onUserRegistered(Map<String, dynamic> _) { _loadBoard(); _loadTrueMatches(); }
+  void _onUserChanged(Map<String, dynamic> _) => _loadBoard();
+  void _onUserRemoved(Map<String, dynamic> _) => _loadBoard();
+  void _onUserProfileUpdated(Map<String, dynamic> _) { _loadBoard(); _loadTrueMatches(); }
+  void _onContactToggled(Map<String, dynamic> payload) {
+    context.read<AuthProvider>().refreshUser().then((_) {
+      if (!mounted) return;
+      final enabled = payload['contact_enabled'] == true;
+      if (enabled) {
+        _showGlobalToast('✅ Admin amefungua namba — sasa unaweza kuwasiliana!');
+      }
+    });
+    _loadBoard();
+  }
+  void _onAnnouncement(Map<String, dynamic> _) => _loadAnnouncements();
+  void _onWsNotification(Map<String, dynamic> payload) {
+    final type = (payload['type'] as String?) ?? '';
+    // Badge bump — AppShell BadgeService inashughulikia global badges
+    BadgeService().bump(type);
+  }
+
   @override
   void dispose() {
+    final ws = WebSocketService();
+    ws.off('match.found', _onMatchFound);
+    ws.off('user.registered', _onUserRegistered);
+    ws.off('user.changed', _onUserChanged);
+    ws.off('user.removed', _onUserRemoved);
+    ws.off('user.profile_updated', _onUserProfileUpdated);
+    ws.off('contact.toggled', _onContactToggled);
+    ws.off('announcement', _onAnnouncement);
+    ws.off('announcement.new', _onAnnouncement);
+    ws.off('notification', _onWsNotification);
     _subjectQCtrl.dispose();
     _toastTimer?.cancel();
     _globalToastTimer?.cancel();
@@ -224,28 +259,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _setupRealtime() {
     final ws = WebSocketService();
-    ws.on('match.found', (_) { _loadBoard(); _loadTrueMatches(); });
-    ws.on('user.registered', (_) { _loadBoard(); _loadTrueMatches(); });
-    ws.on('user.changed', (_) => _loadBoard());
-    ws.on('user.removed', (_) => _loadBoard());
-    ws.on('user.profile_updated', (_) { _loadBoard(); _loadTrueMatches(); });
-    ws.on('contact.toggled', (payload) {
-      context.read<AuthProvider>().refreshUser().then((_) {
-        if (!mounted) return;
-        final enabled = payload['contact_enabled'] == true;
-        if (enabled) {
-          _showGlobalToast('✅ Admin amefungua namba — sasa unaweza kuwasiliana!');
-        }
-      });
-      _loadBoard();
-    });
-    ws.on('announcement', (_) => _loadAnnouncements());
-    ws.on('announcement.new', (_) => _loadAnnouncements());
-    ws.on('notification', (payload) {
-      final type = (payload['type'] as String?) ?? '';
-      // Badge bump — AppShell BadgeService inashughulikia global badges
-      BadgeService().bump(type);
-    });
+    ws.on('match.found', _onMatchFound);
+    ws.on('user.registered', _onUserRegistered);
+    ws.on('user.changed', _onUserChanged);
+    ws.on('user.removed', _onUserRemoved);
+    ws.on('user.profile_updated', _onUserProfileUpdated);
+    ws.on('contact.toggled', _onContactToggled);
+    ws.on('announcement', _onAnnouncement);
+    ws.on('announcement.new', _onAnnouncement);
+    ws.on('notification', _onWsNotification);
   }
 
   void _clearFilters() {

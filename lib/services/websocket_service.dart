@@ -1,4 +1,12 @@
 /// Real-time WebSocket — live board updates, notifications, presence.
+///
+/// Udhibiti wa makosa (v3):
+///  • Reconnect ina MWISHO (jaribio 5, kisha inapumzika) — hakuna loop ya milele
+///    inayozalisha SocketException kila sekunde server ikiwa haipatikani.
+///    connect() mpya (login / app resume) inaianza upya kwa urahisi.
+///  • Ujumbe usio String (binary/frame) hauanguki — unapuuzwa salama.
+///  • listeners haziongezi mara mbili (on() inagundua callback ile ile).
+///  • offAny() kuondoa wildcard listeners (screens zote sasa hutumia dispose).
 import 'dart:async';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -18,7 +26,10 @@ class WebSocketService {
   bool _stopped = false;
   String? _token;
   int _reconnectDelay = 1;
+  int _reconnectAttempts = 0;
   final Map<String, List<WsEventCallback>> _listeners = {};
+
+  static const int _maxReconnectAttempts = 5;
 
   bool get isConnected => _connected;
 
@@ -26,6 +37,7 @@ class WebSocketService {
     _token = token;
     _stopped = false;
     _reconnectDelay = 1;
+    _reconnectAttempts = 0; // connect mpya → anza hesabu upya
     _doConnect();
   }
 
@@ -33,10 +45,9 @@ class WebSocketService {
     _stopped = true;
     _pingTimer?.cancel();
     _reconnectTimer?.cancel();
-    _channel?.sink.close();
+    try { _channel?.sink.close(); } catch (_) {}
     _channel = null;
     _connected = false;
-    _listeners.clear();
   }
 
   void _doConnect() {
@@ -54,10 +65,13 @@ class WebSocketService {
         (message) {
           _connected = true;
           _reconnectDelay = 1;
+          _reconnectAttempts = 0; // tumeunganishwa — hesabu imeisha
+          // Ujumbe usio String (binary/frame mbaya) — puuza salama.
+          if (message is! String) return;
           try {
-            final event = jsonDecode(message as String) as Map<String, dynamic>;
+            final event = jsonDecode(message) as Map<String, dynamic>;
             _handleEvent(event);
-          } catch (_) {}
+          } catch (_) {} // JSON isiyo sahihi — usianguke
         },
         onDone: () {
           _connected = false;
@@ -87,11 +101,16 @@ class WebSocketService {
   }
 
   void _scheduleReconnect() {
+    if (_stopped) return;
+    // MWISHO wa majaribio — isijaribu milele (ndiyo ilikuwa chanzo cha
+    // SocketException nyingi server ikiwa imezimwa).
+    if (_reconnectAttempts >= _maxReconnectAttempts) return;
+    _reconnectAttempts++;
+
     _reconnectTimer?.cancel();
     final delay = _reconnectDelay;
     _reconnectDelay = (_reconnectDelay * 2).clamp(1, 30);
-    _reconnectTimer =
-        Timer(Duration(seconds: delay), _doConnect);
+    _reconnectTimer = Timer(Duration(seconds: delay), _doConnect);
   }
 
   void _handleEvent(Map<String, dynamic> event) {
@@ -115,9 +134,11 @@ class WebSocketService {
     }
   }
 
-  /// Sikiliza event maalum.
+  /// Sikiliza event maalum. Callback ile ile hairudishwi mara mbili
+  /// (kuzuia duplicates zinazoongezwa kila initState).
   void on(String eventType, WsEventCallback callback) {
-    _listeners.putIfAbsent(eventType, () => []).add(callback);
+    final list = _listeners.putIfAbsent(eventType, () => []);
+    if (!list.contains(callback)) list.add(callback);
   }
 
   /// Ondoa listener.
@@ -128,7 +149,14 @@ class WebSocketService {
   /// Ondoa WOTE wa event fulani.
   void offAll(String eventType) => _listeners.remove(eventType);
 
-  /// Sikiliza KILA event (wildcard).
-  void onAny(WsEventCallback callback) =>
-      _listeners.putIfAbsent('*', () => []).add(callback);
+  /// Sikiliza KILA event (wildcard). Dedupe vile vile.
+  void onAny(WsEventCallback callback) {
+    final list = _listeners.putIfAbsent('*', () => []);
+    if (!list.contains(callback)) list.add(callback);
+  }
+
+  /// Ondoa wildcard listener.
+  void offAny(WsEventCallback callback) {
+    _listeners['*']?.remove(callback);
+  }
 }

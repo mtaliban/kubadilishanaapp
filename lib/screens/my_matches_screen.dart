@@ -79,17 +79,20 @@ class _MyMatchesScreenState extends State<MyMatchesScreen>
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 2, vsync: this);
-    // Refresh on WS match events
-    WebSocketService().onAny((_) {
-      _wsTimer?.cancel();
-      _wsTimer = Timer(const Duration(milliseconds: 1500), () {
-        if (mounted) setState(() {});
-      });
+    // Refresh on WS match events (named — ili offAny kwenye dispose)
+    WebSocketService().onAny(_onWsEvent);
+  }
+
+  void _onWsEvent(Map<String, dynamic> _) {
+    _wsTimer?.cancel();
+    _wsTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() {});
     });
   }
 
   @override
   void dispose() {
+    WebSocketService().offAny(_onWsEvent);
     _tabCtrl.dispose();
     _wsTimer?.cancel();
     super.dispose();

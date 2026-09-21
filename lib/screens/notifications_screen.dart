@@ -39,8 +39,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     _load();
-    WebSocketService().on('notification', (_) => _load());
-    WebSocketService().on('notification.new', (_) => _load());
+    WebSocketService().on('notification', _onWsNotification);
+    WebSocketService().on('notification.new', _onWsNotification);
+  }
+
+  void _onWsNotification(Map<String, dynamic> _) {
+    if (mounted) _load();
+  }
+
+  @override
+  void dispose() {
+    final ws = WebSocketService();
+    ws.off('notification', _onWsNotification);
+    ws.off('notification.new', _onWsNotification);
+    super.dispose();
   }
 
   Future<void> _load() async {

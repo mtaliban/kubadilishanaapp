@@ -31,8 +31,20 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   void initState() {
     super.initState();
     _load();
-    WebSocketService().on('announcement', (_) { if (mounted) _load(); });
-    WebSocketService().on('announcement.new', (_) { if (mounted) _load(); });
+    WebSocketService().on('announcement', _onAnnouncement);
+    WebSocketService().on('announcement.new', _onAnnouncement);
+  }
+
+  void _onAnnouncement(Map<String, dynamic> _) {
+    if (mounted) _load();
+  }
+
+  @override
+  void dispose() {
+    final ws = WebSocketService();
+    ws.off('announcement', _onAnnouncement);
+    ws.off('announcement.new', _onAnnouncement);
+    super.dispose();
   }
 
   Future<void> _load() async {
