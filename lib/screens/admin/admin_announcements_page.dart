@@ -601,49 +601,36 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     final type           = item['type'] as String? ?? 'info';
     final audience       = item['audience'] as String? ?? 'all';
     final createdAt      = item['created_at'] as String? ?? '';
-    final createdBy      = item['created_by'] as String?
-        ?? item['creator_name'] as String? ?? '';
     final recipientsCount = item['recipients_count'] as int? ?? 0;
 
     final s = _typeStyle(type);
 
+    // Kadi ya grey (kama reference) — campaign icon + title + pill ya walengwa
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F1F1)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8, offset: const Offset(0, 2)),
-        ],
+        color: const Color(0xFFF7F7F5),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Top row: type icon + title + audience pill ─────────────────────
+          // ── Top row: campaign icon + title + pill ya walengwa ───────────
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(
-                color: s.color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: Icon(s.icon, size: 20, color: s.color),
-            ),
-            const SizedBox(width: 12),
+            Icon(s.icon, size: 18, color: s.color),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(title,
                   style: GoogleFonts.inter(fontSize: 14,
-                      fontWeight: FontWeight.w700, color: _kGrey900)),
+                      fontWeight: FontWeight.w600, color: _kGrey900)),
             ),
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
-                color: _kBlueBg,
-                borderRadius: BorderRadius.circular(20),
+                color: _kBlue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Text(_audienceLabel(audience),
                   style: GoogleFonts.inter(fontSize: 11,
@@ -651,69 +638,62 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
             ),
           ]),
 
-          // ── Message ────────────────────────────────────────────────────────
+          // ── Message (maxLines 3 kama reference) ─────────────────────────
           if (message.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(message,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(fontSize: 13,
                     color: _kGrey700, height: 1.5)),
           ],
 
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF3F4F6)),
           const SizedBox(height: 10),
 
-          // ── Meta row: recipients + date + type badge ───────────────────────
+          // ── Meta row: recipients + date ────────────────────────────────
           Row(children: [
-            if (recipientsCount > 0) ...[
-              Icon(PhosphorIcons.users(), size: 13, color: _kGrey400),
-              const SizedBox(width: 4),
-              Text('$recipientsCount',
-                  style: GoogleFonts.inter(fontSize: 11, color: _kGrey400)),
-              const SizedBox(width: 10),
-            ],
-            if (createdBy.isNotEmpty) ...[
-              Icon(PhosphorIcons.user(), size: 13, color: _kGrey400),
-              const SizedBox(width: 4),
-              Text(createdBy,
-                  style: GoogleFonts.inter(fontSize: 11, color: _kGrey400)),
-              const SizedBox(width: 10),
-            ],
-            Icon(PhosphorIcons.clock(), size: 13, color: _kGrey400),
+            Icon(PhosphorIcons.users(), size: 14, color: _kGrey400),
+            const SizedBox(width: 4),
+            Text(recipientsCount > 0 ? '$recipientsCount watu' : '—',
+                style: GoogleFonts.inter(fontSize: 12, color: _kGrey400)),
+            const SizedBox(width: 14),
+            Icon(PhosphorIcons.clock(), size: 14, color: _kGrey400),
             const SizedBox(width: 4),
             Expanded(child: Text(
               _formatDate(createdAt),
-              style: GoogleFonts.inter(fontSize: 11, color: _kGrey400),
+              style: GoogleFonts.inter(fontSize: 12, color: _kGrey400),
               overflow: TextOverflow.ellipsis,
             )),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-              decoration: BoxDecoration(
-                color: s.color.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(s.label,
-                  style: GoogleFonts.inter(fontSize: 10.5,
-                      color: s.color, fontWeight: FontWeight.w700)),
-            ),
           ]),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          // ── Action buttons ─────────────────────────────────────────────────
+          // ── Action buttons — pills nyeupe rounded 20 (kama reference) ────
           Row(children: [
-            _ActionBtn(
-              icon: PhosphorIcons.arrowClockwise(),
-              label: 'Tuma tena',
-              color: _kBlue,
-              onTap: () => _resend(id),
+            Expanded(
+              child: TextButton.icon(
+                onPressed: () => _resend(id),
+                icon: Icon(PhosphorIcons.arrowClockwise(), size: 16, color: _kBlue),
+                label: const Text('Tuma tena',
+                    style: TextStyle(color: _kBlue, fontWeight: FontWeight.w500, fontSize: 13)),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+              ),
             ),
             const SizedBox(width: 8),
-            _ActionBtn(
-              icon: PhosphorIcons.trash(),
-              label: 'Futa',
-              color: _kRed,
-              onTap: () => _delete(id),
+            Expanded(
+              child: TextButton.icon(
+                onPressed: () => _delete(id),
+                icon: Icon(PhosphorIcons.trash(), size: 16, color: _kRed),
+                label: const Text('Futa',
+                    style: TextStyle(color: _kRed, fontWeight: FontWeight.w500, fontSize: 13)),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+              ),
             ),
           ]),
         ],
@@ -721,192 +701,142 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     );
   }
 
-  // ── MAIN BUILD ────────────────────────────────────────────────────────────
+  // ── MAIN BUILD — tabs 2: Tuma / Historia (kama reference) ────────────────
 
   @override
   Widget build(BuildContext context) {
-    final totalPages = (_items.length / _kPageSize).ceil().clamp(0, 9999);
-    final pageItems  = _loading || _error != null
-        ? <dynamic>[]
-        : _items.skip(_page * _kPageSize).take(_kPageSize).toList();
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F5F9),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        color: _kBlue,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── HERO ya gradient ──
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF0F3D73), Color(0xFF1D6FBF)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    child: Row(children: [
-                      Container(
-                        width: 42, height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                            PhosphorIcons.megaphone(PhosphorIconsStyle.fill),
-                            color: Colors.white, size: 21),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                          Text('Matangazo',
-                              style: GoogleFonts.inter(fontSize: 19,
-                                  fontWeight: FontWeight.w800, color: Colors.white)),
-                          Text('Tuma taarifa kwa watumiaji wote, idara, au mtu mmoja',
-                              style: GoogleFonts.inter(fontSize: 12,
-                                  color: Colors.white70)),
-                        ]),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(99),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Container(width: 7, height: 7,
-                              decoration: const BoxDecoration(
-                                  color: Color(0xFF4ADE80), shape: BoxShape.circle)),
-                          const SizedBox(width: 5),
-                          Text('LIVE',
-                              style: GoogleFonts.inter(
-                                  fontSize: 10.5, fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.8, color: Colors.white)),
-                        ]),
-                      ),
-                    ]),
-                  ),
-                  const SizedBox(height: 14),
-                  _buildSendForm(),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(children: [
-                      Text('Historia ya matangazo',
-                          style: GoogleFonts.inter(fontSize: 15,
-                              fontWeight: FontWeight.w700, color: _kGrey900)),
-                      const SizedBox(width: 8),
-                      if (!_loading && _error == null && _items.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _kBlueBg,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text('${_items.length}',
-                              style: GoogleFonts.inter(fontSize: 11,
-                                  color: _kBlue, fontWeight: FontWeight.w700)),
-                        ),
-                    ]),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(children: [
+            // ── Header nyeupe (badala ya hero ya gradient) ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(children: [
+                Icon(PhosphorIcons.megaphone(PhosphorIconsStyle.fill),
+                    color: _kBlue, size: 22),
+                const SizedBox(width: 8),
+                const Text('Matangazo',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900)),
+              ]),
             ),
-            if (_loading)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator(color: _kBlue)),
-              )
-            else if (_error != null)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(PhosphorIcons.warningCircle(),
-                        color: _kRed, size: 48),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: _load,
-                      icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
-                      label: const Text('Jaribu tena'),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: _kBlue,
-                          foregroundColor: Colors.white),
-                    ),
-                  ]),
-                ),
-              )
-            else if (_items.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(PhosphorIcons.megaphone(),
-                        color: _kGrey400, size: 52),
-                    const SizedBox(height: 12),
-                    Text('Hakuna matangazo bado',
-                        style: GoogleFonts.inter(fontSize: 14,
-                            color: _kGrey500)),
-                  ]),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, i) =>
-                        _buildCard(pageItems[i] as Map<String, dynamic>),
-                    childCount: pageItems.length,
-                  ),
-                ),
-              ),
-            // Pagination
-            if (!_loading && _error == null && totalPages > 1)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _PageBtn(
-                        icon: PhosphorIcons.caretLeft(),
-                        enabled: _page > 0,
-                        onTap: () => _goToPage(_page - 1),
-                      ),
-                      for (int p = 0; p < totalPages; p++)
-                        _PageNum(
-                          n: p + 1,
-                          active: _page == p,
-                          onTap: () => _goToPage(p),
-                        ),
-                      _PageBtn(
-                        icon: PhosphorIcons.caretRight(),
-                        enabled: _page < totalPages - 1,
-                        onTap: () => _goToPage(_page + 1),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
+            // ── TabBar: Tuma / Historia (N) ──
+            TabBar(
+              labelColor: _kBlue,
+              unselectedLabelColor: _kGrey500,
+              indicatorColor: _kBlue,
+              indicatorWeight: 2.5,
+              labelStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700),
+              unselectedLabelStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+              dividerColor: const Color(0xFFF1F1F1),
+              tabs: [
+                const Tab(text: 'Tuma'),
+                Tab(text: (!_loading && _error == null && _items.isNotEmpty)
+                    ? 'Historia (${_items.length})'
+                    : 'Historia'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(children: [
+                _buildTumaTab(),
+                _buildHistoriaTab(),
+              ]),
+            ),
+          ]),
         ),
       ),
     );
+  }
+
+  // ── TAB 1: Fomu ya kutuma ──
+  Widget _buildTumaTab() {
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: _kBlue,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        child: _buildSendForm(),
+      ),
+    );
+  }
+
+  // ── TAB 2: Historia ya matangazo ──
+  Widget _buildHistoriaTab() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator(color: _kBlue));
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(PhosphorIcons.warningCircle(), color: _kRed, size: 48),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: _load,
+            icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
+            label: const Text('Jaribu tena'),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: _kBlue, foregroundColor: Colors.white),
+          ),
+        ]),
+      );
+    }
+    if (_items.isEmpty) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(PhosphorIcons.megaphone(), color: _kGrey400, size: 52),
+          const SizedBox(height: 12),
+          Text('Hakuna tangazo bado',
+              style: GoogleFonts.inter(fontSize: 14, color: _kGrey500)),
+        ]),
+      );
+    }
+    final totalPages = (_items.length / _kPageSize).ceil().clamp(0, 9999);
+    final pageItems  = _items.skip(_page * _kPageSize).take(_kPageSize).toList();
+    return Column(children: [
+      Expanded(
+        child: RefreshIndicator(
+          onRefresh: _load,
+          color: _kBlue,
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            itemCount: pageItems.length,
+            itemBuilder: (_, i) => _buildCard(pageItems[i] as Map<String, dynamic>),
+          ),
+        ),
+      ),
+      // Pagination (dirisha la kurasa)
+      if (totalPages > 1)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _PageBtn(
+                icon: PhosphorIcons.caretLeft(),
+                enabled: _page > 0,
+                onTap: () => _goToPage(_page - 1),
+              ),
+              for (int p = 0; p < totalPages; p++)
+                _PageNum(
+                  n: p + 1,
+                  active: _page == p,
+                  onTap: () => _goToPage(p),
+                ),
+              _PageBtn(
+                icon: PhosphorIcons.caretRight(),
+                enabled: _page < totalPages - 1,
+                onTap: () => _goToPage(_page + 1),
+              ),
+            ],
+          ),
+        )
+      else
+        const SizedBox(height: 16),
+    ]);
   }
 }
 
@@ -949,41 +879,6 @@ class _AinaChip extends StatelessWidget {
                 color: selected ? color : _kGrey700,
               )),
         ]),
-      ),
-    );
-  }
-}
-
-// ─── Action button (Tuma tena / Futa) ────────────────────────────────────────
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  const _ActionBtn({
-    required this.icon, required this.label,
-    required this.color, required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
-            Text(label,
-                style: GoogleFonts.inter(fontSize: 12.5,
-                    fontWeight: FontWeight.w600, color: color)),
-          ]),
-        ),
       ),
     );
   }
