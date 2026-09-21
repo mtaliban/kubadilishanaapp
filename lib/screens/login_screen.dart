@@ -446,7 +446,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 12), // mt-3
                           Center(
                             child: GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/forgot-password'),
+                              onTap: () async {
+                                // Sahau Namba — ukichagua namba, inajazwa kwenye field
+                                final phone = await Navigator.pushNamed(context, '/forgot-number');
+                                if (phone is String && phone.isNotEmpty && mounted) {
+                                  _identifierCtrl.text = phone;
+                                }
+                              },
                               child: const Text(
                                 'Sahau namba yako?',
                                 style: TextStyle(

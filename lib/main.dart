@@ -18,6 +18,7 @@ import 'screens/feedback_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/announcements_screen.dart';
 import 'screens/forgot_password_screen.dart';
+import 'screens/forgot_number_screen.dart';
 import 'screens/admin_login_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/admin/admin_shell.dart';
@@ -130,6 +131,7 @@ class _KubadilishanaAppState extends State<KubadilishanaApp> {
           '/notifications': (_) => const NotificationsScreen(),
           '/announcements': (_) => const AnnouncementsScreen(),
           '/forgot-password': (_) => const ForgotPasswordScreen(),
+          '/forgot-number': (_) => const SahauNambaScreen(),
           '/reset-password': (_) => const ResetPasswordScreen(phone: ''),
           '/admin-login': (_) => const AdminLoginScreen(),
           '/admin': (_) => const AdminShell(),
