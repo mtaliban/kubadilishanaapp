@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
@@ -273,58 +275,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 // ── View: Admin ───────────────────────────────────────────────────────────────
+// Design mpya: avatar kubwa + badge ya nafasi + kadi ya "Mawasiliano"
+// yenye vitufe vya kitendo (nakili / piga / WhatsApp).
 class _ViewAdmin extends StatelessWidget {
   final Map<String, dynamic> profile;
   const _ViewAdmin({required this.profile});
 
-  // Timeline ya reference — mstari wa pembeni + icons za rangi tofauti
-  Widget _row(IconData icon, Color iconBg, Color iconColor, String label,
-      Widget value, {bool isLast = false}) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(children: [
-            Container(
-              width: 22, height: 22,
-              decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-              child: Icon(icon, size: 12, color: iconColor),
-            ),
-            if (!isLast)
-              Expanded(
-                child: Container(
-                  width: 2,
-                  color: _kGrey200,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                ),
-              ),
-          ]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: const TextStyle(fontSize: 12, color: _kGrey500)),
-                  const SizedBox(height: 4),
-                  value,
-                ],
-              ),
-            ),
-          ),
-        ],
+  String get _name => profile['full_name']?.toString() ?? '';
+  String get _initials {
+    final parts = _name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
+  }
+
+  String get _phoneAlt => (profile['phone_alt'] ?? '').toString();
+
+  static const _accent = Color(0xFF2A3EB1);
+  static const _accentMuted = Color(0xFFEDEFFA);
+  static const _success = Color(0xFF1E9E5A);
+  static const _successBg = Color(0xFFE7F7EE);
+  static const _surface1 = Color(0xFFF5F6FA);
+  static const _surface2 = Color(0xFFFFFFFF);
+  static const _border = Color(0xFFE4E6EE);
+  static const _textPrimary = Color(0xFF1A1D29);
+  static const _textSecondary = Color(0xFF5C6072);
+  static const _textMuted = Color(0xFF9297A8);
+
+  Widget _contactRow({
+    required IconData leadingIcon,
+    required Color leadingColor,
+    required Color leadingBg,
+    required String label,
+    required String value,
+    Widget? statusBadge,
+    required IconData trailingIcon,
+    required Color trailingColor,
+    required Color trailingBg,
+    required VoidCallback onTrailingTap,
+  }) {
+    return Row(children: [
+      Container(
+        width: 44, height: 44,
+        decoration: BoxDecoration(color: leadingBg, borderRadius: BorderRadius.circular(12)),
+        alignment: Alignment.center,
+        child: Icon(leadingIcon, color: leadingColor, size: 20),
       ),
-    );
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Text(label, style: const TextStyle(fontSize: 13, color: _textMuted)),
+            if (statusBadge != null) statusBadge!,
+          ]),
+          const SizedBox(height: 2),
+          Text(value,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _textPrimary)),
+        ]),
+      ),
+      const SizedBox(width: 8),
+      InkWell(
+        onTap: onTrailingTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          width: 40, height: 40,
+          decoration: BoxDecoration(color: trailingBg, shape: BoxShape.circle),
+          alignment: Alignment.center,
+          child: Icon(trailingIcon, color: trailingColor, size: 18),
+        ),
+      ),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
     final emailVerified = profile['email_verified'] == true;
-    final name = profile['full_name']?.toString() ?? '';
-    final initials = name.isNotEmpty
-        ? name.trim().split(RegExp(r'\s+')).take(2).map((w) => w[0].toUpperCase()).join()
-        : '?';
+    final email = profile['email']?.toString() ?? '';
+    final phone = profile['phone_primary']?.toString() ?? '';
+
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
         padding: const EdgeInsets.all(20),
@@ -338,78 +366,168 @@ class _ViewAdmin extends StatelessWidget {
                 offset: const Offset(0, 2)),
           ],
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Avatar row (jina + wajibu) — kama reference
-          Row(children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: const Color(0xFFE6F1FB),
-              child: Text(initials,
+        child: Column(children: [
+          // ── Avatar + jina + badge ya nafasi ──
+          Center(
+            child: Column(children: [
+              Container(
+                width: 96, height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _accent,
+                  border: Border.all(color: _accentMuted, width: 6),
+                ),
+                alignment: Alignment.center,
+                child: Text(_initials,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700)),
+              ),
+              const SizedBox(height: 14),
+              Text(_name,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF185FA5))),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _kGrey900)),
-              const SizedBox(height: 2),
-              const Text('Administrator', style: TextStyle(fontSize: 12, color: _kGrey500)),
-            ])),
-          ]),
-          const SizedBox(height: 24),
-          // ── Timeline (kama reference) ──
-          _row(
-            PhosphorIcons.user(),
-            const Color(0xFFE6F1FB), const Color(0xFF185FA5),
-            'Jina kamili',
-            Text(name, style: const TextStyle(fontSize: 14, color: _kGrey900)),
-          ),
-          _row(
-            PhosphorIcons.phone(),
-            const Color(0xFFEEEDFE), const Color(0xFF534AB7),
-            'Namba ya simu',
-            Text(profile['phone_primary']?.toString() ?? '',
-                style: const TextStyle(fontSize: 14, color: _kGrey900)),
-          ),
-          _row(
-            PhosphorIcons.envelopeSimple(),
-            const Color(0xFFEAF3DE), const Color(0xFF3B6D11),
-            'Barua pepe',
-            Row(children: [
-              Flexible(
-                child: Text(profile['email']?.toString() ?? '',
-                    style: const TextStyle(fontSize: 14, color: _kGrey900))),
-              const SizedBox(width: 6),
-              Icon(
-                emailVerified
-                    ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
-                    : PhosphorIcons.xCircle(PhosphorIconsStyle.fill),
-                size: 14,
-                color: emailVerified ? const Color(0xFF3B6D11) : _kRed,
+                      fontSize: 22, fontWeight: FontWeight.w800, color: _textPrimary)),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _accentMuted,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.shield_outlined, size: 16, color: _accent),
+                  SizedBox(width: 6),
+                  Text('Administrator',
+                      style: TextStyle(
+                          color: _accent, fontWeight: FontWeight.w700, fontSize: 13)),
+                ]),
               ),
             ]),
           ),
-          if ((profile['phone_alt'] ?? '').toString().isNotEmpty)
-            _row(
-              PhosphorIcons.phoneCall(),
-              const Color(0xFFFAEEDA), const Color(0xFF854F0B),
-              'Simu ya pili',
-              Text(profile['phone_alt']?.toString() ?? '',
-                  style: const TextStyle(fontSize: 14, color: _kGrey900)),
-              isLast: true,
-            )
-          else
-            _row(
-              PhosphorIcons.shieldCheck(),
-              const Color(0xFFFAEEDA), const Color(0xFF854F0B),
-              'Wajibu',
-              const Text('Administrator', style: TextStyle(fontSize: 14, color: _kGrey900)),
-              isLast: true,
+          const SizedBox(height: 24),
+
+          // ── Kadi ya Mawasiliano ──
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _surface2,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _border, width: 0.6),
             ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Mawasiliano',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 14),
+              _contactRow(
+                leadingIcon: Icons.email_outlined,
+                leadingColor: _accent,
+                leadingBg: _accentMuted,
+                label: 'Barua pepe',
+                value: email,
+                statusBadge: emailVerified
+                    ? const _AdminStatusBadge(
+                        label: 'Imethibitishwa', color: _success, background: _successBg)
+                    : null,
+                trailingIcon: Icons.copy_outlined,
+                trailingColor: _textSecondary,
+                trailingBg: _surface1,
+                onTrailingTap: () {
+                  Clipboard.setData(ClipboardData(text: email));
+                  ScaffoldMessenger.of(context)
+                    ..clearSnackBars()
+                    ..showSnackBar(const SnackBar(
+                        behavior: SnackBarBehavior.floating,
+                        content: Text('Barua pepe imenakiliwa')));
+                },
+              ),
+              const Divider(height: 26, color: _border),
+              _contactRow(
+                leadingIcon: Icons.call_outlined,
+                leadingColor: _accent,
+                leadingBg: _accentMuted,
+                label: 'Namba ya simu',
+                value: phone,
+                trailingIcon: Icons.call,
+                trailingColor: _accent,
+                trailingBg: _accentMuted,
+                onTrailingTap: () async {
+                  final ok = await launchUrl(Uri.parse('tel:$phone'),
+                      mode: LaunchMode.externalApplication);
+                  if (!ok && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        behavior: SnackBarBehavior.floating,
+                        content: Text('Imeshindikana kupiga simu.')));
+                  }
+                },
+              ),
+              if (_phoneAlt.isNotEmpty) ...[
+                const Divider(height: 26, color: _border),
+                _contactRow(
+                  leadingIcon: Icons.chat_bubble_outline,
+                  leadingColor: _success,
+                  leadingBg: _successBg,
+                  label: 'WhatsApp / Simu ya pili',
+                  value: _phoneAlt,
+                  trailingIcon: Icons.chat_bubble,
+                  trailingColor: Colors.white,
+                  trailingBg: _success,
+                  onTrailingTap: () async {
+                    final digits = _phoneAlt.replaceAll(RegExp(r'\D'), '');
+                    var intl = digits.startsWith('0')
+                        ? '255${digits.substring(1)}'
+                        : (digits.startsWith('255') ? digits : digits);
+                    final wa = Uri.parse('https://wa.me/$intl');
+                    final ok = await launchUrl(wa, mode: LaunchMode.externalApplication);
+                    if (!ok && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          behavior: SnackBarBehavior.floating,
+                          content: Text('Imeshindikana kufungua WhatsApp.')));
+                    }
+                  },
+                ),
+              ],
+            ]),
+          ),
+
+          const SizedBox(height: 14),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Icon(Icons.info_outline, size: 18, color: _textMuted),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Barua pepe haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
+                style: const TextStyle(fontSize: 13, color: _textMuted, height: 1.35),
+              ),
+            ),
+          ]),
         ]),
       ),
       const SizedBox(height: 60),
     ]);
+  }
+}
+
+class _AdminStatusBadge extends StatelessWidget {
+  const _AdminStatusBadge({required this.label, required this.color, required this.background});
+  final String label;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(999)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 5),
+        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+      ]),
+    );
   }
 }
 
@@ -492,6 +610,9 @@ class _ViewUser extends StatelessWidget {
 }
 
 // ── Edit: Admin ───────────────────────────────────────────────────────────────
+// Design mpya: header ya avatar + badge, kadi ya "Taarifa za msingi"
+// (jina, namba ya pili yenye +255 prefix, barua pepe imefungwa),
+// na kitufe cha Hifadhi/Ghairi chini.
 class _EditAdminProfile extends StatefulWidget {
   final Map<String, dynamic> profile;
   final void Function(Map<String, dynamic>) onSaved;
@@ -505,6 +626,24 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
   bool _saving = false;
   String? _error;
   final _formKey = GlobalKey<FormState>();
+
+  static const _accent = Color(0xFF2A3EB1);
+  static const _accentMuted = Color(0xFFEDEFFA);
+  static const _success = Color(0xFF1E9E5A);
+  static const _surface1 = Color(0xFFF5F6FA);
+  static const _surface2 = Color(0xFFFFFFFF);
+  static const _border = Color(0xFFE4E6EE);
+  static const _textPrimary = Color(0xFF1A1D29);
+  static const _textSecondary = Color(0xFF5C6072);
+  static const _textMuted = Color(0xFF9297A8);
+
+  String get _name => widget.profile['full_name']?.toString() ?? '';
+  String get _initials {
+    final parts = _name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
+  }
 
   @override
   void initState() {
@@ -534,65 +673,25 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
     }
   }
 
-  InputDecoration _inputDec(IconData icon) => InputDecoration(
-        prefixIcon: Icon(icon, size: 18, color: _kGrey400),
-        isDense: true,
+  InputDecoration _inputDec(IconData? icon) => InputDecoration(
+        prefixIcon: icon == null ? null : Icon(icon, size: 20, color: _textMuted),
         filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: _kGrey200)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: _kGrey200)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: _kBlue, width: 1.4)),
-        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: _kGrey200)),
+        fillColor: _surface2,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: _border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: _border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: _accent, width: 1.6)),
+        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: _border)),
       );
-
-  // Timeline ya reference — mstari + icons za rangi tofauti
-  Widget _row(IconData icon, Color iconBg, Color iconColor, String label,
-      Widget value, {bool isLast = false}) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(children: [
-            Container(
-              width: 22, height: 22,
-              decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-              child: Icon(icon, size: 12, color: iconColor),
-            ),
-            if (!isLast)
-              Expanded(
-                child: Container(
-                  width: 2,
-                  color: _kGrey200,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                ),
-              ),
-          ]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: const TextStyle(fontSize: 12, color: _kGrey500)),
-                  const SizedBox(height: 6),
-                  value,
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
+    final email = widget.profile['email']?.toString() ?? '';
+
     return Form(
       key: _formKey,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -611,78 +710,177 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
             ],
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _row(
-              PhosphorIcons.user(),
-              const Color(0xFFE6F1FB), const Color(0xFF185FA5),
-              'Jina kamili',
-              TextFormField(
-                controller: _nameCtrl,
-                style: const TextStyle(fontSize: 14),
-                decoration: _inputDec(PhosphorIcons.user()),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Weka jina kamili' : null,
+            // ── Header: avatar + jina + badge ──
+            Row(children: [
+              Container(
+                width: 64, height: 64,
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: _accent),
+                alignment: Alignment.center,
+                child: Text(_initials,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
               ),
-            ),
-            _row(
-              PhosphorIcons.phoneCall(),
-              const Color(0xFFEEEDFE), const Color(0xFF534AB7),
-              'Simu ya pili',
-              TextFormField(
-                controller: _altCtrl,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(fontSize: 14),
-                decoration: _inputDec(PhosphorIcons.phoneCall())
-                    .copyWith(hintText: 'Hiari'),
-                validator: (v) =>
-                    (v != null && v.trim().isNotEmpty && v.trim().length < 9)
-                        ? 'Namba si sahihi'
-                        : null,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(_name,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w800, color: _textPrimary)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _accentMuted,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.shield_outlined, size: 14, color: _accent),
+                      SizedBox(width: 5),
+                      Text('Administrator',
+                          style: TextStyle(
+                              color: _accent, fontWeight: FontWeight.w700, fontSize: 12)),
+                    ]),
+                  ),
+                ]),
               ),
+            ]),
+            const SizedBox(height: 20),
+
+            // ── Taarifa za msingi ──
+            const Text('Taarifa za msingi',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 18),
+
+            const Text('Jina kamili',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _accent)),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _nameCtrl,
+              style: const TextStyle(fontSize: 15, color: _textPrimary),
+              decoration: _inputDec(Icons.person_outline),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Weka jina kamili' : null,
             ),
-            _row(
-              PhosphorIcons.envelopeSimple(),
-              const Color(0xFFEAF3DE), const Color(0xFF3B6D11),
-              'Barua pepe',
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                TextField(
-                  controller:
-                      TextEditingController(text: widget.profile['email'] ?? ''),
-                  enabled: false,
-                  style: const TextStyle(fontSize: 14, color: _kGrey400),
-                  decoration: _inputDec(PhosphorIcons.envelopeSimple()),
+
+            const SizedBox(height: 18),
+            const Text('Namba ya simu (Pili / WhatsApp)',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textSecondary)),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _border),
+              ),
+              child: Row(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: const BoxDecoration(
+                    color: _surface1,
+                    borderRadius: BorderRadius.horizontal(left: Radius.circular(14)),
+                  ),
+                  child: const Text('+255',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _textPrimary)),
                 ),
-                const SizedBox(height: 6),
-                const Text('Email haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
-                    style: TextStyle(fontSize: 11, color: _kGrey400)),
+                Container(width: 1, height: 24, color: _border),
+                Expanded(
+                  child: TextFormField(
+                    controller: _altCtrl,
+                    keyboardType: TextInputType.phone,
+                    style: const TextStyle(fontSize: 15, color: _textPrimary),
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    ),
+                    validator: (v) =>
+                        (v != null && v.trim().isNotEmpty && v.trim().length < 9)
+                            ? 'Namba si sahihi'
+                            : null,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(right: 12),
+                  child: Icon(Icons.chat_bubble, color: _success, size: 20),
+                ),
               ]),
-              isLast: true,
             ),
+
+            const SizedBox(height: 18),
+            const Text('Barua pepe',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textSecondary)),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              decoration: BoxDecoration(
+                color: _surface1,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(children: [
+                const Icon(Icons.email_outlined, size: 20, color: _textMuted),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(email,
+                      style: const TextStyle(fontSize: 15, color: _textMuted)),
+                ),
+                const Icon(Icons.lock_outline, size: 18, color: _textMuted),
+              ]),
+            ),
+            const SizedBox(height: 10),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(Icons.info_outline, size: 16, color: _textMuted),
+              ),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  'Barua pepe haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
+                  style: TextStyle(fontSize: 12, color: _textMuted, height: 1.35),
+                ),
+              ),
+            ]),
           ]),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
 
-        // ── Hifadhi — pembeni kulia (kama reference) ──
-        Align(
-          alignment: Alignment.centerRight,
-          child: ElevatedButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 15, height: 15,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : Icon(PhosphorIcons.check(), size: 16),
-            label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
-                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kBlue,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        // ── Ghairi / Hifadhi chini (kama reference) ──
+        Row(children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: _saving ? null : () => Navigator.maybePop(context),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                side: const BorderSide(color: _border),
+                foregroundColor: _textPrimary,
+              ),
+              child: const Text('Ghairi', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: ElevatedButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 15, height: 15,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.save_outlined, size: 18),
+              label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi mabadiliko',
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _accent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              ),
+            ),
+          ),
+        ]),
 
         const SizedBox(height: 60),
       ]),
