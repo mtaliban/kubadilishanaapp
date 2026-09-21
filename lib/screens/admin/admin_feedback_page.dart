@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
 
 // ─── Rangi (zingatia esstranfer.com/admin) ───────────────────────────────────
 const _kBlue    = Color(0xFF1959D6);
@@ -94,7 +95,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     final q = _searchCtrl.text.toLowerCase().trim();
     setState(() {
       _filtered = _all.where((item) {
-        final m = item as Map<String, dynamic>;
+        final m = asMap(item);
         final name  = (m['user_name'] as String? ?? m['full_name'] as String? ?? '').toLowerCase();
         final msg   = (m['message'] as String? ?? m['subject'] as String? ?? '').toLowerCase();
         final phone = (m['user_phone'] as String? ?? m['phone'] as String? ?? '');
@@ -384,7 +385,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         _FeedbackCard(
                           key: ValueKey(pageItems[i]['id'] ?? i),
                           index: (_page * _kPageSize) + i + 1,
-                          item: pageItems[i] as Map<String, dynamic>,
+                          item: asMap(pageItems[i]),
                           onReply: _reply,
                           onDelete: _delete,
                         ),

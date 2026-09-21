@@ -6,6 +6,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
 import '../../widgets/select_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1519,7 +1520,7 @@ class _State extends State<AdminUsersPage> {
                     itemCount: items.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (_, i) => _UserCard(
-                      user:      items[i] as Map<String, dynamic>,
+                      user:      asMap(items[i]),
                       selected:  _selected.contains(_uid(items[i])),
                       deptName:  _deptName('${(items[i] as Map)['category'] ?? ''}'),
                       deptIcon:  _deptIcon('${(items[i] as Map)['category'] ?? ''}'),
@@ -1539,8 +1540,8 @@ class _State extends State<AdminUsersPage> {
                         }
                         _selectAll = _selected.length == _users.length;
                       }),
-                      onView:    () => _showDetail(items[i] as Map<String, dynamic>),
-                      onEdit:    () => _showEdit(items[i] as Map<String, dynamic>),
+                      onView:    () => _showDetail(asMap(items[i])),
+                      onEdit:    () => _showEdit(asMap(items[i])),
                       onSuspend: () => _toggleSuspend(items[i] as Map),
                       onAdmin:   () => _toggleAdmin(items[i] as Map),
                       onDelete:  () => _deleteUser(

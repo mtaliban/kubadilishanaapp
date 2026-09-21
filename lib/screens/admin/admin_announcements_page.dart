@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);
@@ -561,7 +562,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
               shrinkWrap: true,
               itemCount: _userResults.length,
               itemBuilder: (_, i) {
-                final u = _userResults[i] as Map<String, dynamic>;
+                final u = asMap(_userResults[i]);
                 return InkWell(
                   onTap: () => setState(() {
                     _selectedUser = u;
@@ -804,7 +805,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             itemCount: pageItems.length,
-            itemBuilder: (_, i) => _buildCard(pageItems[i] as Map<String, dynamic>),
+            itemBuilder: (_, i) => _buildCard(asMap(pageItems[i])),
           ),
         ),
       ),

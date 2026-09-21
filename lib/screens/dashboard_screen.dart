@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../utils/safe_cast.dart';
 import '../services/websocket_service.dart';
 import '../config/theme.dart';
 import '../widgets/app_shell.dart';
@@ -186,7 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (_subjectQ.trim().isNotEmpty) params['subject_q'] = _subjectQ.trim();
 
       final res = await ApiService().get('/matches/board', queryParameters: params);
-      final data = res.data as Map<String, dynamic>;
+      final data = asMap(res.data);
       if (mounted) {
         setState(() {
           // Sort: wapya (fresh) juu, kisha online, kama web sortFreshToTop
@@ -212,7 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadTrueMatches() async {
     try {
       final res = await ApiService().getTrueMatches(limit: 30);
-      final data = res.data as Map<String, dynamic>;
+      final data = asMap(res.data);
       if (mounted) setState(() => _trueMatches = data['matches'] ?? []);
     } catch (_) {}
   }
@@ -220,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadAnnouncements() async {
     try {
       final res = await ApiService().getAnnouncements();
-      final data = res.data as Map<String, dynamic>;
+      final data = asMap(res.data);
       if (mounted) setState(() => _announcements = data['announcements'] ?? data['items'] ?? []);
     } catch (_) {}
   }

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../providers/auth_provider.dart';
+import '../utils/safe_cast.dart';
 import '../widgets/app_shell.dart';
 
 const _kAdminCall = '0763795801';
@@ -104,7 +105,7 @@ class _DonateScreenState extends State<DonateScreen> {
   Future<void> _loadInfo() async {
     try {
       final res = await ApiService().getDonationInfo();
-      final d = res.data as Map<String, dynamic>;
+      final d = asMap(res.data);
       if (mounted) {
         setState(() {
           _adminPhone = d['phone'] as String? ?? _kAdminCall;

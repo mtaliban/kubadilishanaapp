@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../widgets/app_shell.dart';
+import '../utils/safe_cast.dart';
 
 // ── Brand colors (kama web globals.css) ─────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF); // brand-blue
@@ -106,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _loading = true);
     try {
       final res = await ApiService().getMyProfile();
-      if (mounted) setState(() => _profile = res.data as Map<String, dynamic>?);
+      if (mounted) setState(() => _profile = asMapOrNull(res.data));
     } catch (_) {}
     if (mounted) setState(() => _loading = false);
   }
@@ -527,7 +528,7 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
         'phone_alt': _altCtrl.text.trim().isEmpty ? null : _altCtrl.text.trim(),
       });
       final res = await ApiService().getMyProfile();
-      widget.onSaved(res.data as Map<String, dynamic>);
+      widget.onSaved(asMap(res.data));
     } catch (e) {
       setState(() { _saving = false; _error = _parseErr(e); });
     }
@@ -861,7 +862,7 @@ class _EditProfileState extends State<_EditProfile> {
         'desired_destinations': dests,
       });
       final res = await ApiService().getMyProfile();
-      widget.onSaved(res.data as Map<String, dynamic>);
+      widget.onSaved(asMap(res.data));
     } catch (e) {
       setState(() { _saving = false; _error = _parseErr(e); });
     }

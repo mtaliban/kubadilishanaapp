@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../services/notification_service.dart';
 import '../services/app_navigator.dart';
+import '../utils/safe_cast.dart';
 
 class AuthUser {
   final String userId;
@@ -96,7 +97,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _api.setToken(token);
       final res = await _api.getMe();
-      _user = AuthUser.fromJson(res.data as Map<String, dynamic>);
+      _user = AuthUser.fromJson(asMap(res.data));
       _setupRealtime();
       notifyListeners();
       return true;
@@ -114,7 +115,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final res = await _api.login(phone, password: password);
-      final data = res.data as Map<String, dynamic>;
+      final data = asMap(res.data);
       if (data['two_factor_required'] == true) {
         // Admin 2FA — save email, return false so UI shows OTP input
         pendingAdminEmail = data['email'] as String? ?? phone;
@@ -148,7 +149,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final res = await _api.adminLoginStep1(email, password);
-      final data = res.data as Map<String, dynamic>;
+      final data = asMap(res.data);
       if (data['two_factor_required'] == true) {
         pendingAdminEmail = data['email'] as String? ?? email;
         _loading = false;
@@ -185,7 +186,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final res = await _api.adminLoginOtp(email, code);
-      final data = res.data as Map<String, dynamic>;
+      final data = asMap(res.data);
       final token = data['access_token'] as String;
       await _api.saveToken(token);
       _user = AuthUser.fromJson(data);
@@ -211,7 +212,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final res = await _api.register(data);
-      final responseData = res.data as Map<String, dynamic>;
+      final responseData = asMap(res.data);
       final token = responseData['access_token'] as String?;
       if (token != null) {
         await _api.saveToken(token);
@@ -246,7 +247,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> refreshUser() async {
     try {
       final res = await _api.getMe();
-      _user = AuthUser.fromJson(res.data as Map<String, dynamic>);
+      _user = AuthUser.fromJson(asMap(res.data));
       notifyListeners();
     } catch (_) {}
   }

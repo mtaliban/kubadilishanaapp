@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);
@@ -72,7 +73,7 @@ class _State extends State<AdminDashboardPage>
     try {
       final s = await ApiService().adminStats();
       if (!mounted) return;
-      setState(() { _stats = s.data as Map<String, dynamic>? ?? {}; _loading = false; });
+      setState(() { _stats = asMapOrNull(s.data) ?? {}; _loading = false; });
     } catch (e) {
       if (!mounted) return;
       setState(() { _loading = false; _error = e.toString(); });
@@ -95,7 +96,7 @@ class _State extends State<AdminDashboardPage>
         refresh:  true,
       );
       if (!mounted) return;
-      setState(() => _reports = r.data as Map<String, dynamic>? ?? {});
+      setState(() => _reports = asMapOrNull(r.data) ?? {});
     } catch (_) {}
   }
 
@@ -135,7 +136,7 @@ class _State extends State<AdminDashboardPage>
 
   @override
   Widget build(BuildContext context) {
-    final totals  = _stats['totals'] as Map<String, dynamic>? ?? {};
+    final totals  = asMapOrNull(_stats['totals']) ?? {};
     final regTot  = (_reports['regions_total'] as num?)?.toInt();
 
     return Scaffold(
@@ -311,7 +312,7 @@ class _State extends State<AdminDashboardPage>
           ]),
           const SizedBox(height: 10),
           ..._events.take(6).map((e) {
-            final m = e as Map<String, dynamic>;
+            final m = asMap(e);
             final type = m['event_type'] as String? ?? '';
             final time = m['occurred_at'] as String? ?? '';
             return Container(
@@ -594,7 +595,7 @@ class _State extends State<AdminDashboardPage>
               child: Column(
                 children: _usersList.asMap().entries.map((entry) {
                   final last = entry.key == _usersList.length - 1;
-                  final m    = entry.value as Map<String, dynamic>;
+                  final m    = asMap(entry.value);
                   final name = m['full_name'] as String? ?? '';
                   final phone = m['phone_primary'] as String? ?? '';
                   final cadre = m['cadre_code'] as String? ?? m['cadre_display'] as String? ?? '';
