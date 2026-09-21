@@ -101,7 +101,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   final _titleCtrl = TextEditingController();
   final _msgCtrl   = TextEditingController();
   String _type     = 'info';
-  String _audience = 'all';
+  Set<String> _audiences = {'all'};
   bool   _sending  = false;
   String? _sendResult;
 
@@ -190,16 +190,27 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   Future<void> _send() async {
     // Validation yenye maonyesho ya makosa (kama reference)
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final single = _audiences.contains('user');
+    if (single && _selectedUser == null) {
+      setState(() => _sendResult = 'Chagua mtumiaji mmoja kwanza');
+      return;
+    }
     setState(() { _sending = true; _sendResult = null; });
     try {
+      final targetId = _selectedUser == null
+          ? null
+          : (_selectedUser!['id']?.toString() ??
+              _selectedUser!['user_id']?.toString() ??
+              _selectedUser!['_id']?.toString());
       final payload = <String, dynamic>{
         'title':    _titleCtrl.text.trim(),
         'message':  _msgCtrl.text.trim(),
         'type':     _type,
-        'audience': _audience,
+        'audience': single ? 'user' : (_audiences.length == 1 ? _audiences.first : 'all'),
+        'audiences': _audiences.toList(),
       };
-      if (_audience == 'user' && _selectedUser != null) {
-        payload['user_id'] = _selectedUser!['id'];
+      if (single && targetId != null) {
+        payload['target_user_id'] = targetId;
       }
       await ApiService().adminSendAnnouncement(payload);
       if (!mounted) return;
@@ -209,7 +220,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
         _titleCtrl.clear();
         _msgCtrl.clear();
         _type = 'info';
-        _audience = 'all';
+        _audiences = {'all'};
         _selectedUser = null;
         _userSearchCtrl.clear();
         _userResults = [];
@@ -269,6 +280,13 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     }
   }
 
+  /// Lebo ya walengwa — audiences nyingi zinajiunga kwa koma.
+  String _audiencesLabel(List<String> auds) {
+    final clean = auds.where((a) => a.isNotEmpty).toList();
+    if (clean.isEmpty) return 'Wote';
+    return clean.map(_audienceLabel).join(', ');
+  }
+
   // ── INPUT DECORATION ──────────────────────────────────────────────────────
 
   InputDecoration _inputDec(String hint, {Widget? suffix, IconData? prefixIcon}) =>
@@ -299,202 +317,247 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   Widget _buildSendForm() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF1F1F1)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10, offset: const Offset(0, 3)),
-        ],
+        border: Border.all(color: _kGrey200),
+        borderRadius: BorderRadius.circular(16),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          // Header
-          Row(children: [
+            // Kichwa cha kadi
             Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(color: _kBlueBg,
-                  borderRadius: BorderRadius.circular(10)),
-              child: Icon(PhosphorIcons.bellRinging(PhosphorIconsStyle.fill),
-                  color: _kBlue, size: 18),
-            ),
-            const SizedBox(width: 10),
-            Text('Tuma tangazo',
-                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700,
-                    color: _kGrey900)),
-          ]),
-          const SizedBox(height: 14),
-
-          // Title field (na validator)
-          TextFormField(
-            controller: _titleCtrl,
-            style: GoogleFonts.inter(fontSize: 13),
-            textInputAction: TextInputAction.next,
-            validator: (v) => (v == null || v.trim().isEmpty)
-                ? 'Andika kichwa cha tangazo'
-                : null,
-            decoration: _inputDec('Kichwa cha habari',
-                prefixIcon: PhosphorIcons.textAa()),
-          ),
-          const SizedBox(height: 10),
-
-          // Message field (na validator)
-          TextFormField(
-            controller: _msgCtrl,
-            minLines: 3,
-            maxLines: 6,
-            style: GoogleFonts.inter(fontSize: 13),
-            validator: (v) => (v == null || v.trim().isEmpty)
-                ? 'Andika ujumbe wa tangazo'
-                : null,
-            decoration: _inputDec('Ujumbe wa tangazo...'),
-          ),
-          const SizedBox(height: 14),
-
-          // Type chips
-          Text('Aina',
-              style: GoogleFonts.inter(fontSize: 12, color: _kGrey700,
-                  fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: ['info', 'warning', 'success', 'urgent'].map((t) {
-                final s = _typeStyle(t);
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _AinaChip(
-                    icon: s.icon,
-                    label: s.label,
-                    selected: _type == t,
-                    color: s.color,
-                    onTap: () => setState(() => _type = t),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Audience chips
-          Text('Wasikilizaji',
-              style: GoogleFonts.inter(fontSize: 12, color: _kGrey700,
-                  fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(children: [
-              // Wote
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _AinaChip(
-                  icon: PhosphorIcons.usersThree(PhosphorIconsStyle.fill),
-                  label: 'Wote',
-                  selected: _audience == 'all',
-                  color: _kBlue,
-                  onTap: () => setState(() => _audience = 'all'),
-                ),
-              ),
-              // Departments
-              ..._departments.map((d) {
-                final code = (d['code'] ?? '') as String;
-                final ds = _deptStyle(code);
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _AinaChip(
-                    icon: ds.icon,
-                    label: d['name'] as String? ?? code,
-                    selected: _audience == code,
-                    color: ds.color,
-                    onTap: () => setState(() => _audience = code),
-                  ),
-                );
-              }),
-              // Mtu Mmoja
-              _AinaChip(
-                icon: PhosphorIcons.user(PhosphorIconsStyle.fill),
-                label: 'Mtu Mmoja',
-                selected: _audience == 'user',
-                color: _kAmber,
-                onTap: () => setState(() => _audience = 'user'),
-              ),
-            ]),
-          ),
-
-          // User search (only when "Mtu Mmoja" selected) — AnimatedSize kama reference
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            alignment: Alignment.topCenter,
-            child: _audience == 'user'
-                ? _buildUserSearch()
-                : const SizedBox.shrink(),
-          ),
-
-          const SizedBox(height: 14),
-          // Send result feedback
-          if (_sendResult != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: _sendResult == 'ok' ? _kGreenBg : _kRedBg,
-                borderRadius: BorderRadius.circular(10),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _kGrey200)),
               ),
               child: Row(children: [
-                Icon(
-                  _sendResult == 'ok'
-                      ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
-                      : PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
-                  color: _sendResult == 'ok' ? _kGreen : _kRed,
-                  size: 16,
-                ),
+                Icon(PhosphorIcons.megaphone(PhosphorIconsStyle.fill), size: 18, color: _kGrey500),
                 const SizedBox(width: 8),
-                Expanded(child: Text(
-                  _sendResult == 'ok'
-                      ? '✓ Tangazo limetumwa!'
-                      : 'Kosa: $_sendResult',
-                  style: GoogleFonts.inter(fontSize: 12,
-                      color: _sendResult == 'ok' ? _kGreen : _kRed,
-                      fontWeight: FontWeight.w600),
-                )),
+                Text('Tuma tangazo jipya',
+                    style: GoogleFonts.inter(fontSize: 16,
+                        fontWeight: FontWeight.w700, color: _kGrey900)),
               ]),
             ),
-            const SizedBox(height: 12),
-          ],
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Step 1 — Kichwa
+                  _stepLabel(1, 'Kichwa cha habari'),
+                  TextFormField(
+                    controller: _titleCtrl,
+                    style: GoogleFonts.inter(fontSize: 14),
+                    textInputAction: TextInputAction.next,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Andika kichwa cha tangazo' : null,
+                    decoration: _plainDec('Andika kichwa...'),
+                  ),
+                  const SizedBox(height: 20),
 
-          // Submit button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _sending ? null : _send,
-              icon: _sending
-                  ? const SizedBox(width: 16, height: 16,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
-                  : Icon(PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill),
-                      size: 17),
-              label: Text(
-                _sending ? 'Inatuma...' : 'Tuma tangazo',
-                style: GoogleFonts.inter(fontSize: 14,
-                    fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kBlue,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  // Step 2 — Ujumbe
+                  _stepLabel(2, 'Ujumbe'),
+                  TextFormField(
+                    controller: _msgCtrl,
+                    minLines: 4,
+                    maxLines: 6,
+                    style: GoogleFonts.inter(fontSize: 14),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Andika ujumbe wa tangazo' : null,
+                    decoration: _plainDec('Andika ujumbe wa tangazo...'),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Step 3 — Wasikilizaji (switches, multi-select)
+                  _stepLabel(3, 'Wasikilizaji'),
+                  const SizedBox(height: 4),
+                  _audienceRow('all',
+                      PhosphorIcons.usersThree(PhosphorIconsStyle.fill), 'Wote'),
+                  for (final d in _departments)
+                    _audienceRow(
+                      (d['code'] ?? '') as String,
+                      _deptStyle((d['code'] ?? '') as String).icon,
+                      d['name'] as String? ?? (d['code'] ?? '') as String,
+                    ),
+                  _audienceRow('user',
+                      PhosphorIcons.user(PhosphorIconsStyle.fill), 'Mtu Mmoja'),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 200),
+                    alignment: Alignment.topCenter,
+                    child: _audiences.contains('user')
+                        ? _buildUserSearch()
+                        : const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Step 4 — Aina (chips)
+                  _stepLabel(4, 'Aina ya tangazo'),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: ['info', 'warning', 'success', 'urgent'].map((t) {
+                        final s = _typeStyle(t);
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _AinaChip(
+                            icon: s.icon,
+                            label: s.label,
+                            selected: _type == t,
+                            color: s.color,
+                            onTap: () => setState(() => _type = t),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Matokeo ya kutuma
+                  if (_sendResult != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _sendResult == 'ok' ? _kGreenBg : _kRedBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(children: [
+                        Icon(
+                          _sendResult == 'ok'
+                              ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
+                              : PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
+                          color: _sendResult == 'ok' ? _kGreen : _kRed,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(
+                          _sendResult == 'ok'
+                              ? '✓ Tangazo limetumwa!'
+                              : 'Kosa: $_sendResult',
+                          style: GoogleFonts.inter(fontSize: 12,
+                              color: _sendResult == 'ok' ? _kGreen : _kRed,
+                              fontWeight: FontWeight.w600),
+                        )),
+                      ]),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // Kitufe cha kutuma
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _sending ? null : _send,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBlue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: _sending
+                          ? const SizedBox(width: 18, height: 18,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
+                          : Text('Tuma tangazo',
+                              style: GoogleFonts.inter(fontSize: 15,
+                                  fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  // ── Step label (duara la namba + maandishi) ──────────────────────────────
+  Widget _stepLabel(int number, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(children: [
+        Container(
+          width: 20,
+          height: 20,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(color: _kBlue, shape: BoxShape.circle),
+          child: Text('$number',
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 11,
+                  fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(width: 10),
+        Text(text, style: GoogleFonts.inter(fontSize: 13, color: _kGrey500)),
+      ]),
+    );
+  }
+
+  // ── Field nyeupe na border ya kijivu (kama reference) ────────────────────
+  InputDecoration _plainDec(String hint) => InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.inter(fontSize: 13.5, color: _kGrey400),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+      );
+
+  // ── Mzunguko wa audience (multi-select switches) ──────────────────────────
+  void _toggleAudience(String code, bool on) {
+    setState(() {
+      if (code == 'all' || code == 'user') {
+        _audiences = on ? {code} : <String>{'all'};
+      } else {
+        if (on) {
+          _audiences.add(code);
+          _audiences.remove('all');
+        } else {
+          _audiences.remove(code);
+        }
+        if (_audiences.isEmpty) _audiences.add('all');
+      }
+    });
+  }
+
+  Widget _audienceRow(String code, IconData icon, String label) {
+    final isLast = code == 'user';
+    final on = _audiences.contains(code);
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: isLast
+              ? BorderSide.none
+              : const BorderSide(color: _kGrey200),
+        ),
       ),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(children: [
+        Icon(icon, size: 16, color: on ? _kBlue : _kGrey400),
+        const SizedBox(width: 10),
+        Expanded(child: Text(label, style: GoogleFonts.inter(
+            fontSize: 14,
+            color: on ? _kGrey900 : _kGrey500,
+            fontWeight: on ? FontWeight.w600 : FontWeight.w400))),
+        Switch(
+          value: on,
+          activeColor: Colors.white,
+          activeTrackColor: _kBlue,
+          inactiveTrackColor: const Color(0xFFD1D5DB),
+          onChanged: (v) => _toggleAudience(code, v),
+        ),
+      ]),
     );
   }
 
@@ -605,14 +668,19 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     final recipientsCount = item['recipients_count'] as int? ?? 0;
 
     final s = _typeStyle(type);
+    final auds = (item['audiences'] as List?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [audience];
 
-    // Kadi ya grey (kama reference) — campaign icon + title + pill ya walengwa
+    // Kadi nyeupe yenye border (kama reference) — icon + title + pill ya walengwa
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F5),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        border: Border.all(color: _kGrey200),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -633,7 +701,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                 color: _kBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Text(_audienceLabel(audience),
+              child: Text(_audiencesLabel(auds),
                   style: GoogleFonts.inter(fontSize: 11,
                       color: _kBlue, fontWeight: FontWeight.w600)),
             ),
