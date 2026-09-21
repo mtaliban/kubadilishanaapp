@@ -1411,6 +1411,25 @@ class _BoardCard extends StatelessWidget {
     required this.onContact, required this.onToast,
   });
 
+  // ── Rangi za reference (MatchCard) ──
+  static const _accentBlue = Color(0xFF2F3EC7);
+  static const _green = Color(0xFF1E9E54);
+  static const _amber = Color(0xFFB27C1E);
+  static const _greyBorder = Color(0xFFECEDF2);
+
+  bool get _isFullMatch {
+    if (mySubjects.isEmpty) return false;
+    return matchedCount >= mySubjects.length;
+  }
+
+  int get matchedCount {
+    final subjects = subjectsList;
+    return subjects.where((s) => mySubjects.contains(s)).length;
+  }
+
+  List<String> get subjectsList =>
+      (card['subjects'] as List?)?.map((s) => s.toString()).toList() ?? [];
+
   @override
   Widget build(BuildContext context) {
     final name = card['full_name'] ?? 'Mtumiaji';
@@ -1426,159 +1445,235 @@ class _BoardCard extends StatelessWidget {
     final initial = _initials(name);
     final ago = _timeAgo(card['created_at'] ?? card['joined_at']);
     final fullDate = _fullDate(card['created_at'] ?? card['joined_at']);
-    final subjects = (card['subjects'] as List?)?.map((s) => s.toString()).toList() ?? [];
-    // ── Kiwango cha match (kama reference ya Dashibodi): ──
-    // Inalingana = masomo yangu YOTE yake anayo · Kiasi = baadhi tu
+    final subjects = subjectsList;
     final matchedSubjects = subjects.where((s) => mySubjects.contains(s)).toList();
-    final allMatch = mySubjects.isNotEmpty && matchedSubjects.length >= mySubjects.length;
+    final allMatch = _isFullMatch;
     final someMatch = matchedSubjects.isNotEmpty && !allMatch;
     final years = card['years_of_service'];
     final isEdu = category != 'health';
     final isMe = myUserId.isNotEmpty && (card['user_id'] ?? '') == myUserId;
     final targetPaid = card['is_verified'] == true || card['contact_enabled'] == true || isDefaultName('${card['full_name'] ?? ''}');
 
-    // Destination inayokuja mkoa wako
+    // Destination inayokuja mkoa wako (Anataka)
     final activeDest = matchingDest ?? (dests.isNotEmpty ? dests[0] : null);
+    final fromRegion = _normPlace(station['region_name']?.toString() ?? '');
+    final fromDistrictRaw = (station['district_name'] ?? '').toString();
+    final fromDistrictKnown = fromDistrictRaw.trim().isNotEmpty;
+    final toRegion = _normPlace(activeDest?['region_name']?.toString() ?? '');
+    final toDistrict = _normPlace((activeDest?['district_name'] ?? '').toString());
+    final hasRoute = fromRegion.isNotEmpty || toRegion.isNotEmpty;
+
+    // Anatoka unakotaka? (backend imethibitisha destination inayolingana)
+    final originMatches = matchingDest != null;
 
     return Container(
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: fresh ? AppColors.primary
-              : online ? Colors.green.shade300
-              : AppColors.border,
+          color: allMatch ? const Color(0xFF3FBF6B) : _greyBorder,
+          width: allMatch ? 1.6 : 1,
         ),
-        boxShadow: fresh
-            ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.15), blurRadius: 0, spreadRadius: 2)]
-            : [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+              color: fresh
+                  ? AppColors.primary.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.06),
+              blurRadius: fresh ? 0 : 8,
+              spreadRadius: fresh ? 2 : 0,
+              offset: fresh ? Offset.zero : const Offset(0, 2)),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.max, children: [
-
-          // Row 1: Avatar + info
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Stack(children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFDBEAFE), // blue-100
-                  border: Border.all(color: const Color(0xFFBFDBFE)), // blue-200
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header: avatar, name/time, status pill ──
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: const Color(0xFFDCE6FE),
+                  child: Text(initial,
+                      style: const TextStyle(
+                          color: _accentBlue, fontWeight: FontWeight.bold, fontSize: 18)),
                 ),
-                child: Center(child: Text(initial,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1E40AF)))),
-              ),
-              if (online)
-                Positioned(right: 1, bottom: 1,
-                  child: Container(width: 11, height: 11,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF16A34A),
-                        border: Border.all(color: Colors.white, width: 2)))),
-            ]),
-            const SizedBox(width: 10),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Expanded(child: Text(name,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF111827)),
-                    overflow: TextOverflow.ellipsis)),
-                if (fresh)
-                  Padding(padding: const EdgeInsets.only(left: 4),
-                    child: _PulseBadge(label: 'Mpya', bg: AppColors.primary, textColor: Colors.white)),
-                if (online && !fresh)
-                  Padding(padding: const EdgeInsets.only(left: 4),
-                    child: const Text('● Live',
-                        style: TextStyle(fontSize: 10, color: Color(0xFF16A34A), fontWeight: FontWeight.w700))),
-                if (isMe)
-                  Container(
-                    margin: const EdgeInsets.only(left: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: targetPaid ? const Color(0xFF10B981) : const Color(0xFFF87171),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      targetPaid ? '✓ PAID' : '✗ HAJALIPIA',
-                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ),
-                // ── Kiwango cha match kinaonekana kwenye pill ya masomo (chini) — badge ya juu imeondolewa ili row isijazike ──
+                if (online)
+                  Positioned(
+                    right: 0, bottom: 0,
+                    child: Container(width: 12, height: 12,
+                      decoration: BoxDecoration(shape: BoxShape.circle,
+                          color: const Color(0xFF16A34A),
+                          border: Border.all(color: Colors.white, width: 2)))),
               ]),
-              const SizedBox(height: 3),
-              Text(
-                [if (category.isNotEmpty) (isEdu ? 'Elimu' : 'Afya'), if (cadre.isNotEmpty) cadre]
-                    .join(' · '),
-                style: const TextStyle(fontSize: 12, color: Color(0xFF1E40AF), fontWeight: FontWeight.w500),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ])),
-          ]),
-
-          const SizedBox(height: 8),
-
-          // Location rows — plain, no background box
-          if ((station['region_name'] ?? '').isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Row(children: [
-              Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill), size: 13, color: const Color(0xFFEF4444)),
-              const SizedBox(width: 5),
-              const Text('Kutoka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
-              Expanded(child: Text.rich(
-                TextSpan(children: [
-                  TextSpan(
-                    text: _normPlace(station['region_name']?.toString() ?? ''),
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
-                  ),
-                  if ((station['district_name'] ?? '').toString().isNotEmpty)
-                    TextSpan(
-                      text: ', ${_normPlace(station['district_name']?.toString() ?? '')}',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF374151)),
-                    ),
-                ]),
-                overflow: TextOverflow.ellipsis,
-              )),
-            ]),
-            if (activeDest != null && (activeDest['region_name'] ?? '').isNotEmpty) ...[
-              const SizedBox(height: 5),
-              Row(children: [
-                Icon(PhosphorIcons.crosshair(PhosphorIconsStyle.bold), size: 13, color: const Color(0xFF1E40AF)),
-                const SizedBox(width: 5),
-                const Text('Anataka: ', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
-                Expanded(child: Text.rich(
-                  TextSpan(children: [
-                    TextSpan(
-                      text: _normPlace(activeDest['region_name']?.toString() ?? ''),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
-                    ),
-                    if ((activeDest['district_name'] ?? '').toString().isNotEmpty)
-                      TextSpan(
-                        text: ', ${_normPlace(activeDest['district_name']?.toString() ?? '')}',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Color(0xFF374151)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Expanded(
+                        child: Text(name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 19, fontWeight: FontWeight.bold)),
                       ),
-                  ]),
-                  overflow: TextOverflow.ellipsis,
-                )),
-              ]),
+                      if (isMe)
+                        Container(
+                          margin: const EdgeInsets.only(left: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: targetPaid ? const Color(0xFF10B981) : const Color(0xFFF87171),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(targetPaid ? 'PAID' : 'HAJALIPIA',
+                              style: const TextStyle(
+                                  fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ),
+                    ]),
+                    const SizedBox(height: 2),
+                    Text(
+                      [if (category.isNotEmpty) (isEdu ? 'Elimu' : 'Afya'), if (cadre.isNotEmpty) cadre].join(' · '),
+                      style: const TextStyle(color: _accentBlue, fontSize: 12.5, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      [if (fresh) 'Mpya', if (ago.isNotEmpty) ago, if (fullDate.isNotEmpty) fullDate].join(' · '),
+                      style: TextStyle(
+                          color: fresh ? AppColors.primary : Colors.black54, fontSize: 13,
+                          fontWeight: fresh ? FontWeight.bold : FontWeight.w500),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _StatusPill(level: allMatch ? MatchLevel.full : (someMatch ? MatchLevel.partial : MatchLevel.none)),
             ],
-            if (matchingDest != null && myRegionName.isNotEmpty) ...[
-              const SizedBox(height: 5),
-              Row(children: [
-                const Text('↓ ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF16A34A))),
-                Expanded(child: Text(
-                  'Anakuja $myRegionName — inalingana!',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF16A34A)),
-                  overflow: TextOverflow.ellipsis,
-                )),
-              ]),
-            ],
-          ],
+          ),
+          const SizedBox(height: 16),
 
-          // Uzoefu (kama reference: icon + maneno mazuri)
-          if (years != null) ...[
-            const SizedBox(height: 8),
+          // ── Anatoka → Anataka box ──
+          if (hasRoute)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F6F8),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Anatoka', style: TextStyle(color: Colors.black54, fontSize: 13)),
+                        const SizedBox(height: 2),
+                        Text(fromRegion.isEmpty ? '—' : fromRegion,
+                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                        Text(
+                          fromDistrictKnown ? _normPlace(fromDistrictRaw) : 'Wilaya haijaandikwa',
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 14,
+                            fontStyle: fromDistrictKnown ? FontStyle.normal : FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Icon(Icons.arrow_forward, color: _accentBlue),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Anataka', style: TextStyle(color: Colors.black54, fontSize: 13)),
+                        const SizedBox(height: 2),
+                        Text(toRegion.isEmpty ? '—' : toRegion,
+                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                        Text(
+                          toDistrict.isEmpty ? 'Wilaya yoyote' : toDistrict,
+                          style: const TextStyle(color: Colors.black54, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (hasRoute) const SizedBox(height: 14),
+
+          // ── Origin-match row ──
+          if (myRegionName.isNotEmpty)
             Row(children: [
-              Icon(PhosphorIcons.briefcase(), size: 13, color: const Color(0xFF6B7280)),
-              const SizedBox(width: 5),
+              Icon(
+                originMatches ? Icons.check_circle : Icons.cancel_outlined,
+                size: 18,
+                color: originMatches ? _green : Colors.black45,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  originMatches ? 'Anatoka unakotaka' : 'Hatoki unakotaka',
+                  style: TextStyle(
+                    color: originMatches ? _green : Colors.black54,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ]),
+          if (myRegionName.isNotEmpty) const SizedBox(height: 8),
+
+          // ── Subject-match row ──
+          if (mySubjects.isNotEmpty)
+            Row(children: [
+              Icon(
+                allMatch ? Icons.check_circle : (someMatch ? Icons.hourglass_bottom : Icons.cancel_outlined),
+                size: 18,
+                color: allMatch ? _green : (someMatch ? _amber : Colors.black45),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  allMatch
+                      ? 'Masomo yote yanalingana (${mySubjects.length})'
+                      : someMatch
+                          ? 'Somo ${matchedSubjects.length} kati ya ${mySubjects.length} linalingana'
+                          : 'Hakuna somo linalolingana',
+                  style: TextStyle(
+                    color: allMatch ? _green : (someMatch ? _amber : Colors.black54),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ]),
+          if (mySubjects.isNotEmpty) const SizedBox(height: 14),
+
+          // ── Subject chips ──
+          if (subjects.isNotEmpty)
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: subjects.map((s) => _SubjectChip(label: s, matched: mySubjects.contains(s))).toList(growable: false),
+            ),
+
+          // ── Uzoefu ──
+          if (years != null) ...[
+            const SizedBox(height: 14),
+            Row(children: [
+              const Icon(Icons.work_outline, size: 18, color: Colors.black54),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   years == 3
@@ -1586,109 +1681,46 @@ class _BoardCard extends StatelessWidget {
                       : years == 1
                           ? 'Uzoefu: mwaka 1'
                           : 'Uzoefu: miaka $years',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                  style: const TextStyle(color: Colors.black54, fontSize: 14),
                 ),
               ),
             ]),
           ],
 
-          // Masomo
-          if (subjects.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            const Text('Masomo:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
-            const SizedBox(height: 4),
-            Wrap(spacing: 4, runSpacing: 4, children: [
-              ...subjects.map((s) {
-                final matched = mySubjects.contains(s);
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // px-2 py-0.5 kama web
-                  decoration: BoxDecoration(
-                    color: matched ? AppColors.primary : Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: matched ? AppColors.primary : const Color(0xFFD1D5DB)),
-                  ),
-                  child: Text('$s${matched ? ' ✓' : ''}',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold,
-                          color: matched ? Colors.white : const Color(0xFF374151))),
-                );
-              }),
-              // Check row yenye idadi (kama reference): "Masomo yote yanalingana (2)"
-              if (allMatch)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill), size: 12, color: const Color(0xFF16A34A)),
-                    const SizedBox(width: 4),
-                    Text('Masomo yote ${mySubjects.length} yanalingana',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF15803D))),
-                  ]),
-                )
-              else if (someMatch)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(PhosphorIcons.hourglassMedium(PhosphorIconsStyle.fill), size: 12, color: const Color(0xFFB26A00)),
-                    const SizedBox(width: 4),
-                    Text('Somo ${matchedSubjects.length} kati ya ${mySubjects.length} linalingana',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFB26A00))),
-                  ]),
-                )
-              else if (mySubjects.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(PhosphorIcons.xCircle(), size: 12, color: const Color(0xFF9CA3AF)),
-                    const SizedBox(width: 4),
-                    const Text('Hakuna somo linalolingana',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-                  ]),
-                ),
-            ]),
-          ],
+          const SizedBox(height: 16),
 
-          // Muda
-          if (ago.isNotEmpty) ...[
-            const SizedBox(height: 8), // gap-2 = 8px
-            Row(children: [
-              Icon(fresh ? PhosphorIcons.lightning(PhosphorIconsStyle.fill) : PhosphorIcons.clock(), size: 13,
-                  color: fresh ? AppColors.primary : const Color(0xFF9CA3AF)),
-              const SizedBox(width: 4),
-              Expanded(child: Text(fresh ? 'Mpya · $ago' : ago,
-                  style: TextStyle(fontSize: 12,
-                      color: fresh ? AppColors.primary : const Color(0xFF9CA3AF),
-                      fontWeight: fresh ? FontWeight.bold : FontWeight.w500))),
-            ]),
-            if (fullDate.isNotEmpty)
-              Padding(padding: const EdgeInsets.only(top: 2),
-                  child: Text(fullDate, style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)))),
-          ],
-
-          // mt-auto pt-1 kama web — Spacer inasogeza buttons chini, pt-1=4px
-          const Spacer(),
-          const SizedBox(height: 4),
-
-          // Buttons: Piga / SMS / WA — wote grey-900 kama web
+          // ── Action buttons: Piga / SMS / WhatsApp ──
           Row(children: [
-            Expanded(child: _contactBtn(PhosphorIcons.phoneCall(PhosphorIconsStyle.bold), 'Piga',
-                phoneOk ? () => onContact('call') : null)),
-            const SizedBox(width: 6), // gap-1.5 = 6px
-            Expanded(child: _contactBtn(PhosphorIcons.envelopeSimple(PhosphorIconsStyle.bold), 'SMS',
-                phoneOk ? () => onContact('sms') : null)),
+            Expanded(
+              child: _ActionButton(
+                icon: PhosphorIcons.phoneCall(PhosphorIconsStyle.bold),
+                label: 'Piga',
+                background: phoneOk ? const Color(0xFFE7EEFE) : const Color(0xFFF0F1F5),
+                foreground: phoneOk ? _accentBlue : const Color(0xFF9CA3AF),
+                onTap: phoneOk ? () => onContact('call') : null,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionButton(
+                icon: PhosphorIcons.envelopeSimple(PhosphorIconsStyle.bold),
+                label: 'SMS',
+                background: phoneOk ? const Color(0xFFF0F1F5) : const Color(0xFFF0F1F5),
+                foreground: phoneOk ? Colors.black87 : const Color(0xFF9CA3AF),
+                onTap: phoneOk ? () => onContact('sms') : null,
+              ),
+            ),
             if (altOk) ...[
-              const SizedBox(width: 6), // gap-1.5 = 6px
-              Expanded(child: _contactBtnWa(() => onContact('whatsapp'))),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ActionButton(
+                  icon: PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
+                  label: 'WhatsApp',
+                  background: const Color(0xFF31C258),
+                  foreground: Colors.white,
+                  onTap: () => onContact('whatsapp'),
+                ),
+              ),
             ],
           ]),
 
@@ -1698,64 +1730,177 @@ class _BoardCard extends StatelessWidget {
             GestureDetector(
               onTap: () => Navigator.pushNamed(context, '/donate'),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), // px-3=12 py-2.5=10
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF), // bg-brand-blue-50
-                  borderRadius: BorderRadius.circular(8), // rounded-lg=8
-                  border: Border.all(color: const Color(0xFF1E40AF).withValues(alpha: 0.2)), // border-brand-blue/20
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF1E40AF).withValues(alpha: 0.2)),
                 ),
                 child: Row(children: [
-                  Expanded(child: Text(toast!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E40AF)))), // text-[12px] font-semibold text-brand-blue-800
+                  Expanded(child: Text(toast!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E40AF)))),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // px-2=8 py-0.5=2
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E40AF).withValues(alpha: 0.1), // bg-brand-blue/10
-                      borderRadius: BorderRadius.circular(6), // rounded-md=6
+                      color: const Color(0xFF1E40AF).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('Changia →', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF))), // text-sm=14 font-bold text-brand-blue
+                    child: const Text('Changia →', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF))),
                   ),
                 ]),
               ),
             ),
           ],
-        ]),
+        ],
       ),
     );
   }
+}
 
-  Widget _contactBtn(IconData icon, String label, VoidCallback? onTap) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+// ── Match level (kama reference) ──
+enum MatchLevel { full, partial, none }
+
+class _StatusPill extends StatelessWidget {
+  final MatchLevel level;
+  const _StatusPill({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool full = level == MatchLevel.full;
+    final bool partial = level == MatchLevel.partial;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: full
+            ? const Color(0xFFDCF3E0)
+            : partial
+                ? const Color(0xFFFCEACB)
+                : const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            full
+                ? Icons.verified
+                : partial
+                    ? Icons.radio_button_unchecked
+                    : Icons.cancel_outlined,
+            size: 15,
+            color: full
+                ? const Color(0xFF1E9E54)
+                : partial
+                    ? const Color(0xFFB27C1E)
+                    : const Color(0xFF6B7280),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            full ? 'Inalingana' : partial ? 'Kiasi' : 'Hakuna',
+            style: TextStyle(
+              color: full
+                  ? const Color(0xFF1E9E54)
+                  : partial
+                      ? const Color(0xFFB27C1E)
+                      : const Color(0xFF6B7280),
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubjectChip extends StatelessWidget {
+  final String label;
+  final bool matched;
+  const _SubjectChip({required this.label, required this.matched});
+
+  @override
+  Widget build(BuildContext context) {
+    if (matched) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2F3EC7),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check, size: 15, color: Colors.white),
+            const SizedBox(width: 5),
+            Text(label,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+          ],
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFD1D5DB)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE0E1E6)),
       ),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(icon, size: 14, color: onTap != null ? const Color(0xFF111827) : const Color(0xFF9CA3AF)),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
-            color: onTap != null ? const Color(0xFF111827) : const Color(0xFF9CA3AF))),
-      ]),
-    ),
-  );
+      child: Text(label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+    );
+  }
+}
 
-  Widget _contactBtnWa(VoidCallback onTap) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF25D366),
-        borderRadius: BorderRadius.circular(10),
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color background;
+  final Color foreground;
+  final VoidCallback? onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.background,
+    required this.foreground,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: onTap == null ? 0.55 : 1,
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 17, color: foreground),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: foreground,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill), size: 14, color: Colors.white),
-        const SizedBox(width: 4),
-        const Text('WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
-      ]),
-    ),
-  );
+    );
+  }
 }
 
 // ── Pagination ────────────────────────────────────────────────────────────────
