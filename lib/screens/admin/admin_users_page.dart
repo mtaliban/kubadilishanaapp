@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
@@ -86,8 +86,11 @@ class _State extends State<AdminUsersPage> {
   // Kichujio cha stat cards (kugusika): all | active | disabled | admin
   String _statFilter = 'all';
 
-  int _page = 1;
-  static const _ps = 5;
+  // ── Infinite scroll (badala ya vitufe vya kurasa — kama reference) ──
+  int _visible = 8;        // kadi zinaonekana sasa
+  static const _step = 8;  // ongeza kila tunapofika chini
+  bool _extending = false; // spinner ndogo tunapoongeza
+  VoidCallback? _undoFn;   // kitufe cha Tendua kwenye ujumbe
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
@@ -110,7 +113,7 @@ class _State extends State<AdminUsersPage> {
   void _onSearch() {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 450), () {
-      setState(() { _page = 1; });
+      _resetVisible();
       _load();
     });
   }
@@ -183,9 +186,9 @@ class _State extends State<AdminUsersPage> {
       setState(() {
         _users   = list;
         _loading = false;
-        _page    = 1;
         _live    = true;
       });
+      _resetVisible();
       Future.delayed(const Duration(seconds: 8), () {
         if (mounted) setState(() => _live = false);
       });
@@ -211,12 +214,19 @@ class _State extends State<AdminUsersPage> {
     }).toList();
   }
 
-  int get _totalPages => (_statFiltered.isEmpty ? 1 : (_statFiltered.length / _ps).ceil());
-  int get _safePage   => _page.clamp(1, _totalPages);
-  List<dynamic> get _pageItems {
-    final list = _statFiltered;
-    final s = (_safePage - 1) * _ps;
-    return list.sublist(s, (s + _ps).clamp(0, list.length));
+  // ── Infinite scroll helpers ──
+  void _resetVisible() => _visible = _step;
+  List<dynamic> get _visibleItems => _statFiltered.take(_visible).toList();
+  void _maybeExtend() {
+    if (_extending || _visible >= _statFiltered.length) return;
+    _extending = true;
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      setState(() {
+        _visible = (_visible + _step).clamp(0, _statFiltered.length);
+        _extending = false;
+      });
+    });
   }
 
   int get _activeFilterCount => [
@@ -235,7 +245,7 @@ class _State extends State<AdminUsersPage> {
       _facilityId = null; _facilityName = null;
       _subjectCode = null; _subjectName = null;
       _statFilter = 'all';
-      _page = 1;
+      _visible = _step;
     });
     _load();
   }
@@ -278,10 +288,22 @@ class _State extends State<AdminUsersPage> {
 
   Future<void> _toggleSuspend(Map u) async {
     final active = '${u['status'] ?? 'active'}'.toLowerCase() != 'disabled';
+    final name = u['full_name'] as String? ?? '';
     try {
       await ApiService().adminUpdateUser(_uid(u), {'status': active ? 'disabled' : 'active'});
       if (!mounted) return;
-      _snack(active ? 'Amesitishwa' : 'Amewezeshwa', _amb600); _load();
+      // Optimistic — badilisha kwenye orodha papo hapo (kama reference)
+      setState(() => u['status'] = active ? 'disabled' : 'active');
+      _snack('${active ? 'Amesitishwa' : 'Amewezeshwa'}: $name', _amb600, () async {
+        try {
+          await ApiService().adminUpdateUser(_uid(u), {'status': active ? 'active' : 'disabled'});
+          if (!mounted) return;
+          setState(() => u['status'] = active ? 'active' : 'disabled');
+          _snack('Imetenduliwa', _green);
+        } catch (_) {
+          if (mounted) _snack('Imeshindikana kutendua', _red);
+        }
+      });
     } catch (e) {
       if (!mounted) return; _snack('Hitilafu: $e', _red);
     }
@@ -306,23 +328,37 @@ class _State extends State<AdminUsersPage> {
   Future<void> _bulkEnable() async {
     if (_selected.isEmpty) return;
     if (await _confirm('Wezesha watumiaji ${_selected.length}?', 'Wote watakuwa "Hai".') != true) return;
-    for (final id in _selected) {
+    final ids = _selected.toList();
+    for (final id in ids) {
       try { await ApiService().adminUpdateUser(id, {'status': 'active'}); } catch (_) {}
     }
     if (!mounted) return;
     setState(() { _selected.clear(); _selectAll = false; });
-    _snack('Wamewezeshwa', _green); _load();
+    _snack('Watumiaji ${ids.length} wamewezeshwa', _green, () async {
+      for (final id in ids) {
+        try { await ApiService().adminUpdateUser(id, {'status': 'disabled'}); } catch (_) {}
+      }
+      if (mounted) { _snack('Imetenduliwa', _green); _load(); }
+    });
+    _load();
   }
 
   Future<void> _bulkSuspend() async {
     if (_selected.isEmpty) return;
     if (await _confirm('Sitisha watumiaji ${_selected.length}?', 'Wote watasitishwa.') != true) return;
-    for (final id in _selected) {
+    final ids = _selected.toList();
+    for (final id in ids) {
       try { await ApiService().adminUpdateUser(id, {'status': 'disabled'}); } catch (_) {}
     }
     if (!mounted) return;
     setState(() { _selected.clear(); _selectAll = false; });
-    _snack('Wamesitishwa', _amb600); _load();
+    _snack('Watumiaji ${ids.length} wamesitishwa', _amb600, () async {
+      for (final id in ids) {
+        try { await ApiService().adminUpdateUser(id, {'status': 'active'}); } catch (_) {}
+      }
+      if (mounted) { _snack('Imetenduliwa', _green); _load(); }
+    });
+    _load();
   }
 
   Future<void> _bulkDelete() async {
@@ -354,16 +390,17 @@ class _State extends State<AdminUsersPage> {
     ),
   );
 
-  void _snack(String msg, [Color color = _blue]) {
+  void _snack(String msg, [Color color = _blue, VoidCallback? undo]) {
+    _undoFn = undo;
     if (_message == msg) {
       _msgTimer?.cancel();
-      setState(() => _message = null);
+      setState(() { _message = null; _undoFn = null; });
       return;
     }
     _msgTimer?.cancel();
     setState(() => _message = msg);
-    _msgTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) setState(() => _message = null);
+    _msgTimer = Timer(const Duration(seconds: 6), () {
+      if (mounted) setState(() { _message = null; _undoFn = null; });
     });
   }
 
@@ -502,7 +539,6 @@ class _State extends State<AdminUsersPage> {
           _regionId = id; _regionName = nm;
           _districtId = null; _districtName = null; _districts = [];
           _facilityId = null; _facilityName = null; _facilities = [];
-          _page = 1;
         });
         if (id != null) _loadDistricts(id);
         _load();
@@ -530,7 +566,6 @@ class _State extends State<AdminUsersPage> {
         setState(() {
           _districtId = id; _districtName = nm;
           _facilityId = null; _facilityName = null; _facilities = [];
-          _page = 1;
         });
         if (id != null) _loadFacilities(id);
         _load();
@@ -554,7 +589,7 @@ class _State extends State<AdminUsersPage> {
       current: _facilityId ?? '',
       onPick: (v) {
         final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
-        setState(() { _facilityId = v.isEmpty ? null : v; _facilityName = nm; _page = 1; });
+        setState(() { _facilityId = v.isEmpty ? null : v; _facilityName = nm; });
         _load();
       },
       label: (i) => i['label']!, value: (i) => i['id']!,
@@ -575,7 +610,7 @@ class _State extends State<AdminUsersPage> {
       current: _subjectCode ?? '',
       onPick: (v) {
         final nm = v.isEmpty ? null : items.firstWhere((i) => i['code'] == v, orElse: () => {})['label'];
-        setState(() { _subjectCode = v.isEmpty ? null : v; _subjectName = nm; _page = 1; });
+        setState(() { _subjectCode = v.isEmpty ? null : v; _subjectName = nm; });
         _load();
       },
       label: (i) => i['label']!, value: (i) => i['code']!,
@@ -1360,42 +1395,27 @@ class _State extends State<AdminUsersPage> {
         ),
       );
 
-  // ── Pagination button ──────────────────────────────────────────────────────
-  Widget _pageBtn(String label, VoidCallback? onTap) =>
-      GestureDetector(
-        onTap: onTap,
-        child: Opacity(
-          opacity: onTap == null ? 0.4 : 1.0,
-          child: Container(
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: _g200),
-                borderRadius: BorderRadius.circular(12)),
-            child: Text(label, style: const TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600, color: _g700)),
-          ),
-        ),
-      );
+  // ── Infinite scroll — hakuna vitufe vya kurasa tena (kama reference) ──
 
   // ─────────────────────────────────────────────────────────────────────────
   // BUILD
   // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final items = _pageItems;
-    final total = _totalPages;
-    final cur   = _safePage;
+    final items = _visibleItems;
 
     return Container(
       color: _pageBg,
       child: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _load,
-          color: _blue,
-          child: CustomScrollView(
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            if (n.metrics.axis == Axis.vertical && n.metrics.extentAfter < 500) _maybeExtend();
+            return false;
+          },
+          child: RefreshIndicator(
+            onRefresh: _load,
+            color: _blue,
+            child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               // ── Title ──────────────────────────────────────────────────
@@ -1416,13 +1436,28 @@ class _State extends State<AdminUsersPage> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
                       decoration: BoxDecoration(
                         color: _blueBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Text(_message!,
-                          style: const TextStyle(fontSize: 13.5, color: _blue)),
+                      child: Row(children: [
+                        Expanded(child: Text(_message!,
+                            style: const TextStyle(fontSize: 13.5, color: _blue))),
+                        if (_undoFn != null)
+                          TextButton(
+                            onPressed: () {
+                              _msgTimer?.cancel();
+                              setState(() { _message = null; });
+                              _undoFn!();
+                            },
+                            style: TextButton.styleFrom(
+                                foregroundColor: _blue,
+                                padding: const EdgeInsets.symmetric(horizontal: 10)),
+                            child: const Text('Tendua',
+                                style: TextStyle(fontWeight: FontWeight.w800)),
+                          ),
+                      ]),
                     ),
                   ),
                 ),
@@ -1434,7 +1469,7 @@ class _State extends State<AdminUsersPage> {
                     _loading
                         ? 'Inapakia...'
                         : (_statFilter != 'all' || _activeFilterCount > 0
-                            ? 'Inaonyesha ${_statFiltered.length} kati ya ${_users.length} watumiaji'
+                            ? 'Inaonyesha ${_visibleItems.length} kati ya ${_statFiltered.length} (jumla ${_users.length})'
                             : 'Jumla: ${_users.length} watumiaji'),
                     style: const TextStyle(fontSize: 12.5, color: _g500),
                   ),
@@ -1462,13 +1497,19 @@ class _State extends State<AdminUsersPage> {
                     ),
                   ])),
                 )
-              else if (_users.isEmpty)
+              else if (_statFiltered.isEmpty)
                 SliverFillRemaining(
                   child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(PhosphorIcons.usersThree(), color: _g400, size: 48),
                     const SizedBox(height: 12),
                     const Text('Hakuna watumiaji walioonekana',
                         style: TextStyle(color: _g500, fontSize: 14)),
+                    const SizedBox(height: 12),
+                    if (_statFilter != 'all' || _activeFilterCount > 0)
+                      OutlinedButton(
+                        onPressed: _clearAllFilters,
+                        child: const Text('Ondoa vichujio'),
+                      ),
                   ])),
                 )
               else ...[
@@ -1482,6 +1523,13 @@ class _State extends State<AdminUsersPage> {
                       selected:  _selected.contains(_uid(items[i])),
                       deptName:  _deptName('${(items[i] as Map)['category'] ?? ''}'),
                       deptIcon:  _deptIcon('${(items[i] as Map)['category'] ?? ''}'),
+                      onLongPress: () {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          final id = _uid(items[i]);
+                          _selected.contains(id) ? _selected.remove(id) : _selected.add(id);
+                        });
+                      },
                       onToggle:  () => setState(() {
                         final id = _uid(items[i]);
                         if (_selected.contains(id)) {
@@ -1501,29 +1549,28 @@ class _State extends State<AdminUsersPage> {
                     ),
                   ),
                 ),
-                // Pagination
-                if (total > 1)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        _pageBtn('← Rudi',
-                            cur <= 1 ? null : () => setState(() => _page = cur - 1)),
-                        const SizedBox(width: 12),
-                        Text('$cur / $total', style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w700, color: _g500)),
-                        const SizedBox(width: 12),
-                        _pageBtn('Endelea →',
-                            cur >= total ? null : () => setState(() => _page = cur + 1)),
-                      ]),
+                // ── Infinite scroll footer — spinner tunapoongeza / mwisho wa orodha ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: _extending
+                          ? const SizedBox(width: 24, height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2.5, color: _blue))
+                          : (_visibleItems.length < _statFiltered.length
+                              ? const SizedBox.shrink()
+                              : Text('Umefika mwisho wa orodha',
+                                  style: const TextStyle(fontSize: 12.5, color: _g400))),
                     ),
                   ),
+                ),
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
               ],
             ],
           ),
         ),
-      ),
+          ),
+        ),
     );
   }
 
@@ -1608,21 +1655,21 @@ class _State extends State<AdminUsersPage> {
           // Kila kadi inagusika kuchuja (kama reference)
           stat('${_loading ? '...' : _users.length}', 'Wote', _g900,
               sel: _statFilter == 'all',
-              onTap: () => setState(() { _statFilter = 'all'; _page = 1; })),
+              onTap: () => setState(() { _statFilter = 'all'; _visible = _step; })),
           stat('$active', 'Hai', const Color(0xFF15803D),
               sel: _statFilter == 'active',
               onTap: () => setState(() {
-                _statFilter = _statFilter == 'active' ? 'all' : 'active'; _page = 1;
+                _statFilter = _statFilter == 'active' ? 'all' : 'active'; _visible = _step;
               })),
           stat('$blocked', 'Wamesitishwa', _red,
               sel: _statFilter == 'disabled',
               onTap: () => setState(() {
-                _statFilter = _statFilter == 'disabled' ? 'all' : 'disabled'; _page = 1;
+                _statFilter = _statFilter == 'disabled' ? 'all' : 'disabled'; _visible = _step;
               })),
           stat('$admins', 'Admins', _blue,
               sel: _statFilter == 'admin',
               onTap: () => setState(() {
-                _statFilter = _statFilter == 'admin' ? 'all' : 'admin'; _page = 1;
+                _statFilter = _statFilter == 'admin' ? 'all' : 'admin'; _visible = _step;
               })),
           stat('${_departments.isEmpty ? '—' : _departments.length}', 'Idara', _blue700),
         ],
@@ -1787,7 +1834,7 @@ class _State extends State<AdminUsersPage> {
             runSpacing: 8,
             children: [
               chip('Zote', _category.isEmpty, () {
-                setState(() { _category = ''; _page = 1; });
+                setState(() { _category = ''; });
                 _loadRefs(); _load();
               }),
               // Futa vyote — inaonekana tu kuna kichujio chochote kinachofanya kazi
@@ -1798,7 +1845,7 @@ class _State extends State<AdminUsersPage> {
                   '${d['display_name'] ?? d['name'] ?? d['code']}',
                   _category == '${d['code']}',
                   () {
-                    setState(() { _category = '${d['code']}'; _page = 1; });
+                    setState(() { _category = '${d['code']}'; });
                     _loadRefs(); _load();
                   },
                   icon: _deptIcon('${d['code']}'),
@@ -1923,6 +1970,7 @@ class _UserCard extends StatelessWidget {
   final VoidCallback onAdmin;
   final VoidCallback onDelete;
   final VoidCallback onContact;
+  final VoidCallback? onLongPress;
 
   const _UserCard({
     required this.user,
@@ -1936,6 +1984,7 @@ class _UserCard extends StatelessWidget {
     required this.onAdmin,
     required this.onDelete,
     required this.onContact,
+    this.onLongPress,
   });
 
   @override
@@ -1954,7 +2003,9 @@ class _UserCard extends StatelessWidget {
 
     return Opacity(
       opacity: isActive ? 1.0 : 0.6,
-      child: Container(
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -2077,6 +2128,7 @@ class _UserCard extends StatelessWidget {
               _sqBtn(PhosphorIcons.trash(), 'Futa', _red50, _red, onDelete),
             ]),
           ],
+        ),
         ),
       ),
     );
