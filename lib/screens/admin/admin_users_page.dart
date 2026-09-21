@@ -50,6 +50,26 @@ const _g100 = Color(0xFFF3F4F6);
 const _pageBg = Color(0xFFF4F6FA);
 const _cardBorder = Color(0xFFE4E8F1);
 
+/// "255712345678" -> "+255 712 345 678"
+String _fmtPhone(String p) {
+  final d = p.replaceAll(RegExp(r'\D'), '');
+  if (d.length == 12 && d.startsWith('255')) {
+    return '+255 ${d.substring(3, 6)} ${d.substring(6, 9)} ${d.substring(9)}';
+  }
+  return p.isEmpty ? '' : '+$d';
+}
+
+/// 1096 -> "1,096"
+String _fmtNum(int n) =>
+    n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
+
+/// "ZUHURA labia" -> "Zuhura Labia"
+String _titleCase(String v) => v
+    .trim()
+    .split(RegExp(r'\s+'))
+    .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1).toLowerCase())
+    .join(' ');
+
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
   @override
@@ -82,7 +102,6 @@ class _State extends State<AdminUsersPage> {
   Set<String> _selected = {};
   bool _selectAll = false;
 
-  bool _showFilters = false;
 
   // Kichujio cha stat cards (kugusika): all | active | disabled | admin
   String _statFilter = 'all';
@@ -111,7 +130,22 @@ class _State extends State<AdminUsersPage> {
     super.dispose();
   }
 
+  // ── Filters sheet (bottom sheet kama reference) ────────────────────────────
+  Future<void> _openFiltersSheet() {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => _FiltersSheet(parent: this),
+    );
+  }
+
   void _onSearch() {
+    if (mounted) setState(() {});
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 450), () {
       _resetVisible();
@@ -146,25 +180,6 @@ class _State extends State<AdminUsersPage> {
     } else {
       setState(() => _subjects = []);
     }
-  }
-
-  Future<void> _loadDistricts(int regionId) async {
-    try {
-      final r = await ApiService().getDistricts(regionId);
-      if (!mounted) return;
-      final raw = r.data;
-      setState(() => _districts = raw is List ? raw : (raw['districts'] ?? raw['data'] ?? []));
-    } catch (_) {}
-  }
-
-  Future<void> _loadFacilities(int districtId) async {
-    try {
-      final cat = _category.isEmpty ? 'health' : _category;
-      final r = await ApiService().getFacilities(districtId, category: cat);
-      if (!mounted) return;
-      final raw = r.data;
-      setState(() => _facilities = raw is List ? raw : (raw['facilities'] ?? raw['data'] ?? []));
-    } catch (_) {}
   }
 
   // ── Main load ──────────────────────────────────────────────────────────────
@@ -426,7 +441,7 @@ class _State extends State<AdminUsersPage> {
   }
 
   // ── Pickers (searchable bottom sheet) ──────────────────────────────────────
-  void _showPicker<T>({
+  Future<void> _showPicker<T>({
     required String title,
     required List<T> items,
     required String current,
@@ -436,7 +451,7 @@ class _State extends State<AdminUsersPage> {
   }) {
     final ctrl = TextEditingController();
     List<T> filtered = List.from(items);
-    showModalBottomSheet(
+    return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
@@ -518,103 +533,6 @@ class _State extends State<AdminUsersPage> {
           ]),
         ),
       ),
-    );
-  }
-
-  void _openRegionPicker() {
-    final items = [
-      {'label': 'Mkoa wote', 'id': ''},
-      ...List<Map<String, String>>.from(_regions.map((r) => {
-        'label': '${r['name'] ?? r['region_name'] ?? ''}',
-        'id':    '${r['id'] ?? r['region_id'] ?? ''}',
-      })),
-    ];
-    _showPicker<Map<String, String>>(
-      title: 'Chagua Mkoa',
-      items: items,
-      current: _regionId?.toString() ?? '',
-      onPick: (v) {
-        final id = v.isEmpty ? null : int.tryParse(v);
-        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
-        setState(() {
-          _regionId = id; _regionName = nm;
-          _districtId = null; _districtName = null; _districts = [];
-          _facilityId = null; _facilityName = null; _facilities = [];
-        });
-        if (id != null) _loadDistricts(id);
-        _load();
-      },
-      label: (i) => i['label']!, value: (i) => i['id']!,
-    );
-  }
-
-  void _openDistrictPicker() {
-    if (_regionId == null) { _snack('Chagua mkoa kwanza', _amb600); return; }
-    final items = [
-      {'label': 'Wilaya zote', 'id': ''},
-      ...List<Map<String, String>>.from(_districts.map((d) => {
-        'label': '${d['name'] ?? d['district_name'] ?? ''}',
-        'id':    '${d['id'] ?? d['district_id'] ?? ''}',
-      })),
-    ];
-    _showPicker<Map<String, String>>(
-      title: 'Chagua Wilaya',
-      items: items,
-      current: _districtId?.toString() ?? '',
-      onPick: (v) {
-        final id = v.isEmpty ? null : int.tryParse(v);
-        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
-        setState(() {
-          _districtId = id; _districtName = nm;
-          _facilityId = null; _facilityName = null; _facilities = [];
-        });
-        if (id != null) _loadFacilities(id);
-        _load();
-      },
-      label: (i) => i['label']!, value: (i) => i['id']!,
-    );
-  }
-
-  void _openFacilityPicker() {
-    if (_districtId == null) { _snack('Chagua wilaya kwanza', _amb600); return; }
-    final items = [
-      {'label': 'Vituo vyote', 'id': ''},
-      ...List<Map<String, String>>.from(_facilities.map((f) => {
-        'label': '${f['name'] ?? ''}',
-        'id':    '${f['id'] ?? f['code'] ?? ''}',
-      })),
-    ];
-    _showPicker<Map<String, String>>(
-      title: 'Chagua Kituo',
-      items: items,
-      current: _facilityId ?? '',
-      onPick: (v) {
-        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
-        setState(() { _facilityId = v.isEmpty ? null : v; _facilityName = nm; });
-        _load();
-      },
-      label: (i) => i['label']!, value: (i) => i['id']!,
-    );
-  }
-
-  void _openSubjectPicker() {
-    final items = [
-      {'label': 'Masomo yote', 'code': ''},
-      ...List<Map<String, String>>.from(_subjects.map((s) => {
-        'label': '${s['name'] ?? s['subject_name'] ?? ''}',
-        'code':  '${s['code'] ?? s['subject_code'] ?? ''}',
-      })),
-    ];
-    _showPicker<Map<String, String>>(
-      title: 'Chagua Somo',
-      items: items,
-      current: _subjectCode ?? '',
-      onPick: (v) {
-        final nm = v.isEmpty ? null : items.firstWhere((i) => i['code'] == v, orElse: () => {})['label'];
-        setState(() { _subjectCode = v.isEmpty ? null : v; _subjectName = nm; });
-        _load();
-      },
-      label: (i) => i['label']!, value: (i) => i['code']!,
     );
   }
 
@@ -1421,14 +1339,22 @@ class _State extends State<AdminUsersPage> {
             slivers: [
               // ── Title ──────────────────────────────────────────────────
               SliverToBoxAdapter(child: _buildTitle()),
-              // ── Stats row ──────────────────────────────────────────────
               SliverToBoxAdapter(child: _buildStatsRow()),
-              // ── Toolbar pills ──────────────────────────────────────────
               SliverToBoxAdapter(child: _buildToolbar()),
               // ── Search + funnel ────────────────────────────────────────
               SliverToBoxAdapter(child: _buildSearchBar()),
-              // ── Filter chips (funnel) ──────────────────────────────────
-              if (_showFilters) SliverToBoxAdapter(child: _buildFilterChips()),
+              // ── Tags za vichujio (zinazofutika) ────────────────────────
+              SliverToBoxAdapter(child: _buildFilterTags()),
+              // ── Skeleton wakati wa kupakia ─────────────────────────────
+              if (_loading && _users.isEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  sliver: SliverList.separated(
+                    itemCount: 4,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (_, _) => const _SkeletonCard(),
+                  ),
+                ),
               // ── Bulk bar ───────────────────────────────────────────────
               SliverToBoxAdapter(child: _buildBulkBar()),
               // ── Inline message ─────────────────────────────────────────
@@ -1470,8 +1396,8 @@ class _State extends State<AdminUsersPage> {
                     _loading
                         ? 'Inapakia...'
                         : (_statFilter != 'all' || _activeFilterCount > 0
-                            ? 'Inaonyesha ${_visibleItems.length} kati ya ${_statFiltered.length} (jumla ${_users.length})'
-                            : 'Jumla: ${_users.length} watumiaji'),
+                            ? 'Inaonyesha 1–${_visibleItems.length} kati ya ${_fmtNum(_statFiltered.length)}'
+                            : 'Inaonyesha 1–${_visibleItems.length} kati ya ${_fmtNum(_users.length)}'),
                     style: const TextStyle(fontSize: 12.5, color: _g500),
                   ),
                 ),
@@ -1580,9 +1506,14 @@ class _State extends State<AdminUsersPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Row(children: [
-        const Expanded(
-          child: Text('Watumiaji',
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: _g900)),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Watumiaji',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: _g900)),
+            const SizedBox(height: 2),
+            Text(_loading ? 'Inapakia...' : '${_fmtNum(_users.length)} kwa jumla',
+                style: const TextStyle(fontSize: 13, color: _g500)),
+          ]),
         ),
         // LIVE pill (kama esstranfer.com)
         Container(
@@ -1607,7 +1538,7 @@ class _State extends State<AdminUsersPage> {
     );
   }
 
-  // ── Stats row — horizontal scroll cards ────────────────────────────────────
+  // ── Chips row — Vichujio (sheet) + Wote/Hai/Wamesitishwa/Admin (counts) ──
   Widget _buildStatsRow() {
     int active = 0, blocked = 0, admins = 0;
     for (final u in _users) {
@@ -1619,60 +1550,79 @@ class _State extends State<AdminUsersPage> {
       }
       if ((u['is_admin'] as bool? ?? false)) admins++;
     }
-    Widget stat(String n, String l, Color c, {bool sel = false, VoidCallback? onTap}) =>
+    Widget chip(String label, int n, {bool sel = false, VoidCallback? onTap}) =>
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: sel ? _blueBg : const Color(0xFFF7F8FA),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: sel ? _blue : Colors.transparent, width: 1.4),
+              color: sel ? _blue : Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: sel ? _blue : _cardBorder),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(n, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: c)),
-                const SizedBox(height: 3),
-                Text(l, style: TextStyle(
-                    fontSize: 12, color: sel ? _blue : _g500,
-                    fontWeight: sel ? FontWeight.w700 : FontWeight.w400),
-                    overflow: TextOverflow.ellipsis, maxLines: 1),
-              ],
-            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text(label, style: TextStyle(
+                  color: sel ? Colors.white : _g600,
+                  fontWeight: FontWeight.w700, fontSize: 12.5)),
+              const SizedBox(width: 6),
+              Text(_fmtNum(n), style: TextStyle(
+                  color: sel ? Colors.white70 : _g400,
+                  fontWeight: FontWeight.w700, fontSize: 12)),
+            ]),
           ),
         );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: GridView.count(
-        crossAxisCount: 3,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 2.2,
+    return SizedBox(
+      height: 42,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         children: [
-          // Kila kadi inagusika kuchuja (kama reference)
-          stat('${_loading ? '...' : _users.length}', 'Wote', _g900,
-              sel: _statFilter == 'all',
+          GestureDetector(
+            onTap: _openFiltersSheet,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: _activeFilterCount > 0 ? _blueBg : Colors.white,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: _activeFilterCount > 0 ? _blue : _cardBorder),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(PhosphorIcons.funnelSimple(), size: 14,
+                    color: _activeFilterCount > 0 ? _blue : _g500),
+                const SizedBox(width: 6),
+                Text('Vichujio', style: TextStyle(
+                    color: _activeFilterCount > 0 ? _blue : _g700,
+                    fontWeight: FontWeight.w700, fontSize: 12.5)),
+                if (_activeFilterCount > 0) ...[
+                  const SizedBox(width: 7),
+                  Container(
+                    width: 18, height: 18, alignment: Alignment.center,
+                    decoration: BoxDecoration(color: _blue, shape: BoxShape.circle),
+                    child: Text('$_activeFilterCount', style: const TextStyle(
+                        fontSize: 10.5, fontWeight: FontWeight.w800, color: Colors.white)),
+                  ),
+                ],
+              ]),
+            ),
+          ),
+          const SizedBox(width: 8),
+          chip('Wote', _users.length, sel: _statFilter == 'all',
               onTap: () => setState(() { _statFilter = 'all'; _visible = _step; })),
-          stat('$active', 'Hai', const Color(0xFF15803D),
-              sel: _statFilter == 'active',
+          const SizedBox(width: 8),
+          chip('Hai', active, sel: _statFilter == 'active',
               onTap: () => setState(() {
                 _statFilter = _statFilter == 'active' ? 'all' : 'active'; _visible = _step;
               })),
-          stat('$blocked', 'Wamesitishwa', _red,
-              sel: _statFilter == 'disabled',
+          const SizedBox(width: 8),
+          chip('Wamesitishwa', blocked, sel: _statFilter == 'disabled',
               onTap: () => setState(() {
                 _statFilter = _statFilter == 'disabled' ? 'all' : 'disabled'; _visible = _step;
               })),
-          stat('$admins', 'Admins', _blue,
-              sel: _statFilter == 'admin',
+          const SizedBox(width: 8),
+          chip('Admin', admins, sel: _statFilter == 'admin',
               onTap: () => setState(() {
                 _statFilter = _statFilter == 'admin' ? 'all' : 'admin'; _visible = _step;
               })),
-          stat('${_departments.isEmpty ? '—' : _departments.length}', 'Idara', _blue700),
         ],
       ),
     );
@@ -1756,40 +1706,18 @@ class _State extends State<AdminUsersPage> {
             ),
           ),
           const SizedBox(width: 8),
-          // Funnel button — badge ya idadi ya vichujio vinavyofanya kazi
           GestureDetector(
-            onTap: () => setState(() => _showFilters = !_showFilters),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 42, height: 42,
-                  decoration: BoxDecoration(
-                    color: (_showFilters || _activeFilterCount > 0) ? _blueBg : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                        color: (_showFilters || _activeFilterCount > 0) ? _blue : _cardBorder),
-                  ),
-                  child: Icon(PhosphorIcons.funnelSimple(),
-                      color: (_showFilters || _activeFilterCount > 0) ? _blue : _g500, size: 17),
-                ),
-                if (_activeFilterCount > 0)
-                  Positioned(
-                    top: -5,
-                    right: -5,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: _blue,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      child: Text('$_activeFilterCount',
-                          style: const TextStyle(
-                              fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
-                    ),
-                  ),
-              ],
+            onTap: _openFiltersSheet,
+            child: Container(
+              width: 42, height: 42,
+              decoration: BoxDecoration(
+                color: _activeFilterCount > 0 ? _blueBg : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                    color: _activeFilterCount > 0 ? _blue : _cardBorder),
+              ),
+              child: Icon(PhosphorIcons.funnelSimple(),
+                  color: _activeFilterCount > 0 ? _blue : _g500, size: 17),
             ),
           ),
         ],
@@ -1798,7 +1726,7 @@ class _State extends State<AdminUsersPage> {
   }
 
   // ── Filter chips — idara dynamic kutoka DB + location selects ──────────────
-  Widget _buildFilterChips() {
+  Widget _buildFilterTags() {
     Widget chip(String label, bool active, VoidCallback onTap,
             {IconData? icon, Color? activeBg, Color? activeFg}) =>
         GestureDetector(
@@ -1854,43 +1782,64 @@ class _State extends State<AdminUsersPage> {
             ],
           ),
         ),
-        // Location selects
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-          child: Column(children: [
-            Row(children: [
-              Expanded(child: _selBtn(
-                _regionName != null ? 'Mkoa: $_regionName' : 'Mkoa wote',
-                _openRegionPicker,
-                active: _regionId != null,
-              )),
-              const SizedBox(width: 8),
-              Expanded(child: _selBtn(
-                _districtName ?? 'Wilaya zote',
-                _openDistrictPicker,
-                active: _districtId != null,
-                disabled: _regionId == null,
-              )),
-            ]),
-            const SizedBox(height: 6),
-            if (_subjects.isNotEmpty)
-              _selBtn(
-                _subjectName ?? 'Masomo yote',
-                _openSubjectPicker,
-                active: _subjectCode != null,
-              )
-            else
-              _selBtn(
-                _facilityName ?? 'Vituo vyote',
-                _openFacilityPicker,
-                active: _facilityId != null,
-                disabled: _districtId == null,
-              ),
-          ]),
-        ),
+        // Tags za location/subject — zinazofutika binafsi
+        if (_regionId != null || _districtId != null || _facilityId != null || _subjectCode != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (_regionId != null)
+                  _filterTag('Mkoa: $_regionName', () {
+                    setState(() {
+                      _regionId = null; _regionName = null;
+                      _districtId = null; _districtName = null; _districts = [];
+                      _facilityId = null; _facilityName = null; _facilities = [];
+                    });
+                    _load();
+                  }),
+                if (_districtId != null)
+                  _filterTag('Wilaya: $_districtName', () {
+                    setState(() {
+                      _districtId = null; _districtName = null;
+                      _facilityId = null; _facilityName = null; _facilities = [];
+                    });
+                    _load();
+                  }),
+                if (_facilityId != null)
+                  _filterTag('Kituo: $_facilityName', () {
+                    setState(() { _facilityId = null; _facilityName = null; });
+                    _load();
+                  }),
+                if (_subjectCode != null)
+                  _filterTag('Somo: $_subjectName', () {
+                    setState(() { _subjectCode = null; _subjectName = null; });
+                    _load();
+                  }),
+              ],
+            ),
+          ),
       ]),
     );
   }
+
+  Widget _filterTag(String label, VoidCallback onRemove) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: _blueBg,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(mainAxisSize: MainAxisSize.min, children: [
+      Text(label, style: const TextStyle(
+          fontSize: 12, fontWeight: FontWeight.w700, color: _blue)),
+      const SizedBox(width: 5),
+      GestureDetector(
+        onTap: onRemove,
+        child: Icon(PhosphorIcons.x(), size: 12, color: _blue),
+      ),
+    ]),
+  );
 
   // ── Bulk bar — select-all + bulk actions ───────────────────────────────────
   Widget _buildBulkBar() {
@@ -2031,26 +1980,44 @@ class _UserCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Container(
-                  width: 40, height: 40,
-                  decoration: const BoxDecoration(color: _blueBg, shape: BoxShape.circle),
-                  alignment: Alignment.center,
-                  child: Text(init, style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w800, color: _blue700)),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 40, height: 40,
+                      decoration: const BoxDecoration(color: _blueBg, shape: BoxShape.circle),
+                      alignment: Alignment.center,
+                      child: Text(init, style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800, color: _blue700)),
+                    ),
+                    Positioned(
+                      right: -1,
+                      bottom: -1,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: isActive ? const Color(0xFF16A34A) : _red,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name,
+                      Text(_titleCase(name),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 14.5, color: _g900)),
                       const SizedBox(height: 2),
                       if (phone.isNotEmpty)
-                        Text(phone, style: const TextStyle(
+                        Text(_fmtPhone(phone), style: const TextStyle(
                             fontSize: 12.5, color: _blue, fontWeight: FontWeight.w600)),
                     ],
                   ),
@@ -2225,4 +2192,414 @@ class _UserCard extends StatelessWidget {
           ),
         ),
       );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _FiltersSheet — sheet ya vichujio (Idara/Mkoa/Wilaya/Kituo/Somo) yenye
+// count ya papo hapo kwenye kitufe ("Onyesha watumiaji 1,234")
+// ─────────────────────────────────────────────────────────────────────────────
+class _FiltersSheet extends StatefulWidget {
+  const _FiltersSheet({required this.parent});
+  final _State parent;
+  @override
+  State<_FiltersSheet> createState() => _FiltersSheetState();
+}
+
+class _FiltersSheetState extends State<_FiltersSheet> {
+  String _category = '';
+  int?    _regionId;   String? _regionName;
+  int?    _districtId; String? _districtName;
+  String? _facilityId; String? _facilityName;
+  String? _subjectCode; String? _subjectName;
+
+  List<dynamic> _districts  = [];
+  List<dynamic> _facilities = [];
+  List<dynamic> _subjects   = [];
+
+  Timer? _ct;
+  bool _busyCount = false;
+  int? _count;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.parent;
+    _category    = p._category;
+    _regionId    = p._regionId;     _regionName   = p._regionName;
+    _districtId  = p._districtId;   _districtName = p._districtName;
+    _facilityId  = p._facilityId;   _facilityName = p._facilityName;
+    _subjectCode = p._subjectCode;  _subjectName  = p._subjectName;
+    _districts   = List.from(p._districts);
+    _facilities  = List.from(p._facilities);
+    _subjects    = List.from(p._subjects);
+    if (_category == 'education' && _subjects.isEmpty) _loadSubjects();
+    _queueCount();
+  }
+
+  @override
+  void dispose() {
+    _ct?.cancel();
+    super.dispose();
+  }
+
+  void _queueCount() {
+    _ct?.cancel();
+    _ct = Timer(const Duration(milliseconds: 350), _updateCount);
+  }
+
+  Future<void> _updateCount() async {
+    setState(() => _busyCount = true);
+    try {
+      final p = <String, dynamic>{'limit': 1};
+      if (widget.parent._search.text.isNotEmpty) p['q'] = widget.parent._search.text;
+      if (_category.isNotEmpty)  p['category']    = _category;
+      if (_regionId   != null)   p['region_id']   = _regionId;
+      if (_districtId != null)   p['district_id'] = _districtId;
+      if (_facilityId != null)   p['facility_id'] = _facilityId;
+      if (_subjectCode != null)  p['subject']     = _subjectCode;
+      final r = await ApiService().adminUsers(params: p, useCache: false);
+      final raw = r.data;
+      int n = 0;
+      if (raw is List) {
+        n = raw.length;
+      } else if (raw is Map) {
+        final t = raw['total'] ?? raw['count'] ?? raw['filtered_count'];
+        if (t is int) {
+          n = t;
+        } else if (t is String) {
+          n = int.tryParse(t) ?? 0;
+        } else {
+          final list = raw['users'] ?? raw['data'] ?? raw['results'];
+          n = list is List ? list.length : 0;
+        }
+      }
+      if (mounted) setState(() { _count = n; _busyCount = false; });
+    } catch (_) {
+      if (mounted) setState(() { _count = null; _busyCount = false; });
+    }
+  }
+
+  Future<void> _loadDistricts() async {
+    if (_regionId == null) return;
+    try {
+      final r = await ApiService().getDistricts(_regionId!);
+      if (!mounted) return;
+      final raw = r.data;
+      setState(() => _districts = raw is List ? raw : (raw['districts'] ?? raw['data'] ?? []));
+    } catch (_) {}
+  }
+
+  Future<void> _loadFacilities() async {
+    if (_districtId == null) return;
+    try {
+      final cat = _category.isEmpty ? 'health' : _category;
+      final r = await ApiService().getFacilities(_districtId!, category: cat);
+      if (!mounted) return;
+      final raw = r.data;
+      setState(() => _facilities = raw is List ? raw : (raw['facilities'] ?? raw['data'] ?? []));
+    } catch (_) {}
+  }
+
+  Future<void> _loadSubjects() async {
+    if (_category != 'education') return;
+    try {
+      final r = await ApiService().getSubjects(level: 'Primary');
+      if (!mounted) return;
+      final raw = r.data;
+      setState(() => _subjects = raw is List ? raw : (raw['subjects'] ?? raw['data'] ?? []));
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.parent;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 12, 4),
+          child: Row(children: [
+            Expanded(child: Text('Vichujio',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _g900))),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _category = '';
+                  _regionId = null;  _regionName = null;
+                  _districtId = null; _districtName = null;
+                  _facilityId = null; _facilityName = null;
+                  _subjectCode = null; _subjectName = null;
+                });
+                _queueCount();
+              },
+              child: const Text('Ondoa vyote'),
+            ),
+          ]),
+        ),
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // Idara chips
+              const Text('Idara', style: TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 12.5, color: _g500)),
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                p._deptChip('Zote', '', _category.isEmpty, () {
+                  setState(() { _category = ''; _subjects = []; });
+                  _queueCount();
+                }),
+                for (final d in p._departments)
+                  p._deptChip(
+                    '${d['display_name'] ?? d['name'] ?? d['code']}',
+                    '${d['code']}',
+                    _category == '${d['code']}',
+                    () {
+                      setState(() { _category = '${d['code']}'; });
+                      _loadSubjects();
+                      _queueCount();
+                    },
+                  ),
+              ]),
+              const SizedBox(height: 14),
+              // Mkoa + Wilaya
+              Row(children: [
+                Expanded(child: p._selBtn(
+                  _regionName ?? 'Mkoa wote', _pickRegion,
+                  active: _regionId != null,
+                )),
+                const SizedBox(width: 8),
+                Expanded(child: p._selBtn(
+                  _districtName ?? 'Wilaya zote', _pickDistrict,
+                  active: _districtId != null,
+                  disabled: _regionId == null,
+                )),
+              ]),
+              const SizedBox(height: 10),
+              // Kituo au Somo
+              if (_category == 'education')
+                p._selBtn(
+                  _subjectName ?? 'Masomo yote', _pickSubject,
+                  active: _subjectCode != null,
+                )
+              else
+                p._selBtn(
+                  _facilityName ?? 'Vituo vyote', _pickFacility,
+                  active: _facilityId != null,
+                  disabled: _districtId == null,
+                ),
+              const SizedBox(height: 4),
+            ]),
+          ),
+        ),
+        // Kitufe chenye count
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _applyAndClose,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: _blue, foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                child: Text(
+                  _busyCount
+                      ? 'Inahesabu...'
+                      : _count == null
+                          ? 'Onyesha watumiaji'
+                          : 'Onyesha watumiaji ${_fmtNum(_count!)}',
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  void _applyAndClose() {
+    final p = widget.parent;
+    p.setState(() {
+      p._category      = _category;
+      p._regionId      = _regionId;   p._regionName   = _regionName;
+      p._districtId    = _districtId; p._districtName = _districtName;
+      p._facilityId    = _facilityId; p._facilityName = _facilityName;
+      p._subjectCode   = _subjectCode; p._subjectName = _subjectName;
+      p._visible       = _State._step;
+    });
+    p._load();
+    Navigator.pop(context);
+  }
+
+  // ── Pickers (zinatumia _showPicker ya mzazi) ──
+  Future<void> _pickRegion() async {
+    final p = widget.parent;
+    final items = [
+      {'label': 'Mkoa wote', 'id': ''},
+      ...List<Map<String, String>>.from(p._regions.map((r) => {
+        'label': '${r['name'] ?? r['region_name'] ?? ''}',
+        'id':    '${r['id'] ?? r['region_id'] ?? ''}',
+      })),
+    ];
+    await p._showPicker<Map<String, String>>(
+      title: 'Chagua Mkoa',
+      items: items,
+      current: _regionId?.toString() ?? '',
+      onPick: (v) {
+        final id = v.isEmpty ? null : int.tryParse(v);
+        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
+        setState(() {
+          _regionId = id; _regionName = nm;
+          _districtId = null; _districtName = null; _districts = [];
+          _facilityId = null; _facilityName = null; _facilities = [];
+        });
+        if (id != null) _loadDistricts();
+        _queueCount();
+      },
+      label: (i) => i['label']!, value: (i) => i['id']!,
+    );
+  }
+
+  Future<void> _pickDistrict() async {
+    if (_regionId == null) return;
+    final p = widget.parent;
+    final items = [
+      {'label': 'Wilaya zote', 'id': ''},
+      ...List<Map<String, String>>.from(_districts.map((d) => {
+        'label': '${d['name'] ?? d['district_name'] ?? ''}',
+        'id':    '${d['id'] ?? d['district_id'] ?? ''}',
+      })),
+    ];
+    await p._showPicker<Map<String, String>>(
+      title: 'Chagua Wilaya',
+      items: items,
+      current: _districtId?.toString() ?? '',
+      onPick: (v) {
+        final id = v.isEmpty ? null : int.tryParse(v);
+        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
+        setState(() {
+          _districtId = id; _districtName = nm;
+          _facilityId = null; _facilityName = null; _facilities = [];
+        });
+        if (id != null) _loadFacilities();
+        _queueCount();
+      },
+      label: (i) => i['label']!, value: (i) => i['id']!,
+    );
+  }
+
+  Future<void> _pickFacility() async {
+    if (_districtId == null) return;
+    final p = widget.parent;
+    final items = [
+      {'label': 'Vituo vyote', 'id': ''},
+      ...List<Map<String, String>>.from(_facilities.map((f) => {
+        'label': '${f['name'] ?? ''}',
+        'id':    '${f['id'] ?? f['code'] ?? ''}',
+      })),
+    ];
+    await p._showPicker<Map<String, String>>(
+      title: 'Chagua Kituo',
+      items: items,
+      current: _facilityId ?? '',
+      onPick: (v) {
+        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
+        setState(() { _facilityId = v.isEmpty ? null : v; _facilityName = nm; });
+        _queueCount();
+      },
+      label: (i) => i['label']!, value: (i) => i['id']!,
+    );
+  }
+
+  Future<void> _pickSubject() async {
+    final p = widget.parent;
+    final items = [
+      {'label': 'Masomo yote', 'code': ''},
+      ...List<Map<String, String>>.from(_subjects.map((s) => {
+        'label': '${s['name'] ?? s['subject_name'] ?? ''}',
+        'code':  '${s['code'] ?? s['subject_code'] ?? ''}',
+      })),
+    ];
+    await p._showPicker<Map<String, String>>(
+      title: 'Chagua Somo',
+      items: items,
+      current: _subjectCode ?? '',
+      onPick: (v) {
+        final nm = v.isEmpty ? null : items.firstWhere((i) => i['code'] == v, orElse: () => {})['label'];
+        setState(() { _subjectCode = v.isEmpty ? null : v; _subjectName = nm; });
+        _queueCount();
+      },
+      label: (i) => i['label']!, value: (i) => i['code']!,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _SkeletonCard — kadi ya kujiandaa wakati data inapakia (inapulse)
+// ─────────────────────────────────────────────────────────────────────────────
+class _SkeletonCard extends StatefulWidget {
+  const _SkeletonCard();
+  @override
+  State<_SkeletonCard> createState() => _SkeletonCardState();
+}
+
+class _SkeletonCardState extends State<_SkeletonCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _a;
+
+  @override
+  void initState() {
+    super.initState();
+    _a = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _a.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget bar(double w, double h) => Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+              color: _g100, borderRadius: BorderRadius.circular(8)),
+        );
+    return FadeTransition(
+      opacity: Tween<double>(begin: .45, end: 1).animate(_a),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _cardBorder),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Container(width: 40, height: 40,
+                decoration: const BoxDecoration(color: _g100, shape: BoxShape.circle)),
+            const SizedBox(width: 12),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              bar(140, 13),
+              const SizedBox(height: 8),
+              bar(100, 11),
+            ]),
+          ]),
+          const SizedBox(height: 12),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            bar(90, 20), bar(70, 20), bar(60, 20),
+          ]),
+        ]),
+      ),
+    );
+  }
 }
