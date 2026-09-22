@@ -8,8 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 const v2Accent = Color(0xFF1E6FE0);
 const v2AccentBg = Color(0xFFE6F1FB);
 const v2Surface = Color(0xFFFFFFFF);
-const v2SurfaceMuted = Color(0xFFF3F6FB);
-const v2Border = Color(0xFFE3E7EE);
+const v2SurfaceMuted = Color(0xFFF6F6F3); // neutral grey — siyo bluu
+const v2Border = Color(0xFFE8E7E3); // neutral border
 const v2TextPrimary = Color(0xFF1B1D22);
 const v2TextSecondary = Color(0xFF6B6F76);
 const v2TextMuted = Color(0xFF9A9EA6);

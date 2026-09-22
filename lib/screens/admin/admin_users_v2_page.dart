@@ -51,7 +51,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
 
   final List<Map<String, dynamic>> _trash = [];
 
-  static const int _pageSize = 50;
+  static const int _pageSize = 4; // users 4 tu kwa screen
   int _page = 0;
   bool get _hasNext => (_page + 1) * _pageSize < _total;
 
@@ -462,7 +462,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: v2SurfaceMuted,
+      backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddOptions,
         backgroundColor: v2Accent,
@@ -489,7 +489,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: BoxDecoration(
-            color: v2SurfaceMuted,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -731,7 +731,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         onTap: () => _onDotsTap(user),
         child: Stack(clipBehavior: Clip.none, children: [
           Container(
-            padding: EdgeInsets.fromLTRB(16, 8, 0, isLast ? 8 : 12),
+            padding: EdgeInsets.fromLTRB(16, 10, 0, isLast ? 10 : 18),
             decoration: const BoxDecoration(
               border: Border(
                 left: BorderSide(color: v2Border, width: 2),
@@ -747,17 +747,17 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                           // Muda
                           Text(_relativeTime(user),
                               style: const TextStyle(
-                                  fontSize: 11, color: v2TextMuted)),
-                          const SizedBox(height: 2),
-                          // Jina
+                                  fontSize: 11.5, color: v2TextMuted)),
+                          const SizedBox(height: 3),
+                          // Jina (kubwa)
                           Text(v2TitleCase(name),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w700,
                                   color: v2TextPrimary)),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           // Kada (accent) · Mkoa (muted) · simu
                           Row(children: [
                             Flexible(
@@ -788,10 +788,10 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                           if (phone.isNotEmpty)
                             Text(v2FmtPhone(phone),
                                 style: const TextStyle(
-                                    fontSize: 11.5, color: v2TextMuted)),
-                          const SizedBox(height: 6),
+                                    fontSize: 12.5, color: v2TextMuted)),
+                          const SizedBox(height: 8),
                           // Pills: hali + malipo + admin
-                          Wrap(spacing: 6, runSpacing: 6, children: [
+                          Wrap(spacing: 7, runSpacing: 7, children: [
                             _pill(
                               isActive ? 'Hai' : 'Amesitishwa',
                               isActive ? v2Success : v2Danger,
@@ -821,17 +821,17 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                   ),
                 ]),
           ),
-          // Dot ya timeline
+          // Dot ya timeline (kubwa na wazi)
           Positioned(
-            left: -6,
-            top: 12,
+            left: -7,
+            top: 14,
             child: Container(
-              width: 10,
-              height: 10,
+              width: 14,
+              height: 14,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: dotColor,
-                border: Border.all(color: v2SurfaceMuted, width: 2),
+                border: Border.all(color: Colors.white, width: 2.5),
               ),
             ),
           ),
@@ -928,21 +928,28 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
               filled: false,
               enabled: _page > 0 && !_loading,
               onTap: () => _fetchPage(_page - 1),
+              label: 'Iliyopita',
             ),
-            Text(
-              _loading
-                  ? 'Inapakia...'
-                  : 'Ukurasa $current / ${v2FmtNum(totalPages)}'
-                      ' · ${v2FmtNum(_total)} watu',
-              style: const TextStyle(
-                  fontSize: 12, color: v2TextSecondary),
+            Flexible(
+              child: Text(
+                _loading
+                    ? 'Inapakia...'
+                    : 'Ukurasa $current / ${v2FmtNum(totalPages)}'
+                        ' · ${v2FmtNum(_total)} watu',
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 12, color: v2TextSecondary),
+              ),
             ),
-            // Inayofuata
+            // Inayofuata (Next)
             _pageBtn(
               icon: PhosphorIcons.caretRight(),
               filled: true,
               enabled: _hasNext && !_loading,
               onTap: () => _fetchPage(_page + 1),
+              label: 'Next',
             ),
           ]),
     );
@@ -952,23 +959,37 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       {required IconData icon,
       required bool filled,
       required bool enabled,
-      required VoidCallback onTap}) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: filled ? v2Accent : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        border: filled ? null : Border.all(color: v2Border),
-      ),
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        icon: Icon(icon,
-            size: 16,
-            color: enabled
-                ? (filled ? Colors.white : v2TextPrimary)
-                : v2TextMuted),
-        onPressed: enabled ? onTap : null,
+      required VoidCallback onTap,
+      String? label}) {
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        height: 34,
+        padding: EdgeInsets.symmetric(
+            horizontal: label != null ? 12 : 10),
+        decoration: BoxDecoration(
+          color: filled ? v2Accent : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: filled ? null : Border.all(color: v2Border),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon,
+              size: 15,
+              color: enabled
+                  ? (filled ? Colors.white : v2TextPrimary)
+                  : v2TextMuted),
+          if (label != null) ...[
+            const SizedBox(width: 5),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: enabled
+                        ? (filled ? Colors.white : v2TextPrimary)
+                        : v2TextMuted)),
+          ],
+        ]),
       ),
     );
   }
