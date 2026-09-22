@@ -720,123 +720,113 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     final isPaid = (user['is_verified'] as bool?) ?? false;
     final isAdmin = user['is_admin'] as bool? ?? false;
 
-    // Dot ya kwanza (mpya zaidi) ina rangi ya accent
     final isNewest = _page == 0 && _users.indexOf(user) == 0;
-    final dotColor =
-        isNewest ? v2Accent : (isActive ? v2TextMuted : v2Danger);
+    final dotColor = isNewest ? v2Accent : (isActive ? v2TextMuted : v2Danger);
 
     return Opacity(
       opacity: isActive ? 1.0 : 0.68,
-      child: InkWell(
-        onTap: () => _onDotsTap(user),
-        child: Stack(clipBehavior: Clip.none, children: [
-          Container(
-            padding: EdgeInsets.fromLTRB(16, 10, 0, isLast ? 10 : 18),
-            decoration: const BoxDecoration(
-              border: Border(
-                left: BorderSide(color: v2Border, width: 2),
-              ),
-            ),
-            child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(clipBehavior: Clip.none, children: [
+        Container(
+          padding: EdgeInsets.fromLTRB(16, 10, 0, isLast ? 10 : 18),
+          decoration: const BoxDecoration(
+            border: Border(left: BorderSide(color: v2Border, width: 2)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Muda
+                    Text(_relativeTime(user),
+                        style: const TextStyle(fontSize: 10.5, color: v2TextMuted)),
+                    const SizedBox(height: 2),
+                    // Jina
+                    Text(v2TitleCase(name),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: v2TextPrimary)),
+                    const SizedBox(height: 2),
+                    // Kada (accent) · Mkoa (secondary) — RichText
+                    RichText(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        style: const TextStyle(fontSize: 11.5),
                         children: [
-                          // Muda
-                          Text(_relativeTime(user),
-                              style: const TextStyle(
-                                  fontSize: 11.5, color: v2TextMuted)),
-                          const SizedBox(height: 3),
-                          // Jina (kubwa)
-                          Text(v2TitleCase(name),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 15.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: v2TextPrimary)),
-                          const SizedBox(height: 3),
-                          // Kada (accent) · Mkoa (muted) · simu
-                          Row(children: [
-                            Flexible(
-                              child: Text(
-                                cadre.isNotEmpty ? cadre : _deptName('${user['category'] ?? ''}'),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: v2Accent),
-                              ),
+                          TextSpan(
+                            text: cadre.isNotEmpty
+                                ? cadre
+                                : _deptName('${user['category'] ?? ''}'),
+                            style: const TextStyle(
+                                color: v2Accent, fontWeight: FontWeight.w600),
+                          ),
+                          if (region.isNotEmpty)
+                            TextSpan(
+                              text: ' · $region',
+                              style: const TextStyle(color: v2TextSecondary),
                             ),
-                            if (region.isNotEmpty) ...[
-                              const Text(' · ',
-                                  style: TextStyle(
-                                      fontSize: 12, color: v2TextMuted)),
-                              Flexible(
-                                child: Text(region,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: v2TextMuted)),
-                              ),
-                            ],
-                          ]),
-                          if (phone.isNotEmpty)
-                            Text(v2FmtPhone(phone),
-                                style: const TextStyle(
-                                    fontSize: 12.5, color: v2TextMuted)),
-                          const SizedBox(height: 8),
-                          // Pills: hali + malipo + admin
-                          Wrap(spacing: 7, runSpacing: 7, children: [
-                            _pill(
-                              isActive ? 'Hai' : 'Amesitishwa',
-                              isActive ? v2Success : v2Danger,
-                              isActive ? v2SuccessBg : v2DangerBg,
-                              dot: true,
-                            ),
-                            _pill(
-                              isPaid ? 'Amelipa' : 'Hajalipa',
-                              isPaid ? v2Success : v2Danger,
-                              isPaid ? v2SuccessBg : v2DangerBg,
-                            ),
-                            if (isAdmin)
-                              _pill('Admin', v2Accent, v2AccentBg,
-                                  icon: PhosphorIcons.shieldCheck()),
-                          ]),
-                        ]),
-                  ),
-                  const SizedBox(width: 6),
-                  InkWell(
-                    onTap: () => _onDotsTap(user),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Icon(PhosphorIcons.dotsThreeVertical(),
-                          size: 16, color: v2TextMuted),
+                        ],
+                      ),
                     ),
-                  ),
-                ]),
-          ),
-          // Dot ya timeline (kubwa na wazi)
-          Positioned(
-            left: -7,
-            top: 14,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: dotColor,
-                border: Border.all(color: Colors.white, width: 2.5),
+                    if (phone.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(v2FmtPhone(phone),
+                          style: const TextStyle(
+                              fontSize: 11.5, color: v2TextMuted)),
+                    ],
+                    const SizedBox(height: 7),
+                    // Pills: hali + malipo + admin
+                    Wrap(spacing: 6, runSpacing: 6, children: [
+                      _pill(
+                        isActive ? 'Hai' : 'Amesitishwa',
+                        isActive ? v2Success : v2Danger,
+                        isActive ? v2SuccessBg : v2DangerBg,
+                        dot: true,
+                      ),
+                      _pill(
+                        isPaid ? 'Amelipa' : 'Hajalipa',
+                        isPaid ? v2Success : v2Danger,
+                        isPaid ? v2SuccessBg : v2DangerBg,
+                      ),
+                      if (isAdmin)
+                        _pill('Admin', v2Accent, v2AccentBg,
+                            icon: PhosphorIcons.shieldCheck()),
+                    ]),
+                  ],
+                ),
               ),
+              InkWell(
+                onTap: () => _onDotsTap(user),
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(PhosphorIcons.dotsThreeVertical(),
+                      size: 16, color: v2TextMuted),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Dot ya timeline
+        Positioned(
+          left: -7,
+          top: 13,
+          child: Container(
+            width: 13,
+            height: 13,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: dotColor,
+              border: Border.all(color: Colors.white, width: 2.5),
             ),
           ),
-        ]),
-      ),
+        ),
+      ]),
     );
   }
 
@@ -922,34 +912,26 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Iliyopita
             _pageBtn(
               icon: PhosphorIcons.caretLeft(),
               filled: false,
               enabled: _page > 0 && !_loading,
               onTap: () => _fetchPage(_page - 1),
-              label: 'Iliyopita',
             ),
-            Flexible(
-              child: Text(
-                _loading
-                    ? 'Inapakia...'
-                    : 'Ukurasa $current / ${v2FmtNum(totalPages)}'
-                        ' · ${v2FmtNum(_total)} watu',
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 12, color: v2TextSecondary),
-              ),
+            Text(
+              _loading
+                  ? 'Inapakia...'
+                  : 'Ukurasa $current / ${v2FmtNum(totalPages)} · ${v2FmtNum(_total)} watu',
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: v2TextSecondary),
             ),
-            // Inayofuata (Next)
             _pageBtn(
               icon: PhosphorIcons.caretRight(),
               filled: true,
               enabled: _hasNext && !_loading,
               onTap: () => _fetchPage(_page + 1),
-              label: 'Next',
             ),
           ]),
     );
@@ -959,37 +941,23 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       {required IconData icon,
       required bool filled,
       required bool enabled,
-      required VoidCallback onTap,
-      String? label}) {
+      required VoidCallback onTap}) {
     return InkWell(
       onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(9),
       child: Container(
-        height: 34,
-        padding: EdgeInsets.symmetric(
-            horizontal: label != null ? 12 : 10),
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
-          color: filled ? v2Accent : Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          color: filled ? v2Accent : null,
           border: filled ? null : Border.all(color: v2Border),
+          borderRadius: BorderRadius.circular(9),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon,
-              size: 15,
-              color: enabled
-                  ? (filled ? Colors.white : v2TextPrimary)
-                  : v2TextMuted),
-          if (label != null) ...[
-            const SizedBox(width: 5),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: enabled
-                        ? (filled ? Colors.white : v2TextPrimary)
-                        : v2TextMuted)),
-          ],
-        ]),
+        child: Icon(icon,
+            size: 15,
+            color: enabled
+                ? (filled ? Colors.white : v2TextPrimary)
+                : v2TextMuted),
       ),
     );
   }
