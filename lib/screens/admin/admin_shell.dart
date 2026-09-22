@@ -7,7 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_shell.dart' show LanguageProvider;
 import 'admin_dashboard_page.dart';
-import 'admin_users_page.dart';
+import 'admin_users_v2_page.dart';
 import 'admin_matches_page.dart';
 import 'admin_real_matches_page.dart';
 import 'admin_data_page.dart';
@@ -23,7 +23,6 @@ const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg  = Color(0xFFEFF6FF);
 const _kNavy    = Color(0xFF1D2F6F);
 const _kRed     = Color(0xFFDC2626);
-const _kRedBg   = Color(0xFFFEE2E2);
 const _kGrey900 = Color(0xFF111827);
 const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
@@ -101,7 +100,7 @@ class _AdminShellState extends State<AdminShell> {
   Widget _pageFor(int i) {
     switch (i) {
       case 0:  return AdminDashboardPage(onNavigate: _go);
-      case 1:  return const AdminUsersPage();
+      case 1:  return const AdminUsersV2Page();
       case 2:  return const AdminMatchesPage();
       case 3:  return const AdminRealMatchesPage();
       case 4:  return const AdminDataPage();
