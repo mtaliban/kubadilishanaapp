@@ -725,108 +725,118 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
 
     return Opacity(
       opacity: isActive ? 1.0 : 0.68,
-      child: Stack(clipBehavior: Clip.none, children: [
-        Container(
-          padding: EdgeInsets.fromLTRB(16, 10, 0, isLast ? 10 : 18),
-          decoration: const BoxDecoration(
-            border: Border(left: BorderSide(color: v2Border, width: 2)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 20,
+              child: Column(children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  width: 9,
+                  height: 9,
+                  decoration:
+                      BoxDecoration(color: dotColor, shape: BoxShape.circle),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 1,
+                      color: v2Border,
+                      margin: const EdgeInsets.only(top: 4),
+                    ),
+                  ),
+              ]),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 15),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Muda
-                    Text(_relativeTime(user),
-                        style: const TextStyle(fontSize: 10.5, color: v2TextMuted)),
-                    const SizedBox(height: 2),
-                    // Jina
-                    Text(v2TitleCase(name),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: v2TextPrimary)),
-                    const SizedBox(height: 2),
-                    // Kada (accent) · Mkoa (secondary) — RichText
-                    RichText(
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      text: TextSpan(
-                        style: const TextStyle(fontSize: 11.5),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextSpan(
-                            text: cadre.isNotEmpty
-                                ? cadre
-                                : _deptName('${user['category'] ?? ''}'),
-                            style: const TextStyle(
-                                color: v2Accent, fontWeight: FontWeight.w600),
-                          ),
-                          if (region.isNotEmpty)
-                            TextSpan(
-                              text: ' · $region',
-                              style: const TextStyle(color: v2TextSecondary),
+                          Text(_relativeTime(user),
+                              style: const TextStyle(
+                                  fontSize: 10.5, color: v2TextMuted)),
+                          const SizedBox(height: 2),
+                          Text(v2TitleCase(name),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: v2TextPrimary)),
+                          const SizedBox(height: 2),
+                          RichText(
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            text: TextSpan(
+                              style: const TextStyle(fontSize: 11.5),
+                              children: [
+                                TextSpan(
+                                  text: cadre.isNotEmpty
+                                      ? cadre
+                                      : _deptName('${user['category'] ?? ''}'),
+                                  style: const TextStyle(
+                                      color: v2Accent,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                                if (region.isNotEmpty)
+                                  TextSpan(
+                                    text: ' · $region',
+                                    style: const TextStyle(
+                                        color: v2TextSecondary),
+                                  ),
+                              ],
                             ),
+                          ),
+                          if (phone.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(v2FmtPhone(phone),
+                                style: const TextStyle(
+                                    fontSize: 11.5, color: v2TextMuted)),
+                          ],
+                          const SizedBox(height: 7),
+                          Wrap(spacing: 6, runSpacing: 6, children: [
+                            _pill(
+                              isActive ? 'Hai' : 'Amesitishwa',
+                              isActive ? v2Success : v2Danger,
+                              isActive ? v2SuccessBg : v2DangerBg,
+                              dot: true,
+                            ),
+                            _pill(
+                              isPaid ? 'Amelipa' : 'Hajalipa',
+                              isPaid ? v2Success : v2Danger,
+                              isPaid ? v2SuccessBg : v2DangerBg,
+                            ),
+                            if (isAdmin)
+                              _pill('Admin', v2Accent, v2AccentBg,
+                                  icon: PhosphorIcons.shieldCheck()),
+                          ]),
                         ],
                       ),
                     ),
-                    if (phone.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(v2FmtPhone(phone),
-                          style: const TextStyle(
-                              fontSize: 11.5, color: v2TextMuted)),
-                    ],
-                    const SizedBox(height: 7),
-                    // Pills: hali + malipo + admin
-                    Wrap(spacing: 6, runSpacing: 6, children: [
-                      _pill(
-                        isActive ? 'Hai' : 'Amesitishwa',
-                        isActive ? v2Success : v2Danger,
-                        isActive ? v2SuccessBg : v2DangerBg,
-                        dot: true,
+                    InkWell(
+                      onTap: () => _onDotsTap(user),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(PhosphorIcons.dotsThreeVertical(),
+                            size: 16, color: v2TextMuted),
                       ),
-                      _pill(
-                        isPaid ? 'Amelipa' : 'Hajalipa',
-                        isPaid ? v2Success : v2Danger,
-                        isPaid ? v2SuccessBg : v2DangerBg,
-                      ),
-                      if (isAdmin)
-                        _pill('Admin', v2Accent, v2AccentBg,
-                            icon: PhosphorIcons.shieldCheck()),
-                    ]),
+                    ),
                   ],
                 ),
               ),
-              InkWell(
-                onTap: () => _onDotsTap(user),
-                borderRadius: BorderRadius.circular(6),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(PhosphorIcons.dotsThreeVertical(),
-                      size: 16, color: v2TextMuted),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Dot ya timeline
-        Positioned(
-          left: -7,
-          top: 13,
-          child: Container(
-            width: 13,
-            height: 13,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: dotColor,
-              border: Border.all(color: Colors.white, width: 2.5),
             ),
-          ),
+          ],
         ),
-      ]),
+      ),
     );
   }
 
