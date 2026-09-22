@@ -200,15 +200,15 @@ class V2UserCard extends StatelessWidget {
                           color: v2Accent)),
                 ),
                 Positioned(
-                  right: -1,
-                  bottom: -1,
+                  right: -2,
+                  bottom: -2,
                   child: Container(
-                    width: 16,
-                    height: 16,
+                    width: 20,
+                    height: 20,
                     decoration: BoxDecoration(
                       color: isActive ? v2Success : v2Danger,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2.5),
+                      border: Border.all(color: Colors.white, width: 3),
                     ),
                   ),
                 ),
@@ -263,7 +263,7 @@ class V2UserCard extends StatelessWidget {
             ]),
             const SizedBox(height: 13),
 
-            // ── BOX: IDARA | ANATOKA ──
+            // ── BOX: ANATOKA (kushoto) | ANAELEKEA (kulia) ──
             Container(
               width: double.infinity,
               padding:
@@ -272,56 +272,31 @@ class V2UserCard extends StatelessWidget {
                 color: v2SurfaceMuted,
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: Row(children: [
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                // Anatoka
                 Expanded(
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('IDARA',
-                            style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: .5,
-                                color: v2TextMuted)),
-                        const SizedBox(height: 4),
                         Row(children: [
-                          Icon(deptIcon, size: 14, color: v2Accent),
-                          const SizedBox(width: 5),
-                          Flexible(
-                              child: Text(
-                            deptName.isEmpty ? '—' : deptName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: v2TextPrimary),
-                          )),
+                          Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill),
+                              size: 10, color: v2TextMuted),
+                          const SizedBox(width: 3),
+                          const Text('ANATOKA',
+                              style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: .5,
+                                  color: v2TextMuted)),
                         ]),
-                      ]),
-                ),
-                Container(
-                    width: 1,
-                    height: 34,
-                    color: v2Border,
-                    margin: const EdgeInsets.symmetric(horizontal: 12)),
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('ANATOKA',
-                            style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: .5,
-                                color: v2TextMuted)),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Text(
                           region.isEmpty ? '—' : region,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 13.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: v2TextPrimary),
                         ),
@@ -330,58 +305,67 @@ class V2UserCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontSize: 11.5, color: v2TextSecondary)),
+                                  fontSize: 11, color: v2TextSecondary)),
+                      ]),
+                ),
+                Container(
+                    width: 1,
+                    height: 38,
+                    color: v2Border,
+                    margin: const EdgeInsets.symmetric(horizontal: 10)),
+                // Anaelekea
+                Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Icon(PhosphorIcons.flag(PhosphorIconsStyle.fill),
+                              size: 10, color: v2TextMuted),
+                          const SizedBox(width: 3),
+                          const Text('ANAELEKEA',
+                              style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: .5,
+                                  color: v2TextMuted)),
+                        ]),
+                        const SizedBox(height: 5),
+                        if (dests.isEmpty)
+                          const Text('—',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: v2TextPrimary))
+                        else
+                          Wrap(spacing: 4, runSpacing: 3, children: [
+                            for (final d in dests)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                    color: v2AccentBg,
+                                    borderRadius: BorderRadius.circular(6)),
+                                child: Text(d,
+                                    style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: v2Accent),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1),
+                              ),
+                          ]),
                       ]),
                 ),
               ]),
             ),
-
-            // ── ANAELEKEA (destinations, kama zipo) ──
-            if (dests.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 3),
-                  child: Text('ANAELEKEA',
-                      style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: .5,
-                          color: v2TextMuted)),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Wrap(spacing: 5, runSpacing: 4, children: [
-                    for (final d in dests)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                            color: v2AccentBg,
-                            borderRadius: BorderRadius.circular(8)),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(PhosphorIcons.flag(PhosphorIconsStyle.fill),
-                              size: 10, color: v2Accent),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(d,
-                                style: const TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: v2Accent),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1),
-                          ),
-                        ]),
-                      ),
-                  ]),
-                ),
-              ]),
-            ],
             const SizedBox(height: 11),
 
-            // ── CHIPS: hali + kada + malipo + admin ──
+            // ── CHIPS: idara + hali + kada + malipo + admin ──
             Wrap(spacing: 7, runSpacing: 7, children: [
+              // Idara (imetoka kwenye box)
+              if (deptName.isNotEmpty)
+                _tag(deptName, deptIcon, v2AccentBg, v2Accent),
+              // Hali
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -403,8 +387,11 @@ class V2UserCard extends StatelessWidget {
                           color: isActive ? v2Success : v2Danger)),
                 ]),
               ),
+              // Kada
               if (cadre.isNotEmpty)
-                _tag(cadre, PhosphorIcons.bookOpen(), v2AccentBg, v2Accent),
+                _tag(cadre, PhosphorIcons.identificationBadge(),
+                    v2AccentBg, v2Accent),
+              // Malipo
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -427,6 +414,7 @@ class V2UserCard extends StatelessWidget {
                           color: isPaid ? v2Success : v2Danger)),
                 ]),
               ),
+              // Admin
               if (isAdmin)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -446,33 +434,6 @@ class V2UserCard extends StatelessWidget {
                   ]),
                 ),
             ]),
-
-            // ── STRIP YA TAHADHARI (hajalipa) ──
-            if (!isPaid) ...[
-              const SizedBox(height: 10),
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                    color: v2WarningBg,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Row(children: [
-                  Icon(PhosphorIcons.warning(PhosphorIconsStyle.fill),
-                      size: 13, color: v2Warning),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Hajalipa — Haoni namba za wengine',
-                      style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: v2Warning),
-                    ),
-                  ),
-                ]),
-              ),
-            ],
           ],
         ),
       ),

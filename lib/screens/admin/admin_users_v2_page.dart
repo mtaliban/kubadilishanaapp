@@ -560,12 +560,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1E6FE0), Color(0xFF1251B5)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: const Color(0xFFF7F8FA),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: v2Border, width: 0.8),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Expanded(
@@ -575,13 +572,13 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                 style: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: v2TextPrimary,
                     height: 1.0)),
             const SizedBox(height: 4),
             const Text('Watumiaji Wote',
                 style: TextStyle(
                     fontSize: 12.5,
-                    color: Colors.white70,
+                    color: v2TextSecondary,
                     fontWeight: FontWeight.w500)),
             const SizedBox(height: 12),
             Row(children: [
@@ -598,9 +595,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                   backgroundColor: v2Danger,
                   child: Icon(PhosphorIcons.trash(),
                       size: 17,
-                      color: _trash.isEmpty
-                          ? Colors.white38
-                          : Colors.white70),
+                      color: _trash.isEmpty ? v2TextMuted : v2Danger),
                 ),
               ),
             ]),
@@ -611,11 +606,11 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
           width: 58,
           height: 58,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .15),
+            color: v2AccentBg,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(PhosphorIcons.usersThree(PhosphorIconsStyle.fill),
-              size: 28, color: Colors.white),
+              size: 28, color: v2Accent),
         ),
       ]),
     );
@@ -625,7 +620,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .2),
+        color: _live ? v2SuccessBg : const Color(0xFFF0F0F0),
         borderRadius: BorderRadius.circular(100),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -633,7 +628,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
           width: 6,
           height: 6,
           decoration: BoxDecoration(
-            color: _live ? const Color(0xFF4ADE80) : Colors.white38,
+            color: _live ? v2Success : v2TextMuted,
             shape: BoxShape.circle,
           ),
         ),
@@ -642,7 +637,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: _live ? const Color(0xFF4ADE80) : Colors.white54)),
+                color: _live ? v2Success : v2TextMuted)),
       ]),
     );
   }
@@ -815,62 +810,90 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     );
   }
 
-  // ── PAGINATION: Ukurasa N / M + vitufe ──
+  // ── PAGINATION ──
   Widget _paginationRow() {
     final totalPages =
         ((_total / _pageSize).ceil()).clamp(1, 999999).toInt();
     final current = _page + 1;
+    final canPrev = _page > 0 && !_loading;
+    final canNext = _hasNext && !_loading;
+
     return Container(
-      padding: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: 14),
       decoration: const BoxDecoration(
-        border: Border(
-            top: BorderSide(color: v2Border, width: 0.5)),
+        border: Border(top: BorderSide(color: v2Border, width: 0.5)),
       ),
       child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _pageBtn(
-              icon: PhosphorIcons.caretLeft(),
-              filled: false,
-              enabled: _page > 0 && !_loading,
-              onTap: () => _fetchPage(_page - 1),
-            ),
-            Text(
-              _loading ? '...' : '$current / $totalPages',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: v2TextSecondary),
-            ),
-            _pageBtn(
-              icon: PhosphorIcons.caretRight(),
-              filled: true,
-              enabled: _hasNext && !_loading,
-              onTap: () => _fetchPage(_page + 1),
-            ),
-          ]),
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Iliyopita
+          _pageBtn(
+            label: 'Iliyopita',
+            icon: PhosphorIcons.caretLeft(PhosphorIconsStyle.bold),
+            iconLeft: true,
+            filled: false,
+            enabled: canPrev,
+            onTap: () => _fetchPage(_page - 1),
+          ),
+          // Ukurasa N / M
+          Text(
+            _loading ? '…' : '$current / $totalPages',
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: v2TextSecondary),
+          ),
+          // Inayofuata
+          _pageBtn(
+            label: 'Inayofuata',
+            icon: PhosphorIcons.caretRight(PhosphorIconsStyle.bold),
+            iconLeft: false,
+            filled: true,
+            enabled: canNext,
+            onTap: () => _fetchPage(_page + 1),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _pageBtn(
-      {required IconData icon,
-      required bool filled,
-      required bool enabled,
-      required VoidCallback onTap}) {
+  Widget _pageBtn({
+    required String label,
+    required IconData icon,
+    required bool iconLeft,
+    required bool filled,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    final fgEnabled = filled ? Colors.white : v2Accent;
+    final fg = enabled ? fgEnabled : v2TextMuted;
     return InkWell(
       onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(9),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        width: 32,
-        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: filled ? v2Accent : null,
-          border: filled ? null : Border.all(color: v2Border),
-          borderRadius: BorderRadius.circular(9),
+          color: filled
+              ? (enabled ? v2Accent : v2Border)
+              : Colors.transparent,
+          border: filled ? null : Border.all(color: enabled ? v2Accent : v2Border),
+          borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon,
-            size: 15,
-            color: enabled
-                ? (filled ? Colors.white : v2TextPrimary)
-                : v2TextMuted),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (iconLeft) ...[
+            Icon(icon, size: 13, color: fg),
+            const SizedBox(width: 5),
+          ],
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: fg)),
+          if (!iconLeft) ...[
+            const SizedBox(width: 5),
+            Icon(icon, size: 13, color: fg),
+          ],
+        ]),
       ),
     );
   }
