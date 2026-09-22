@@ -60,6 +60,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     super.initState();
     _load();
     _loadRefs();
+    _loadCounts();
     _search.addListener(_onSearch);
   }
 
