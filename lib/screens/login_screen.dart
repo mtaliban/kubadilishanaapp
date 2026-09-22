@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -236,9 +237,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: Color(0xFF6B7280), // placeholder-brand-grey-500
                               ),
                               // Phone icon — left-3=12px from left, size=16, text-grey-400
-                              prefixIcon: const Padding(
-                                padding: EdgeInsets.only(left: 12, right: 8),
-                                child: Icon(Icons.phone, size: 16, color: Color(0xFF9CA3AF)),
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.only(left: 12, right: 8),
+                                child: Icon(PhosphorIcons.phone(), size: 16, color: const Color(0xFF9CA3AF)),
                               ),
                               prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                               // .input borders
@@ -282,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Padding(
                                     padding: const EdgeInsets.only(top: 2), // mt-0.5 = 2px
                                     child: Icon(
-                                      _errorIsNetwork ? Icons.wifi_off : Icons.error_outline,
+                                      _errorIsNetwork ? PhosphorIcons.wifiSlash() : PhosphorIcons.warningCircle(),
                                       size: 16, // size={16}
                                       color: const Color(0xFFDC2626), // text-brand-red
                                     ),
@@ -318,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.error_outline, size: 14, color: Color(0xFF22C55E)), // AlertCircle text-green-500
+                                  Icon(PhosphorIcons.checkCircle(), size: 14, color: const Color(0xFF22C55E)), // AlertCircle text-green-500
                                   const SizedBox(width: 8), // gap-2
                                   Expanded(
                                     child: Text.rich(
@@ -417,9 +418,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // X button — absolute right-2.5 top-1/2 (kama web) → suffixIcon
                                     suffixIcon: GestureDetector(
                                       onTap: _cancelOtp,
-                                      child: const Padding(
-                                        padding: EdgeInsets.only(right: 10), // right-2.5 = 10px
-                                        child: Icon(Icons.close, size: 16, color: Color(0xFF9CA3AF)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(right: 10), // right-2.5 = 10px
+                                        child: Icon(PhosphorIcons.x(), size: 16, color: const Color(0xFF9CA3AF)),
                                       ),
                                     ),
                                     suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
