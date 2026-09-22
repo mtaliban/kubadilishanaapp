@@ -300,8 +300,28 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     final phone = user['phone_primary'] as String? ?? '';
     switch (action) {
       case V2Action.angalia:
-        await Navigator.of(context).push<bool>(MaterialPageRoute(
-          builder: (_) => V2UserDetailScreen(user: asMap(user)),
+        final usr = Map<String, dynamic>.from(asMap(user));
+        await Navigator.of(context).push<void>(MaterialPageRoute(
+          builder: (detailCtx) => V2UserDetailScreen(
+            user: usr,
+            onHariri: () async {
+              final saved = await Navigator.of(detailCtx).push<bool>(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      V2UserFormScreen(existing: usr, regions: _regions),
+                ),
+              );
+              if (saved == true && mounted) {
+                Navigator.of(detailCtx).pop();
+                _load();
+              }
+            },
+            onFuta: () async {
+              Navigator.of(detailCtx).pop();
+              await _deleteUser(_uid(usr), '${usr['full_name'] ?? ''}',
+                  '${usr['phone_primary'] ?? ''}');
+            },
+          ),
         ));
         break;
       case V2Action.hariri:

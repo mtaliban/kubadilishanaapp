@@ -659,7 +659,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(11),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
               border: Border.all(color: v2Border),
               borderRadius: BorderRadius.circular(11),
@@ -699,30 +699,27 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _saving ? null : _hifadhi,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: v2Accent,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: v2Accent.withValues(alpha: .6),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12))),
-              icon: _saving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Icon(PhosphorIcons.check(), size: 17),
-              label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 14.5)),
-            ),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+          child: ElevatedButton.icon(
+            onPressed: _saving ? null : _hifadhi,
+            style: ElevatedButton.styleFrom(
+                backgroundColor: v2Accent,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: v2Accent.withValues(alpha: .6),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
+            icon: _saving
+                ? const SizedBox(
+                    width: 15,
+                    height: 15,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : Icon(PhosphorIcons.check(), size: 16),
+            label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 14)),
           ),
         ),
       ),
@@ -1137,7 +1134,15 @@ class V2UserDetailScreen extends StatelessWidget {
                 : '$d')
             .toList() ??
         [];
-    final init = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    String _initials(String n) {
+      final parts =
+          n.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+      if (parts.isEmpty) return '?';
+      if (parts.length == 1) return parts[0][0].toUpperCase();
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+
+    final init = _initials(name);
     final waDigits = wa.replaceAll(RegExp(r'\D'), '');
     final waIntl =
         waDigits.startsWith('0') ? '255${waDigits.substring(1)}' : waDigits;
@@ -1154,24 +1159,29 @@ class V2UserDetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: v2TextPrimary)),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: V2IconChip(
-                icon: PhosphorIcons.pencilSimple(),
-                color: v2Accent,
-                background: v2AccentBg,
-                onTap: onHariri,
-                size: 34),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: V2IconChip(
-                icon: PhosphorIcons.trash(),
-                color: v2Danger,
-                background: v2DangerBg,
-                onTap: onFuta,
-                size: 34),
-          ),
+          if (onHariri != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: TextButton.icon(
+                onPressed: onHariri,
+                icon: Icon(PhosphorIcons.pencilSimple(), size: 14),
+                label: const Text('Hariri'),
+                style: TextButton.styleFrom(
+                    foregroundColor: v2Accent,
+                    textStyle: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          if (onFuta != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: V2IconChip(
+                  icon: PhosphorIcons.trash(),
+                  color: v2Danger,
+                  background: v2DangerBg,
+                  onTap: onFuta,
+                  size: 30),
+            ),
         ],
       ),
       body: ListView(padding: const EdgeInsets.all(16), children: [
