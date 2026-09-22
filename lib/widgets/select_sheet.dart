@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../config/theme.dart';
 
 const double _kItemH = 40;
@@ -122,7 +123,7 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                       color: AppColors.grey100,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.close_rounded,
+                    child: Icon(PhosphorIcons.x(),
                         size: 16, color: AppColors.grey700),
                   ),
                 ),
@@ -141,7 +142,7 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                     isDense: true,
                     filled: true,
                     fillColor: Colors.white,
-                    prefixIcon: const Icon(Icons.search_rounded,
+                    prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
                         size: 18, color: AppColors.textLight),
                     prefixIconConstraints:
                         const BoxConstraints(minWidth: 44, minHeight: 0),
@@ -231,7 +232,7 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                               ),
                               if (isSel) ...[
                                 const SizedBox(width: 12),
-                                const Icon(Icons.check_rounded,
+                                Icon(PhosphorIcons.check(),
                                     size: 22,
                                     color: AppColors.primary),
                               ],
@@ -248,13 +249,15 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
   }
 }
 
-// ── Tappable select field (fake dropdown) — kisasa, rounded-xl ───────────────
+// ── Tappable select field (fake dropdown) — icon + kisasa ────────────────────
 class SelectField extends StatelessWidget {
   final String hint;
   final String? value;
   final bool disabled;
   final VoidCallback? onTap;
   final Widget? leading;
+  final IconData? icon;
+
   const SelectField({
     super.key,
     required this.hint,
@@ -262,40 +265,70 @@ class SelectField extends StatelessWidget {
     this.disabled = false,
     this.onTap,
     this.leading,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     final hasValue = value != null && value!.isNotEmpty;
+    final useIcon = icon != null;
     return GestureDetector(
       onTap: disabled ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: useIcon ? 8 : 6,
+        ),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: AppColors.grey300),
+          color: (hasValue && useIcon) ? const Color(0xFFF5F9FF) : Colors.white,
+          borderRadius: BorderRadius.circular(useIcon ? 10 : 6),
+          border: Border.all(
+            color: (hasValue && useIcon)
+                ? AppColors.blue200
+                : AppColors.grey300,
+            width: (hasValue && useIcon) ? 1.5 : 1.0,
+          ),
         ),
         child: Row(children: [
-          if (leading != null) ...[leading!, const SizedBox(width: 8)],
+          if (useIcon) ...[
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: hasValue ? AppColors.blue50 : AppColors.grey100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon!,
+                size: 15,
+                color: hasValue ? AppColors.primary : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 10),
+          ] else if (leading != null) ...[
+            leading!,
+            const SizedBox(width: 8),
+          ],
           Expanded(
             child: Text(
               hasValue ? value! : hint,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: useIcon ? 13 : 12,
                 fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
-                color: hasValue ? AppColors.textPrimary : const Color(0xFF374151),
+                color: hasValue
+                    ? AppColors.textPrimary
+                    : const Color(0xFF9CA3AF),
               ),
             ),
           ),
           const SizedBox(width: 6),
           Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 16,
-            color: hasValue ? AppColors.primary : const Color(0xFF374151),
+            PhosphorIcons.caretDown(),
+            size: useIcon ? 14 : 16,
+            color: hasValue ? AppColors.primary : const Color(0xFF9CA3AF),
           ),
         ]),
       ),

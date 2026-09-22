@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/select_sheet.dart';
+import '../widgets/picker_screen.dart';
 
 const _kBlue = Color(0xFF1E40AF);
 const _kGrey300 = Color(0xFFD1D5DB);
@@ -75,6 +77,15 @@ Widget _loadingRow({double verticalPad = 32}) => Padding(
       ]),
     );
 
+IconData _deptIcon(String code) {
+  switch (code) {
+    case 'health': return PhosphorIcons.heartbeat();
+    case 'education': return PhosphorIcons.graduationCap();
+    case 'service': return PhosphorIcons.buildings();
+    default: return PhosphorIcons.briefcase();
+  }
+}
+
 // FieldLabel — web: icon size=14 brand-blue + gap-1.5(6px) + label text-sm font-semibold grey-700
 Widget _fieldLabel(IconData icon, String label) => Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -90,7 +101,7 @@ Widget _fieldLabel(IconData icon, String label) => Padding(
 Widget _fieldError(String msg) => Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Icon(Icons.error_outline, size: 12, color: _kRed500),
+        Icon(PhosphorIcons.warningCircle(), size: 12, color: _kRed500),
         const SizedBox(width: 4),
         Expanded(child: Text(msg, style: const TextStyle(fontSize: 12, color: _kRed500))),
       ]),
@@ -213,8 +224,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: Color(0xFFDCFCE7), // bg-green-100
                     shape: BoxShape.circle,
                   ),
-                  child: const Center(
-                    child: Icon(Icons.check, size: 16, color: Color(0xFF16A34A)), // text-green-600
+                  child: Center(
+                    child: Icon(PhosphorIcons.check(), size: 16, color: const Color(0xFF16A34A)), // text-green-600
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -253,10 +264,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             // Back button — web: inline-flex items-center gap-1.5 text-sm font-medium text-grey-600 mb-4
             GestureDetector(
               onTap: () => Navigator.canPop(context) ? Navigator.pop(context) : null,
-              child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.arrow_back_ios_new, size: 16, color: Color(0xFF4B5563)), // text-brand-grey-600
-                SizedBox(width: 6), // gap-1.5=6px
-                Text('Rudi',
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(PhosphorIcons.arrowLeft(), size: 16, color: const Color(0xFF4B5563)), // text-brand-grey-600
+                const SizedBox(width: 6), // gap-1.5=6px
+                const Text('Rudi',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF4B5563))), // text-brand-grey-600
               ]),
             ),
@@ -302,7 +313,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: Border.all(color: const Color(0xFFFEE2E2)),
                 ),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Icon(Icons.error_outline, size: 18, color: Color(0xFFDC2626)),
+                  Icon(PhosphorIcons.warningCircle(), size: 18, color: const Color(0xFFDC2626)),
                   const SizedBox(width: 10), // gap-2.5=10px
                   Expanded(
                     child: Text(_error!,
@@ -529,15 +540,15 @@ class _Step1IdentityState extends State<_Step1Identity> {
       );
     }
     if (status == 'available') {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8),
-        child: Icon(Icons.check_circle, size: 14, color: Color(0xFF22C55E)),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Icon(PhosphorIcons.checkCircle(), size: 14, color: const Color(0xFF22C55E)),
       );
     }
     if (status == 'taken') {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8),
-        child: Icon(Icons.error_outline, size: 14, color: _kRed500),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Icon(PhosphorIcons.warningCircle(), size: 14, color: _kRed500),
       );
     }
     return const SizedBox();
@@ -556,7 +567,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
       return [Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Row(children: [
-          const Icon(Icons.check_circle, size: 11, color: _kGreen600),
+          Icon(PhosphorIcons.checkCircle(), size: 11, color: _kGreen600),
           const SizedBox(width: 4),
           Text(availableMsg, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _kGreen600)),
         ]),
@@ -566,7 +577,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
       return [Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Row(children: [
-          const Icon(Icons.error_outline, size: 11, color: _kRed500),
+          Icon(PhosphorIcons.warningCircle(), size: 11, color: _kRed500),
           const SizedBox(width: 4),
           Text(takenMsg, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _kRed500)),
         ]),
@@ -583,7 +594,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
       const SizedBox(height: 16),
 
       // Full name
-      _fieldLabel(Icons.person_outline, 'Jina Kamili *'),
+      _fieldLabel(PhosphorIcons.user(), 'Jina Kamili *'),
       TextField(
         controller: _nameCtrl,
         style: const TextStyle(fontSize: 12),
@@ -594,7 +605,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
       const SizedBox(height: 14),
 
       // Phone primary
-      _fieldLabel(Icons.phone_outlined, 'Namba ya Simu *'),
+      _fieldLabel(PhosphorIcons.phone(), 'Namba ya Simu *'),
       TextField(
         controller: _phoneCtrl,
         keyboardType: TextInputType.phone,
@@ -614,7 +625,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
       const SizedBox(height: 14),
 
       // WhatsApp
-      _fieldLabel(Icons.chat_bubble_outline, 'Namba ya WhatsApp *'),
+      _fieldLabel(PhosphorIcons.chatCircle(), 'Namba ya WhatsApp *'),
       TextField(
         controller: _altCtrl,
         keyboardType: TextInputType.phone,
@@ -702,29 +713,22 @@ class _Step2IdaraState extends State<_Step2Idara> {
       const SizedBox(height: 16),
 
       if (_loading)
-        Center(child: _loadingRow(verticalPad: 32)) // py-8
+        Center(child: _loadingRow(verticalPad: 32))
       else if (_error != null)
         _ErrorBox(_error!)
       else ...[
         const Text('Chagua Idara *',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-        const SizedBox(height: 6),
-        SelectField(
-          hint: '-- Chagua Idara --',
-          value: _selected.isEmpty ? null : _departments.cast<dynamic>()
-              .firstWhere((d) => d['code'] == _selected, orElse: () => null)?['name'] as String?,
-          onTap: () async {
-            final items = _departments.map((d) => (
-              value: d['code'] as String,
-              label: d['name'] as String,
-              subtitle: null,
-            )).toList();
-            final result = await showSelectSheet<String>(
-              context, title: 'Chagua Idara', items: items, selected: _selected.isEmpty ? null : _selected,
-            );
-            if (result != null) setState(() => _selected = result);
-          },
-        ),
+        const SizedBox(height: 10),
+        for (final d in _departments) ...[
+          _DeptCard(
+            icon: _deptIcon('${d['code']}'),
+            name: '${d['name'] ?? d['code']}',
+            isSelected: _selected == '${d['code']}',
+            onTap: () => setState(() => _selected = '${d['code']}'),
+          ),
+          const SizedBox(height: 10),
+        ],
       ],
 
       _btnRow(
@@ -764,22 +768,21 @@ class _Step3WizaraState extends State<_Step3Wizara> {
       const Text('Je, unafanya kazi chini ya taasisi gani?',
           style: TextStyle(fontSize: 14, color: _kGrey500)),
       const SizedBox(height: 16),
-      const Text('Wizara *',
+      const Text('Chagua Wizara *',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-      const SizedBox(height: 6),
-      SelectField(
-        hint: '-- Chagua --',
-        value: _sector.isEmpty ? null : (_sector == 'wizara_afya' ? 'Wizara ya Afya' : 'TAMISEMI'),
-        onTap: () async {
-          final items = [
-            (value: 'wizara_afya', label: 'Wizara ya Afya', subtitle: null),
-            (value: 'tamisemi', label: 'TAMISEMI', subtitle: null),
-          ];
-          final result = await showSelectSheet<String>(
-            context, title: 'Chagua Wizara', items: items, selected: _sector.isEmpty ? null : _sector,
-          );
-          if (result != null) setState(() => _sector = result);
-        },
+      const SizedBox(height: 10),
+      _DeptCard(
+        icon: PhosphorIcons.heartbeat(),
+        name: 'Wizara ya Afya',
+        isSelected: _sector == 'wizara_afya',
+        onTap: () => setState(() => _sector = 'wizara_afya'),
+      ),
+      const SizedBox(height: 10),
+      _DeptCard(
+        icon: PhosphorIcons.buildings(),
+        name: 'TAMISEMI',
+        isSelected: _sector == 'tamisemi',
+        onTap: () => setState(() => _sector = 'tamisemi'),
       ),
 
       _btnRow(
@@ -892,20 +895,23 @@ class _Step4KadaState extends State<_Step4Kada> {
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 6),
         SelectField(
-          hint: '-- Chagua Kada --',
+          icon: PhosphorIcons.identificationCard(),
+          hint: 'Chagua kada yako',
           value: _cadreCode.isEmpty ? null : _cadres.cast<dynamic>()
               .firstWhere((c) => c['code'] == _cadreCode, orElse: () => null)?['display_name'] as String? ?? _cadreCode,
           onTap: () async {
-            final items = _cadres.map((c) => (
-              value: c['code'] as String,
-              label: c['display_name'] as String? ?? c['code'] as String,
-              subtitle: null,
-            )).toList();
-            final result = await showSelectSheet<String>(
-              context, title: 'Chagua Kada', items: items,
-              selected: _cadreCode.isEmpty ? null : _cadreCode, searchable: true,
+            final result = await openPickerScreen(
+              context,
+              title: 'Chagua Kada',
+              allLabel: '-- Chagua Kada --',
+              icon: PhosphorIcons.identificationCard(),
+              options: _cadres.map((c) => (
+                id: '${c['code']}',
+                name: '${c['display_name'] ?? c['name'] ?? c['code']}',
+              )).toList(),
+              selectedId: _cadreCode.isEmpty ? null : _cadreCode,
             );
-            if (result != null) _onCadreChanged(result);
+            if (result != null && result.id != null) _onCadreChanged(result.id!);
           },
         ),
       ],

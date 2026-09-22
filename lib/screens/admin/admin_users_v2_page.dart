@@ -687,12 +687,27 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     ]);
   }
 
-  // ── TIMELINE ──
+  // ── DEPT ICON ──
+  IconData _deptIcon(String code) {
+    if (code == 'health') return PhosphorIcons.heartbeat();
+    if (code == 'education') return PhosphorIcons.graduationCap();
+    return PhosphorIcons.briefcase();
+  }
+
+  // ── CARDS ──
   Widget _buildTimeline() {
     return Column(
       children: [
         for (int i = 0; i < _users.length; i++)
-          _buildUserRow(asMap(_users[i]), isLast: i == _users.length - 1),
+          V2UserCard(
+            user: asMap(_users[i]),
+            timeText: _relativeTime(asMap(_users[i])),
+            isNewest: _page == 0 && i == 0,
+            isLast: i == _users.length - 1,
+            deptName: _deptName('${asMap(_users[i])['category'] ?? ''}'),
+            deptIcon: _deptIcon('${asMap(_users[i])['category'] ?? ''}'),
+            onDotsTap: () => _onDotsTap(asMap(_users[i])),
+          ),
         if (_loading && _users.isNotEmpty)
           const Padding(
             padding: EdgeInsets.all(14),
@@ -703,168 +718,6 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                     strokeWidth: 2.2, color: v2Accent)),
           ),
       ],
-    );
-  }
-
-  Widget _buildUserRow(Map user, {required bool isLast}) {
-    final name = user['full_name'] as String? ?? '';
-    final phone =
-        user['phone_primary'] as String? ?? user['phone'] as String? ?? '';
-    final cadre =
-        user['cadre_display'] as String? ?? user['cadre_code'] as String? ?? '';
-    final station =
-        user['current_station'] as Map? ?? user['station'] as Map? ?? {};
-    final region = station['region_name'] as String? ?? '';
-    final st = '${user['status'] ?? 'active'}'.toLowerCase();
-    final isActive = st == 'active';
-    final isPaid = (user['is_verified'] as bool?) ?? false;
-    final isAdmin = user['is_admin'] as bool? ?? false;
-
-    final isNewest = _page == 0 && _users.indexOf(user) == 0;
-    final dotColor = isNewest ? v2Accent : (isActive ? v2TextMuted : v2Danger);
-
-    return Opacity(
-      opacity: isActive ? 1.0 : 0.68,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 20,
-              child: Column(children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  width: 9,
-                  height: 9,
-                  decoration:
-                      BoxDecoration(color: dotColor, shape: BoxShape.circle),
-                ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 1,
-                      color: v2Border,
-                      margin: const EdgeInsets.only(top: 4),
-                    ),
-                  ),
-              ]),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 15),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_relativeTime(user),
-                              style: const TextStyle(
-                                  fontSize: 10.5, color: v2TextMuted)),
-                          const SizedBox(height: 2),
-                          Text(v2TitleCase(name),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: v2TextPrimary)),
-                          const SizedBox(height: 2),
-                          RichText(
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            text: TextSpan(
-                              style: const TextStyle(fontSize: 11.5),
-                              children: [
-                                TextSpan(
-                                  text: cadre.isNotEmpty
-                                      ? cadre
-                                      : _deptName('${user['category'] ?? ''}'),
-                                  style: const TextStyle(
-                                      color: v2Accent,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                                if (region.isNotEmpty)
-                                  TextSpan(
-                                    text: ' · $region',
-                                    style: const TextStyle(
-                                        color: v2TextSecondary),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          if (phone.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(v2FmtPhone(phone),
-                                style: const TextStyle(
-                                    fontSize: 11.5, color: v2TextMuted)),
-                          ],
-                          const SizedBox(height: 7),
-                          Wrap(spacing: 6, runSpacing: 6, children: [
-                            _pill(
-                              isActive ? 'Hai' : 'Amesitishwa',
-                              isActive ? v2Success : v2Danger,
-                              isActive ? v2SuccessBg : v2DangerBg,
-                              dot: true,
-                            ),
-                            _pill(
-                              isPaid ? 'Amelipa' : 'Hajalipa',
-                              isPaid ? v2Success : v2Danger,
-                              isPaid ? v2SuccessBg : v2DangerBg,
-                            ),
-                            if (isAdmin)
-                              _pill('Admin', v2Accent, v2AccentBg,
-                                  icon: PhosphorIcons.shieldCheck()),
-                          ]),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => _onDotsTap(user),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(PhosphorIcons.dotsThreeVertical(),
-                            size: 16, color: v2TextMuted),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _pill(String label, Color color, Color bg,
-      {bool dot = false, IconData? icon}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-          color: bg, borderRadius: BorderRadius.circular(100)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (dot) ...[
-          Container(
-              width: 5,
-              height: 5,
-              decoration:
-                  BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 4),
-        ],
-        if (icon != null) ...[
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: 3),
-        ],
-        Text(label,
-            style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                color: color)),
-      ]),
     );
   }
 
@@ -985,33 +838,23 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       padding: const EdgeInsets.all(12),
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: BoxDecoration(
               color: Colors.white, borderRadius: BorderRadius.circular(16)),
           child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                bar(140, 16),
+                Row(children: [
+                  bar(140, 16),
+                  const Spacer(),
+                  bar(60, 22),
+                ]),
                 const SizedBox(height: 10),
                 bar(120, 12),
                 const SizedBox(height: 14),
                 bar(double.maxFinite, 40),
-                const SizedBox(height: 20),
-                for (int i = 0; i < 8; i++) ...[
-                  Row(children: [
-                    bar(10, 10),
-                    const SizedBox(width: 14),
-                    Expanded(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                          bar(180, 13),
-                          const SizedBox(height: 6),
-                          bar(240, 10),
-                        ])),
-                  ]),
-                  const SizedBox(height: 20),
-                ],
+                const SizedBox(height: 16),
+                for (int i = 0; i < _pageSize; i++) const V2SkeletonCard(),
               ]),
         ),
       ],
