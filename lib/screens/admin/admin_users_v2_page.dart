@@ -463,20 +463,29 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openAddOptions,
-        backgroundColor: v2Accent,
-        shape: const CircleBorder(),
-        child: Icon(PhosphorIcons.plus(), color: Colors.white, size: 20),
-      ),
       body: SafeArea(
-        child: _loading && _users.isEmpty
-            ? _buildSkeleton()
-            : RefreshIndicator(
-                color: v2Accent,
-                onRefresh: _load,
-                child: _buildScrollBody(),
+        child: Stack(
+          children: [
+            _loading && _users.isEmpty
+                ? _buildSkeleton()
+                : RefreshIndicator(
+                    color: v2Accent,
+                    onRefresh: _load,
+                    child: _buildScrollBody(),
+                  ),
+            Positioned(
+              bottom: MediaQuery.of(context).size.height * 0.25,
+              right: 16,
+              child: FloatingActionButton(
+                onPressed: _openAddOptions,
+                backgroundColor: v2Accent,
+                shape: const CircleBorder(),
+                elevation: 4,
+                child: Icon(PhosphorIcons.plus(), color: Colors.white, size: 20),
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -484,8 +493,11 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   Widget _buildScrollBody() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
       children: [
+        // ── Stats card ──
+        _statsCard(),
+        const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: BoxDecoration(
@@ -495,12 +507,6 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header: icon + jina + Live pill + trash ──
-              _headerRow(),
-              const SizedBox(height: 10),
-              // ── Jumla ya watumiaji: N ──
-              _jumlaRow(),
-              const SizedBox(height: 12),
               // ── Message bar (na Tendua) ──
               if (_message != null) ...[
                 _messageBar(),
@@ -528,69 +534,97 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     );
   }
 
-  // ── HEADER ROW ──
-  Widget _headerRow() {
-    return Row(children: [
-      Icon(PhosphorIcons.usersThree(), size: 19, color: v2TextPrimary),
-      const SizedBox(width: 8),
-      const Text('Watumiaji',
-          style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: v2TextPrimary)),
-      const Spacer(),
-      // Live pill
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: v2SuccessBg,
-          borderRadius: BorderRadius.circular(100),
+  // ── STATS CARD ──
+  Widget _statsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E6FE0), Color(0xFF1251B5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-                color: _live ? v2Success : v2TextMuted,
-                shape: BoxShape.circle),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Expanded(
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(v2FmtNum(_total),
+                style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.0)),
+            const SizedBox(height: 4),
+            const Text('Watumiaji Wote',
+                style: TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500)),
+            const SizedBox(height: 12),
+            Row(children: [
+              _livePill(),
+              const SizedBox(width: 10),
+              InkWell(
+                onTap: _trash.isEmpty ? null : _showTrashSheet,
+                borderRadius: BorderRadius.circular(8),
+                child: Badge(
+                  label: Text('${_trash.length}',
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 9)),
+                  isLabelVisible: _trash.isNotEmpty,
+                  backgroundColor: v2Danger,
+                  child: Icon(PhosphorIcons.trash(),
+                      size: 17,
+                      color: _trash.isEmpty
+                          ? Colors.white38
+                          : Colors.white70),
+                ),
+              ),
+            ]),
+          ]),
+        ),
+        const SizedBox(width: 12),
+        Container(
+          width: 58,
+          height: 58,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .15),
+            borderRadius: BorderRadius.circular(16),
           ),
-          const SizedBox(width: 5),
-          Text(_live ? 'Live' : 'Offline',
-              style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: _live ? v2Success : v2TextMuted)),
-        ]),
-      ),
-      const SizedBox(width: 8),
-      InkWell(
-        onTap: _trash.isEmpty ? null : _showTrashSheet,
-        borderRadius: BorderRadius.circular(8),
-        child: Badge(
-          label: Text('${_trash.length}'),
-          isLabelVisible: _trash.isNotEmpty,
-          child: Icon(PhosphorIcons.trash(),
-              size: 17,
-              color: _trash.isEmpty ? v2TextMuted : v2Danger),
+          child: Icon(PhosphorIcons.usersThree(PhosphorIconsStyle.fill),
+              size: 28, color: Colors.white),
         ),
-      ),
-    ]);
+      ]),
+    );
   }
 
-  // ── JUMLA ROW ──
-  Widget _jumlaRow() {
-    return Row(children: [
-      Icon(PhosphorIcons.listNumbers(), size: 14, color: v2TextMuted),
-      const SizedBox(width: 6),
-      const Text('Jumla ya watumiaji',
-          style: TextStyle(fontSize: 13, color: v2TextSecondary)),
-      const SizedBox(width: 4),
-      Text(v2FmtNum(_total),
-          style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: v2Accent)),
-    ]);
+  Widget _livePill() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .2),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: _live ? const Color(0xFF4ADE80) : Colors.white38,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(_live ? 'Live' : 'Offline',
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _live ? const Color(0xFF4ADE80) : Colors.white54)),
+      ]),
+    );
   }
 
   // ── MESSAGE BAR ──
@@ -782,12 +816,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
               onTap: () => _fetchPage(_page - 1),
             ),
             Text(
-              _loading
-                  ? 'Inapakia...'
-                  : 'Ukurasa $current / ${v2FmtNum(totalPages)} · ${v2FmtNum(_total)} watu',
+              _loading ? '...' : '$current / $totalPages',
               textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 12, color: v2TextSecondary),
             ),
             _pageBtn(
@@ -827,16 +857,17 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
 
   // ── SKELETON ──
   Widget _buildSkeleton() {
-    Widget bar(double w, double h) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-              color: v2Border.withValues(alpha: .5),
-              borderRadius: BorderRadius.circular(6)),
-        );
     return ListView(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
       children: [
+        Container(
+          height: 108,
+          decoration: BoxDecoration(
+            color: v2Border.withValues(alpha: .4),
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+        const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: BoxDecoration(
@@ -844,15 +875,12 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
           child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  bar(140, 16),
-                  const Spacer(),
-                  bar(60, 22),
-                ]),
-                const SizedBox(height: 10),
-                bar(120, 12),
-                const SizedBox(height: 14),
-                bar(double.maxFinite, 40),
+                Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: v2Border.withValues(alpha: .5),
+                      borderRadius: BorderRadius.circular(8)),
+                ),
                 const SizedBox(height: 16),
                 for (int i = 0; i < _pageSize; i++) const V2SkeletonCard(),
               ]),

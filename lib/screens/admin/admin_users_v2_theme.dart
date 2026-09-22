@@ -48,6 +48,13 @@ Future<void> v2Launch(String url) async {
   } catch (_) {}
 }
 
+String _v2Initials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  if (parts.length == 1) return parts[0][0].toUpperCase();
+  return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+}
+
 // ═══════════════════════════════ StatusBadge ═══════════════════════════════
 class V2StatusBadge extends StatelessWidget {
   final bool active;
@@ -148,21 +155,36 @@ class V2UserCard extends StatelessWidget {
     final isActive = st == 'active';
     final isPaid = (user['is_verified'] as bool?) ?? false;
     final isAdmin = user['is_admin'] as bool? ?? false;
-    final init = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final initials = _v2Initials(name);
 
-    return Opacity(
-      opacity: isActive ? 1.0 : 0.72,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: v2Surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: v2Border, width: 0.8),
-        ),
+    final rawDests =
+        ((user['desired_destinations'] ?? user['destinations']) as List?) ?? [];
+    final dests = rawDests
+        .where((d) => d is Map)
+        .map((d) {
+          final m = d as Map;
+          final dn = m['district_name']?.toString() ?? '';
+          final rn =
+              m['region_name']?.toString() ?? m['region']?.toString() ?? '';
+          return dn.isNotEmpty ? '$dn, $rn' : rn;
+        })
+        .where((s) => s.isNotEmpty)
+        .toList();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: v2Surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: v2Border, width: 0.8),
+      ),
+      child: Opacity(
+        opacity: isActive ? 1.0 : 0.72,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── HEADER: avatar kubwa + jina + muda + pill + dots ──
+            // ── HEADER: avatar (2 herufi + dot kubwa) + jina + simu clickable + dots ──
             Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
               Stack(clipBehavior: Clip.none, children: [
                 Container(
@@ -171,9 +193,9 @@ class V2UserCard extends StatelessWidget {
                   decoration: const BoxDecoration(
                       color: v2AccentBg, shape: BoxShape.circle),
                   alignment: Alignment.center,
-                  child: Text(init,
+                  child: Text(initials,
                       style: const TextStyle(
-                          fontSize: 21,
+                          fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: v2Accent)),
                 ),
@@ -181,8 +203,8 @@ class V2UserCard extends StatelessWidget {
                   right: -1,
                   bottom: -1,
                   child: Container(
-                    width: 14,
-                    height: 14,
+                    width: 16,
+                    height: 16,
                     decoration: BoxDecoration(
                       color: isActive ? v2Success : v2Danger,
                       shape: BoxShape.circle,
@@ -204,28 +226,34 @@ class V2UserCard extends StatelessWidget {
                             fontSize: 16.5,
                             color: v2TextPrimary)),
                     const SizedBox(height: 3),
-                    Row(children: [
-                      if (phone.isNotEmpty) ...[
-                        Icon(PhosphorIcons.phone(),
-                            size: 12, color: v2Accent),
-                        const SizedBox(width: 4),
-                        Text(v2FmtPhone(phone),
-                            style: const TextStyle(
-                                fontSize: 13,
-                                color: v2Accent,
-                                fontWeight: FontWeight.w600)),
-                      ] else if (cadre.isNotEmpty)
-                        Text(cadre,
-                            style: const TextStyle(
-                                fontSize: 12.5,
-                                color: v2TextSecondary,
-                                fontWeight: FontWeight.w600)),
-                    ]),
+                    if (phone.isNotEmpty)
+                      GestureDetector(
+                        onTap: () => v2Launch(
+                            'tel:+${phone.replaceAll(RegExp(r'\D'), '')}'),
+                        child: Row(children: [
+                          Icon(PhosphorIcons.phone(),
+                              size: 12, color: v2Accent),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(v2FmtPhone(phone),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    color: v2Accent,
+                                    fontWeight: FontWeight.w600)),
+                          ),
+                        ]),
+                      )
+                    else if (cadre.isNotEmpty)
+                      Text(cadre,
+                          style: const TextStyle(
+                              fontSize: 12.5,
+                              color: v2TextSecondary,
+                              fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
-              V2StatusBadge(active: isActive),
-              const SizedBox(width: 2),
               IconButton(
                 onPressed: onDotsTap,
                 icon: Icon(PhosphorIcons.dotsThreeVertical(), size: 18),
@@ -235,7 +263,7 @@ class V2UserCard extends StatelessWidget {
             ]),
             const SizedBox(height: 13),
 
-            // ── BOX YA KATI: Idara | Mkoa/Wilaya (kama Anatoka/Anataka) ──
+            // ── BOX: IDARA | ANATOKA ──
             Container(
               width: double.infinity,
               padding:
@@ -281,7 +309,7 @@ class V2UserCard extends StatelessWidget {
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('MAHALI ANAKO',
+                        const Text('ANATOKA',
                             style: TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w700,
@@ -307,10 +335,74 @@ class V2UserCard extends StatelessWidget {
                 ),
               ]),
             ),
-            const SizedBox(height: 12),
 
-            // ── CHIPS: kada + malipo + admin ──
+            // ── ANAELEKEA (destinations, kama zipo) ──
+            if (dests.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 3),
+                  child: Text('ANAELEKEA',
+                      style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: .5,
+                          color: v2TextMuted)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Wrap(spacing: 5, runSpacing: 4, children: [
+                    for (final d in dests)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                            color: v2AccentBg,
+                            borderRadius: BorderRadius.circular(8)),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(PhosphorIcons.flag(PhosphorIconsStyle.fill),
+                              size: 10, color: v2Accent),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(d,
+                                style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: v2Accent),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1),
+                          ),
+                        ]),
+                      ),
+                  ]),
+                ),
+              ]),
+            ],
+            const SizedBox(height: 11),
+
+            // ── CHIPS: hali + kada + malipo + admin ──
             Wrap(spacing: 7, runSpacing: 7, children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                    color: isActive ? v2SuccessBg : v2DangerBg,
+                    borderRadius: BorderRadius.circular(9)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                          color: isActive ? v2Success : v2Danger,
+                          shape: BoxShape.circle)),
+                  const SizedBox(width: 5),
+                  Text(isActive ? 'Hai' : 'Amesitishwa',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isActive ? v2Success : v2Danger)),
+                ]),
+              ),
               if (cadre.isNotEmpty)
                 _tag(cadre, PhosphorIcons.bookOpen(), v2AccentBg, v2Accent),
               Container(
@@ -323,7 +415,8 @@ class V2UserCard extends StatelessWidget {
                   Icon(
                       isPaid
                           ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
-                          : PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
+                          : PhosphorIcons.warningCircle(
+                              PhosphorIconsStyle.fill),
                       size: 12,
                       color: isPaid ? v2Success : v2Danger),
                   const SizedBox(width: 4),
@@ -353,6 +446,33 @@ class V2UserCard extends StatelessWidget {
                   ]),
                 ),
             ]),
+
+            // ── STRIP YA TAHADHARI (hajalipa) ──
+            if (!isPaid) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                    color: v2WarningBg,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Row(children: [
+                  Icon(PhosphorIcons.warning(PhosphorIconsStyle.fill),
+                      size: 13, color: v2Warning),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Hajalipa — Haoni namba za wengine',
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: v2Warning),
+                    ),
+                  ),
+                ]),
+              ),
+            ],
           ],
         ),
       ),
@@ -540,9 +660,9 @@ Future<V2AddOption?> showV2AddOptionsSheet(BuildContext context) {
     builder: (ctx) => Container(
       decoration: const BoxDecoration(
         color: v2Surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 20),
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,45 +673,55 @@ Future<V2AddOption?> showV2AddOptionsSheet(BuildContext context) {
                   height: 4,
                   decoration: BoxDecoration(
                       color: v2Border, borderRadius: BorderRadius.circular(4)))),
-          const SizedBox(height: 16),
-          const Text('Ongeza',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 18),
+          Row(children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                  color: v2AccentBg, borderRadius: BorderRadius.circular(10)),
+              child: Icon(PhosphorIcons.plus(), size: 17, color: v2Accent),
+            ),
+            const SizedBox(width: 10),
+            const Text('Ongeza',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ]),
           const SizedBox(height: 14),
           _addOption(ctx, PhosphorIcons.userPlus(), 'Mtumiaji Mpya',
-              'Ongeza mwalimu, afisa afya au mtumishi', V2AddOption.mtumiajiMpya,
-              filled: true),
-          const SizedBox(height: 10),
+              'Mwalimu, afisa afya au mtumishi mwingine',
+              V2AddOption.mtumiajiMpya, v2AccentBg, v2Accent),
+          const SizedBox(height: 8),
           _addOption(ctx, PhosphorIcons.shieldCheck(), 'Ongeza Admin',
-              'Anaingia kwa email, hana idara', V2AddOption.ongezaAdmin),
-          const SizedBox(height: 10),
+              'Anaingia kwa email, hana idara', V2AddOption.ongezaAdmin,
+              const Color(0xFFF3E8FF), const Color(0xFF7C3AED)),
+          const SizedBox(height: 8),
           _addOption(ctx, PhosphorIcons.microsoftExcelLogo(), 'Import Watumiaji',
-              'Pakia wengi kwa mara moja (.xlsx)', V2AddOption.importWatumiaji),
+              'Pakia wengi kwa mara moja (.xlsx)',
+              V2AddOption.importWatumiaji, v2SuccessBg, v2Success),
         ],
       ),
     ),
   );
 }
 
-Widget _addOption(BuildContext ctx, IconData icon, String title,
-    String subtitle, V2AddOption value,
-    {bool filled = false}) {
+Widget _addOption(BuildContext ctx, IconData icon, String title, String subtitle,
+    V2AddOption value, Color iconBg, Color iconColor) {
   return InkWell(
     onTap: () => Navigator.of(ctx).pop(value),
     borderRadius: BorderRadius.circular(12),
     child: Container(
       padding: const EdgeInsets.all(13),
-      decoration:
-          BoxDecoration(color: v2SurfaceMuted, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+          color: v2Surface,
+          border: Border.all(color: v2Border, width: 0.8),
+          borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
         Container(
-          width: 38,
-          height: 38,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
-            color: filled ? v2AccentBg : v2Surface,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon,
-              size: 18, color: filled ? v2Accent : v2TextSecondary),
+              color: iconBg, borderRadius: BorderRadius.circular(11)),
+          child: Icon(icon, size: 20, color: iconColor),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -601,12 +731,13 @@ Widget _addOption(BuildContext ctx, IconData icon, String title,
               Text(title,
                   style: const TextStyle(
                       fontSize: 13.5, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 1),
+              const SizedBox(height: 2),
               Text(subtitle,
-                  style: const TextStyle(fontSize: 11, color: v2TextMuted)),
+                  style: const TextStyle(fontSize: 11.5, color: v2TextMuted)),
             ],
           ),
         ),
+        Icon(PhosphorIcons.caretRight(), size: 14, color: v2TextMuted),
       ]),
     ),
   );
