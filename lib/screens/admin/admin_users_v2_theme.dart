@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
-// WATUMIAJI V2 — theme + shared widgets (kutoka prototype ya watumiaji_v2)
+// WATUMIAJI V2 — theme + shared widgets (Phosphor, kadi pana nyeupe)
 // ═══════════════════════════════════════════════════════════════════════════
 const v2Accent = Color(0xFF1E6FE0);
 const v2AccentBg = Color(0xFFE6F1FB);
@@ -103,7 +104,7 @@ class V2IconChip extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════ Kadi ya timeline ═══════════════════════════
+// ═══════════════════════════════ Kadi ya mtumiaji (pana, nyeupe) ═══════════
 class V2UserCard extends StatelessWidget {
   final Map<String, dynamic> user;
   final String timeText;
@@ -141,169 +142,132 @@ class V2UserCard extends StatelessWidget {
     final init = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Opacity(
-      opacity: isActive ? 1.0 : 0.62,
+      opacity: isActive ? 1.0 : 0.68,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 11, 4, 12),
+        // ── Kadi NZIMA: no timeline column — full width, clean padding ──
+        padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
         decoration: BoxDecoration(
           color: v2Surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: v2Border, width: 0.7),
         ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Timeline line (dot + mstari) ──
-              SizedBox(
-                width: 20,
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      width: 9,
-                      height: 9,
-                      decoration: BoxDecoration(
-                        color: isNewest ? v2Accent : v2TextMuted,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    if (!isLast)
-                      Expanded(
-                        child: Container(
-                            width: 1,
-                            color: v2Border,
-                            margin: const EdgeInsets.only(top: 4)),
-                      ),
-                  ],
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Muda (juu, ndogo, kama prototype) ──
+            if (timeText.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6, left: 2),
+                child: Text(timeText,
+                    style: const TextStyle(
+                        fontSize: 10.5, color: v2TextMuted)),
               ),
-              const SizedBox(width: 12),
+            // ── Avatar + jina + simu + hali + dots ──
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Stack(clipBehavior: Clip.none, children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: const BoxDecoration(
+                      color: v2AccentBg, shape: BoxShape.circle),
+                  alignment: Alignment.center,
+                  child: Text(init,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: v2Accent)),
+                ),
+                Positioned(
+                  right: -1,
+                  bottom: -1,
+                  child: Container(
+                    width: 11,
+                    height: 11,
+                    decoration: BoxDecoration(
+                      color: isActive ? v2Success : v2Danger,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+              ]),
+              const SizedBox(width: 11),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Muda (kama prototype: tarehe/muda juu) ──
-                    if (timeText.isNotEmpty)
-                      Text(timeText,
-                          style: const TextStyle(
-                              fontSize: 10.5, color: v2TextMuted)),
-                    const SizedBox(height: 2),
-
-                    // ── Avatar + jina + simu + hali + dots ──
-                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Stack(clipBehavior: Clip.none, children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                              color: v2AccentBg, shape: BoxShape.circle),
-                          alignment: Alignment.center,
-                          child: Text(init,
-                              style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: v2Accent)),
-                        ),
-                        Positioned(
-                          right: -1,
-                          bottom: -1,
-                          child: Container(
-                            width: 11,
-                            height: 11,
-                            decoration: BoxDecoration(
-                              color: isActive ? v2Success : v2Danger,
-                              shape: BoxShape.circle,
-                              border:
-                                  Border.all(color: Colors.white, width: 2),
-                            ),
-                          ),
-                        ),
-                      ]),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(v2TitleCase(name),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13.5,
-                                    color: v2TextPrimary)),
-                            const SizedBox(height: 1),
-                            Text(
-                              phone.isNotEmpty ? v2FmtPhone(phone) : cadre,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: phone.isNotEmpty
-                                      ? v2Accent
-                                      : v2TextSecondary,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                      ),
-                      V2StatusBadge(active: isActive),
-                    ]),
-                    const SizedBox(height: 5),
-
-                    // ── Chips: kada/idara/mkoa + malipo + admin ──
-                    Wrap(spacing: 6, runSpacing: 6, children: [
-                      if (cadre.isNotEmpty)
-                        _tag(cadre, Icons.menu_book_outlined, v2AccentBg, v2Accent),
-                      if (deptName.isNotEmpty)
-                        _tag(deptName, deptIcon, v2SurfaceMuted, v2TextSecondary),
-                      if (region.isNotEmpty)
-                        _tag(region, Icons.location_on_outlined, v2SurfaceMuted,
-                            v2TextSecondary),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                            color: isPaid ? v2SuccessBg : v2DangerBg,
-                            borderRadius: BorderRadius.circular(8)),
-                        child: Text(isPaid ? 'Amelipa' : 'Hajalipa',
-                            style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                                color: isPaid ? v2Success : v2Danger)),
-                      ),
-                      if (isAdmin)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                              color: v2AccentBg,
-                              borderRadius: BorderRadius.circular(8)),
-                          child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.shield_outlined,
-                                    size: 11, color: v2Accent),
-                                SizedBox(width: 3),
-                                Text('Admin',
-                                    style: TextStyle(
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: v2Accent)),
-                              ]),
-                        ),
-                    ]),
+                    Text(v2TitleCase(name),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: v2TextPrimary)),
+                    const SizedBox(height: 1),
+                    Text(
+                      phone.isNotEmpty ? v2FmtPhone(phone) : cadre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          color:
+                              phone.isNotEmpty ? v2Accent : v2TextSecondary,
+                          fontWeight: FontWeight.w600),
+                    ),
                   ],
                 ),
               ),
-              // ── Dots menu ──
+              V2StatusBadge(active: isActive),
+              const SizedBox(width: 2),
               IconButton(
                 onPressed: onDotsTap,
-                icon: const Icon(Icons.more_vert, size: 18),
+                icon: Icon(PhosphorIcons.dotsThreeVertical(), size: 17),
                 color: v2TextMuted,
                 visualDensity: VisualDensity.compact,
               ),
-            ],
-          ),
+            ]),
+            const SizedBox(height: 7),
+            // ── Chips: kada/idara/mkoa + malipo + admin ──
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              if (cadre.isNotEmpty)
+                _tag(cadre, PhosphorIcons.bookOpen(), v2AccentBg, v2Accent),
+              if (deptName.isNotEmpty)
+                _tag(deptName, deptIcon, v2SurfaceMuted, v2TextSecondary),
+              if (region.isNotEmpty)
+                _tag(region, PhosphorIcons.mapPin(), v2SurfaceMuted,
+                    v2TextSecondary),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                    color: isPaid ? v2SuccessBg : v2DangerBg,
+                    borderRadius: BorderRadius.circular(8)),
+                child: Text(isPaid ? 'Amelipa' : 'Hajalipa',
+                    style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: isPaid ? v2Success : v2Danger)),
+              ),
+              if (isAdmin)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                      color: v2AccentBg,
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(PhosphorIcons.shieldCheck(),
+                        size: 11, color: v2Accent),
+                    const SizedBox(width: 3),
+                    const Text('Admin',
+                        style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: v2Accent)),
+                  ]),
+                ),
+            ]),
+          ],
         ),
       ),
     );
@@ -348,8 +312,8 @@ class V2SkeletonCard extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: const BoxDecoration(
                   color: v2SurfaceMuted, shape: BoxShape.circle)),
           const SizedBox(width: 12),
@@ -389,7 +353,7 @@ Future<V2Action?> showV2CardActionsSheet(
     backgroundColor: Colors.transparent,
     builder: (ctx) => Container(
       decoration: const BoxDecoration(
-        color: v2SurfaceMuted,
+        color: v2Surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 18),
@@ -411,16 +375,16 @@ Future<V2Action?> showV2CardActionsSheet(
                     fontSize: 14, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 8),
-          _actionRow(ctx, Icons.visibility_outlined, 'Angalia', v2TextSecondary,
+          _actionRow(ctx, PhosphorIcons.eye(), 'Angalia', v2TextSecondary,
               V2Action.angalia),
-          _actionRow(ctx, Icons.edit_outlined, 'Hariri', v2Accent,
+          _actionRow(ctx, PhosphorIcons.pencilSimple(), 'Hariri', v2Accent,
               V2Action.hariri),
           // Piga simu — inaonekana tu kama ana namba na amelipa
           if (phone.isNotEmpty && isPaid)
             ListTile(
               dense: true,
               leading:
-                  const Icon(Icons.call_outlined, size: 19, color: v2Success),
+                  Icon(PhosphorIcons.phoneCall(), size: 19, color: v2Success),
               title: Text('Piga simu (${v2FmtPhone(phone)})',
                   style:
                       const TextStyle(fontSize: 13.5, color: v2Success)),
@@ -432,20 +396,18 @@ Future<V2Action?> showV2CardActionsSheet(
           if (!isAdmin && !isPaid)
             _actionRow(
                 ctx,
-                Icons.call_outlined,
+                PhosphorIcons.phoneCall(),
                 contact ? 'Ondoa haki ya kupiga simu' : 'Ruhusu mawasiliano',
                 v2Success,
                 V2Action.ruhusu),
           if (!isAdmin)
             _actionRow(
                 ctx,
-                isActive
-                    ? Icons.block_outlined
-                    : Icons.check_circle_outline,
+                isActive ? PhosphorIcons.prohibit() : PhosphorIcons.checkCircle(),
                 isActive ? 'Funga akaunti' : 'Fungua akaunti',
                 v2Warning,
                 V2Action.funga),
-          _actionRow(ctx, Icons.delete_outline, 'Futa', v2Danger,
+          _actionRow(ctx, PhosphorIcons.trash(), 'Futa', v2Danger,
               V2Action.futa,
               isLast: true),
         ],
@@ -483,7 +445,7 @@ Future<V2AddOption?> showV2AddOptionsSheet(BuildContext context) {
     backgroundColor: Colors.transparent,
     builder: (ctx) => Container(
       decoration: const BoxDecoration(
-        color: v2SurfaceMuted,
+        color: v2Surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 20),
@@ -501,14 +463,14 @@ Future<V2AddOption?> showV2AddOptionsSheet(BuildContext context) {
           const Text('Ongeza',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
           const SizedBox(height: 14),
-          _addOption(ctx, Icons.person_add_alt_1_outlined, 'Mtumiaji Mpya',
+          _addOption(ctx, PhosphorIcons.userPlus(), 'Mtumiaji Mpya',
               'Ongeza mwalimu, afisa afya au mtumishi', V2AddOption.mtumiajiMpya,
               filled: true),
           const SizedBox(height: 10),
-          _addOption(ctx, Icons.shield_outlined, 'Ongeza Admin',
+          _addOption(ctx, PhosphorIcons.shieldCheck(), 'Ongeza Admin',
               'Anaingia kwa email, hana idara', V2AddOption.ongezaAdmin),
           const SizedBox(height: 10),
-          _addOption(ctx, Icons.table_chart_outlined, 'Import Watumiaji',
+          _addOption(ctx, PhosphorIcons.microsoftExcelLogo(), 'Import Watumiaji',
               'Pakia wengi kwa mara moja (.xlsx)', V2AddOption.importWatumiaji),
         ],
       ),
@@ -525,13 +487,13 @@ Widget _addOption(BuildContext ctx, IconData icon, String title,
     child: Container(
       padding: const EdgeInsets.all(13),
       decoration:
-          BoxDecoration(color: v2Surface, borderRadius: BorderRadius.circular(12)),
+          BoxDecoration(color: v2SurfaceMuted, borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
         Container(
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: filled ? v2AccentBg : v2SurfaceMuted,
+            color: filled ? v2AccentBg : v2Surface,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon,
@@ -576,7 +538,7 @@ Future<bool> v2ConfirmDelete(BuildContext context,
                 decoration: BoxDecoration(
                     color: v2DangerBg, borderRadius: BorderRadius.circular(12)),
                 child:
-                    const Icon(Icons.delete_outline, color: v2Danger, size: 22),
+                    Icon(PhosphorIcons.trash(), color: v2Danger, size: 22),
               ),
               const SizedBox(height: 14),
               Text('Futa "${v2TitleCase(jina)}"?',

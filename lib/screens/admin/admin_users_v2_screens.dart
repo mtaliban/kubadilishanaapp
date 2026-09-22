@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../widgets/select_sheet.dart';
 import 'admin_users_v2_theme.dart';
@@ -47,8 +48,11 @@ class _V2PickerScreenState extends State<V2PickerScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: v2Surface,
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(widget.title,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -98,9 +102,8 @@ class _V2PickerScreenState extends State<V2PickerScreen> {
                   leading: Container(
                     width: 34,
                     height: 34,
-                    decoration: BoxDecoration(
-                        color: v2AccentBg,
-                        borderRadius: BorderRadius.circular(9)),
+                    decoration: BoxDecoration(                      color: v2AccentBg,
+                      borderRadius: BorderRadius.circular(9)),
                     child: Icon(widget.icon, size: 17, color: v2Accent),
                   ),
                   title: Text(o.name, style: const TextStyle(fontSize: 13.5)),
@@ -253,6 +256,18 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
       setState(
           () => _facilities = raw is List ? raw : (raw['facilities'] ?? raw['data'] ?? []));
     } catch (_) {}
+  }
+
+  String _deptLabel() {
+    for (final d in _departments) {
+      if ('${d['code']}' == _category) {
+        return '${d['display_name'] ?? d['name'] ?? _category}';
+      }
+    }
+    if (_category == 'health') return 'Afya';
+    if (_category == 'education') return 'Elimu';
+    if (_category == 'service') return 'Utumishi';
+    return _category.isEmpty ? 'Chagua idara' : _category;
   }
 
   String _cadreLabel() {
@@ -530,37 +545,43 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     final showWizara = _category != 'education';
 
     return Scaffold(
-      backgroundColor: v2AccentBg,
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
         title: Text(_isEditing ? 'Hariri Mtumiaji' : 'Unda Mtumiaji Mpya',
             style:
                 const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: InkWell(
-              onTap: _saving ? null : _hifadhi,
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                    color: v2Accent, borderRadius: BorderRadius.circular(10)),
-                child: _saving
-                    ? const Padding(
-                        padding: EdgeInsets.all(9),
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.check, size: 18, color: Colors.white),
-              ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _saving ? null : _hifadhi,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : Icon(PhosphorIcons.check(), size: 17),
+              label: const Text('Hifadhi',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: v2Accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14)),
             ),
           ),
-        ],
+        ),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           children: [
             if (_error != null)
               Container(
@@ -642,13 +663,11 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                     borderRadius: BorderRadius.circular(10),
                     color: v2Surface),
                 child: Row(children: [
-                  const Icon(Icons.category_outlined,
+                  Icon(PhosphorIcons.squaresFour(),
                       size: 16, color: v2TextSecondary),
                   const SizedBox(width: 10),
                   Expanded(
-                      child: Text(_category.isEmpty
-                          ? 'Chagua idara'
-                          : _category,
+                      child: Text(_deptLabel(),
                           style: const TextStyle(fontSize: 13))),
                   const Icon(Icons.keyboard_arrow_down,
                       size: 16, color: v2TextMuted),
@@ -669,7 +688,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                     borderRadius: BorderRadius.circular(10),
                     color: v2Surface),
                 child: Row(children: [
-                  const Icon(Icons.badge_outlined,
+                  Icon(PhosphorIcons.identificationBadge(),
                       size: 16, color: v2TextSecondary),
                   const SizedBox(width: 10),
                   Expanded(
@@ -740,7 +759,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                       border: Border.all(color: v2Border),
                       borderRadius: BorderRadius.circular(10)),
                   child: Row(children: [
-                    const Icon(Icons.flag_outlined, size: 15, color: v2Accent),
+                    Icon(PhosphorIcons.flag(), size: 15, color: v2Accent),
                     const SizedBox(width: 8),
                     Expanded(
                         child: Text(
@@ -843,14 +862,14 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                 borderRadius: BorderRadius.circular(10),
                 color: v2Surface),
             child: Row(children: [
-              const Icon(Icons.location_on_outlined,
+              Icon(PhosphorIcons.mapPin(),
                   size: 16, color: v2TextSecondary),
               const SizedBox(width: 10),
               Expanded(
                   child: Text(label,
                       style: const TextStyle(fontSize: 13))),
-              const Icon(Icons.keyboard_arrow_down,
-                  size: 16, color: v2TextMuted),
+              Icon(PhosphorIcons.caretDown(),
+                  size: 14, color: v2TextMuted),
             ]),
           ),
         ),
@@ -875,6 +894,25 @@ class V2UserDetailScreen extends StatelessWidget {
   final VoidCallback? onFuta;
   const V2UserDetailScreen(
       {super.key, required this.user, this.onHariri, this.onFuta});
+
+  Future<void> _toggleSuspend(BuildContext context) async {
+    final id = user['user_id']?.toString() ?? user['_id']?.toString() ?? '';
+    final active = '${user['status'] ?? 'active'}'.toLowerCase() != 'disabled';
+    try {
+      await ApiService()
+          .adminUpdateUser(id, {'status': active ? 'disabled' : 'active'});
+      user['status'] = active ? 'disabled' : 'active';
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(active ? 'Amesitishwa' : 'Amewezeshwa')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Hitilafu: $e')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -911,8 +949,11 @@ class V2UserDetailScreen extends StatelessWidget {
         : waDigits;
 
     return Scaffold(
-      backgroundColor: v2AccentBg,
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
         title: const Text('Taarifa za Mtumiaji',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         actions: [
@@ -962,16 +1003,16 @@ class V2UserDetailScreen extends StatelessWidget {
                     const TextStyle(color: v2TextSecondary, fontSize: 12)),
             const SizedBox(height: 12),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              _quick(Icons.call_outlined, 'Piga', v2Accent, phone.isEmpty ? null : () => v2Launch('tel:+${phone.replaceAll(RegExp(r'\D'), '')}')),
+              _quick(PhosphorIcons.phoneCall(), 'Piga', v2Accent, phone.isEmpty ? null : () => v2Launch('tel:+${phone.replaceAll(RegExp(r'\D'), '')}')),
               const SizedBox(width: 22),
-              _quick(Icons.chat_outlined, 'WhatsApp', v2Success,
+              _quick(PhosphorIcons.whatsappLogo(), 'WhatsApp', v2Success,
                   wa.isEmpty ? null : () => v2Launch('https://wa.me/$waIntl')),
               const SizedBox(width: 22),
               _quick(
-                  isActive ? Icons.block_outlined : Icons.check_circle_outline,
+                  isActive ? PhosphorIcons.prohibit() : PhosphorIcons.checkCircle(),
                   isActive ? 'Funga' : 'Fungua',
                   v2Warning,
-                  null),
+                  () => _toggleSuspend(context)),
             ]),
           ]),
         ),
@@ -987,7 +1028,7 @@ class V2UserDetailScreen extends StatelessWidget {
             _row('SIMU', phone.isEmpty ? '—' : v2FmtPhone(phone),
                 valueColor: v2Accent),
             if (wa.isNotEmpty) _row('WHATSAPP', v2FmtPhone(wa), valueColor: v2Success),
-            _row('IDARA', category.isEmpty ? '—' : category),
+            _row('IDARA', _deptDisplay(category)),
             _row('KADA', cadre.isEmpty ? '—' : cadre),
             if (subjects.isNotEmpty) _row('MASOMO', subjects.join(', ')),
             _row('MKOA / WILAYA',
@@ -1005,6 +1046,19 @@ class V2UserDetailScreen extends StatelessWidget {
         const SizedBox(height: 20),
       ]),
     );
+  }
+
+  String _deptDisplay(String code) {
+    switch (code) {
+      case 'health':
+        return 'Afya';
+      case 'education':
+        return 'Elimu';
+      case 'service':
+        return 'Utumishi';
+      default:
+        return code.isEmpty ? '—' : code;
+    }
   }
 
   String _fmtDate(String iso) {
@@ -1110,35 +1164,41 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: v2AccentBg,
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
         title: const Text('Ongeza Admin',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: InkWell(
-              onTap: _saving ? null : _hifadhi,
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                    color: v2Accent, borderRadius: BorderRadius.circular(10)),
-                child: _saving
-                    ? const Padding(
-                        padding: EdgeInsets.all(9),
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.check, size: 18, color: Colors.white),
-              ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _saving ? null : _hifadhi,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : Icon(PhosphorIcons.check(), size: 17),
+              label: const Text('Hifadhi',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: v2Accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14)),
             ),
           ),
-        ],
+        ),
       ),
       body: Form(
         key: _formKey,
-        child: ListView(padding: const EdgeInsets.all(16), children: [
+        child: ListView(padding: const EdgeInsets.fromLTRB(16, 16, 16, 8), children: [
           if (_error != null)
             Container(
               margin: const EdgeInsets.only(bottom: 12),
@@ -1253,8 +1313,11 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: v2AccentBg,
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
           title: const Text('Import Watumiaji',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
       body: ListView(padding: const EdgeInsets.all(16), children: [
@@ -1322,11 +1385,11 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
               color: v2Surface,
               border: Border.all(color: v2Border),
               borderRadius: BorderRadius.circular(12)),
-          child: const Column(
+          child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Icon(Icons.info_outline, size: 15, color: v2Accent),
+                  Icon(PhosphorIcons.info(), size: 15, color: v2Accent),
                   SizedBox(width: 8),
                   Text('Safu za faili',
                       style: TextStyle(
@@ -1351,7 +1414,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                     height: 16,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.upload_file, size: 18),
+                : Icon(PhosphorIcons.uploadSimple(), size: 18),
             label: const Text('Chagua Faili la Excel',
                 style: TextStyle(fontWeight: FontWeight.w700)),
             style: ElevatedButton.styleFrom(
@@ -1365,7 +1428,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: _template,
-            icon: const Icon(Icons.download, size: 18),
+            icon: Icon(PhosphorIcons.downloadSimple(), size: 18),
             label: const Text('Pakua Kiolezo (Excel)'),
             style: OutlinedButton.styleFrom(
                 foregroundColor: v2Accent,

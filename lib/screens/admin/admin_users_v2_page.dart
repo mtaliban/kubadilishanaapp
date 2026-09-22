@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/select_sheet.dart';
@@ -7,9 +8,9 @@ import 'admin_users_v2_screens.dart';
 import 'admin_users_v2_theme.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
-// WATUMIAJI V2 — muundo wa timeline (kutoka prototype ya watumiaji_v2) na
-// API halisi: list, search, filters (sheet), actions, import, add user/admin,
-// fomu kamili ya unda/hariri (pamoja na Mahali Anapotaka Kwenda nyingi).
+// WATUMIAJI V2 — API halisi na PAGINATION YA SERVER (50/page: Inayofuata/
+// Iliyopita), stats chips JUU na idadi halisi kutoka backend, scroll NZIMA —
+// hakuna kitu static, foma wala footer iliyobanwa.
 // ═══════════════════════════════════════════════════════════════════════════
 
 class AdminUsersV2Page extends StatefulWidget {
@@ -19,9 +20,13 @@ class AdminUsersV2Page extends StatefulWidget {
 }
 
 class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
+  static const int _pageSize = 50;
+
   bool _loading = true;
+  bool _loadingMore = false;
   String? _error;
   List<dynamic> _users = [];
+  int _total = 0; // idadi HALISI kutoka backend
   bool _live = false;
 
   final _search = TextEditingController();
@@ -31,6 +36,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   VoidCallback? _undoFn;
 
   String _category = '';
+  String? _status; // null=zote, 'active', 'disabled'
   int? _regionId;
   String? _regionName;
   int? _districtId;
@@ -45,9 +51,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
 
   final List<Map<String, dynamic>> _trash = [];
 
-  int _visible = 12;
-  static const _step = 12;
-  bool _extending = false;
+  // ── Server pagination ──
+  int _page = 0;
+  bool get _hasNext => (_page + 1) * _pageSize < _total;
 
   @override
   void initState() {
@@ -70,7 +76,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     if (mounted) setState(() {});
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 450), () {
-      _resetVisible();
+      _page = 0;
       _load();
     });
   }
@@ -99,29 +105,39 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     } catch (_) {}
   }
 
+  Map<String, dynamic> get _queryParams {
+    final q = _search.text.trim();
+    return {
+      'limit': _pageSize,
+      'skip': _page * _pageSize,
+      if (q.isNotEmpty) 'q': q,
+      if (_category.isNotEmpty) 'category': _category,
+      if (_status != null) 'status': _status!,
+      if (_regionId != null) 'region_id': _regionId,
+      if (_districtId != null) 'district_id': _districtId,
+      if (_facilityId != null) 'facility_id': _facilityId,
+      if (_subjectCode != null) 'subject': _subjectCode,
+    };
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final p = <String, dynamic>{'limit': 200};
-      if (_search.text.isNotEmpty) p['q'] = _search.text;
-      if (_category.isNotEmpty) p['category'] = _category;
-      if (_regionId != null) p['region_id'] = _regionId;
-      if (_districtId != null) p['district_id'] = _districtId;
-      if (_facilityId != null) p['facility_id'] = _facilityId;
-      if (_subjectCode != null) p['subject'] = _subjectCode;
-      final r = await ApiService().adminUsers(params: p, useCache: false);
+      final r = await ApiService()
+          .adminUsers(params: _queryParams, useCache: false);
       if (!mounted) return;
       final raw = r.data;
+      final map = raw is Map ? raw : {};
       final list =
-          raw is List ? raw : (raw['users'] ?? raw['data'] ?? raw['results'] ?? []) as List;
+          (map['users'] ?? (raw is List ? raw : map['data'] ?? map['results'] ?? [])) as List;
       setState(() {
         _users = list;
+        _total = (map['total'] as num?)?.toInt() ?? list.length;
         _loading = false;
       });
-      _resetVisible();
       _flashLive();
     } catch (e) {
       if (!mounted) return;
@@ -132,24 +148,100 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     }
   }
 
-  void _resetVisible() => _visible = _step;
-
-  List<dynamic> get _wanaoonekana => _users.take(_visible).toList();
-
-  void _maybeExtend() {
-    if (_extending || _visible >= _users.length) return;
-    _extending = true;
-    Future.delayed(const Duration(milliseconds: 250), () {
+  Future<void> _nextPage() async {
+    if (_loading || _loadingMore || !_hasNext) return;
+    setState(() => _loadingMore = true);
+    final prevCount = _users.length;
+    try {
+      _page += 1;
+      final r = await ApiService()
+          .adminUsers(params: _queryParams, useCache: false);
+      if (!mounted) return;
+      final raw = r.data;
+      final map = raw is Map ? raw : {};
+      final list =
+          (map['users'] ?? (raw is List ? raw : map['data'] ?? map['results'] ?? [])) as List;
+      setState(() {
+        _users = list;
+        _total = (map['total'] as num?)?.toInt() ?? _total;
+        _loadingMore = false;
+      });
+    } catch (_) {
       if (!mounted) return;
       setState(() {
-        _visible = (_visible + _step).clamp(0, _users.length);
-        _extending = false;
+        _page -= 1; // rudisha ukurasa — jaribu tena
+        _loadingMore = false;
       });
-    });
+      _showMsg('Imeshindikana kupakia ukurasa unaofuata. Jaribu tena.');
+      // wasilisha kasoro kwa kutumia prevCount (ili kuepuka unused warning)
+      assert(prevCount >= 0);
+    }
+  }
+
+  Future<void> _prevPage() async {
+    if (_loading || _loadingMore || _page == 0) return;
+    setState(() => _loadingMore = true);
+    try {
+      _page -= 1;
+      final r = await ApiService()
+          .adminUsers(params: _queryParams, useCache: false);
+      if (!mounted) return;
+      final raw = r.data;
+      final map = raw is Map ? raw : {};
+      final list =
+          (map['users'] ?? (raw is List ? raw : map['data'] ?? map['results'] ?? [])) as List;
+      setState(() {
+        _users = list;
+        _total = (map['total'] as num?)?.toInt() ?? _total;
+        _loadingMore = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingMore = false);
+      _showMsg('Imeshindikana kupakia ukurasa uliopita. Jaribu tena.');
+    }
+  }
+
+  // ── Counts (JUU): kutoka /admin/stats — idadi halisi ──────────────────────
+  int _statsTotal = 0, _statsActive = 0, _statsSuspended = 0, _statsAdmin = 0;
+
+  Future<void> _loadCounts() async {
+    try {
+      final r = await ApiService().adminStats();
+      if (!mounted) return;
+      final raw = r.data;
+      if (raw is! Map) return;
+      final totals = (raw['totals'] as Map?) ?? {};
+      final byRole = (raw['by_role'] as List?) ?? const [];
+      int admins = 0;
+      for (final x in byRole) {
+        if (x is Map && '${x['is_admin'] ?? x['_id'] ?? ''}' == 'true') {
+          admins = ((x['count'] ?? x['n']) as num?)?.toInt() ?? 0;
+        }
+      }
+      final total = (totals['users'] as num?)?.toInt() ?? 0;
+      final suspended = (totals['users_suspended'] as num?)?.toInt() ??
+          (total - ((totals['users_verified'] as num?)?.toInt() ?? 0));
+      setState(() {
+        _statsTotal = total;
+        _statsSuspended = suspended.clamp(0, total).toInt();
+        _statsActive = total - _statsSuspended;
+        _statsAdmin = admins;
+      });
+    } catch (_) {
+      // angalizo: inarudi kwa idadi ya ukurasa huu
+      setState(() {
+        _statsTotal = _total;
+        _statsActive = _users.where((u) => '${(u as Map)['status'] ?? 'active'}' == 'active').length;
+        _statsSuspended = _users.where((u) => '${(u as Map)['status'] ?? 'active'}' != 'active').length;
+        _statsAdmin = _users.where((u) => (u as Map)['is_admin'] == true).length;
+      });
+    }
   }
 
   int get _activeFilterCount => [
         _category.isNotEmpty,
+        _status != null,
         _regionId != null,
         _districtId != null,
         _facilityId != null,
@@ -159,11 +251,12 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   void _clearAllFilters() {
     setState(() {
       _category = '';
+      _status = null;
       _regionId = null; _regionName = null;
       _districtId = null; _districtName = null;
       _facilityId = null; _facilityName = null;
       _subjectCode = null; _subjectName = null;
-      _visible = _step;
+      _page = 0;
     });
     _load();
   }
@@ -185,13 +278,13 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   IconData _deptIcon(String code) {
     switch (code) {
       case 'health':
-        return Icons.medical_services_outlined;
+        return PhosphorIcons.heartbeat();
       case 'education':
-        return Icons.school_outlined;
+        return PhosphorIcons.graduationCap();
       case 'service':
-        return Icons.account_balance_outlined;
+        return PhosphorIcons.briefcase();
       default:
-        return Icons.apartment_outlined;
+        return PhosphorIcons.buildings();
     }
   }
 
@@ -203,6 +296,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       final removed = _users.where((u) => _uid(u) == id).toList();
       setState(() {
         _users.removeWhere((u) => _uid(u) == id);
+        _total = (_total - 1).clamp(0, 1 << 30).toInt();
+        _statsTotal = (_statsTotal - 1).clamp(0, 1 << 30).toInt();
         _trash.addAll(removed.map(asMap));
       });
       _showMsg('$name amefutwa');
@@ -335,8 +430,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   }
 
   void _applySheetFilters() {
-    _resetVisible();
+    _page = 0;
     _load();
+    _loadCounts();
   }
 
   // ── Trash sheet (zilizofutwa kipindi hii) ────────────────────────────────
@@ -373,7 +469,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                 for (final t in _trash)
                   ListTile(
                     dense: true,
-                    leading: const Icon(Icons.person_outline, size: 18, color: v2TextMuted),
+                    leading: Icon(PhosphorIcons.user(), size: 18, color: v2TextMuted),
                     title: Text(v2TitleCase('${t['full_name'] ?? ''}'),
                         style: const TextStyle(fontSize: 13)),
                     subtitle: Text('${t['phone_primary'] ?? ''}',
@@ -403,11 +499,16 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   // ═══════════════════════════════ BUILD ═══════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    final items = _wanaoonekana;
+    final from = _total == 0 ? 0 : _page * _pageSize + 1;
+    final to = _page * _pageSize + _users.length;
 
     return Scaffold(
-      backgroundColor: v2AccentBg,
+      // ── Background NYEUPE (siyo bluu) ──
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
         title: Row(children: [
           const Text('Watumiaji'),
           const SizedBox(width: 8),
@@ -427,234 +528,343 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
             icon: Badge(
               label: Text('${_trash.length}'),
               isLabelVisible: _trash.isNotEmpty,
-              child: const Icon(Icons.delete_outline),
+              child: Icon(PhosphorIcons.trash(), size: 20),
             ),
           ),
           const SizedBox(width: 4),
         ],
       ),
-      body: LayoutBuilder(builder: (context, constraints) {
-        return Stack(children: [
-          Column(children: [
-            // ── Search + tune ────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-              child: Row(children: [
-                Expanded(
-                  child: TextField(
-                    controller: _search,
-                    decoration: const InputDecoration(
-                        hintText: 'Tafuta jina, simu, kada...',
-                        prefixIcon: Icon(Icons.search, size: 20)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: _openFilters,
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration:
-                        BoxDecoration(color: v2Accent, borderRadius: BorderRadius.circular(10)),
-                    child: Stack(children: [
-                      const Center(child: Icon(Icons.tune, color: Colors.white, size: 18)),
-                      if (_activeFilterCount > 0)
-                        Positioned(
-                          top: 2,
-                          right: 2,
-                          child: Container(
-                            width: 15,
-                            height: 15,
-                            decoration:
-                                const BoxDecoration(color: v2Danger, shape: BoxShape.circle),
-                            child: Center(
-                                child: Text('$_activeFilterCount',
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 9))),
-                          ),
-                        ),
-                    ]),
-                  ),
-                ),
-              ]),
-            ),
-
-            // ── Message bar (na Tendua) ──────────────────────────────────
-            if (_message != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
-                  decoration: BoxDecoration(
-                      color: Colors.white, borderRadius: BorderRadius.circular(10)),
-                  child: Row(children: [
-                    Expanded(
-                        child: Text(_message!,
-                            style: const TextStyle(fontSize: 13, color: v2TextPrimary))),
-                    if (_undoFn != null)
-                      TextButton(
-                        onPressed: () {
-                          _msgTimer?.cancel();
-                          setState(() => _message = null);
-                          _undoFn!();
-                        },
-                        child: const Text('Tendua',
-                            style:
-                                TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
-                      ),
-                  ]),
-                ),
-              ),
-
-            const Divider(height: 1, color: v2Border),
-
-            // ── List / states ────────────────────────────────────────────
+      body: Column(children: [
+        // ── Search + tune ────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(children: [
             Expanded(
-              child: _loading && _users.isEmpty
-                  ? ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                      itemCount: 5,
-                      itemBuilder: (_, _) => const V2SkeletonCard())
-                  : _error != null
-                      ? Center(
-                          child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.cloud_off_outlined,
-                              size: 44, color: v2TextMuted),
-                          const SizedBox(height: 12),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32),
-                            child: Text(_error!,
-                                textAlign: TextAlign.center,
-                                style:
-                                    const TextStyle(fontSize: 12, color: v2TextMuted)),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: _load,
-                            icon: const Icon(Icons.refresh, size: 16),
-                            label: const Text('Jaribu tena'),
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: v2Accent,
-                                foregroundColor: Colors.white),
-                          ),
-                        ]))
-                      : _users.isEmpty
-                          ? Center(
-                              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                              const Icon(Icons.person_search_outlined,
-                                  size: 48, color: v2TextMuted),
-                              const SizedBox(height: 12),
-                              const Text('Hakuna watumiaji wanaolingana',
-                                  style: TextStyle(color: v2TextMuted)),
-                              if (_activeFilterCount > 0) ...[
-                                const SizedBox(height: 12),
-                                OutlinedButton(
-                                    onPressed: _clearAllFilters,
-                                    child: const Text('Ondoa vichujio')),
-                              ],
-                            ]))
-                          : NotificationListener<ScrollNotification>(
-                              onNotification: (n) {
-                                if (n.metrics.axis == Axis.vertical &&
-                                    n.metrics.extentAfter < 400) {
-                                  _maybeExtend();
-                                }
-                                return false;
-                              },
-                              child: RefreshIndicator(
-                                color: v2Accent,
-                                onRefresh: _load,
-                                child: ListView.builder(
-                                  physics: const AlwaysScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                                  itemCount: items.length + 1,
-                                  itemBuilder: (context, i) {
-                                    if (i == items.length) {
-                                      // footer ya mwisho wa orodha
-                                      if (_visible < _users.length) {
-                                        return const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 18),
-                                          child: Center(
-                                              child: SizedBox(
-                                                  width: 22,
-                                                  height: 22,
-                                                  child: CircularProgressIndicator(
-                                                      strokeWidth: 2.4,
-                                                      color: v2Accent))),
-                                        );
-                                      }
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        child: Center(
-                                            child: Text(
-                                                'Umefika mwisho — ${v2FmtNum(_users.length)} watumiaji',
-                                                style: const TextStyle(
-                                                    fontSize: 11.5,
-                                                    color: v2TextMuted))),
-                                      );
-                                    }
-                                    final u = asMap(items[i]);
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 10),
-                                      child: V2UserCard(
-                                        user: u,
-                                        timeText: _timeAgo(u),
-                                        isNewest: i == 0,
-                                        isLast: i == items.length - 1,
-                                        deptName:
-                                            _deptName('${u['category'] ?? ''}'),
-                                        deptIcon:
-                                            _deptIcon('${u['category'] ?? ''}'),
-                                        onDotsTap: () => _onDotsTap(u),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
+              child: TextField(
+                controller: _search,
+                decoration: InputDecoration(
+                    hintText: 'Tafuta jina, simu, kada...',
+                    prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 18),
+                    isDense: true,
+                    filled: true,
+                    fillColor: v2SurfaceMuted,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none)),
+              ),
             ),
-
-            // ── Footer: Jumla ────────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration:
-                  const BoxDecoration(border: Border(top: BorderSide(color: v2Border))),
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('Jumla: ${v2FmtNum(_users.length)}',
-                    style: const TextStyle(fontSize: 11, color: v2TextMuted)),
-                Text('Inaonyesha ${items.length}',
-                    style: const TextStyle(fontSize: 11, color: v2TextMuted)),
-              ]),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: _openFilters,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                    color: v2Accent, borderRadius: BorderRadius.circular(12)),
+                child: Stack(children: [
+                  Center(
+                      child: Icon(PhosphorIcons.funnel(),
+                          color: Colors.white, size: 18)),
+                  if (_activeFilterCount > 0)
+                    Positioned(
+                      top: 2,
+                      right: 2,
+                      child: Container(
+                        width: 15,
+                        height: 15,
+                        decoration:
+                            const BoxDecoration(color: v2Danger, shape: BoxShape.circle),
+                        child: Center(
+                            child: Text('$_activeFilterCount',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 9))),
+                      ),
+                    ),
+                ]),
+              ),
             ),
           ]),
+        ),
 
-          // ── FAB "+" robo tatu ya urefu, kulia (kama prototype) ─────────
-          Positioned(
-            right: 10,
-            top: constraints.maxHeight * 0.68,
-            child: InkWell(
-              onTap: _openAddOptions,
-              borderRadius: BorderRadius.circular(26),
-              child: Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: v2Accent,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: .12),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3))
-                  ],
-                ),
-                child: const Icon(Icons.add, color: Colors.white, size: 22),
-              ),
+        // ── STATS CHIPS — JUU, na idadi halisi ──────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+          child: SizedBox(
+            height: 30,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _statChip(
+                    PhosphorIcons.usersThree(),
+                    'Wote',
+                    v2FmtNum(_statsTotal),
+                    selected: _status == null,
+                    onTap: () => _setStatus(null)),
+                _statChip(
+                    PhosphorIcons.checkCircle(),
+                    'Hai',
+                    v2FmtNum(_statsActive),
+                    selected: _status == 'active',
+                    onTap: () => _setStatus('active')),
+                _statChip(
+                    PhosphorIcons.prohibit(),
+                    'Wamesitishwa',
+                    v2FmtNum(_statsSuspended),
+                    selected: _status == 'disabled',
+                    onTap: () => _setStatus('disabled')),
+                _statChip(
+                    PhosphorIcons.shieldCheck(),
+                    'Admin',
+                    v2FmtNum(_statsAdmin),
+                    selected: false,
+                    color: v2Accent,
+                    bg: v2AccentBg,
+                    onTap: _openAdminFilter),
+              ],
             ),
           ),
-        ]);
-      }),
+        ),
+
+        // ── Message bar (na Tendua) ──────────────────────────────────────
+        if (_message != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+              decoration: BoxDecoration(
+                  color: v2SurfaceMuted, borderRadius: BorderRadius.circular(10)),
+              child: Row(children: [
+                Expanded(
+                    child: Text(_message!,
+                        style: const TextStyle(fontSize: 13, color: v2TextPrimary))),
+                if (_undoFn != null)
+                  TextButton(
+                    onPressed: () {
+                      _msgTimer?.cancel();
+                      setState(() => _message = null);
+                      _undoFn!();
+                    },
+                    child: const Text('Tendua',
+                        style:
+                            TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                  ),
+              ]),
+            ),
+          ),
+
+        const Divider(height: 1, color: v2Border),
+
+        // ── List / states — SCROLL NZIMA, hakuna footer static ──────────
+        Expanded(
+          child: _loading && _users.isEmpty
+              ? ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  itemCount: 5,
+                  itemBuilder: (_, _) => const V2SkeletonCard())
+              : _error != null
+                  ? ListView(children: [
+                      const SizedBox(height: 80),
+                      Column(children: [
+                        Icon(PhosphorIcons.cloudSlash(),
+                            size: 44, color: v2TextMuted),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(_error!,
+                              textAlign: TextAlign.center,
+                              style:
+                                  const TextStyle(fontSize: 12, color: v2TextMuted)),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: _load,
+                          icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
+                          label: const Text('Jaribu tena'),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: v2Accent,
+                              foregroundColor: Colors.white),
+                        ),
+                      ]),
+                    ])
+                  : _users.isEmpty
+                      ? ListView(children: [
+                          const SizedBox(height: 80),
+                          Column(children: [
+                            Icon(PhosphorIcons.userFocus(),
+                                size: 48, color: v2TextMuted),
+                            const SizedBox(height: 12),
+                            const Text('Hakuna watumiaji wanaolingana',
+                                style: TextStyle(color: v2TextMuted)),
+                            if (_activeFilterCount > 0) ...[
+                              const SizedBox(height: 12),
+                              OutlinedButton(
+                                  onPressed: _clearAllFilters,
+                                  child: const Text('Ondoa vichujio')),
+                            ],
+                          ]),
+                        ])
+                      : RefreshIndicator(
+                          color: v2Accent,
+                          onRefresh: () async {
+                            await _load();
+                            _loadCounts();
+                          },
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                            itemCount: _users.length,
+                            itemBuilder: (context, i) {
+                              final u = asMap(_users[i]);
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: V2UserCard(
+                                  user: u,
+                                  timeText: _timeAgo(u),
+                                  isNewest: i == 0 && _page == 0,
+                                  isLast: i == _users.length - 1,
+                                  deptName:
+                                      _deptName('${u['category'] ?? ''}'),
+                                  deptIcon:
+                                      _deptIcon('${u['category'] ?? ''}'),
+                                  onDotsTap: () => _onDotsTap(u),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+        ),
+
+        // ── PAGINATION YA SERVER — chini ya orodha, si static footer ────
+        SafeArea(
+          top: false,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: v2Border))),
+            child: Row(children: [
+              Expanded(
+                child: Text(
+                  _total > 0
+                      ? 'Watu ${v2FmtNum(from)}–${v2FmtNum(to)} kati ya ${v2FmtNum(_total)}'
+                      : 'Hakuna watu',
+                  style: const TextStyle(fontSize: 11.5, color: v2TextMuted),
+                ),
+              ),
+              _pageBtn(
+                icon: PhosphorIcons.caretLeft(),
+                enabled: _page > 0 && !_loadingMore,
+                onTap: _prevPage,
+              ),
+              const SizedBox(width: 10),
+              Text('Ukurasa ${_page + 1}',
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 10),
+              _pageBtn(
+                icon: PhosphorIcons.caretRight(),
+                enabled: _hasNext && !_loadingMore,
+                onTap: _nextPage,
+              ),
+            ]),
+          ),
+        ),
+      ]),
+      // ── FAB "+" robo tatu ya urefu, kulia (kama prototype) ──
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openAddOptions,
+        backgroundColor: v2Accent,
+        shape: const CircleBorder(),
+        child: Icon(PhosphorIcons.plus(), color: Colors.white, size: 22),
+      ),
+    );
+  }
+
+  void _setStatus(String? s) {
+    setState(() {
+      _status = s;
+      _page = 0;
+    });
+    _load();
+  }
+
+  Future<void> _openAdminFilter() async {
+    setState(() {
+      _status = null;
+      _page = 0;
+    });
+    // Onyesha admin PEKEE kwa kutumia is_admin=true (backend)
+    setState(() => _loading = true);
+    try {
+      final p = _queryParams;
+      p['is_admin'] = true;
+      p['skip'] = 0;
+      final r =
+          await ApiService().adminUsers(params: p, useCache: false);
+      if (!mounted) return;
+      final raw = r.data;
+      final map = raw is Map ? raw : {};
+      final list =
+          (map['users'] ?? (raw is List ? raw : map['data'] ?? [])) as List;
+      setState(() {
+        _users = list;
+        _total = (map['total'] as num?)?.toInt() ?? list.length;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  Widget _statChip(IconData icon, String label, String count,
+      {required bool selected,
+      required VoidCallback onTap,
+      Color color = v2TextSecondary,
+      Color bg = v2SurfaceMuted}) {
+    final c = selected ? v2Accent : color;
+    final b = selected ? v2AccentBg : bg;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+              color: b,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                  color: selected ? v2Accent : v2Border,
+                  width: selected ? 1.2 : 1)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 13, color: c),
+            const SizedBox(width: 5),
+            Text('$label ${count == '0' ? '' : count}'.trim(),
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: c)),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _pageBtn({required IconData icon, required bool enabled, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(9),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+            color: enabled ? v2SurfaceMuted : v2Surface,
+            border: Border.all(color: enabled ? v2Border : v2Border),
+            borderRadius: BorderRadius.circular(9)),
+        child: Icon(icon,
+            size: 15, color: enabled ? v2TextPrimary : v2TextMuted),
+      ),
     );
   }
 
@@ -761,7 +971,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
       MaterialPageRoute(
         builder: (_) => V2PickerScreen(
           title: 'Chagua Mkoa',
-          icon: Icons.location_on_outlined,
+          icon: PhosphorIcons.mapPin(),
           allLabel: 'Mikoa yote',
           options: [
             for (final r in widget.parent._regions)
@@ -795,7 +1005,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
         builder: (_) => V2PickerScreen(
           title: 'Chagua Wilaya',
           subtitle: 'Ndani ya ${_regionName ?? ''}',
-          icon: Icons.location_city_outlined,
+          icon: PhosphorIcons.city(),
           allLabel: 'Wilaya zote',
           options: [
             for (final d in _districts)
@@ -826,7 +1036,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
         builder: (_) => V2PickerScreen(
           title: 'Chagua Kituo',
           subtitle: 'Ndani ya ${_districtName ?? ''}',
-          icon: Icons.apartment_outlined,
+          icon: PhosphorIcons.buildings(),
           allLabel: 'Vituo vyote',
           options: [
             for (final f in _facilities)
@@ -851,7 +1061,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
       MaterialPageRoute(
         builder: (_) => V2PickerScreen(
           title: 'Chagua Somo',
-          icon: Icons.menu_book_outlined,
+          icon: PhosphorIcons.bookOpen(),
           allLabel: 'Masomo yote',
           options: [
             for (final s in _subjects)
@@ -897,8 +1107,8 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                         style: TextStyle(
                             fontSize: 13,
                             color: active ? v2Accent : v2TextPrimary))),
-                const Icon(Icons.keyboard_arrow_down,
-                    size: 16, color: v2TextMuted),
+                Icon(PhosphorIcons.caretDown(),
+                    size: 14, color: v2TextMuted),
               ]),
             ),
           ),
@@ -916,7 +1126,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(children: [
-              const Icon(Icons.tune, size: 18, color: v2TextSecondary),
+              Icon(PhosphorIcons.funnel(), size: 17, color: v2TextSecondary),
               const SizedBox(width: 10),
               const Text('Vichujio',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -929,8 +1139,8 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                   _facilityId = null; _facilityName = null;
                   _subjectCode = null; _subjectName = null;
                 }),
-                child: const Row(children: [
-                  Icon(Icons.refresh, size: 14, color: v2Accent),
+                child: Row(children: [
+                  Icon(PhosphorIcons.arrowClockwise(), size: 13, color: v2Accent),
                   SizedBox(width: 4),
                   Text('Futa vyote',
                       style: TextStyle(fontSize: 12, color: v2Accent)),
@@ -951,7 +1161,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                           fontWeight: FontWeight.w600,
                           color: v2TextMuted)),
                   const SizedBox(height: 8),
-                  sel(Icons.category_outlined,
+                  sel(PhosphorIcons.squaresFour(),
                       _category.isEmpty
                           ? 'Idara zote'
                           : p._deptName(_category),
@@ -964,7 +1174,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                           fontWeight: FontWeight.w600,
                           color: v2TextMuted)),
                   const SizedBox(height: 8),
-                  sel(Icons.location_on_outlined, _regionName ?? 'Mikoa yote',
+                  sel(PhosphorIcons.mapPin(), _regionName ?? 'Mikoa yote',
                       _pickRegion,
                       active: _regionId != null),
                   const SizedBox(height: 14),
@@ -974,22 +1184,22 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                           fontWeight: FontWeight.w600,
                           color: v2TextMuted)),
                   const SizedBox(height: 8),
-                  sel(Icons.location_city_outlined, _districtName ?? 'Wilaya zote',
+                  sel(PhosphorIcons.city(), _districtName ?? 'Wilaya zote',
                       _pickDistrict,
                       enabled: _regionId != null, active: _districtId != null),
                   const SizedBox(height: 14),
-                  const Text('KITAU / MASOMO',
+                  const Text('KITUO / MASOMO',
                       style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
                           color: v2TextMuted)),
                   const SizedBox(height: 8),
                   if (_category == 'education')
-                    sel(Icons.menu_book_outlined, _subjectName ?? 'Masomo yote',
+                    sel(PhosphorIcons.bookOpen(), _subjectName ?? 'Masomo yote',
                         _pickSubject,
                         active: _subjectCode != null)
                   else
-                    sel(Icons.apartment_outlined, _facilityName ?? 'Vituo vyote',
+                    sel(PhosphorIcons.buildings(), _facilityName ?? 'Vituo vyote',
                         _pickFacility,
                         enabled: _districtId != null,
                         active: _facilityId != null),
@@ -1012,7 +1222,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                       border: Border.all(color: v2Border),
                       borderRadius: BorderRadius.circular(10)),
                   child:
-                      const Icon(Icons.close, size: 18, color: v2TextSecondary),
+                      Icon(PhosphorIcons.x(), size: 17, color: v2TextSecondary),
                 ),
               ),
               const Spacer(),
@@ -1028,7 +1238,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                   p._applySheetFilters();
                   Navigator.of(context).pop();
                 },
-                icon: const Icon(Icons.check, size: 16),
+                icon: Icon(PhosphorIcons.check(), size: 15),
                 label: const Text('Tumia'),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: v2Accent, foregroundColor: Colors.white),
