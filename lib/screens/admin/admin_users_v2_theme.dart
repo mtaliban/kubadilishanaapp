@@ -56,15 +56,23 @@ class V2StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
           color: active ? v2SuccessBg : v2DangerBg,
           borderRadius: BorderRadius.circular(20)),
-      child: Text(active ? 'Hai' : 'Amesitishwa',
-          style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: active ? v2Success : v2Danger)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+                color: active ? v2Success : v2Danger, shape: BoxShape.circle)),
+        const SizedBox(width: 5),
+        Text(active ? 'Hai' : 'Amesitishwa',
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: active ? v2Success : v2Danger)),
+      ]),
     );
   }
 }
@@ -135,6 +143,7 @@ class V2UserCard extends StatelessWidget {
     final station =
         user['current_station'] as Map? ?? user['station'] as Map? ?? {};
     final region = station['region_name'] as String? ?? '';
+    final district = station['district_name'] as String? ?? '';
     final st = '${user['status'] ?? 'active'}'.toLowerCase();
     final isActive = st == 'active';
     final isPaid = (user['is_verified'] as bool?) ?? false;
@@ -142,38 +151,29 @@ class V2UserCard extends StatelessWidget {
     final init = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Opacity(
-      opacity: isActive ? 1.0 : 0.68,
+      opacity: isActive ? 1.0 : 0.72,
       child: Container(
-        // ── Kadi NZIMA: no timeline column — full width, clean padding ──
-        padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: v2Surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: v2Border, width: 0.7),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: v2Border, width: 0.8),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Muda (juu, ndogo, kama prototype) ──
-            if (timeText.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6, left: 2),
-                child: Text(timeText,
-                    style: const TextStyle(
-                        fontSize: 10.5, color: v2TextMuted)),
-              ),
-            // ── Avatar + jina + simu + hali + dots ──
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // ── HEADER: avatar kubwa + jina + muda + pill + dots ──
+            Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
               Stack(clipBehavior: Clip.none, children: [
                 Container(
-                  width: 42,
-                  height: 42,
+                  width: 54,
+                  height: 54,
                   decoration: const BoxDecoration(
                       color: v2AccentBg, shape: BoxShape.circle),
                   alignment: Alignment.center,
                   child: Text(init,
                       style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 21,
                           fontWeight: FontWeight.w800,
                           color: v2Accent)),
                 ),
@@ -181,17 +181,17 @@ class V2UserCard extends StatelessWidget {
                   right: -1,
                   bottom: -1,
                   child: Container(
-                    width: 11,
-                    height: 11,
+                    width: 14,
+                    height: 14,
                     decoration: BoxDecoration(
                       color: isActive ? v2Success : v2Danger,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: Colors.white, width: 2.5),
                     ),
                   ),
                 ),
               ]),
-              const SizedBox(width: 11),
+              const SizedBox(width: 13),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,20 +200,27 @@ class V2UserCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16.5,
                             color: v2TextPrimary)),
-                    const SizedBox(height: 1),
-                    Text(
-                      phone.isNotEmpty ? v2FmtPhone(phone) : cadre,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          fontSize: 11.5,
-                          color:
-                              phone.isNotEmpty ? v2Accent : v2TextSecondary,
-                          fontWeight: FontWeight.w600),
-                    ),
+                    const SizedBox(height: 3),
+                    Row(children: [
+                      if (phone.isNotEmpty) ...[
+                        Icon(PhosphorIcons.phone(),
+                            size: 12, color: v2Accent),
+                        const SizedBox(width: 4),
+                        Text(v2FmtPhone(phone),
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: v2Accent,
+                                fontWeight: FontWeight.w600)),
+                      ] else if (cadre.isNotEmpty)
+                        Text(cadre,
+                            style: const TextStyle(
+                                fontSize: 12.5,
+                                color: v2TextSecondary,
+                                fontWeight: FontWeight.w600)),
+                    ]),
                   ],
                 ),
               ),
@@ -221,49 +228,128 @@ class V2UserCard extends StatelessWidget {
               const SizedBox(width: 2),
               IconButton(
                 onPressed: onDotsTap,
-                icon: Icon(PhosphorIcons.dotsThreeVertical(), size: 17),
+                icon: Icon(PhosphorIcons.dotsThreeVertical(), size: 18),
                 color: v2TextMuted,
                 visualDensity: VisualDensity.compact,
               ),
             ]),
-            const SizedBox(height: 7),
-            // ── Chips: kada/idara/mkoa + malipo + admin ──
-            Wrap(spacing: 6, runSpacing: 6, children: [
+            const SizedBox(height: 13),
+
+            // ── BOX YA KATI: Idara | Mkoa/Wilaya (kama Anatoka/Anataka) ──
+            Container(
+              width: double.infinity,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: v2SurfaceMuted,
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Row(children: [
+                Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('IDARA',
+                            style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: .5,
+                                color: v2TextMuted)),
+                        const SizedBox(height: 4),
+                        Row(children: [
+                          Icon(deptIcon, size: 14, color: v2Accent),
+                          const SizedBox(width: 5),
+                          Flexible(
+                              child: Text(
+                            deptName.isEmpty ? '—' : deptName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: v2TextPrimary),
+                          )),
+                        ]),
+                      ]),
+                ),
+                Container(
+                    width: 1,
+                    height: 34,
+                    color: v2Border,
+                    margin: const EdgeInsets.symmetric(horizontal: 12)),
+                Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('MAHALI ANAKO',
+                            style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: .5,
+                                color: v2TextMuted)),
+                        const SizedBox(height: 4),
+                        Text(
+                          region.isEmpty ? '—' : region,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: v2TextPrimary),
+                        ),
+                        if (district.isNotEmpty)
+                          Text(district,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 11.5, color: v2TextSecondary)),
+                      ]),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 12),
+
+            // ── CHIPS: kada + malipo + admin ──
+            Wrap(spacing: 7, runSpacing: 7, children: [
               if (cadre.isNotEmpty)
                 _tag(cadre, PhosphorIcons.bookOpen(), v2AccentBg, v2Accent),
-              if (deptName.isNotEmpty)
-                _tag(deptName, deptIcon, v2SurfaceMuted, v2TextSecondary),
-              if (region.isNotEmpty)
-                _tag(region, PhosphorIcons.mapPin(), v2SurfaceMuted,
-                    v2TextSecondary),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                     color: isPaid ? v2SuccessBg : v2DangerBg,
-                    borderRadius: BorderRadius.circular(8)),
-                child: Text(isPaid ? 'Amelipa' : 'Hajalipa',
-                    style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: isPaid ? v2Success : v2Danger)),
+                    borderRadius: BorderRadius.circular(9)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(
+                      isPaid
+                          ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
+                          : PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
+                      size: 12,
+                      color: isPaid ? v2Success : v2Danger),
+                  const SizedBox(width: 4),
+                  Text(isPaid ? 'Amelipa' : 'Hajalipa',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isPaid ? v2Success : v2Danger)),
+                ]),
               ),
               if (isAdmin)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                      color: v2AccentBg,
-                      borderRadius: BorderRadius.circular(8)),
+                      color: v2Accent,
+                      borderRadius: BorderRadius.circular(9)),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(PhosphorIcons.shieldCheck(),
-                        size: 11, color: v2Accent),
-                    const SizedBox(width: 3),
+                    Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
+                        size: 12, color: Colors.white),
+                    const SizedBox(width: 4),
                     const Text('Admin',
                         style: TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: v2Accent)),
+                            color: Colors.white)),
                   ]),
                 ),
             ]),
@@ -274,16 +360,16 @@ class V2UserCard extends StatelessWidget {
   }
 
   Widget _tag(String label, IconData icon, Color bg, Color fg) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration:
-            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(9)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 11, color: fg),
-          const SizedBox(width: 3),
+          Icon(icon, size: 12, color: fg),
+          const SizedBox(width: 4),
           Flexible(
               child: Text(label,
                   style: TextStyle(
-                      color: fg, fontSize: 10.5, fontWeight: FontWeight.w700),
+                      color: fg, fontSize: 11, fontWeight: FontWeight.w700),
                   overflow: TextOverflow.ellipsis)),
         ]),
       );
@@ -302,33 +388,41 @@ class V2SkeletonCard extends StatelessWidget {
               color: v2SurfaceMuted, borderRadius: BorderRadius.circular(6)),
         );
     return Container(
-      padding: const EdgeInsets.all(14),
-      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: v2Surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: v2Border, width: 0.7),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: v2Border, width: 0.8),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Container(
-              width: 42,
-              height: 42,
+              width: 54,
+              height: 54,
               decoration: const BoxDecoration(
                   color: v2SurfaceMuted, shape: BoxShape.circle)),
-          const SizedBox(width: 12),
+          const SizedBox(width: 13),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            bar(140, 12),
-            const SizedBox(height: 8),
-            bar(100, 10),
+            bar(150, 14),
+            const SizedBox(height: 9),
+            bar(110, 11),
           ]),
+          const Spacer(),
+          bar(70, 22),
         ]),
+        const SizedBox(height: 13),
+        Container(
+          width: double.infinity,
+          height: 58,
+          decoration: BoxDecoration(
+              color: v2SurfaceMuted, borderRadius: BorderRadius.circular(13)),
+        ),
         const SizedBox(height: 12),
-        Wrap(spacing: 6, runSpacing: 6, children: [
-          bar(70, 18),
-          bar(90, 18),
-          bar(60, 18),
-          bar(80, 18),
+        Wrap(spacing: 7, runSpacing: 7, children: [
+          bar(80, 22),
+          bar(90, 22),
+          bar(70, 22),
         ]),
       ]),
     );

@@ -713,12 +713,12 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                           },
                           child: ListView.builder(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                             itemCount: _users.length,
                             itemBuilder: (context, i) {
                               final u = asMap(_users[i]);
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.only(bottom: 12),
                                 child: V2UserCard(
                                   user: u,
                                   timeText: _timeAgo(u),
