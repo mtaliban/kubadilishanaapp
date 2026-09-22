@@ -86,6 +86,61 @@ IconData _deptIcon(String code) {
   }
 }
 
+// DeptCard — kadi ya kuchagua idara/wizara (selected = bluu border + bg)
+class _DeptCard extends StatelessWidget {
+  final IconData icon;
+  final String name;
+  final bool isSelected;
+  final VoidCallback onTap;
+  const _DeptCard({
+    required this.icon,
+    required this.name,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? _kBlue : const Color(0xFFE5E7EB),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(children: [
+          Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFFDBEAFE) : const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon,
+                size: 18,
+                color: isSelected ? _kBlue : const Color(0xFF6B7280)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(name,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? _kBlue : const Color(0xFF374151))),
+          ),
+          if (isSelected)
+            const Icon(Icons.check_circle_rounded, size: 18, color: _kBlue),
+        ]),
+      ),
+    );
+  }
+}
+
 // FieldLabel — web: icon size=14 brand-blue + gap-1.5(6px) + label text-sm font-semibold grey-700
 Widget _fieldLabel(IconData icon, String label) => Padding(
       padding: const EdgeInsets.only(bottom: 6),
