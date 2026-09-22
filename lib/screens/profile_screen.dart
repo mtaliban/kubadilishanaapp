@@ -78,6 +78,26 @@ ButtonStyle _btnPrimarySmall() => ElevatedButton.styleFrom(
   elevation: 0,
 );
 
+/// "255763795801" / "0763795801" -> "+255 763 795 801"
+String _fmtPhone(String p) {
+  final d = p.replaceAll(RegExp(r'\D'), '');
+  if (d.length == 12 && d.startsWith('255')) {
+    return '+255 ${d.substring(3, 6)} ${d.substring(6, 9)} ${d.substring(9)}';
+  }
+  if (d.length == 10 && d.startsWith('0')) {
+    return '+255 ${d.substring(1, 4)} ${d.substring(4, 7)} ${d.substring(7)}';
+  }
+  return p.isEmpty ? '' : '+$d';
+}
+
+/// "0763795801" / "+255763795801" -> "763795801" (kwa field yenye prefix +255)
+String _strip255(String p) {
+  final d = p.replaceAll(RegExp(r'\D'), '');
+  if (d.length == 12 && d.startsWith('255')) return d.substring(3);
+  if (d.length == 10 && d.startsWith('0')) return d.substring(1);
+  return d;
+}
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
   @override
@@ -446,12 +466,14 @@ class _ViewAdmin extends StatelessWidget {
                 leadingColor: _accent,
                 leadingBg: _accentMuted,
                 label: 'Namba ya simu',
-                value: phone,
+                value: phone.isNotEmpty ? _fmtPhone(phone) : '—',
                 trailingIcon: Icons.call,
                 trailingColor: _accent,
                 trailingBg: _accentMuted,
                 onTrailingTap: () async {
-                  final ok = await launchUrl(Uri.parse('tel:$phone'),
+                  final digits = phone.replaceAll(RegExp(r'\D'), '');
+                  if (digits.isEmpty) return;
+                  final ok = await launchUrl(Uri.parse('tel:+$digits'),
                       mode: LaunchMode.externalApplication);
                   if (!ok && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -467,7 +489,7 @@ class _ViewAdmin extends StatelessWidget {
                   leadingColor: _success,
                   leadingBg: _successBg,
                   label: 'WhatsApp / Simu ya pili',
-                  value: _phoneAlt,
+                  value: _fmtPhone(_phoneAlt),
                   trailingIcon: Icons.chat_bubble,
                   trailingColor: Colors.white,
                   trailingBg: _success,
@@ -649,7 +671,7 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.profile['full_name'] ?? '');
-    _altCtrl  = TextEditingController(text: widget.profile['phone_alt'] ?? '');
+    _altCtrl  = TextEditingController(text: _strip255(widget.profile['phone_alt']?.toString() ?? ''));
   }
 
   @override

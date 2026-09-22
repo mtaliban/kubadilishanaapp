@@ -174,7 +174,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     setState(() { _searchingUsers = true; });
     try {
       final r = await ApiService().adminUsers(
-          params: {'search': q, 'limit': 10}, useCache: false);
+          params: {'q': q, 'limit': 10}, useCache: false);
       if (!mounted) return;
       final data = r.data;
       setState(() {
@@ -274,7 +274,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     if (a == 'user') return 'Mtu Mmoja';
     try {
       final dept = _departments.firstWhere((d) => (d['code'] ?? '') == a);
-      return dept['name'] as String? ?? a;
+      return (dept['display_name'] ?? dept['name'] ?? a) as String;
     } catch (_) {
       return a;
     }
@@ -642,7 +642,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                         u['full_name'] as String? ?? '',
                         style: GoogleFonts.inter(fontSize: 13, color: _kGrey900),
                       )),
-                      Text(u['phone'] as String? ?? '',
+                      Text(u['phone_primary'] as String? ?? u['phone'] as String? ?? '',
                           style: GoogleFonts.inter(fontSize: 11,
                               color: _kGrey500)),
                     ]),
@@ -695,15 +695,20 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                       fontWeight: FontWeight.w600, color: _kGrey900)),
             ),
             const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-              decoration: BoxDecoration(
-                color: _kBlue.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 130),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _kBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(_audiencesLabel(auds),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(fontSize: 11,
+                        color: _kBlue, fontWeight: FontWeight.w600)),
               ),
-              child: Text(_audiencesLabel(auds),
-                  style: GoogleFonts.inter(fontSize: 11,
-                      color: _kBlue, fontWeight: FontWeight.w600)),
             ),
           ]),
 
