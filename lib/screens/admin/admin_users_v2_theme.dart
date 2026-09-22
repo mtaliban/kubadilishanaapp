@@ -48,7 +48,7 @@ Future<void> v2Launch(String url) async {
   } catch (_) {}
 }
 
-String _v2Initials(String name) {
+String v2Initials(String name) {
   final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
   if (parts.isEmpty) return '?';
   if (parts.length == 1) return parts[0][0].toUpperCase();
@@ -155,7 +155,7 @@ class V2UserCard extends StatelessWidget {
     final isActive = st == 'active';
     final isPaid = (user['is_verified'] as bool?) ?? false;
     final isAdmin = user['is_admin'] as bool? ?? false;
-    final initials = _v2Initials(name);
+    final initials = v2Initials(name);
 
     final rawDests =
         ((user['desired_destinations'] ?? user['destinations']) as List?) ?? [];

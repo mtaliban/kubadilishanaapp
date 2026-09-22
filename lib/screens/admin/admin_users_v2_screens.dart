@@ -1134,15 +1134,7 @@ class V2UserDetailScreen extends StatelessWidget {
                 : '$d')
             .toList() ??
         [];
-    String _initials(String n) {
-      final parts =
-          n.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-      if (parts.isEmpty) return '?';
-      if (parts.length == 1) return parts[0][0].toUpperCase();
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-
-    final init = _initials(name);
+    final init = v2Initials(name);
     final waDigits = wa.replaceAll(RegExp(r'\D'), '');
     final waIntl =
         waDigits.startsWith('0') ? '255${waDigits.substring(1)}' : waDigits;

@@ -312,12 +312,12 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                 ),
               );
               if (saved == true && mounted) {
-                Navigator.of(detailCtx).pop();
+                if (detailCtx.mounted) Navigator.of(detailCtx).pop();
                 _load();
               }
             },
             onFuta: () async {
-              Navigator.of(detailCtx).pop();
+              if (detailCtx.mounted) Navigator.of(detailCtx).pop();
               await _deleteUser(_uid(usr), '${usr['full_name'] ?? ''}',
                   '${usr['phone_primary'] ?? ''}');
             },
