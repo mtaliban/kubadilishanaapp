@@ -345,8 +345,10 @@ class ApiService {
     AppCache().invalidatePrefix('/feedback/admin');
     return delete('/feedback/admin/$feedbackId');
   }
-  Future<Response> adminListAnnouncements() =>
-      get('/admin/announcements', cacheTtl: _ttlShort);
+  Future<Response> adminListAnnouncements({int limit = 50, int skip = 0}) =>
+      get('/admin/announcements',
+          queryParameters: {'limit': limit, 'skip': skip},
+          cacheTtl: _ttlShort);
   Future<Response> adminSendAnnouncement(Map<String, dynamic> data) async {
     AppCache().invalidatePrefix('/admin/announcements');
     AppCache().invalidatePrefix('/announcements');
