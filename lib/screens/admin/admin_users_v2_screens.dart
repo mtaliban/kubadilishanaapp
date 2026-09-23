@@ -708,6 +708,16 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
 
   // ── UI helpers ───────────────────────────────────────────────────────────
 
+  static String _deptSub(String code) {
+    switch (code.toLowerCase()) {
+      case 'health':     return 'Watumishi wa afya';
+      case 'education':  return 'Walimu';
+      case 'agriculture': return 'Wataalam wa kilimo';
+      case 'water':      return 'Wataalam wa maji';
+      default:           return '';
+    }
+  }
+
   Widget _errorBox() => Container(
         margin: const EdgeInsets.only(top: 6, bottom: 10),
         padding: const EdgeInsets.all(12),
@@ -739,7 +749,9 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         ]),
       );
 
-  Widget _lbl(String text, {bool req = false, String? trailing}) => Padding(
+  Widget _lbl(String text,
+          {bool req = false, String? trailing, Color? trailingColor}) =>
+      Padding(
         padding: const EdgeInsets.only(top: 12, bottom: 6),
         child: Row(children: [
           Expanded(
@@ -758,7 +770,12 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           ),
           if (trailing != null)
             Text(trailing,
-                style: const TextStyle(color: v2TextMuted, fontSize: 12)),
+                style: TextStyle(
+                    color: trailingColor ?? v2TextMuted,
+                    fontSize: 12,
+                    fontWeight: trailingColor != null
+                        ? FontWeight.w600
+                        : FontWeight.w400)),
         ]),
       );
 
@@ -1101,30 +1118,39 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           ]),
         )
       else
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final d in _departments)
-              _V2IdaraCard(
-                code: '${d['code']}',
-                label: '${d['display_name'] ?? d['name'] ?? d['code']}',
-                selected: _category == '${d['code']}',
-                onTap: () {
-                  final code = '${d['code']}';
-                  if (_category == code) return;
-                  setState(() {
-                    _category = code;
-                    _cadreCode = null;
-                    _cadres = [];
-                    _masomo.clear();
-                    _subjects = [];
-                  });
-                  _loadCadres();
-                  if (code == 'education') _loadSubjects();
-                },
-              ),
-          ],
+        LayoutBuilder(
+          builder: (context, box) {
+            final w = (box.maxWidth - 8) / 2;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final d in _departments)
+                  SizedBox(
+                    width: w,
+                    child: _V2IdaraCard(
+                      code: '${d['code']}',
+                      label: '${d['display_name'] ?? d['name'] ?? d['code']}',
+                      sub: _deptSub('${d['code']}'),
+                      selected: _category == '${d['code']}',
+                      onTap: () {
+                        final code = '${d['code']}';
+                        if (_category == code) return;
+                        setState(() {
+                          _category = code;
+                          _cadreCode = null;
+                          _cadres = [];
+                          _masomo.clear();
+                          _subjects = [];
+                        });
+                        _loadCadres();
+                        if (code == 'education') _loadSubjects();
+                      },
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       _lbl('Kada', req: true),
       _selectRow(
@@ -1136,22 +1162,9 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         onTap: _category.isEmpty ? null : _pickCadre,
       ),
       if (showMasomo) ...[
-        const SizedBox(height: 4),
-        Row(children: [
-          const Expanded(
-              child: Text('Masomo anayofundisha',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: v2TextPrimary))),
-          if (_masomo.isNotEmpty)
-            Text('${_masomo.length} umechagua',
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: v2Accent)),
-        ]),
-        const SizedBox(height: 8),
+        _lbl('Masomo anayofundisha',
+            trailing: _masomo.isEmpty ? null : '${_masomo.length} umechagua',
+            trailingColor: _masomo.isEmpty ? null : v2Accent),
         if (_subjects.isEmpty && _masomo.isEmpty)
           Container(
             padding: const EdgeInsets.all(12),
@@ -1326,24 +1339,30 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
 
   Widget _subjectChip(String label, String code) {
     final selected = _masomo.contains(code);
-    return InkWell(
+    return GestureDetector(
       onTap: () =>
           setState(() => selected ? _masomo.remove(code) : _masomo.add(code)),
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? v2Accent : v2Surface,
-          borderRadius: BorderRadius.circular(18),
+          color: selected ? v2Accent : Colors.white,
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
-              color: selected ? v2Accent : v2Border,
-              width: selected ? 1.2 : 1),
+              color: selected ? v2Accent : const Color(0xFFCFD5DF),
+              width: selected ? 1.5 : 1.0),
         ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-                color: selected ? Colors.white : v2TextSecondary)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (selected) ...[
+            Icon(PhosphorIcons.check(), size: 13, color: Colors.white),
+            const SizedBox(width: 4),
+          ],
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  color: selected ? Colors.white : v2TextPrimary)),
+        ]),
       ),
     );
   }
@@ -1354,11 +1373,13 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
 class _V2IdaraCard extends StatelessWidget {
   final String code;
   final String label;
+  final String sub;
   final bool selected;
   final VoidCallback onTap;
   const _V2IdaraCard({
     required this.code,
     required this.label,
+    required this.sub,
     required this.selected,
     required this.onTap,
   });
@@ -1400,43 +1421,43 @@ class _V2IdaraCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _color;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? color : const Color(0xFFE5E7EB),
-            width: selected ? 2.0 : 1.2,
+    return Material(
+      color: selected ? color.withValues(alpha: 0.09) : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? color : const Color(0xFFCFD5DF),
+              width: selected ? 1.5 : 1.2,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_icon, size: 22, color: color),
+              const SizedBox(height: 6),
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: v2TextPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600)),
+              if (sub.isNotEmpty)
+                Text(sub,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        color: v2TextMuted, fontSize: 12)),
+            ],
           ),
         ),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: selected ? color.withValues(alpha: 0.15) : const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(_icon, size: 20, color: selected ? color : v2TextMuted),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            maxLines: 2,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected ? color : v2TextSecondary,
-            ),
-          ),
-        ]),
       ),
     );
   }
@@ -1450,28 +1471,31 @@ class _V2DashedAddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      borderRadius: BorderRadius.circular(10),
       child: CustomPaint(
         painter: _DashedBorderPainter(
-          color: v2Accent.withValues(alpha: 0.5),
+          color: v2Accent.withValues(alpha: 0.6),
           radius: 10,
         ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(PhosphorIcons.plus(), size: 15, color: v2Accent),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: v2Accent,
+        child: SizedBox(
+          height: 40,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(PhosphorIcons.plus(), size: 16, color: v2Accent),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: v2Accent,
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ),
       ),
     );
