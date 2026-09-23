@@ -12,8 +12,8 @@ import 'admin_users_v2_theme.dart';
 // fomu inayojitosheleza (inapakia refs zake mwenyewe).
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Chaguo la picker: id + jina (id inaweza kuwa null = "yote/hiari")
-typedef V2PickOption = ({String? id, String name});
+/// Chaguo la picker: id + jina + subtitle (zote isipokuwa jina zinaweza null)
+typedef V2PickOption = ({String? id, String name, String? subtitle});
 
 // ═══════════════════════════════ SHARED HELPERS ═════════════════════════════
 
@@ -169,6 +169,11 @@ class _V2PickerScreenState extends State<V2PickerScreen> {
                     child: Icon(widget.icon, size: 17, color: v2Accent),
                   ),
                   title: Text(o.name, style: const TextStyle(fontSize: 13.5)),
+                  subtitle: o.subtitle != null
+                      ? Text(o.subtitle!,
+                          style: const TextStyle(
+                              fontSize: 11, color: v2TextMuted))
+                      : null,
                   trailing: widget.selectedId == o.id
                       ? Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
                           color: v2Accent, size: 18)
@@ -409,7 +414,8 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         for (final r in widget.regions)
           (
             id: '${r['id'] ?? r['region_id'] ?? ''}',
-            name: '${r['name'] ?? r['region_name'] ?? ''}'
+            name: '${r['name'] ?? r['region_name'] ?? ''}',
+            subtitle: null,
           ),
       ],
       selectedId: _regionId?.toString(),
@@ -439,7 +445,8 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         for (final d in _districts)
           (
             id: '${d['id'] ?? d['district_id'] ?? ''}',
-            name: '${d['name'] ?? d['district_name'] ?? ''}'
+            name: '${d['name'] ?? d['district_name'] ?? ''}',
+            subtitle: null,
           ),
       ],
       selectedId: _districtId?.toString(),
@@ -457,16 +464,20 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
 
   Future<void> _pickKituo() async {
     if (_districtId == null) return;
+    final catIcon = _category == 'health'
+        ? PhosphorIcons.heartbeat()
+        : PhosphorIcons.buildings();
     final picked = await _openPicker(
       title: 'Chagua Kituo',
       subtitle: 'Ndani ya ${_districtName ?? ''}',
       allLabel: 'Vituo vyote',
-      icon: PhosphorIcons.buildings(),
+      icon: catIcon,
       options: [
         for (final f in _facilities)
           (
             id: '${f['id'] ?? f['code'] ?? ''}',
-            name: '${f['name'] ?? f['facility_name'] ?? ''}'
+            name: '${f['name'] ?? f['facility_name'] ?? ''}',
+            subtitle: f['type'] as String?,
           ),
       ],
       selectedId: _facilityId,
@@ -487,7 +498,8 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         for (final r in widget.regions)
           (
             id: '${r['id'] ?? r['region_id'] ?? ''}',
-            name: '${r['name'] ?? r['region_name'] ?? ''}'
+            name: '${r['name'] ?? r['region_name'] ?? ''}',
+            subtitle: null,
           ),
       ],
     );
@@ -510,7 +522,8 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           for (final d in dists)
             (
               id: '${d['id'] ?? d['district_id'] ?? ''}',
-              name: '${d['name'] ?? d['district_name'] ?? ''}'
+              name: '${d['name'] ?? d['district_name'] ?? ''}',
+              subtitle: null,
             ),
         ],
       );

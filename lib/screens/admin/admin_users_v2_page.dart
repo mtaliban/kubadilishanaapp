@@ -958,6 +958,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
   List<dynamic> _districts = [];
   List<dynamic> _facilities = [];
   List<dynamic> _subjects = [];
+  bool _loadingFacilities = false;
 
   @override
   void initState() {
@@ -980,15 +981,21 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
 
   Future<void> _loadFacilities() async {
     if (_districtId == null) return;
+    if (mounted) setState(() => _loadingFacilities = true);
     try {
       final cat = _category.isEmpty ? 'health' : _category;
       final r =
           await ApiService().getFacilities(_districtId!, category: cat);
       if (!mounted) return;
       final raw = r.data;
-      setState(() => _facilities =
-          raw is List ? raw : (raw['facilities'] ?? raw['data'] ?? []));
-    } catch (_) {}
+      setState(() {
+        _facilities =
+            raw is List ? raw : (raw['facilities'] ?? raw['data'] ?? []);
+        _loadingFacilities = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingFacilities = false);
+    }
   }
 
   Future<void> _loadSubjects() async {
@@ -1045,7 +1052,11 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
       _facilityName = null;
       _facilities = [];
     });
-    if (picked == 'education') _loadSubjects();
+    if (picked == 'education') {
+      _loadSubjects();
+    } else if (_districtId != null) {
+      _loadFacilities();
+    }
   }
 
   Future<void> _pickRegion() async {
@@ -1060,7 +1071,8 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
             for (final r in widget.parent._regions)
               (
                 id: '${r['id'] ?? r['region_id'] ?? ''}',
-                name: '${r['name'] ?? r['region_name'] ?? ''}'
+                name: '${r['name'] ?? r['region_name'] ?? ''}',
+                subtitle: null,
               ),
           ],
           selectedId: _regionId?.toString(),
@@ -1095,7 +1107,8 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
             for (final d in _districts)
               (
                 id: '${d['id'] ?? d['district_id'] ?? ''}',
-                name: '${d['name'] ?? d['district_name'] ?? ''}'
+                name: '${d['name'] ?? d['district_name'] ?? ''}',
+                subtitle: null,
               ),
           ],
           selectedId: _districtId?.toString(),
@@ -1115,19 +1128,23 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
 
   Future<void> _pickFacility() async {
     if (_districtId == null) return;
+    final facIcon = _category == 'health'
+        ? PhosphorIcons.heartbeat()
+        : PhosphorIcons.buildings();
     final picked =
         await Navigator.of(context).push<({String? id, String? name})>(
       MaterialPageRoute(
         builder: (_) => V2PickerScreen(
           title: 'Chagua Kituo',
           subtitle: 'Ndani ya ${_districtName ?? ''}',
-          icon: PhosphorIcons.buildings(),
+          icon: facIcon,
           allLabel: 'Vituo vyote',
           options: [
             for (final f in _facilities)
               (
                 id: '${f['id'] ?? f['code'] ?? ''}',
-                name: '${f['name'] ?? f['facility_name'] ?? ''}'
+                name: '${f['name'] ?? f['facility_name'] ?? ''}',
+                subtitle: f['type'] as String?,
               ),
           ],
           selectedId: _facilityId,
@@ -1153,7 +1170,8 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
             for (final s in _subjects)
               (
                 id: '${s['code'] ?? s['subject_code'] ?? ''}',
-                name: '${s['name'] ?? s['subject_name'] ?? ''}'
+                name: '${s['name'] ?? s['subject_name'] ?? ''}',
+                subtitle: null,
               ),
           ],
           selectedId: _subjectCode,
@@ -1293,9 +1311,15 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                         _subjectName ?? 'Masomo yote', _pickSubject,
                         active: _subjectCode != null)
                   else
-                    sel(PhosphorIcons.buildings(),
-                        _facilityName ?? 'Vituo vyote', _pickFacility,
-                        enabled: _districtId != null,
+                    sel(
+                        _category == 'health'
+                            ? PhosphorIcons.heartbeat()
+                            : PhosphorIcons.buildings(),
+                        _loadingFacilities
+                            ? 'Inapakia vituo...'
+                            : (_facilityName ?? 'Vituo vyote'),
+                        _pickFacility,
+                        enabled: _districtId != null && !_loadingFacilities,
                         active: _facilityId != null),
                   const SizedBox(height: 6),
                 ],
