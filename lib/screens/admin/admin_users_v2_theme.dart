@@ -381,83 +381,63 @@ class V2UserCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            // ── Idara + Kada (mstari 1) ──
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: v2SurfaceMuted,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(children: [
-                Icon(deptIcon, size: 13, color: v2Accent),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    cadre.isNotEmpty
-                        ? '$deptName  ·  $cadre'
-                        : deptName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: v2TextPrimary),
-                  ),
+            // ── Idara + Kada (mstari 1 — chips mbili) ──
+            Row(children: [
+              Flexible(child: _tag(deptName, deptIcon, v2AccentBg, v2Accent)),
+              if (cadre.isNotEmpty) ...[
+                const SizedBox(width: 7),
+                Flexible(
+                  child: _tag(cadre,
+                      PhosphorIcons.identificationBadge(), v2AccentBg, v2Accent),
                 ),
-                if (isAdmin) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(
-                        color: v2Accent,
-                        borderRadius: BorderRadius.circular(7)),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(
-                          PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
-                          size: 10,
-                          color: Colors.white),
-                      const SizedBox(width: 3),
-                      const Text('Admin',
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white)),
-                    ]),
-                  ),
-                ],
-              ]),
-            ),
-            const SizedBox(height: 8),
-
-            // ── Hali ya malipo (mstari 2 — button pana) ──
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: isPaid ? v2SuccessBg : v2DangerBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                        isPaid
-                            ? PhosphorIcons.checkCircle(
-                                PhosphorIconsStyle.fill)
-                            : PhosphorIcons.warningCircle(
-                                PhosphorIconsStyle.fill),
-                        size: 15,
-                        color: isPaid ? v2Success : v2Danger),
-                    const SizedBox(width: 7),
-                    Text(
-                        isPaid ? 'Amelipa' : 'Hajalipa',
+              ],
+              if (isAdmin) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                      color: v2Accent,
+                      borderRadius: BorderRadius.circular(7)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
+                        size: 10, color: Colors.white),
+                    const SizedBox(width: 3),
+                    const Text('Admin',
                         style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: isPaid ? v2Success : v2Danger)),
+                            color: Colors.white)),
                   ]),
-            ),
+                ),
+              ],
+            ]),
+            const SizedBox(height: 7),
+
+            // ── Hali ya mtumiaji + malipo (mstari 2 — chips mbili) ──
+            Row(children: [
+              Flexible(
+                child: _tag(
+                  isActive ? 'Hai' : 'Amesitishwa',
+                  isActive
+                      ? PhosphorIcons.circle(PhosphorIconsStyle.fill)
+                      : PhosphorIcons.prohibit(PhosphorIconsStyle.fill),
+                  isActive ? v2SuccessBg : v2DangerBg,
+                  isActive ? v2Success : v2Danger,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Flexible(
+                child: _tag(
+                  isPaid ? 'Amelipa' : 'Hajalipa',
+                  isPaid
+                      ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
+                      : PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
+                  isPaid ? v2SuccessBg : v2DangerBg,
+                  isPaid ? v2Success : v2Danger,
+                ),
+              ),
+            ]),
           ],
         ),
       ),

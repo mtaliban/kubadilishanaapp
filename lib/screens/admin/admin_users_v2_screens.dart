@@ -377,7 +377,11 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     ];
     if (opts.isEmpty) return;
     final picked = await showSelectSheet<String>(context,
-        title: 'Chagua Idara', items: opts, selected: _category, searchable: false);
+        title: 'Chagua Idara',
+        items: opts,
+        selected: _category,
+        searchable: false,
+        itemIcon: PhosphorIcons.buildings());
     if (picked == null || picked == _category) return;
     setState(() {
       _category = picked;
@@ -401,7 +405,11 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         ),
     ];
     final picked = await showSelectSheet<String>(context,
-        title: 'Chagua Kada', items: opts, selected: _cadreCode, searchable: true);
+        title: 'Chagua Kada',
+        items: opts,
+        selected: _cadreCode,
+        searchable: true,
+        itemIcon: PhosphorIcons.identificationBadge());
     if (picked != null) setState(() => _cadreCode = picked);
   }
 
@@ -676,7 +684,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           decoration: BoxDecoration(
               border: Border.all(color: v2Border),
               borderRadius: BorderRadius.circular(11),
-              color: v2Surface),
+              color: Colors.white),
           child: Row(children: [
             Icon(icon, size: 16, color: v2TextSecondary),
             const SizedBox(width: 10),
@@ -699,16 +707,50 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     final showMasomo = _category == 'education';
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: const Color(0xFFF5F7FA),
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: Text(_isEditing ? 'Hariri Mtumiaji' : 'Mtumiaji Mpya',
             style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: v2TextPrimary)),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: v2Border)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: _saving ? null : _hifadhi,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: v2Accent,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: v2Accent.withValues(alpha: .55),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13))),
+              icon: _saving
+                  ? const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : Icon(PhosphorIcons.floppyDisk(), size: 16),
+              label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 14)),
+            ),
+          ),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -1020,31 +1062,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                     (v) => setState(() => _verified = v)),
               ]),
             ),
-            const SizedBox(height: 20),
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              ElevatedButton.icon(
-                onPressed: _saving ? null : _hifadhi,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: v2Accent,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: v2Accent.withValues(alpha: .6),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 9),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10))),
-                icon: _saving
-                    ? const SizedBox(
-                        width: 13,
-                        height: 13,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : Icon(PhosphorIcons.floppyDisk(), size: 14),
-                label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 12.5)),
-              ),
-            ]),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -1412,16 +1430,50 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: const Color(0xFFF5F7FA),
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: const Text('Ongeza Admin',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: v2TextPrimary)),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: v2Border)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: _saving ? null : _hifadhi,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: v2Accent,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: v2Accent.withValues(alpha: .55),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13))),
+              icon: _saving
+                  ? const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : Icon(PhosphorIcons.floppyDisk(), size: 16),
+              label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 14)),
+            ),
+          ),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -1453,12 +1505,12 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                 child: Row(children: [
                   Icon(PhosphorIcons.shieldCheck(),
                       size: 16, color: v2Accent),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                       child: Text(
                           'Anaingia kwa barua pepe — hana idara wala kada.',
                           style:
-                              TextStyle(fontSize: 12.5, color: v2Accent))),
+                              const TextStyle(fontSize: 12.5, color: v2Accent))),
                 ]),
               ),
               const SizedBox(height: 14),
@@ -1482,31 +1534,7 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                   obscure: true,
                   validator: (v) =>
                       (v == null || v.length < 6) ? 'Herufi 6+' : null),
-              const SizedBox(height: 24),
-              Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                ElevatedButton.icon(
-                  onPressed: _saving ? null : _hifadhi,
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: v2Accent,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: v2Accent.withValues(alpha: .6),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 9),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10))),
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 13,
-                          height: 13,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : Icon(PhosphorIcons.floppyDisk(), size: 14),
-                  label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 12.5)),
-                ),
-              ]),
+              const SizedBox(height: 8),
             ]),
       ),
     );
