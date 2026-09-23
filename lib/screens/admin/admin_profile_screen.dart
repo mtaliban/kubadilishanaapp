@@ -61,7 +61,7 @@ class ProfileColors {
   });
 
   static const light = ProfileColors(
-    page: Color(0xFFF3F5F9),
+    page: Color(0xFFFFFFFF),
     card: Color(0xFFFFFFFF),
     soft: Color(0xFFF1F3F7),
     border: Color(0xFFE3E7EE),

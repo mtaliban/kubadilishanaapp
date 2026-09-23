@@ -205,7 +205,7 @@ class _AdminShellState extends State<AdminShell> {
         lang: LanguageProvider().lang,
         onMenu: () => _scaffoldKey.currentState?.openDrawer(),
         onLangChanged: (l) => LanguageProvider().setLang(l),
-        onAvatarTap: _openProfile,
+        onAvatarTap: null,
       ),
       drawer: AdminDrawer(
         activeKey: _indexToKey[_idx] ?? 'takwimu',
