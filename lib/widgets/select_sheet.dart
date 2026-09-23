@@ -11,6 +11,7 @@ Future<T?> showSelectSheet<T>(
   required List<({T value, String label, String? subtitle})> items,
   required T? selected,
   bool searchable = false,
+  IconData? itemIcon,
 }) async {
   return showModalBottomSheet<T>(
     context: context,
@@ -22,6 +23,7 @@ Future<T?> showSelectSheet<T>(
       items: items,
       selected: selected,
       searchable: searchable,
+      itemIcon: itemIcon,
     ),
   );
 }
@@ -31,12 +33,14 @@ class SelectSheet<T> extends StatefulWidget {
   final List<({T value, String label, String? subtitle})> items;
   final T? selected;
   final bool searchable;
+  final IconData? itemIcon;
   const SelectSheet({
     super.key,
     required this.title,
     required this.items,
     required this.selected,
     this.searchable = false,
+    this.itemIcon,
   });
   @override
   State<SelectSheet<T>> createState() => _SelectSheetState<T>();
@@ -182,24 +186,48 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                       itemBuilder: (_, i) {
                         final item = list[i];
                         final isSel = item.value == widget.selected;
+                        final hasIcon = widget.itemIcon != null;
                         return GestureDetector(
                           onTap: () => Navigator.pop(context, item.value),
                           behavior: HitTestBehavior.opaque,
                           child: Container(
-                            margin: const EdgeInsets.only(bottom: 1),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
+                            margin: const EdgeInsets.only(bottom: 4),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: hasIcon ? 8 : 10),
                             decoration: isSel
                                 ? BoxDecoration(
                                     color: const Color(0xFFEFF6FF),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: const Color(0xFFBFDBFE),
                                       width: 1.5,
                                     ),
                                   )
-                                : null,
+                                : BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                             child: Row(children: [
+                              if (hasIcon) ...[
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: isSel
+                                        ? AppColors.blue50
+                                        : AppColors.grey100,
+                                    borderRadius: BorderRadius.circular(9),
+                                  ),
+                                  child: Icon(
+                                    widget.itemIcon!,
+                                    size: 17,
+                                    color: isSel
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,17 +251,19 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                                       Text(item.subtitle!,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.textLight)),
+                                          style: TextStyle(
+                                              fontSize: 11.5,
+                                              color: isSel
+                                                  ? AppColors.primary
+                                                  : AppColors.textLight)),
                                     ],
                                   ],
                                 ),
                               ),
                               if (isSel) ...[
-                                const SizedBox(width: 12),
-                                Icon(PhosphorIcons.check(),
-                                    size: 22,
+                                const SizedBox(width: 10),
+                                Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
+                                    size: 20,
                                     color: AppColors.primary),
                               ],
                             ]),

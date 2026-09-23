@@ -1337,7 +1337,8 @@ class _Step5StationState extends State<_Step5Station> {
               subtitle: null,
             )).toList();
             final result = await showSelectSheet<int>(
-              context, title: 'Chagua Mkoa', items: items, selected: _regionId, searchable: true,
+              context, title: 'Chagua Mkoa', items: items, selected: _regionId,
+              searchable: true, itemIcon: PhosphorIcons.mapPin(),
             );
             if (result != null) _onRegionChanged(result);
           },
@@ -1363,7 +1364,9 @@ class _Step5StationState extends State<_Step5Station> {
                   subtitle: f['type'] != null ? '${f['type']}' : null,
                 )).toList();
                 final result = await showSelectSheet<String>(
-                  context, title: 'Chagua Hospitali ya Rufaa', items: items, selected: _facilityId, searchable: true,
+                  context, title: 'Chagua Hospitali ya Rufaa', items: items,
+                  selected: _facilityId, searchable: true,
+                  itemIcon: PhosphorIcons.heartbeat(),
                 );
                 if (result != null) setState(() => _facilityId = result);
               },
@@ -1390,7 +1393,8 @@ class _Step5StationState extends State<_Step5Station> {
                   subtitle: null,
                 )).toList();
                 final result = await showSelectSheet<int>(
-                  context, title: 'Chagua Wilaya', items: items, selected: _districtId, searchable: true,
+                  context, title: 'Chagua Wilaya', items: items, selected: _districtId,
+                  searchable: true, itemIcon: PhosphorIcons.city(),
                 );
                 if (result != null) _onDistrictChanged(result);
               },
@@ -1433,6 +1437,11 @@ class _Step5StationState extends State<_Step5Station> {
                   context,
                   title: widget.initial['category'] == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
                   items: items, selected: _facilityId, searchable: true,
+                  itemIcon: widget.initial['category'] == 'health'
+                      ? PhosphorIcons.heartbeat()
+                      : (widget.initial['cadre_level'] == 'Secondary'
+                          ? PhosphorIcons.graduationCap()
+                          : PhosphorIcons.bookOpen()),
                 );
                 if (result != null || result == null) setState(() => _facilityId = result);
               },
@@ -1732,7 +1741,8 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
               subtitle: null,
             )).toList();
             final result = await showSelectSheet<int>(
-              context, title: 'Chagua Mkoa wa Lengo', items: items, selected: rid, searchable: true,
+              context, title: 'Chagua Mkoa wa Lengo', items: items, selected: rid,
+              searchable: true, itemIcon: PhosphorIcons.mapPin(),
             );
             if (result != null) _onRegionChanged(i, result);
           },
@@ -1768,7 +1778,9 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
                   subtitle: f['type'] != null ? '${f['type']}' : null,
                 )).toList();
                 final result = await showSelectSheet<String>(
-                  context, title: 'Chagua Hospitali ya Rufaa', items: items, selected: d.facilityId, searchable: true,
+                  context, title: 'Chagua Hospitali ya Rufaa', items: items,
+                  selected: d.facilityId, searchable: true,
+                  itemIcon: PhosphorIcons.heartbeat(),
                 );
                 if (result != null) setState(() {
                   d.facilityId = result;
@@ -1841,6 +1853,11 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
                 context,
                 title: _category == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
                 items: items, selected: d.facilityId, searchable: true,
+                itemIcon: _category == 'health'
+                    ? PhosphorIcons.heartbeat()
+                    : (widget.initial['cadre_level'] == 'Secondary'
+                        ? PhosphorIcons.graduationCap()
+                        : PhosphorIcons.bookOpen()),
               );
               setState(() {
                 d.facilityId = result;
