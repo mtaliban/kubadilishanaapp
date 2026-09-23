@@ -18,6 +18,7 @@ import 'admin_feedback_page.dart';
 import 'admin_reports_page.dart';
 import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';
+import 'admin_profile_screen.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg  = Color(0xFFEFF6FF);
@@ -128,6 +129,27 @@ class _AdminShellState extends State<AdminShell> {
     await Provider.of<AuthProvider>(context, listen: false).logout();
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, '/login');
+  }
+
+  void _openProfile() {
+    if (Navigator.of(context).canPop()) Navigator.pop(context);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.user;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => AdminProfileScreen(
+        admin: AdminProfileData(
+          jina: user?.fullName ?? 'Admin',
+          barua: user?.email ?? '',
+          simu: user?.phone ?? '',
+        ),
+        onSaved: (updated) async {
+          await ApiService().updateProfile({
+            'full_name': updated.jina,
+            if (updated.whatsapp != null) 'phone_alt': updated.whatsapp,
+          });
+        },
+      ),
+    ));
   }
 
   @override
@@ -270,7 +292,7 @@ class _AdminShellState extends State<AdminShell> {
     ).then((v) {
       if (!mounted) return;
       if (v == 'logout') _logout();
-      if (v == 'profile') nav.pushNamed('/profile');
+      if (v == 'profile') _openProfile();
     });
   }
 
@@ -335,7 +357,7 @@ class _AdminShellState extends State<AdminShell> {
             name: name,
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/profile');
+              _openProfile();
             },
           ),
 

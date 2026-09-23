@@ -2,36 +2,64 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../config/theme.dart';
+import '../../services/api_service.dart';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// MODEL
+// ═══════════════════════════════════════════════════════════════════════════════
 class AdminProfileData {
   final String jina;
+  final String jukumu;
   final String barua;
   final bool baruaImethibitishwa;
   final String simu;
-  final String whatsapp;
+  final String? whatsapp;
 
   const AdminProfileData({
     required this.jina,
+    this.jukumu = 'Administrator',
     required this.barua,
-    required this.simu,
-    required this.whatsapp,
     this.baruaImethibitishwa = true,
+    required this.simu,
+    this.whatsapp,
   });
 
-  AdminProfileData copyWith({String? jina, String? simu, String? whatsapp}) =>
+  AdminProfileData copyWith({
+    String? jina,
+    String? whatsapp,
+    bool clearWhatsapp = false,
+  }) =>
       AdminProfileData(
         jina: jina ?? this.jina,
+        jukumu: jukumu,
         barua: barua,
         baruaImethibitishwa: baruaImethibitishwa,
-        simu: simu ?? this.simu,
-        whatsapp: whatsapp ?? this.whatsapp,
+        simu: simu,
+        whatsapp: clearWhatsapp ? null : (whatsapp ?? this.whatsapp),
       );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// RANGI
+// ═══════════════════════════════════════════════════════════════════════════════
+const _kPage        = Color(0xFFF3F5F9);
+const _kCard        = Color(0xFFFFFFFF);
+const _kSoft        = Color(0xFFF1F3F7);
+const _kBorder      = Color(0xFFE3E7EE);
+const _kBorderStrong= Color(0xFFCFD5DF);
+const _kText        = Color(0xFF141A24);
+const _kMuted       = Color(0xFF667085);
+const _kFaint       = Color(0xFF98A2B3);
+const _kBlue        = Color(0xFF1E66E0);
+const _kBlueBg      = Color(0xFFE8F0FD);
+const _kGreen       = Color(0xFF0F7A52);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
 class AdminProfileScreen extends StatefulWidget {
   final AdminProfileData admin;
-  final ValueChanged<AdminProfileData>? onSaved;
+  final Future<void> Function(AdminProfileData updated)? onSaved;
 
   const AdminProfileScreen({super.key, required this.admin, this.onSaved});
 
@@ -40,529 +68,528 @@ class AdminProfileScreen extends StatefulWidget {
 }
 
 class _AdminProfileScreenState extends State<AdminProfileScreen> {
-  late AdminProfileData _data = widget.admin;
-  bool _inaHariri = false;
+  late AdminProfileData _data;
+  bool _editing = false;
+  bool _saving  = false;
 
-  late final _jinaCtrl = TextEditingController(text: _data.jina);
-  late final _whatsappCtrl = TextEditingController(text: _data.whatsapp);
+  final _jinaCtrl = TextEditingController();
+  final _waCtrl   = TextEditingController();
+  bool _showWaField = false;
 
-  String get _initials {
-    final parts = _data.jina.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
-  }
-
-  void _hifadhi() {
-    final mpya = _data.copyWith(
-        jina: _jinaCtrl.text.trim(), whatsapp: _whatsappCtrl.text.trim());
-    setState(() {
-      _data = mpya;
-      _inaHariri = false;
+  @override
+  void initState() {
+    super.initState();
+    _data = widget.admin;
+    _jinaCtrl.addListener(() {
+      if (_editing) setState(() {});
     });
-    widget.onSaved?.call(mpya);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Wasifu umehifadhiwa')),
-    );
-  }
-
-  void _ghairi() {
-    setState(() {
-      _jinaCtrl.text = _data.jina;
-      _whatsappCtrl.text = _data.whatsapp;
-      _inaHariri = false;
-    });
-  }
-
-  Future<void> _launch(String url) async {
-    try {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } catch (_) {}
-  }
-
-  void _copyToClipboard(String text) {
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Imenakiliwa'), duration: Duration(seconds: 2)),
-    );
   }
 
   @override
   void dispose() {
     _jinaCtrl.dispose();
-    _whatsappCtrl.dispose();
+    _waCtrl.dispose();
     super.dispose();
   }
 
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  static String _digits(String s) => s.replaceAll(RegExp(r'\D'), '');
+
+  // "0763795801" → "763 795 801"
+  static String _local9(String phone) {
+    var d = _digits(phone);
+    if (d.startsWith('255')) d = d.substring(3);
+    if (d.startsWith('0')) d = d.substring(1);
+    if (d.length == 9) {
+      return '${d.substring(0, 3)} ${d.substring(3, 6)} ${d.substring(6)}';
+    }
+    return d;
+  }
+
+  static String _pretty(String phone) => '+255 ${_local9(phone)}';
+  static String _waIntl(String phone) => '255${_digits(_local9(phone))}';
+
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  void _startEdit() {
+    _jinaCtrl.text = _data.jina;
+    _waCtrl.text   = _data.whatsapp == null ? '' : _local9(_data.whatsapp!);
+    _showWaField   = true;
+    setState(() => _editing = true);
+  }
+
+  void _cancel() => setState(() => _editing = false);
+
+  Future<void> _save() async {
+    final name = _jinaCtrl.text.trim();
+    final wa   = _digits(_waCtrl.text);
+    if (name.isEmpty) return _toast('Andika jina kamili');
+    if (wa.isNotEmpty && wa.length != 9) {
+      return _toast('Namba ya WhatsApp iwe tarakimu 9 baada ya +255');
+    }
+    final updated = wa.isEmpty
+        ? _data.copyWith(name: name, clearWhatsapp: true)
+        : _data.copyWith(name: name, whatsapp: '0$wa');
+
+    setState(() => _saving = true);
+    try {
+      await widget.onSaved?.call(updated);
+      if (!mounted) return;
+      setState(() {
+        _data    = updated;
+        _editing = false;
+      });
+      _toast('Mabadiliko yamehifadhiwa');
+    } catch (e) {
+      if (mounted) _toast('Imeshindikana kuhifadhi: $e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _copyEmail() async {
+    await Clipboard.setData(ClipboardData(text: _data.barua));
+    _toast('Barua pepe imenakiliwa');
+  }
+
+  Future<void> _call() async {
+    try {
+      await launchUrl(Uri(scheme: 'tel', path: '+255${_local9(_data.simu).replaceAll(' ', '')}'));
+    } catch (_) {}
+  }
+
+  Future<void> _openWa() async {
+    if (_data.whatsapp == null) return;
+    try {
+      await launchUrl(
+        Uri.parse('https://wa.me/${_waIntl(_data.whatsapp!)}'),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {}
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BUILD
+  // ═══════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FA),
-      body: SafeArea(
-        child: Column(children: [
-          _header(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              child: _inaHariri ? _formHariri() : _viewAngalia(),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
+    final shownName = _editing
+        ? (_jinaCtrl.text.trim().isEmpty ? '—' : _jinaCtrl.text.trim())
+        : _data.jina;
 
-  // ── HEADER ───────────────────────────────────────────────────────────────
-  Widget _header() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-      child: Row(children: [
-        InkWell(
-          onTap: () {
-            if (_inaHariri) {
-              _ghairi();
-            } else {
-              Navigator.of(context).maybePop();
-            }
-          },
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.all(6),
-            child: Icon(PhosphorIcons.arrowLeft(),
-                size: 20, color: AppColors.textPrimary),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            _inaHariri ? 'Hariri Wasifu' : 'Wasifu wa Admin',
-            style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary),
-          ),
-        ),
-        if (!_inaHariri)
-          InkWell(
-            onTap: () => setState(() => _inaHariri = true),
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: AppColors.blue50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(PhosphorIcons.pencilSimple(),
-                    size: 13, color: AppColors.accent),
-                const SizedBox(width: 5),
-                Text('Hariri',
-                    style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.accent)),
-              ]),
-            ),
-          ),
-      ]),
-    );
-  }
-
-  // ── VIEW MODE ────────────────────────────────────────────────────────────
-  Widget _viewAngalia() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // ── Identity card ──
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.accent,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            alignment: Alignment.center,
-            child: Text(_initials,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700)),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-              Text(_data.jina,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
-              const SizedBox(height: 5),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                    color: AppColors.blue50,
-                    borderRadius: BorderRadius.circular(20)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(PhosphorIcons.shieldCheck(),
-                      size: 12, color: AppColors.accent),
-                  const SizedBox(width: 5),
-                  const Text('Administrator',
-                      style: TextStyle(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 11)),
-                ]),
-              ),
-            ]),
-          ),
-        ]),
-      ),
-
-      const SizedBox(height: 14),
-
-      // ── Contact card ──
-      Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(children: [
-          _contactTile(
-            icon: PhosphorIcons.envelope(),
-            label: 'Barua pepe',
-            value: _data.barua,
-            chip: _data.baruaImethibitishwa
-                ? 'Imethibitishwa'
-                : null,
-            onTap: () => _launch('mailto:${_data.barua}'),
-            trailing: InkWell(
-              onTap: () => _copyToClipboard(_data.barua),
-              borderRadius: BorderRadius.circular(6),
-              child: Padding(
-                padding: const EdgeInsets.all(5),
-                child: Icon(PhosphorIcons.copy(),
-                    size: 16, color: AppColors.textLight),
-              ),
-            ),
-          ),
-          _divider(),
-          _contactTile(
-            icon: PhosphorIcons.phone(),
-            label: 'Namba ya simu',
-            value: '+255 ${_data.simu}',
-            onTap: () => _launch('tel:${_data.simu}'),
-            actionIcon: PhosphorIcons.phone(),
-            actionColor: AppColors.accent,
-            actionBg: AppColors.blue50,
-          ),
-          _divider(),
-          _contactTile(
-            icon: PhosphorIcons.chatCircle(),
-            iconBg: const Color(0xFFDCFCE7),
-            iconColor: AppColors.success,
-            label: 'WhatsApp / Simu ya pili',
-            value: '+255 ${_data.whatsapp}',
-            onTap: () => _launch(
-                'https://wa.me/255${_data.whatsapp.replaceAll(RegExp(r'[^0-9]'), '')}'),
-            actionIcon: PhosphorIcons.chatCircle(),
-            actionColor: Colors.white,
-            actionBg: AppColors.success,
-          ),
-        ]),
-      ),
-
-      const SizedBox(height: 12),
-
-      // ── Note ──
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(PhosphorIcons.info(),
-              size: 13, color: AppColors.textLight),
-          const SizedBox(width: 7),
-          const Expanded(
-            child: Text(
-              'Barua pepe haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
-              style: TextStyle(
-                  fontSize: 11.5, color: AppColors.textLight, height: 1.4),
-            ),
-          ),
-        ]),
-      ),
-    ]);
-  }
-
-  Widget _divider() =>
-      const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.border);
-
-  Widget _contactTile({
-    required IconData icon,
-    required String label,
-    required String value,
-    Color? iconBg,
-    Color? iconColor,
-    String? chip,
-    Widget? trailing,
-    VoidCallback? onTap,
-    IconData? actionIcon,
-    Color? actionColor,
-    Color? actionBg,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-                color: iconBg ?? AppColors.blue50,
-                borderRadius: BorderRadius.circular(11)),
-            child:
-                Icon(icon, size: 18, color: iconColor ?? AppColors.accent),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-              Row(children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.textLight)),
-                if (chip != null) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(20)),
-                    child: Text(chip,
-                        style: const TextStyle(
-                            fontSize: 9.5,
-                            color: Color(0xFF15803D),
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ],
-              ]),
-              const SizedBox(height: 3),
-              Text(value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
-            ]),
-          ),
-          if (trailing != null) trailing,
-          if (actionIcon != null)
-            Container(
-              width: 32,
-              height: 32,
-              decoration:
-                  BoxDecoration(color: actionBg, shape: BoxShape.circle),
-              child: Icon(actionIcon, size: 15, color: actionColor),
-            ),
-        ]),
-      ),
-    );
-  }
-
-  // ── EDIT FORM ────────────────────────────────────────────────────────────
-  Widget _formHariri() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // ── Form card ──
-      Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Taarifa za msingi',
-              style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
-          const SizedBox(height: 18),
-
-          // Jina
-          _fieldLabel('Jina kamili'),
-          const SizedBox(height: 7),
-          _inputField(
-            controller: _jinaCtrl,
-            hint: 'Andika jina kamili',
-            icon: PhosphorIcons.user(),
-          ),
-          const SizedBox(height: 16),
-
-          // WhatsApp
-          _fieldLabel('WhatsApp / Simu ya pili'),
-          const SizedBox(height: 7),
-          Row(children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.grey100,
-                border: Border.all(color: const Color(0xFFD0D7E2)),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text('+255',
-                  style: TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary)),
-            ),
-            const SizedBox(width: 8),
+    return PopScope(
+      canPop: !_editing,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _editing) _cancel();
+      },
+      child: Scaffold(
+        backgroundColor: _kPage,
+        body: SafeArea(
+          child: Column(children: [
             Expanded(
-              child: _inputField(
-                controller: _whatsappCtrl,
-                hint: '7xxxxxxxx',
-                keyboardType: TextInputType.phone,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _topBar(),
+                    _headerSection(shownName),
+                    _groupTitle('TAARIFA BINAFSI'),
+                    _group([_nameRow()]),
+                    _groupTitle('MAWASILIANO'),
+                    _group([_emailRow(), _phoneRow(), _waRow()]),
+                    if (_editing) _lockNote(),
+                  ],
+                ),
               ),
             ),
+            if (_editing) _footer(),
           ]),
-          const SizedBox(height: 16),
-
-          // Email (read-only)
-          _fieldLabel('Barua pepe'),
-          const SizedBox(height: 7),
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-                color: const Color(0xFFF8F9FA),
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(10)),
-            child: Row(children: [
-              Icon(PhosphorIcons.lock(),
-                  size: 15, color: AppColors.textLight),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(_data.barua,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 13, color: AppColors.textLight)),
-              ),
-            ]),
-          ),
-          const SizedBox(height: 10),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(PhosphorIcons.info(),
-                size: 13, color: AppColors.textLight),
-            const SizedBox(width: 7),
-            const Expanded(
-              child: Text(
-                'Barua pepe haiwezi kubadilishwa — wasiliana na admin mwenza.',
-                style: TextStyle(
-                    fontSize: 11, color: AppColors.textLight, height: 1.4),
-              ),
-            ),
-          ]),
-        ]),
+        ),
       ),
+    );
+  }
 
-      const SizedBox(height: 16),
-
-      // ── Action buttons ──
-      Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-        OutlinedButton(
-          onPressed: _ghairi,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.textSecondary,
-            side: const BorderSide(color: AppColors.border),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(9)),
-            textStyle: const TextStyle(
-                fontSize: 12.5, fontWeight: FontWeight.w600),
+  // ── Top bar ─────────────────────────────────────────────────────────────────
+  Widget _topBar() {
+    return Row(children: [
+      _squareBtn(
+        icon: _editing ? PhosphorIcons.x() : PhosphorIcons.caretLeft(),
+        onTap: _editing ? _cancel : () => Navigator.maybePop(context),
+      ),
+      const Spacer(),
+      if (!_editing)
+        SizedBox(
+          height: 36,
+          child: OutlinedButton.icon(
+            onPressed: _startEdit,
+            icon: Icon(PhosphorIcons.pencilSimple(), size: 15),
+            label: const Text('Hariri'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _kText,
+              backgroundColor: _kCard,
+              side: const BorderSide(color: _kBorderStrong),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              textStyle: const TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w600),
+            ),
           ),
-          child: const Text('Ghairi'),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton.icon(
-          onPressed: _hifadhi,
-          icon: Icon(PhosphorIcons.floppyDisk(), size: 14),
-          label: const Text('Hifadhi'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(9)),
-            textStyle: const TextStyle(
-                fontSize: 12.5, fontWeight: FontWeight.w600),
+        )
+      else
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: _kBlueBg,
+            borderRadius: BorderRadius.circular(999),
           ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(PhosphorIcons.pencilSimple(), size: 13, color: _kBlue),
+            const SizedBox(width: 5),
+            const Text('Unahariri',
+                style: TextStyle(
+                    color: _kBlue, fontSize: 12, fontWeight: FontWeight.w600)),
+          ]),
         ),
-      ]),
     ]);
   }
 
-  Widget _fieldLabel(String text) => Text(text,
-      style: const TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary));
+  // ── Header (jina kubwa + jukumu) ────────────────────────────────────────────
+  Widget _headerSection(String name) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 18, 4, 4),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(name,
+            style: const TextStyle(
+                color: _kText,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                height: 1.25)),
+        const SizedBox(height: 4),
+        Row(children: [
+          Icon(PhosphorIcons.shieldCheck(), size: 14, color: _kMuted),
+          const SizedBox(width: 5),
+          Text(_data.jukumu,
+              style: const TextStyle(color: _kMuted, fontSize: 12)),
+        ]),
+      ]),
+    );
+  }
 
-  Widget _inputField({
-    required TextEditingController controller,
-    required String hint,
-    IconData? icon,
-    TextInputType? keyboardType,
+  // ── Section title ────────────────────────────────────────────────────────────
+  Widget _groupTitle(String text) => Padding(
+        padding: const EdgeInsets.fromLTRB(4, 16, 4, 6),
+        child: Text(text,
+            style: const TextStyle(
+                color: _kMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: .3)),
+      );
+
+  // ── Card group ───────────────────────────────────────────────────────────────
+  Widget _group(List<Widget> rows) {
+    final items = <Widget>[];
+    for (int i = 0; i < rows.length; i++) {
+      if (i > 0) {
+        items.add(const Divider(height: 1, thickness: 1, color: _kBorder));
+      }
+      items.add(rows[i]);
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: _kCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(children: items),
+    );
+  }
+
+  // ── InfoRow universal ────────────────────────────────────────────────────────
+  Widget _infoRow({
+    required IconData icon,
+    Color? iconColor,
+    required String label,
+    Widget? labelExtra,
+    required String value,
+    Widget? editor,
+    Widget? trailing,
+    bool faded = false,
   }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(
-            fontSize: 13, color: AppColors.textLight, fontWeight: FontWeight.w400),
-        prefixIcon: icon != null
-            ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Icon(icon, size: 16, color: AppColors.textLight),
+    final hasEditor = editor != null;
+    return Opacity(
+      opacity: faded ? 0.55 : 1.0,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          crossAxisAlignment:
+              hasEditor ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: hasEditor ? 2 : 0),
+              child: Icon(icon, size: 20, color: iconColor ?? _kMuted),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Flexible(
+                      child: Text(label,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: _kMuted, fontSize: 12)),
+                    ),
+                    if (labelExtra != null) labelExtra!,
+                  ]),
+                  if (hasEditor)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: editor,
+                    )
+                  else
+                    Text(value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: _kText,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: 8),
+              trailing!,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Rows ─────────────────────────────────────────────────────────────────────
+
+  Widget _nameRow() => _infoRow(
+        icon: PhosphorIcons.user(),
+        label: 'Jina kamili',
+        value: _data.jina,
+        editor: _editing ? _editField(controller: _jinaCtrl) : null,
+      );
+
+  Widget _emailRow() => _infoRow(
+        icon: PhosphorIcons.envelope(),
+        label: 'Barua pepe',
+        labelExtra: _data.baruaImethibitishwa && !_editing
+            ? Row(mainAxisSize: MainAxisSize.min, children: [
+                const SizedBox(width: 6),
+                Icon(PhosphorIcons.sealCheck(PhosphorIconsStyle.fill),
+                    size: 13, color: _kGreen),
+                const SizedBox(width: 3),
+                const Text('Imethibitishwa',
+                    style: TextStyle(
+                        color: _kGreen,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600)),
+              ])
+            : null,
+        value: _data.barua,
+        faded: _editing,
+        trailing: _editing
+            ? Icon(PhosphorIcons.lockSimple(), size: 17, color: _kFaint)
+            : _trailingBtn(
+                icon: PhosphorIcons.copy(),
+                color: _kFaint,
+                onTap: _copyEmail,
+              ),
+      );
+
+  Widget _phoneRow() => _infoRow(
+        icon: PhosphorIcons.phone(),
+        label: 'Namba ya simu',
+        value: _pretty(_data.simu),
+        faded: _editing,
+        trailing: _editing
+            ? Icon(PhosphorIcons.lockSimple(), size: 17, color: _kFaint)
+            : _trailingBtn(
+                icon: PhosphorIcons.phoneCall(),
+                color: _kFaint,
+                onTap: _call,
+              ),
+      );
+
+  Widget _waRow() => _infoRow(
+        icon: PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
+        iconColor: _kGreen,
+        label: 'WhatsApp / simu ya pili',
+        value: _data.whatsapp == null
+            ? 'Haijawekwa'
+            : _pretty(_data.whatsapp!),
+        editor: _editing
+            ? _editField(
+                controller: _waCtrl,
+                prefix255: true,
+                keyboard: TextInputType.phone,
+                hint: '712 345 678',
               )
             : null,
-        prefixIconConstraints:
-            const BoxConstraints(minWidth: 40, minHeight: 0),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide:
-                const BorderSide(color: Color(0xFFD0D7E2))),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide:
-                const BorderSide(color: Color(0xFFD0D7E2))),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-                color: AppColors.accent, width: 1.6)),
+        trailing: !_editing && _data.whatsapp != null
+            ? _trailingBtn(
+                icon: PhosphorIcons.chatCircle(PhosphorIconsStyle.fill),
+                color: _kGreen,
+                onTap: _openWa,
+              )
+            : null,
+      );
+
+  // ── Lock note (editing only) ──────────────────────────────────────────────
+  Widget _lockNote() => Padding(
+        padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(PhosphorIcons.lockSimple(), size: 15, color: _kMuted),
+          const SizedBox(width: 6),
+          const Expanded(
+            child: Text(
+              'Barua pepe na namba ya simu kuu haziwezi kubadilishwa hapa. '
+              'Wasiliana na admin mwenzako.',
+              style: TextStyle(color: _kMuted, fontSize: 12, height: 1.5),
+            ),
+          ),
+        ]),
+      );
+
+  // ── Footer (editing) ─────────────────────────────────────────────────────────
+  Widget _footer() => Container(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        decoration: const BoxDecoration(
+          color: _kCard,
+          border: Border(top: BorderSide(color: _kBorder)),
+        ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          TextButton(
+            onPressed: _saving ? null : _cancel,
+            child: const Text('Ghairi',
+                style: TextStyle(
+                    color: _kMuted,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600)),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 38,
+            child: FilledButton(
+              onPressed: _saving ? null : _save,
+              style: FilledButton.styleFrom(
+                backgroundColor: _kBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                textStyle: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(PhosphorIcons.floppyDisk(), size: 16),
+                      const SizedBox(width: 6),
+                      const Text('Hifadhi'),
+                    ]),
+            ),
+          ),
+        ]),
+      );
+
+  // ── Sub-widgets ──────────────────────────────────────────────────────────────
+
+  Widget _squareBtn({required IconData icon, required VoidCallback onTap}) =>
+      Material(
+        color: _kCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: const BorderSide(color: _kBorder),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            width: 38,
+            height: 38,
+            child: Icon(icon, size: 19, color: _kText),
+          ),
+        ),
+      );
+
+  Widget _trailingBtn({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) =>
+      IconButton(
+        onPressed: onTap,
+        visualDensity: VisualDensity.compact,
+        icon: Icon(icon, size: 20, color: color),
+      );
+
+  Widget _editField({
+    required TextEditingController controller,
+    bool prefix255 = false,
+    TextInputType? keyboard,
+    TextCapitalization capitalization = TextCapitalization.words,
+    String? hint,
+  }) {
+    OutlineInputBorder b(Color col, [double w = 1]) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: col, width: w),
+        );
+    return SizedBox(
+      height: 42,
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboard,
+        textCapitalization: capitalization,
+        style: const TextStyle(color: _kText, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle:
+              const TextStyle(color: _kFaint, fontSize: 14),
+          isDense: true,
+          filled: true,
+          fillColor: _kSoft,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+          prefixIcon: prefix255
+              ? Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 8),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Text('+255',
+                        style:
+                            TextStyle(color: _kMuted, fontSize: 14)),
+                    const SizedBox(width: 8),
+                    Container(
+                        width: 1, height: 18, color: _kBorder),
+                  ]),
+                )
+              : null,
+          prefixIconConstraints:
+              const BoxConstraints(minWidth: 0, minHeight: 0),
+          border: b(_kBorderStrong),
+          enabledBorder: b(_kBorderStrong),
+          focusedBorder: b(_kBlue, 1.5),
+        ),
       ),
     );
   }
