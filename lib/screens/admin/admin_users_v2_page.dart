@@ -6,6 +6,8 @@ import '../../utils/safe_cast.dart';
 import '../../widgets/select_sheet.dart';
 import 'admin_add_admin_page.dart';
 import 'admin_add_user_page.dart';
+import 'admin_delete_user_dialog.dart';
+import 'admin_filter_users_sheet.dart';
 import 'admin_import_users_page.dart';
 import 'admin_users_v2_screens.dart';
 import 'admin_view_user_page.dart';
@@ -292,7 +294,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   // ── ACTIONS ─────────────────────────────────────────────────────────────
 
   Future<void> _deleteUser(String id, String name, String phone) async {
-    if (await v2ConfirmDelete(context, jina: name, simu: phone) != true) return;
+    if (!await showDeleteUserDialog(context, name: name)) return;
     try {
       await ApiService().adminDeleteUser(id);
       if (!mounted) return;
@@ -448,11 +450,65 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   // ── FILTERS SHEET ───────────────────────────────────────────────────────
 
   Future<void> _openFilters() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _V2FiltersSheet(parent: this),
+    final mikoa = _regions
+        .map((r) => '${r['name'] ?? r['region_name'] ?? ''}')
+        .where((s) => s.isNotEmpty)
+        .toList();
+
+    // Geuza category code -> UserFilter idara key
+    String? _toIdaraKey(String cat) => switch (cat.toLowerCase()) {
+          'health' => 'afya',
+          'education' => 'elimu',
+          'agriculture' => 'kilimo',
+          'service' || 'public' => 'umma',
+          _ => cat.isEmpty ? null : cat,
+        };
+    String _fromIdaraKey(String? key) => switch (key) {
+          'afya' => 'health',
+          'elimu' => 'education',
+          'kilimo' => 'agriculture',
+          'umma' => 'service',
+          _ => key ?? '',
+        };
+
+    final initial = UserFilter(
+      idara: _toIdaraKey(_category),
+      mkoa: _regionName,
+      wilaya: _districtName,
+      kituo: _subjectName ?? _facilityName,
+    );
+
+    await showUserFilterSheet(
+      context,
+      initial: initial,
+      mikoa: mikoa,
+      wilaya: const {}, // wilaya zinapakiwa API — zinapanuliwa baadaye
+      vituo: const {},
+      masomo: const [],
+      onChanged: (f) {
+        // Mapper: jina la mkoa -> region object
+        final region = _regions.firstWhere(
+          (r) => '${r['name'] ?? r['region_name'] ?? ''}' == f.mkoa,
+          orElse: () => <String, dynamic>{},
+        );
+        final rId = region['id'] != null ? int.tryParse('${region['id']}') : null;
+
+        setState(() {
+          _category = _fromIdaraKey(f.idara);
+          _regionId = rId;
+          _regionName = f.mkoa;
+          if (f.mkoa == null) {
+            _districtId = null;
+            _districtName = null;
+            _facilityId = null;
+            _facilityName = null;
+            _subjectCode = null;
+            _subjectName = null;
+          }
+        });
+        _page = 0;
+        _load();
+      },
     );
   }
 
