@@ -4,6 +4,9 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/select_sheet.dart';
+import 'admin_add_admin_page.dart';
+import 'admin_add_user_page.dart';
+import 'admin_import_users_page.dart';
 import 'admin_users_v2_screens.dart';
 import 'admin_users_v2_theme.dart';
 
@@ -372,24 +375,25 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     if (opt == null || !mounted) return;
     switch (opt) {
       case V2AddOption.mtumiajiMpya:
-        final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
-          builder: (_) => V2UserFormScreen(regions: _regions),
+        await Navigator.of(context).push<void>(MaterialPageRoute(
+          builder: (_) => NewUserPage(onSave: (data) async { /* tuma kwenye API */ }),
         ));
-        if (saved == true) _load();
+        _load();
         break;
       case V2AddOption.ongezaAdmin:
-        final saved = await Navigator.of(context)
-            .push<bool>(MaterialPageRoute(
-          builder: (_) => const V2AddAdminScreen(),
+        await Navigator.of(context).push<void>(MaterialPageRoute(
+          builder: (_) => AddAdminPage(onSave: (d) async { /* d.name, d.email, d.phone, d.password */ }),
         ));
-        if (saved == true) _load();
+        _load();
         break;
       case V2AddOption.importWatumiaji:
-        final saved = await Navigator.of(context)
-            .push<bool>(MaterialPageRoute(
-          builder: (_) => V2ImportScreen(departments: _departments),
+        await Navigator.of(context).push<void>(MaterialPageRoute(
+          builder: (_) => ImportUsersPage(
+            onTemplateReady: (bytes, jina) async { /* hifadhi au shiriki kiolezo */ },
+            onImport: (idara, safu) async { /* tuma kwenye API */ },
+          ),
         ));
-        if (saved == true) _load();
+        _load();
         break;
     }
   }
