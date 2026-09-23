@@ -86,55 +86,125 @@ IconData _deptIcon(String code) {
   }
 }
 
-// DeptCard — kadi ya kuchagua idara/wizara (selected = bluu border + bg)
-class _DeptCard extends StatelessWidget {
+Color _deptBg(String code) {
+  switch (code) {
+    case 'health': return const Color(0xFFFFF1F2);
+    case 'education': return const Color(0xFFEFF6FF);
+    case 'service': return const Color(0xFFF0FDF4);
+    default: return const Color(0xFFF3F4F6);
+  }
+}
+
+Color _deptFg(String code) {
+  switch (code) {
+    case 'health': return const Color(0xFFDC2626);
+    case 'education': return _kBlue;
+    case 'service': return _kGreen600;
+    default: return _kGrey500;
+  }
+}
+
+// _PickItem — data ya kila chaguo kwenye _IconPickerSheet
+class _PickItem {
+  final String value;
+  final String label;
   final IconData icon;
-  final String name;
-  final bool isSelected;
-  final VoidCallback onTap;
-  const _DeptCard({
+  final Color iconBg;
+  final Color iconFg;
+  const _PickItem({
+    required this.value,
+    required this.label,
     required this.icon,
-    required this.name,
-    required this.isSelected,
-    required this.onTap,
+    required this.iconBg,
+    required this.iconFg,
+  });
+}
+
+// _IconPickerSheet — bottom sheet ya kisasa na icons za Phosphor
+class _IconPickerSheet extends StatelessWidget {
+  final String title;
+  final List<_PickItem> items;
+  final String? selected;
+  const _IconPickerSheet({
+    super.key,
+    required this.title,
+    required this.items,
+    this.selected,
   });
 
   @override
   Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                    color: _kGrey300, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w700, color: _kGrey900)),
+            const SizedBox(height: 12),
+            for (int i = 0; i < items.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              _row(context, items[i]),
+            ],
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, _PickItem item) {
+    final isSel = selected == item.value;
     return InkWell(
-      onTap: onTap,
+      onTap: () => Navigator.pop(context, item.value),
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isSel ? const Color(0xFFEFF6FF) : Colors.white,
           border: Border.all(
-            color: isSelected ? _kBlue : const Color(0xFFE5E7EB),
-            width: isSelected ? 2 : 1,
+            color: isSel ? _kBlue : const Color(0xFFE5E7EB),
+            width: isSel ? 1.5 : 1.0,
           ),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(children: [
           Container(
-            width: 38, height: 38,
+            width: 40, height: 40,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFDBEAFE) : const Color(0xFFF3F4F6),
+              color: isSel ? const Color(0xFFDBEAFE) : item.iconBg,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon,
-                size: 18,
-                color: isSelected ? _kBlue : const Color(0xFF6B7280)),
+            child: Icon(item.icon, size: 19,
+                color: isSel ? _kBlue : item.iconFg),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(name,
+            child: Text(item.label,
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? _kBlue : const Color(0xFF374151))),
+                    color: isSel ? _kBlue : _kGrey700)),
           ),
-          if (isSelected)
-            const Icon(Icons.check_circle_rounded, size: 18, color: _kBlue),
+          if (isSel)
+            Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
+                size: 18, color: _kBlue),
         ]),
       ),
     );
@@ -774,16 +844,36 @@ class _Step2IdaraState extends State<_Step2Idara> {
       else ...[
         const Text('Chagua Idara *',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-        const SizedBox(height: 10),
-        for (final d in _departments) ...[
-          _DeptCard(
-            icon: _deptIcon('${d['code']}'),
-            name: '${d['name'] ?? d['code']}',
-            isSelected: _selected == '${d['code']}',
-            onTap: () => setState(() => _selected = '${d['code']}'),
-          ),
-          const SizedBox(height: 10),
-        ],
+        const SizedBox(height: 8),
+        SelectField(
+          icon: _selected.isEmpty ? PhosphorIcons.squaresFour() : _deptIcon(_selected),
+          hint: 'Chagua idara yako',
+          value: _selected.isEmpty
+              ? null
+              : '${_departments.cast<dynamic>().firstWhere(
+                    (d) => '${d['code']}' == _selected, orElse: () => null)?['name'] ?? _selected}',
+          onTap: () async {
+            final result = await showModalBottomSheet<String>(
+              context: context,
+              backgroundColor: Colors.transparent,
+              builder: (_) => _IconPickerSheet(
+                title: 'Chagua Idara',
+                selected: _selected.isEmpty ? null : _selected,
+                items: [
+                  for (final d in _departments)
+                    _PickItem(
+                      value: '${d['code']}',
+                      label: '${d['name'] ?? d['code']}',
+                      icon: _deptIcon('${d['code']}'),
+                      iconBg: _deptBg('${d['code']}'),
+                      iconFg: _deptFg('${d['code']}'),
+                    ),
+                ],
+              ),
+            );
+            if (result != null) setState(() => _selected = result);
+          },
+        ),
       ],
 
       _btnRow(
@@ -825,19 +915,46 @@ class _Step3WizaraState extends State<_Step3Wizara> {
       const SizedBox(height: 16),
       const Text('Chagua Wizara *',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-      const SizedBox(height: 10),
-      _DeptCard(
-        icon: PhosphorIcons.heartbeat(),
-        name: 'Wizara ya Afya',
-        isSelected: _sector == 'wizara_afya',
-        onTap: () => setState(() => _sector = 'wizara_afya'),
-      ),
-      const SizedBox(height: 10),
-      _DeptCard(
-        icon: PhosphorIcons.buildings(),
-        name: 'TAMISEMI',
-        isSelected: _sector == 'tamisemi',
-        onTap: () => setState(() => _sector = 'tamisemi'),
+      const SizedBox(height: 8),
+      SelectField(
+        icon: _sector == 'wizara_afya'
+            ? PhosphorIcons.heartbeat()
+            : _sector == 'tamisemi'
+                ? PhosphorIcons.buildings()
+                : PhosphorIcons.squaresFour(),
+        hint: 'Chagua wizara',
+        value: _sector == 'wizara_afya'
+            ? 'Wizara ya Afya'
+            : _sector == 'tamisemi'
+                ? 'TAMISEMI'
+                : null,
+        onTap: () async {
+          final result = await showModalBottomSheet<String>(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (_) => _IconPickerSheet(
+              title: 'Chagua Wizara',
+              selected: _sector.isEmpty ? null : _sector,
+              items: [
+                _PickItem(
+                  value: 'wizara_afya',
+                  label: 'Wizara ya Afya',
+                  icon: PhosphorIcons.heartbeat(),
+                  iconBg: const Color(0xFFFFF1F2),
+                  iconFg: const Color(0xFFDC2626),
+                ),
+                _PickItem(
+                  value: 'tamisemi',
+                  label: 'TAMISEMI',
+                  icon: PhosphorIcons.buildings(),
+                  iconBg: const Color(0xFFF0FDF4),
+                  iconFg: _kGreen600,
+                ),
+              ],
+            ),
+          );
+          if (result != null) setState(() => _sector = result);
+        },
       ),
 
       _btnRow(
@@ -1073,7 +1190,9 @@ class _Step4KadaState extends State<_Step4Kada> {
             return;
           }
           setState(() => _error = null);
-          widget.onNext({'cadre_code': _cadreCode, 'subjects': _selectedSubjects});
+          final _cl = _cadres.cast<dynamic>()
+              .firstWhere((c) => c['code'] == _cadreCode, orElse: () => null)?['level'] as String?;
+          widget.onNext({'cadre_code': _cadreCode, 'subjects': _selectedSubjects, 'cadre_level': _cl});
         },
         nextEnabled: _loading ? false : (_cadres.isNotEmpty ? _cadreCode.isNotEmpty : true),
       ),
@@ -1207,6 +1326,7 @@ class _Step5StationState extends State<_Step5Station> {
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 6),
         SelectField(
+          icon: PhosphorIcons.mapPin(),
           hint: 'Chagua Mkoa',
           value: _regionId == null ? null : _regions.cast<dynamic>()
               .firstWhere((r) => r['id'] == _regionId, orElse: () => null)?['name'] as String?,
@@ -1232,17 +1352,18 @@ class _Step5StationState extends State<_Step5Station> {
             Center(child: _loadingRow(verticalPad: 8))
           else
             SelectField(
+              icon: PhosphorIcons.heartbeat(),
               hint: 'Chagua Hospitali ya Rufaa',
               value: _facilityId == null ? null : (_facilities.cast<dynamic>()
                   .firstWhere((f) => '${f['id'] ?? f['code']}' == _facilityId, orElse: () => null)?['name'] as String?),
               onTap: () async {
                 final items = _facilities.map((f) => (
                   value: '${f['id'] ?? f['code']}' as String,
-                  label: '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
-                  subtitle: null,
+                  label: '${f['name']}',
+                  subtitle: f['type'] != null ? '${f['type']}' : null,
                 )).toList();
                 final result = await showSelectSheet<String>(
-                  context, title: 'Chagua Hospitali', items: items, selected: _facilityId, searchable: true,
+                  context, title: 'Chagua Hospitali ya Rufaa', items: items, selected: _facilityId, searchable: true,
                 );
                 if (result != null) setState(() => _facilityId = result);
               },
@@ -1258,6 +1379,7 @@ class _Step5StationState extends State<_Step5Station> {
             Center(child: _loadingRow(verticalPad: 8))
           else
             SelectField(
+              icon: PhosphorIcons.city(),
               hint: 'Chagua Wilaya',
               value: _districtId == null ? null : _districts.cast<dynamic>()
                   .firstWhere((d) => d['id'] == _districtId, orElse: () => null)?['name'] as String?,
@@ -1288,7 +1410,14 @@ class _Step5StationState extends State<_Step5Station> {
             Center(child: _loadingRow(verticalPad: 8))
           else
             SelectField(
-              hint: widget.initial['category'] == 'health' ? 'Chagua Hospitali/Kituo (hiari)' : 'Chagua Shule (hiari)',
+              icon: widget.initial['category'] == 'health'
+                  ? PhosphorIcons.heartbeat()
+                  : (widget.initial['cadre_level'] == 'Secondary'
+                      ? PhosphorIcons.graduationCap()
+                      : PhosphorIcons.bookOpen()),
+              hint: widget.initial['category'] == 'health'
+                  ? 'Chagua Hospitali/Kituo (hiari)'
+                  : 'Chagua Shule (hiari)',
               value: _facilityId == null ? null : _facilities.cast<dynamic>()
                   .firstWhere((f) => '${f['id'] ?? f['code']}' == _facilityId, orElse: () => null)?['name'] as String?,
               onTap: () async {
@@ -1296,12 +1425,13 @@ class _Step5StationState extends State<_Step5Station> {
                   (value: null as String?, label: 'Bila Kituo (Hiari)', subtitle: null),
                   ..._facilities.map((f) => (
                     value: '${f['id'] ?? f['code']}' as String?,
-                    label: '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
-                    subtitle: null,
+                    label: '${f['name']}',
+                    subtitle: f['type'] != null ? '${f['type']}' : null,
                   )),
                 ];
                 final result = await showSelectSheet<String?>(
-                  context, title: widget.initial['category'] == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
+                  context,
+                  title: widget.initial['category'] == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
                   items: items, selected: _facilityId, searchable: true,
                 );
                 if (result != null || result == null) setState(() => _facilityId = result);
@@ -1523,6 +1653,7 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
       const SizedBox(height: 6),
       SelectField(
+        icon: PhosphorIcons.briefcase(),
         hint: 'Chagua miaka ya kazi',
         value: _years.isEmpty ? null : (_years == '3' ? '3+ (miaka 3 au zaidi)' : _years),
         onTap: () async {
@@ -1588,8 +1719,9 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
         ]),
         const SizedBox(height: 12),
 
-        // Region select — web: input text-sm → fontSize 14
+        // Region select
         SelectField(
+          icon: PhosphorIcons.mapPin(),
           hint: '— Chagua Mkoa wa Lengo —',
           value: rid == null ? null : _regions.cast<dynamic>()
               .firstWhere((r) => r['id'] == rid, orElse: () => null)?['name'] as String?,
@@ -1624,6 +1756,7 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
             )
           else
             SelectField(
+              icon: PhosphorIcons.heartbeat(),
               hint: 'Chagua Hospitali ya Rufaa',
               value: d.facilityId == null ? null : (_regionFacilities[rid!] ?? []).cast<dynamic>()
                   .firstWhere((f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null)?['name'] as String?,
@@ -1631,8 +1764,8 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
                 final facList = _regionFacilities[rid!] ?? [];
                 final items = facList.map((f) => (
                   value: '${f['id'] ?? f['code']}' as String,
-                  label: '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
-                  subtitle: null,
+                  label: '${f['name']}',
+                  subtitle: f['type'] != null ? '${f['type']}' : null,
                 )).toList();
                 final result = await showSelectSheet<String>(
                   context, title: 'Chagua Hospitali ya Rufaa', items: items, selected: d.facilityId, searchable: true,
@@ -1683,9 +1816,16 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
             ]),
           ),
           const SizedBox(height: 8),
-          // Kituo select — web: input text-sm (optional)
+          // Kituo / Shule select (hiari)
           SelectField(
-            hint: _category == 'health' ? 'Chagua Hospitali/Kituo (hiari)' : 'Chagua Shule (hiari)',
+            icon: _category == 'health'
+                ? PhosphorIcons.heartbeat()
+                : (widget.initial['cadre_level'] == 'Secondary'
+                    ? PhosphorIcons.graduationCap()
+                    : PhosphorIcons.bookOpen()),
+            hint: _category == 'health'
+                ? 'Chagua Hospitali/Kituo (hiari)'
+                : 'Chagua Shule (hiari)',
             value: d.facilityId == null ? null : tamisemiFacs.cast<dynamic>()
                 .firstWhere((f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null)?['name'] as String?,
             onTap: () async {
@@ -1693,12 +1833,13 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
                 (value: null as String?, label: 'Bila Kituo (Hiari)', subtitle: null),
                 ...tamisemiFacs.map((f) => (
                   value: '${f['id'] ?? f['code']}' as String?,
-                  label: '${f['name']}${f['type'] != null ? ' (${f['type']})' : ''}',
-                  subtitle: null,
+                  label: '${f['name']}',
+                  subtitle: f['type'] != null ? '${f['type']}' : null,
                 )),
               ];
               final result = await showSelectSheet<String?>(
-                context, title: _category == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
+                context,
+                title: _category == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
                 items: items, selected: d.facilityId, searchable: true,
               );
               setState(() {
