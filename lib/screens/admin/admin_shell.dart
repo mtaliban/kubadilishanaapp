@@ -1,11 +1,11 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_shell.dart' show LanguageProvider;
+import '../../widgets/admin_top_bar.dart';
+import '../../widgets/admin_drawer.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_users_v2_page.dart';
 import 'admin_matches_page.dart';
@@ -20,16 +20,8 @@ import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';
 import 'admin_profile_screen.dart';
 
-const _kBlue    = Color(0xFF1E40AF);
-const _kBlueBg  = Color(0xFFEFF6FF);
-const _kNavy    = Color(0xFF1D2F6F);
-const _kRed     = Color(0xFFDC2626);
-const _kGrey900 = Color(0xFF111827);
-const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
-const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey200 = Color(0xFFE5E7EB);
-const _kGrey100 = Color(0xFFF3F4F6);
 
 // ─── Nav item descriptor ──────────────────────────────────────────────────────
 
@@ -38,36 +30,74 @@ class _NavItem {
   final String label;
   final IconData Function() icon;
   final IconData Function() iconFill;
-  final Color? iconColor; // pink kwa Match za Kweli
-  _NavItem(this.index, this.label, this.icon, this.iconFill, {this.iconColor});
+  /// Rangi za tile (drawer-style icon) — fg na bg
+  final Color tileFg;
+  final Color tileBg;
+  _NavItem(this.index, this.label, this.icon, this.iconFill, {
+    this.tileFg = const Color(0xFF2A78D6),
+    this.tileBg = const Color(0xFFD3E5FA),
+  });
 }
 
 // ─── Master list of all nav items ────────────────────────────────────────────
 
 List<_NavItem> _allNavItems() => [
   _NavItem(9,  'Statistics',          () => PhosphorIcons.chartBar(),
-                                      () => PhosphorIcons.chartBar(PhosphorIconsStyle.fill)),
+                                      () => PhosphorIcons.chartBar(PhosphorIconsStyle.fill),
+                                      tileFg: const Color(0xFF2A78D6), tileBg: const Color(0xFFD3E5FA)),
   _NavItem(1,  'Watumiaji',           () => PhosphorIcons.usersThree(),
-                                      () => PhosphorIcons.usersThree(PhosphorIconsStyle.fill)),
+                                      () => PhosphorIcons.usersThree(PhosphorIconsStyle.fill),
+                                      tileFg: const Color(0xFF2A78D6), tileBg: const Color(0xFFD3E5FA)),
   _NavItem(2,  'Waliopata Wenzao',    () => PhosphorIcons.handshake(),
-                                      () => PhosphorIcons.handshake(PhosphorIconsStyle.fill)),
+                                      () => PhosphorIcons.handshake(PhosphorIconsStyle.fill),
+                                      tileFg: const Color(0xFF1E6B1E), tileBg: const Color(0xFFCDEBCB)),
   _NavItem(3,  'Match za Kweli',      () => PhosphorIcons.heart(),
                                       () => PhosphorIcons.heart(PhosphorIconsStyle.fill),
-                                      iconColor: const Color(0xFFEC4899)),
+                                      tileFg: const Color(0xFF8E2A2A), tileBg: const Color(0xFFF8D7D7)),
   _NavItem(4,  'Data',                () => PhosphorIcons.database(),
-                                      () => PhosphorIcons.database(PhosphorIconsStyle.fill)),
+                                      () => PhosphorIcons.database(PhosphorIconsStyle.fill),
+                                      tileFg: const Color(0xFF3C3C3A), tileBg: const Color(0xFFEFEFEC)),
   _NavItem(5,  'Matangazo',           () => PhosphorIcons.megaphone(),
-                                      () => PhosphorIcons.megaphone(PhosphorIconsStyle.fill)),
+                                      () => PhosphorIcons.megaphone(PhosphorIconsStyle.fill),
+                                      tileFg: const Color(0xFF7A4A00), tileBg: const Color(0xFFF9DDA4)),
   _NavItem(6,  'Malipo',              () => PhosphorIcons.wallet(),
-                                      () => PhosphorIcons.wallet(PhosphorIconsStyle.fill)),
+                                      () => PhosphorIcons.wallet(PhosphorIconsStyle.fill),
+                                      tileFg: const Color(0xFF1E6B1E), tileBg: const Color(0xFFCDEBCB)),
   _NavItem(7,  'Waliopigiana',        () => PhosphorIcons.phoneCall(),
-                                      () => PhosphorIcons.phoneCall(PhosphorIconsStyle.fill)),
+                                      () => PhosphorIcons.phoneCall(PhosphorIconsStyle.fill),
+                                      tileFg: const Color(0xFF1E6B1E), tileBg: const Color(0xFFCDEBCB)),
   _NavItem(8,  'Maoni na Malalamiko', () => PhosphorIcons.chatCenteredText(),
-                                      () => PhosphorIcons.chatCenteredText(PhosphorIconsStyle.fill)),
+                                      () => PhosphorIcons.chatCenteredText(PhosphorIconsStyle.fill),
+                                      tileFg: const Color(0xFF7A4A00), tileBg: const Color(0xFFF9DDA4)),
 ];
 
 // Bottom nav shows 5 key items (subset of drawer)
 const _bottomNavIndices = [9, 1, 2, 6, 8];
+
+// Mapping kati ya string key (AdminDrawer) na int index (pages)
+const _keyToIndex = {
+  'takwimu': 9,
+  'watumiaji': 1,
+  'wenzao': 2,
+  'match': 3,
+  'matangazo': 5,
+  'simu': 7,
+  'maoni': 8,
+  'malipo': 6,
+  'data': 4,
+};
+
+const _indexToKey = {
+  9: 'takwimu',
+  1: 'watumiaji',
+  2: 'wenzao',
+  3: 'match',
+  5: 'matangazo',
+  7: 'simu',
+  8: 'maoni',
+  6: 'malipo',
+  4: 'data',
+};
 
 // ─── AdminShell ───────────────────────────────────────────────────────────────
 
@@ -86,6 +116,15 @@ class _AdminShellState extends State<AdminShell> {
   void initState() {
     super.initState();
     _loadCount();
+    LanguageProvider().addListener(_onLangChange);
+  }
+
+  void _onLangChange() => setState(() {});
+
+  @override
+  void dispose() {
+    LanguageProvider().removeListener(_onLangChange);
+    super.dispose();
   }
 
   Future<void> _loadCount() async {
@@ -137,14 +176,14 @@ class _AdminShellState extends State<AdminShell> {
     final user = auth.user;
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => AdminProfileScreen(
-        admin: AdminProfileData(
-          jina: user?.fullName ?? 'Admin',
-          barua: user?.email ?? '',
-          simu: user?.phone ?? '',
+        profile: AdminProfile(
+          name: user?.fullName ?? 'Admin',
+          email: user?.email ?? '',
+          phone: user?.phone ?? '',
         ),
-        onSaved: (updated) async {
+        onSave: (updated) async {
           await ApiService().updateProfile({
-            'full_name': updated.jina,
+            'full_name': updated.name,
             if (updated.whatsapp != null) 'phone_alt': updated.whatsapp,
           });
         },
@@ -161,211 +200,24 @@ class _AdminShellState extends State<AdminShell> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
-      appBar: _buildAppBar(initial),
-      drawer: _buildDrawer(initial, name),
+      appBar: AdminTopBar(
+        initials: initial,
+        lang: LanguageProvider().lang,
+        onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+        onLangChanged: (l) => LanguageProvider().setLang(l),
+        onAvatarTap: _openProfile,
+      ),
+      drawer: AdminDrawer(
+        activeKey: _indexToKey[_idx] ?? 'takwimu',
+        usersCount: _userCount > 0 ? _userCount : null,
+        adminName: name,
+        initials: initial,
+        onSelect: (key) => _go(_keyToIndex[key] ?? 9),
+        onProfile: _openProfile,
+        onLogout: _logout,
+      ),
       body: _pageFor(_idx),
       bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  // ── AppBar ──────────────────────────────────────────────────────────────────
-
-  PreferredSizeWidget _buildAppBar(String initial) {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      leading: Builder(
-        builder: (ctx) => GestureDetector(
-          onTap: () => Scaffold.of(ctx).openDrawer(),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: _kGrey100,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(PhosphorIcons.list(), color: _kGrey900, size: 20),
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        GestureDetector(
-          onTap: () => _showUserMenu(context),
-          child: Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Container(
-              width: 34, height: 34,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(color: _kBlueBg, shape: BoxShape.circle),
-              child: Text(
-                initial.isEmpty ? 'A' : initial.toUpperCase(),
-                style: const TextStyle(
-                    color: _kBlue, fontWeight: FontWeight.w700, fontSize: 15),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        ListenableBuilder(
-          listenable: LanguageProvider(),
-          builder: (context, _) {
-            final sw = LanguageProvider().lang == 'sw';
-            return GestureDetector(
-              onTap: () => LanguageProvider().setLang(sw ? 'en' : 'sw'),
-              child: Container(
-                margin: const EdgeInsets.only(right: 14),
-                height: 32,
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _kNavy.withValues(alpha: 0.35)),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  _langChip('SW', sw),
-                  _langChip('EN', !sw),
-                ]),
-              ),
-            );
-          },
-        ),
-      ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: _kGrey200, height: 1),
-      ),
-    );
-  }
-
-  Widget _langChip(String label, bool active) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(
-      color: active ? _kNavy : Colors.transparent,
-      borderRadius: BorderRadius.circular(7),
-    ),
-    child: Text(label, style: TextStyle(
-      fontSize: 12.5, fontWeight: FontWeight.w700,
-      color: active ? Colors.white : _kNavy,
-    )),
-  );
-
-  // ── User popup menu ─────────────────────────────────────────────────────────
-
-  void _showUserMenu(BuildContext context) {
-    final RenderBox btn = context.findRenderObject() as RenderBox;
-    final RenderBox overlay =
-        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
-    final nav = Navigator.of(context);
-    final pos = RelativeRect.fromRect(
-      Rect.fromPoints(
-        btn.localToGlobal(Offset.zero, ancestor: overlay),
-        btn.localToGlobal(btn.size.bottomRight(Offset.zero), ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-    showMenu<String>(
-      context: context,
-      position: pos,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      items: [
-        PopupMenuItem(
-          value: 'profile',
-          child: Row(children: [
-            Icon(PhosphorIcons.user(), size: 18, color: _kGrey700),
-            const SizedBox(width: 10),
-            const Text('Wasifu', style: TextStyle(fontSize: 14, color: _kGrey900)),
-          ]),
-        ),
-        PopupMenuItem(
-          value: 'logout',
-          child: Row(children: [
-            Icon(PhosphorIcons.signOut(), size: 18, color: _kRed),
-            const SizedBox(width: 10),
-            const Text('Toka',
-                style: TextStyle(fontSize: 14, color: _kRed, fontWeight: FontWeight.w600)),
-          ]),
-        ),
-      ],
-    ).then((v) {
-      if (!mounted) return;
-      if (v == 'logout') _logout();
-      if (v == 'profile') _openProfile();
-    });
-  }
-
-  // ── Drawer ──────────────────────────────────────────────────────────────────
-
-  Widget _buildDrawer(String initial, String name) {
-    final navItems = _allNavItems();
-    return Drawer(
-      backgroundColor: Colors.white,
-      width: 285,
-      child: SafeArea(
-        child: Column(children: [
-          // ── Header logo/title ──────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-            child: Row(children: [
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(
-                  color: _kBlueBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(PhosphorIcons.arrowsLeftRight(PhosphorIconsStyle.fill),
-                    color: _kBlue, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Kubadilishana',
-                    style: GoogleFonts.inter(
-                        fontSize: 15, fontWeight: FontWeight.w800, color: _kGrey900)),
-                Text('Admin Panel',
-                    style: GoogleFonts.inter(fontSize: 11, color: _kGrey500)),
-              ]),
-            ]),
-          ),
-          const Divider(height: 1, color: _kGrey200),
-          const SizedBox(height: 6),
-
-          // ── Nav items ──────────────────────────────────────────────────────
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              children: navItems.map((item) {
-                final badge = item.index == 1 && _userCount > 0
-                    ? '$_userCount'
-                    : null;
-                return _DrawerRow(
-                  item: item,
-                  isActive: _idx == item.index,
-                  badge: badge,
-                  onTap: () => _go(item.index),
-                );
-              }).toList(),
-            ),
-          ),
-
-          const Divider(height: 1, color: _kGrey200),
-
-          // ── Profile footer ─────────────────────────────────────────────────
-          _DrawerProfileTile(
-            initial: initial,
-            name: name,
-            onTap: () {
-              Navigator.pop(context);
-              _openProfile();
-            },
-          ),
-
-          // ── Logout ─────────────────────────────────────────────────────────
-          _DrawerLogoutTile(onTap: _logout),
-          const SizedBox(height: 10),
-        ]),
-      ),
     );
   }
 
@@ -387,11 +239,21 @@ class _AdminShellState extends State<AdminShell> {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 58,
+          height: 68,
           child: Row(
             children: bottomItems.map((item) {
               final active = _idx == item.index;
-              final color = active ? _kBlue : _kGrey500;
+              // Tile colors: colored when active, grey when inactive
+              final fg = active ? item.tileFg : _kGrey500;
+              final bg = active ? item.tileBg : _kGrey200;
+              final labelColor = active ? item.tileFg : _kGrey500;
+
+              final label = item.label == 'Maoni na Malalamiko'
+                  ? 'Maoni'
+                  : item.label == 'Waliopata Wenzao'
+                      ? 'Wenzao'
+                      : item.label;
+
               return Expanded(
                 child: GestureDetector(
                   onTap: () => _go(item.index),
@@ -399,37 +261,31 @@ class _AdminShellState extends State<AdminShell> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        active ? item.iconFill() : item.icon(),
-                        size: 22,
-                        color: item.iconColor != null && active
-                            ? item.iconColor!
-                            : color,
+                      // Tile ya drawer-style
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 40,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: bg,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          active ? item.iconFill() : item.icon(),
+                          size: 20,
+                          color: fg,
+                        ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        // Shorten long labels for bottom nav
-                        item.label == 'Maoni na Malalamiko'
-                            ? 'Maoni'
-                            : item.label == 'Waliopata Wenzao'
-                                ? 'Wenzao'
-                                : item.label,
+                        label,
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                          color: color,
+                          color: labelColor,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      if (active) ...[
-                        const SizedBox(height: 2),
-                        Container(
-                          width: 14, height: 2,
-                          decoration: BoxDecoration(
-                              color: _kBlue,
-                              borderRadius: BorderRadius.circular(2)),
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -442,180 +298,3 @@ class _AdminShellState extends State<AdminShell> {
   }
 }
 
-// ─── Drawer row widget ────────────────────────────────────────────────────────
-
-class _DrawerRow extends StatelessWidget {
-  final _NavItem item;
-  final bool isActive;
-  final String? badge;
-  final VoidCallback onTap;
-  const _DrawerRow({
-    required this.item,
-    required this.isActive,
-    required this.onTap,
-    this.badge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // For "Match za Kweli" pink color regardless of active state
-    final Color iColor = item.iconColor != null
-        ? item.iconColor!
-        : isActive
-            ? _kBlue
-            : _kGrey500;
-    final Color iBg = isActive ? _kBlueBg : _kGrey100;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Material(
-        color: isActive
-            ? _kBlue.withValues(alpha: 0.06)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
-            child: Row(children: [
-              // Active indicator bar
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 3,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: isActive ? _kBlue : Colors.transparent,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              const SizedBox(width: 10),
-
-              // Icon container
-              Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(
-                  color: iBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  isActive ? item.iconFill() : item.icon(),
-                  size: 20, color: iColor,
-                ),
-              ),
-              const SizedBox(width: 14),
-
-              // Label
-              Expanded(
-                child: Text(
-                  item.label,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                    color: isActive ? _kBlue : _kGrey900,
-                  ),
-                ),
-              ),
-
-              // Badge
-              if (badge != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _kBlue,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(badge!,
-                      style: GoogleFonts.inter(
-                          fontSize: 11, fontWeight: FontWeight.w700,
-                          color: Colors.white)),
-                ),
-                const SizedBox(width: 4),
-              ],
-            ]),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Drawer profile tile ──────────────────────────────────────────────────────
-
-class _DrawerProfileTile extends StatelessWidget {
-  final String initial;
-  final String name;
-  final VoidCallback onTap;
-  const _DrawerProfileTile(
-      {required this.initial, required this.name, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: _kBlue,
-              child: Text(initial,
-                  style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Wasifu wangu',
-                    style: GoogleFonts.inter(
-                        fontSize: 14, fontWeight: FontWeight.w600,
-                        color: _kGrey900)),
-                Text(name,
-                    style: GoogleFonts.inter(fontSize: 11, color: _kGrey500),
-                    overflow: TextOverflow.ellipsis),
-              ]),
-            ),
-            Icon(PhosphorIcons.caretRight(), size: 16, color: _kGrey400),
-          ]),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Drawer logout tile ───────────────────────────────────────────────────────
-
-class _DrawerLogoutTile extends StatelessWidget {
-  final VoidCallback onTap;
-  const _DrawerLogoutTile({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-      child: Material(
-        color: _kRed.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(children: [
-              Icon(PhosphorIcons.signOut(), size: 20, color: _kRed),
-              const SizedBox(width: 12),
-              Text('Toka',
-                  style: GoogleFonts.inter(
-                      fontSize: 14, fontWeight: FontWeight.w600,
-                      color: _kRed)),
-            ]),
-          ),
-        ),
-      ),
-    );
-  }
-}
