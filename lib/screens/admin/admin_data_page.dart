@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import 'admin_idara_dialogs.dart';
+import 'admin_masomo_dialogs.dart';
+import 'admin_kada_dialogs.dart';
+import 'admin_mikoa_dialogs.dart';
+import 'admin_wilaya_dialogs.dart';
+import 'admin_vituo_dialogs.dart';
 
 const _kBlue     = Color(0xFF1E40AF);
 const _kBlueBg   = Color(0xFFEFF6FF);
@@ -118,40 +124,239 @@ class _AdminDataPageState extends State<AdminDataPage>
     }).toList();
   }
 
-  void _showAddEdit(String type, {Map<String, dynamic>? item}) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _DataFormSheet(
-        type: type,
-        item: item,
-        onSaved: () { _cache.remove(type); _loadType(type); },
-      ),
-    );
+  // ─── Mappers ────────────────────────────────────────────────────────────────
+
+  Idara _toIdara(Map<String, dynamic> m) => Idara(
+    code: m['code'] as String? ?? '',
+    name: m['name'] as String? ?? '',
+    iconKey: m['icon'] as String? ?? 'briefcase',
+    active: m['status'] != 'disabled',
+    kadaCount: m['kada_count'] as int?,
+    usersCount: m['users_count'] as int?,
+  );
+
+  Somo _toSomo(Map<String, dynamic> m) => Somo(
+    code: m['code'] as String? ?? '',
+    name: m['name'] as String? ?? '',
+    level: m['level'] as String? ?? 'Primary',
+    active: m['is_active'] as bool? ?? m['status'] != 'disabled',
+    kadaCount: m['kada_count'] as int?,
+  );
+
+  Kada _toKada(Map<String, dynamic> m) => Kada(
+    code: m['code'] as String? ?? '',
+    displayName: m['display_name'] as String? ?? m['name'] as String? ?? '',
+    category: m['category'] as String? ?? '',
+    categoryName: m['category_name'] as String? ?? '',
+    level: m['level'] as String? ?? '',
+    requiresSubjects: m['requires_subjects'] as bool? ?? false,
+    active: m['is_active'] as bool? ?? true,
+    usersCount: m['users_count'] as int?,
+  );
+
+  Mkoa _toMkoa(Map<String, dynamic> m) => Mkoa(
+    id: m['id']?.toString() ?? '',
+    name: m['name'] as String? ?? '',
+    active: m['is_active'] as bool? ?? true,
+    wilayaCount: m['districts_count'] as int?,
+  );
+
+  Wilaya _toWilaya(Map<String, dynamic> m) => Wilaya(
+    id: m['id']?.toString() ?? '',
+    name: m['name'] as String? ?? '',
+    regionId: m['region_id']?.toString() ?? '',
+    regionName: m['region_name'] as String? ?? _getRegionName(m),
+    active: m['is_active'] as bool? ?? true,
+    vituoCount: m['facilities_count'] as int?,
+  );
+
+  Kituo _toKituo(Map<String, dynamic> m) => Kituo(
+    id: m['id']?.toString() ?? m['school_code'] as String? ?? '',
+    name: m['name'] as String? ?? '',
+    type: m['type'] as String? ?? m['level'] as String? ?? 'dispensary',
+    category: m['category'] as String? ?? 'health',
+    regionId: m['region_id']?.toString() ?? '',
+    regionName: _getRegionName(m),
+    districtId: m['district_id']?.toString() ?? '',
+    districtName: m['district_name'] as String? ?? m['district'] as String? ?? '',
+    active: m['is_active'] as bool? ?? true,
+    staffCount: m['staff_count'] as int?,
+  );
+
+  // ─── Actions ────────────────────────────────────────────────────────────────
+
+  Future<void> _showView(String type, Map<String, dynamic> item) async {
+    switch (type) {
+      case 'departments':
+        await showIdaraViewDialog(context, _toIdara(item),
+            onEdit: () => _showEdit(type, item: item));
+      case 'subjects':
+        await showSomoViewDialog(context, _toSomo(item),
+            onEdit: () => _showEdit(type, item: item));
+      case 'cadres':
+        await showKadaViewDialog(context, _toKada(item),
+            onEdit: () => _showEdit(type, item: item));
+      case 'regions':
+        await showMkoaViewDialog(context, _toMkoa(item),
+            onEdit: () => _showEdit(type, item: item));
+      case 'districts':
+        await showWilayaViewDialog(context, _toWilaya(item),
+            onEdit: () => _showEdit(type, item: item));
+      case 'facilities':
+        await showKituoViewDialog(context, _toKituo(item),
+            onEdit: () => _showEdit(type, item: item));
+    }
   }
 
-  Future<void> _delete(String type, Map<String, dynamic> item) async {
+  Future<void> _showEdit(String type, {Map<String, dynamic>? item}) async {
+    Map<String, dynamic>? payload;
+
+    switch (type) {
+      case 'departments':
+        final result = await showIdaraEditDialog(context,
+            idara: item != null ? _toIdara(item) : null);
+        if (result == null) return;
+        payload = {
+          'name': result.name,
+          'code': result.code,
+          'status': result.active ? 'active' : 'disabled',
+          'icon': result.iconKey,
+        };
+
+      case 'subjects':
+        final result = await showSomoEditDialog(context,
+            somo: item != null ? _toSomo(item) : null);
+        if (result == null) return;
+        final code = result.code.isNotEmpty
+            ? result.code.toUpperCase()
+            : _slugify(result.name).toUpperCase();
+        payload = {
+          'name': result.name,
+          'code': code,
+          'level': result.level,
+          'is_active': result.active,
+        };
+
+      case 'cadres':
+        if (!_cache.containsKey('departments')) await _loadType('departments');
+        final depts = (_cache['departments'] ?? []).cast<Map<String, dynamic>>();
+        final idaraList = depts
+            .map((d) => (code: d['code'] as String? ?? '', name: d['name'] as String? ?? ''))
+            .where((e) => e.code.isNotEmpty)
+            .toList();
+        final result = await showKadaEditDialog(context,
+            kada: item != null ? _toKada(item) : null, idara: idaraList);
+        if (result == null) return;
+        payload = {
+          'display_name': result.displayName,
+          'code': result.code,
+          'category': result.category,
+          'level': result.level,
+          'requires_subjects': result.requiresSubjects,
+          'is_active': result.active,
+        };
+
+      case 'regions':
+        final result = await showMkoaEditDialog(context,
+            mkoa: item != null ? _toMkoa(item) : null);
+        if (result == null) return;
+        payload = {
+          'name': result.name,
+          'is_active': result.active,
+        };
+
+      case 'districts':
+        if (!_cache.containsKey('regions')) await _loadType('regions');
+        final regionsList = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
+        final mikoa = regionsList
+            .map((r) => (id: r['id']?.toString() ?? '', name: r['name'] as String? ?? ''))
+            .where((e) => e.id.isNotEmpty)
+            .toList();
+        final result = await showWilayaEditDialog(context,
+            wilaya: item != null ? _toWilaya(item) : null, mikoa: mikoa);
+        if (result == null) return;
+        payload = {
+          'name': result.name,
+          'region_id': int.tryParse(result.regionId) ?? result.regionId,
+          'is_active': result.active,
+        };
+
+      case 'facilities':
+        if (!_cache.containsKey('regions')) await _loadType('regions');
+        final regionsList = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
+        final mikoa = regionsList
+            .map((r) => (id: r['id']?.toString() ?? '', name: r['name'] as String? ?? ''))
+            .where((e) => e.id.isNotEmpty)
+            .toList();
+        final result = await showKituoEditDialog(
+          context,
+          kituo: item != null ? _toKituo(item) : null,
+          mikoa: mikoa,
+          loadWilaya: (regionId) async {
+            try {
+              final res = await ApiService().getDistricts(int.parse(regionId));
+              final data = res.data;
+              final list = data is List ? data : (data['results'] as List? ?? []);
+              return list.cast<Map<String, dynamic>>().map((d) => (
+                    id: d['id']?.toString() ?? '',
+                    name: d['name'] as String? ?? '',
+                  )).toList();
+            } catch (_) {
+              return [];
+            }
+          },
+        );
+        if (result == null) return;
+        payload = {
+          'name': result.name,
+          'category': result.category,
+          'type': result.type,
+          'region_id': int.tryParse(result.regionId) ?? result.regionId,
+          'district_id': int.tryParse(result.districtId) ?? result.districtId,
+          'is_active': result.active,
+        };
+
+      default:
+        return;
+    }
+
+    try {
+      final id = item?['id']?.toString() ?? item?['code']?.toString();
+      if (id != null && id.isNotEmpty) {
+        await ApiService().adminUpdateData(type, id, payload);
+      } else {
+        await ApiService().adminCreateData(type, payload);
+      }
+      if (!mounted) return;
+      _cache.remove(type);
+      _loadType(type);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
+      );
+    }
+  }
+
+  Future<void> _openDelete(String type, Map<String, dynamic> item) async {
+    bool ok = false;
+    switch (type) {
+      case 'departments':
+        ok = await showIdaraDeleteDialog(context, _toIdara(item));
+      case 'subjects':
+        ok = await showSomoDeleteDialog(context, _toSomo(item));
+      case 'cadres':
+        ok = await showKadaDeleteDialog(context, _toKada(item));
+      case 'regions':
+        ok = await showMkoaDeleteDialog(context, _toMkoa(item));
+      case 'districts':
+        ok = await showWilayaDeleteDialog(context, _toWilaya(item));
+      case 'facilities':
+        ok = await showKituoDeleteDialog(context, _toKituo(item));
+    }
+    if (!ok) return;
     final id = item['id']?.toString() ?? item['code']?.toString() ?? '';
     if (id.isEmpty) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Futa'),
-        content: Text('Futa "${item['name'] ?? item['display_name']}"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hapana')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Futa', style: TextStyle(color: _kRed)),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
     try {
       await ApiService().adminDeleteData(type, id);
       if (!mounted) return;
@@ -164,6 +369,22 @@ class _AdminDataPageState extends State<AdminDataPage>
       );
     }
   }
+
+  static String _slugify(String name) {
+    final buf = StringBuffer();
+    for (final ch in name.trim().toLowerCase().split('')) {
+      if (RegExp(r'[a-z0-9]').hasMatch(ch)) {
+        buf.write(ch);
+      } else if (buf.isNotEmpty && !buf.toString().endsWith('_')) {
+        buf.write('_');
+      }
+    }
+    var code = buf.toString();
+    while (code.endsWith('_')) { code = code.substring(0, code.length - 1); }
+    return code.isEmpty ? 'item' : code;
+  }
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
 
   String _getRegionName(Map<String, dynamic> item) {
     final direct = (item['region_name'] ?? item['region']) as String? ?? '';
@@ -555,7 +776,7 @@ class _AdminDataPageState extends State<AdminDataPage>
 
   Widget _addBtn(String type) {
     return ElevatedButton.icon(
-      onPressed: () => _showAddEdit(type),
+      onPressed: () => _showEdit(type),
       icon: Icon(PhosphorIcons.plus(), size: 15, color: Colors.white),
       label: const Text('Ongeza',
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
@@ -783,8 +1004,9 @@ class _AdminDataPageState extends State<AdminDataPage>
           ),
           const SizedBox(width: 8),
           _RowAction(
-            onEdit:   () => _showAddEdit(type, item: item),
-            onDelete: () => _delete(type, item),
+            onView:   () => _showView(type, item),
+            onEdit:   () => _showEdit(type, item: item),
+            onDelete: () => _openDelete(type, item),
           ),
         ]),
       ),
@@ -795,13 +1017,16 @@ class _AdminDataPageState extends State<AdminDataPage>
 // ─── Row action buttons ───────────────────────────────────────────────────────
 
 class _RowAction extends StatelessWidget {
+  final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  const _RowAction({required this.onEdit, required this.onDelete});
+  const _RowAction({required this.onView, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
+      _sq(PhosphorIcons.eye(), _kBlue, _kBlueBg, onView),
+      const SizedBox(width: 6),
       _sq(PhosphorIcons.pencilSimple(), _kBlue, _kBlueBg, onEdit),
       const SizedBox(width: 6),
       _sq(PhosphorIcons.trash(), _kRed, _kRedBg, onDelete),
@@ -822,593 +1047,4 @@ class _RowAction extends StatelessWidget {
           child: Icon(icon, size: 16, color: iconColor),
         ),
       );
-}
-
-// ─── Add / Edit form sheet ────────────────────────────────────────────────────
-
-class _DataFormSheet extends StatefulWidget {
-  final String type;
-  final Map<String, dynamic>? item;
-  final VoidCallback onSaved;
-  const _DataFormSheet({required this.type, this.item, required this.onSaved});
-
-  @override
-  State<_DataFormSheet> createState() => _DataFormSheetState();
-}
-
-class _DataFormSheetState extends State<_DataFormSheet> {
-  final _nameCtrl = TextEditingController();
-  final _codeCtrl = TextEditingController();
-  final _iconCtrl = TextEditingController();
-  String _category        = 'health';
-  String _level           = 'Primary';
-  String _status          = 'active';
-  bool   _requiresSubjects = false;
-  bool   _saving           = false;
-  List<dynamic> _regions        = [];
-  String?       _selectedRegion;
-  String?       _selectedDistrict;
-  List<dynamic> _districts      = [];
-  List<dynamic> _departments    = [];
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.item != null) {
-      final it = widget.item!;
-      _nameCtrl.text    = (it['display_name'] ?? it['name'] ?? '') as String? ?? '';
-      _codeCtrl.text    = it['code'] as String? ?? '';
-      _iconCtrl.text    = (it['icon'] ?? '') as String? ?? '';
-      _category         = it['category'] as String? ?? 'health';
-      _status           = it['status'] as String? ?? 'active';
-      _requiresSubjects = (it['requires_subjects'] as bool?) ?? false;
-      final lvl = (it['level'] ?? it['type'] ?? '') as String? ?? '';
-      if (widget.type == 'subjects') {
-        _level = lvl.toLowerCase() == 'secondary' ? 'Secondary' : 'Primary';
-      } else {
-        _level = lvl.isNotEmpty ? lvl : 'dispensary';
-      }    } else {
-      _level = widget.type == 'subjects' ? 'Primary' : 'dispensary';
-    }
-    // Kada mpya: HAKUNA idara ya default — mtumiaji lazima achague (kama web fix)
-    if (widget.type == 'cadres' && widget.item == null) _category = '';
-
-    if (widget.type == 'facilities') {
-      _loadRegions();
-      if (widget.item != null) {
-        final rid = widget.item!['region_id'];
-        final did = widget.item!['district_id'];
-        if (rid != null) {
-          _selectedRegion = rid.toString();
-          _loadDistricts(rid.toString());
-        }
-        if (did != null) _selectedDistrict = did.toString();
-      }
-    }
-    if (widget.type == 'cadres') _loadDepartments();
-  }
-
-  static String _slug(String name) {
-    final buf = StringBuffer();
-    for (final ch in name.trim().toLowerCase().split('')) {
-      if (RegExp(r'[a-z0-9]').hasMatch(ch)) {
-        buf.write(ch);
-      } else if (buf.isNotEmpty && !buf.toString().endsWith('_')) {
-        buf.write('_');
-      }
-    }
-    var code = buf.toString();
-    while (code.endsWith('_')) { code = code.substring(0, code.length - 1); }
-    return code.isEmpty ? 'item' : code;
-  }
-
-  Future<void> _loadDepartments() async {
-    try {
-      final res = await ApiService().adminListData('departments');
-      if (!mounted) return;
-      final data = res.data;
-      setState(() {
-        _departments = data is List ? data : ((data['results'] ?? data['items'] ?? []) as List);
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _loadRegions() async {
-    try {
-      final res = await ApiService().getRegions();
-      if (!mounted) return;
-      final data = res.data;
-      setState(() {
-        _regions = data is List ? data : (data['results'] as List? ?? []);
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _loadDistricts(String regionId) async {
-    try {
-      final res = await ApiService().getDistricts(int.parse(regionId));
-      if (!mounted) return;
-      final data = res.data;
-      setState(() {
-        _districts = data is List ? data : (data['results'] as List? ?? []);
-      });
-    } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _codeCtrl.dispose();
-    _iconCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    final name = _nameCtrl.text.trim();
-    if (name.isEmpty) return;
-    setState(() { _saving = true; });
-    try {
-      final typedCode = _codeCtrl.text.trim();
-      final slug = typedCode.isNotEmpty ? typedCode : _slug(name);
-      final data = <String, dynamic>{'name': name};
-
-      switch (widget.type) {
-        case 'departments':
-          data['code']   = slug.toLowerCase();
-          data['status'] = _status;
-          if (_iconCtrl.text.trim().isNotEmpty) data['icon'] = _iconCtrl.text.trim();
-        case 'subjects':
-          data['code']  = slug.toUpperCase();
-          data['level'] = _level;
-        case 'cadres':
-          if (_category.isEmpty) {
-            if (!mounted) return;
-            setState(() { _saving = false; });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Chagua idara ya kada'), backgroundColor: _kAmber),
-            );
-            return;
-          }
-          data.remove('name');
-          data['code']              = slug.toUpperCase();
-          data['display_name']      = name;
-          data['category']          = _category;
-          data['requires_subjects'] = _requiresSubjects;
-          if (_level == 'Primary' || _level == 'Secondary') data['level'] = _level;
-        case 'regions':
-          break;
-        case 'districts':
-          break;
-        case 'facilities':
-          data['category'] = _category;
-          data['type']     = _level;
-          if (_selectedRegion != null)   data['region_id']   = int.parse(_selectedRegion!);
-          if (_selectedDistrict != null) data['district_id'] = int.parse(_selectedDistrict!);
-          if (_selectedRegion == null || _selectedDistrict == null) {
-            if (!mounted) return;
-            setState(() { _saving = false; });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Chagua mkoa na wilaya'), backgroundColor: _kAmber),
-            );
-            return;
-          }
-      }
-
-      final id = widget.item?['id']?.toString() ?? widget.item?['code']?.toString();
-      if (id != null && id.isNotEmpty) {
-        await ApiService().adminUpdateData(widget.type, id, data);
-      } else {
-        await ApiService().adminCreateData(widget.type, data);
-      }
-      if (!mounted) return;
-      Navigator.pop(context);
-      widget.onSaved();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _saving = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
-    }
-  }
-
-  String get _deptLabel {
-    if (_category.isEmpty || _departments.isEmpty) return '';
-    final d = _departments.firstWhere(
-      (x) => (x as Map)['code'] == _category,
-      orElse: () => <String, dynamic>{},
-    ) as Map<String, dynamic>;
-    return d['name'] as String? ?? _category;
-  }
-
-  String? get _regionLabel {
-    if (_selectedRegion == null) return null;
-    for (final r in _regions) {
-      if ((r as Map)['id'].toString() == _selectedRegion) return r['name'] as String?;
-    }
-    return _selectedRegion;
-  }
-
-  String? get _districtLabel {
-    if (_selectedDistrict == null) return null;
-    for (final d in _districts) {
-      if ((d as Map)['id'].toString() == _selectedDistrict) return d['name'] as String?;
-    }
-    return _selectedDistrict;
-  }
-
-  Widget _pickerBtn({required String hint, String? value, required VoidCallback onTap, bool disabled = false}) {
-    return GestureDetector(
-      onTap: disabled ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: _kGrey50,
-          border: Border.all(color: _kGrey200),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(children: [
-          Icon(PhosphorIcons.mapPin(), size: 16,
-              color: disabled ? _kGrey300 : (value != null ? _kGrey500 : _kGrey400)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value ?? hint,
-              style: TextStyle(fontSize: 14, color: value != null ? _kGrey900 : _kGrey400),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Icon(PhosphorIcons.caretDown(), size: 14,
-              color: value != null ? _kGrey500 : _kGrey400),
-        ]),
-      ),
-    );
-  }
-
-  void _openPicker({
-    required String title,
-    required List<({String label, String value})> items,
-    required void Function(String) onPick,
-  }) {
-    final ctrl = TextEditingController();
-    List<({String label, String value})> filtered = List.from(items);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, ss) => SizedBox(
-          height: MediaQuery.of(ctx).size.height * 0.65,
-          child: Column(children: [
-            const SizedBox(height: 6),
-            Center(child: Container(width: 36, height: 4,
-                decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(children: [
-                Expanded(child: Text(title,
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900))),
-                GestureDetector(
-                  onTap: () => Navigator.pop(ctx),
-                  child: Container(
-                    width: 30, height: 30,
-                    decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
-                    child: Icon(PhosphorIcons.x(), size: 14, color: _kGrey700),
-                  ),
-                ),
-              ]),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: ctrl,
-                onChanged: (q) {
-                  final ql = q.toLowerCase();
-                  ss(() => filtered = items.where((i) => i.label.toLowerCase().contains(ql)).toList());
-                },
-                decoration: InputDecoration(
-                  hintText: 'Tafuta...',
-                  hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
-                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: _kGrey400, size: 16),
-                  fillColor: _kGrey100, filled: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Divider(height: 1, color: _kGrey200),
-            Expanded(
-              child: ListView.builder(
-                itemCount: filtered.length,
-                itemBuilder: (_, i) {
-                  final item = filtered[i];
-                  return InkWell(
-                    onTap: () { Navigator.pop(ctx); onPick(item.value); },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: _kGrey100)),
-                      ),
-                      child: Text(item.label,
-                          style: const TextStyle(fontSize: 15, color: _kGrey900)),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _dec(String hint, {IconData? prefixIcon}) => InputDecoration(
-    hintText: hint,
-    prefixIcon: prefixIcon != null
-        ? Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(prefixIcon, size: 16, color: _kGrey400),
-          )
-        : null,
-    prefixIconConstraints: prefixIcon != null
-        ? const BoxConstraints(minWidth: 44, minHeight: 0)
-        : null,
-    filled: true,
-    fillColor: _kGrey50,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kGrey200)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue)),
-  );
-
-  String get _title {
-    final action = widget.item != null ? 'Hariri' : 'Ongeza';
-    switch (widget.type) {
-      case 'departments': return '$action Idara';
-      case 'subjects':    return '$action Somo';
-      case 'cadres':      return '$action Kada';
-      case 'regions':     return '$action Mkoa';
-      case 'districts':   return '$action Wilaya';
-      case 'facilities':  return '$action Kituo';
-      default: return action;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Modal header with grey circle close button
-          Row(children: [
-            Text(_title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kGrey900)),
-            const Spacer(),
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 30, height: 30,
-                decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
-                child: Icon(PhosphorIcons.x(), size: 14, color: _kGrey700),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 16),
-          if (widget.type == 'facilities') ...[
-            _pickerBtn(
-              hint: 'Chagua mkoa *',
-              value: _regionLabel,
-              onTap: () => _openPicker(
-                title: 'Chagua Mkoa',
-                items: _regions.map((r) => (
-                    label: (r as Map)['name'] as String? ?? '',
-                    value: r['id'].toString(),
-                )).toList(),
-                onPick: (v) {
-                  setState(() { _selectedRegion = v; _selectedDistrict = null; _districts = []; });
-                  _loadDistricts(v);
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            _pickerBtn(
-              hint: _selectedRegion == null ? 'Chagua mkoa kwanza' : 'Chagua wilaya *',
-              value: _districtLabel,
-              disabled: _selectedRegion == null,
-              onTap: () => _openPicker(
-                title: 'Chagua Wilaya',
-                items: _districts.map((d) => (
-                    label: (d as Map)['name'] as String? ?? '',
-                    value: d['id'].toString(),
-                )).toList(),
-                onPick: (v) => setState(() => _selectedDistrict = v),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          TextField(
-            controller: _nameCtrl,
-            decoration: _dec(
-              widget.type == 'cadres' ? 'Jina la kada *' : 'Jina *',
-              prefixIcon: PhosphorIcons.tag(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (widget.type != 'facilities' && widget.type != 'regions' &&
-              widget.type != 'districts')
-            TextField(
-              controller: _codeCtrl,
-              decoration: _dec(
-                'Code (ikiachiwa wazi tunautengeneza wenyewe)',
-                prefixIcon: PhosphorIcons.hash(),
-              ),
-            ),
-          if (widget.type == 'facilities') ...[
-            const SizedBox(height: 12),
-            Row(children: [
-              _SelectableChip(label: 'Afya',  selected: _category == 'health',
-                  onTap: () => setState(() => _category = 'health')),
-              const SizedBox(width: 8),
-              _SelectableChip(label: 'Elimu', selected: _category == 'education',
-                  onTap: () => setState(() => _category = 'education')),
-            ]),
-            const SizedBox(height: 12),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(children: [
-                for (final t in const ['dispensary', 'health_center', 'hospital', 'laboratory', 'clinic']) ...[
-                  _SelectableChip(
-                    label: t,
-                    selected: _level.toLowerCase() == t,
-                    onTap: () => setState(() => _level = t),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ]),
-            ),
-          ],
-          if (widget.type == 'departments') ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: _iconCtrl,
-              decoration: _dec('Ikoni (emoji, k.m. 🏥 — hiari)'),
-            ),
-            const SizedBox(height: 12),
-            Row(children: [
-              _SelectableChip(label: 'Hai',      selected: _status == 'active',
-                  onTap: () => setState(() { _status = 'active'; })),
-              const SizedBox(width: 8),
-              _SelectableChip(label: 'Imezimwa', selected: _status == 'disabled',
-                  onTap: () => setState(() { _status = 'disabled'; })),
-            ]),
-          ],
-          if (widget.type == 'cadres') ...[
-            const SizedBox(height: 12),
-            _pickerBtn(
-              hint: 'Chagua idara *',
-              value: _deptLabel.isEmpty ? null : _deptLabel,
-              onTap: () => _openPicker(
-                title: 'Chagua Idara',
-                items: _departments.map((d) => (
-                    label: (d as Map)['name'] as String? ?? d['code'] as String,
-                    value: d['code'] as String,
-                )).toList(),
-                onPick: (v) => setState(() => _category = v),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(children: [
-              _SelectableChip(label: 'Bila kiwango',
-                  selected: _level != 'Primary' && _level != 'Secondary',
-                  onTap: () => setState(() { _level = ''; })),
-              const SizedBox(width: 8),
-              _SelectableChip(label: 'Primary',   selected: _level == 'Primary',
-                  onTap: () => setState(() { _level = 'Primary'; })),
-              const SizedBox(width: 8),
-              _SelectableChip(label: 'Secondary', selected: _level == 'Secondary',
-                  onTap: () => setState(() { _level = 'Secondary'; })),
-            ]),
-            const SizedBox(height: 10),
-            // Custom checkbox row
-            GestureDetector(
-              onTap: () => setState(() => _requiresSubjects = !_requiresSubjects),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: _kGrey50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _kGrey200),
-                ),
-                child: Row(children: [
-                  Container(
-                    width: 18, height: 18,
-                    decoration: BoxDecoration(
-                      color: _requiresSubjects ? _kBlue : Colors.white,
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(
-                          color: _requiresSubjects ? _kBlue : _kGrey300, width: 1.5),
-                    ),
-                    child: _requiresSubjects
-                        ? Icon(PhosphorIcons.check(), size: 11, color: Colors.white)
-                        : null,
-                  ),
-                  const SizedBox(width: 10),
-                  const Text('Inahitaji masomo',
-                      style: TextStyle(fontSize: 13, color: _kGrey700)),
-                ]),
-              ),
-            ),
-          ],
-          if (widget.type == 'subjects') ...[
-            const SizedBox(height: 12),
-            Row(children: [
-              _SelectableChip(label: 'Primary',   selected: _level == 'Primary',
-                  onTap: () => setState(() { _level = 'Primary'; })),
-              const SizedBox(width: 8),
-              _SelectableChip(label: 'Secondary', selected: _level == 'Secondary',
-                  onTap: () => setState(() { _level = 'Secondary'; })),
-            ]),
-          ],
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kBlue, foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
-              ),
-              child: _saving
-                  ? const SizedBox(width: 20, height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('Hifadhi', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Selectable chip — uniform blue primary selected state ────────────────────
-
-class _SelectableChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _SelectableChip({required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: selected ? _kBlueBg : Colors.white,
-          border: Border.all(color: selected ? _kBlue : _kGrey200, width: selected ? 1.5 : 1),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(label,
-            style: TextStyle(
-              fontSize: 12,
-              color: selected ? _kBlue : _kGrey700,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            )),
-      ),
-    );
-  }
 }
