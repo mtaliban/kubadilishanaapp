@@ -21,7 +21,7 @@ const _kBlue = v2Accent;
 const _kTitleMax = 60;
 const _kMsgMax = 500;
 
-const _kPageSize = 8; // Historia: pagination "Pakia zaidi"
+const _kPageSize = 8; // Historia: idadi inayoonyeshwa kila mphatso ya "Pakia zaidi" (client-side)
 
 ({IconData icon, Color color, Color bg, String label}) _typeStyle(String t) {
   switch (t) {
@@ -115,11 +115,10 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
 
   // ── Historia (data) ──
   bool _loading = true;
-  bool _loadingMore = false;
-  bool _noMore = false;
   String? _error;
   List<dynamic> _items = [];
   int _total = 0;
+  int _visibleCount = _kPageSize; // "Pakia zaidi" huongeza hii (client-side)
   List<dynamic> _departments = [];
   Map<String, int> _catCounts = {}; // idadi za watumiaji kwa kundi (kutoka /admin/stats)
   String? _confirmDelete; // id ya tangazo linalothibitishwa kufuta
@@ -169,19 +168,20 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       _error = null;
     });
     try {
-      final res = await ApiService().adminListAnnouncements(limit: _kPageSize, skip: 0);
+      final res = await ApiService().adminListAnnouncements();
       if (!mounted) return;
       final data = res.data;
+      final map = data is List ? <String, dynamic>{} : asMap(data);
       final list = data is List
           ? data
-          : (asMap(data)['announcements'] as List? ??
-              asMap(data)['results'] as List? ??
+          : (map['announcements'] as List? ??
+              map['results'] as List? ??
               []);
       setState(() {
         _items = list;
-        _total = (asMap(data)['total'] as num?)?.toInt() ?? list.length;
+        _total = (map['total'] as num?)?.toInt() ?? list.length;
         _loading = false;
-        _noMore = list.length < _kPageSize;
+        _visibleCount = _kPageSize;
       });
     } catch (e) {
       if (!mounted) return;
@@ -192,28 +192,9 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     }
   }
 
-  Future<void> _loadMore() async {
-    if (_loadingMore || _noMore) return;
-    setState(() => _loadingMore = true);
-    try {
-      final res = await ApiService()
-          .adminListAnnouncements(limit: _kPageSize, skip: _items.length);
-      if (!mounted) return;
-      final data = res.data;
-      final list = data is List
-          ? data
-          : (asMap(data)['announcements'] as List? ??
-              asMap(data)['results'] as List? ??
-              []);
-      setState(() {
-        _items.addAll(list);
-        if (list.length < _kPageSize) _noMore = true;
-        _loadingMore = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingMore = false);
-    }
+  void _showMore() {
+    // Client-side: onyesha zaidi kutoka kwenye orodha iliyopakiwa tayari
+    setState(() => _visibleCount += _kPageSize);
   }
 
   Future<void> _loadDepts() async {
@@ -317,7 +298,8 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       final payload = <String, dynamic>{
         'title': _titleCtrl.text.trim(),
         'message': _msgCtrl.text.trim(),
-        'type': _type,
+        // 'type' haihifadhiwa na backend ya sasa — tunaiweka tu kwa ajili ya siku zijazo
+        if (_type != 'info') 'type': _type,
         'audience': single
             ? 'user'
             : (_audiences.length == 1 ? _audiences.first : 'all'),
@@ -359,12 +341,9 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       _titleCtrl.text = a['title'] as String? ?? '';
       _msgCtrl.text = a['message'] as String? ?? '';
       final auds =
-          (a['audiences'] as List?)?.map((e) => e.toString()).toList() ?? ['all'];
+          (a['audiences'] as List?)?.map((e) => e.toString()).toList() ??
+              ['all'];
       _audiences = auds.isEmpty ? {'all'} : auds.toSet();
-      if (_audiences.contains('user')) {
-        _selectedUser = null;
-        _userSearchCtrl.clear();
-      }
       _tab = 0;
       _confirmDelete = null;
     });
@@ -1020,11 +999,13 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       );
     }
 
-    final list = _filter == null
-        ? _items
-        : _items
-            .where((x) => (asMap(x)['type'] as String? ?? 'info') == _filter)
-            .toList();
+    final list = (_filter == null
+            ? _items
+            : _items
+                .where((x) => (asMap(x)['type'] as String? ?? 'info') == _filter)
+                .toList())
+        .take(_visibleCount)
+        .toList();
 
     return Column(children: [
       // ── Chipse za filter (sticky) ──
@@ -1088,14 +1069,20 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
               ),
       ),
       // ── Pakia zaidi ──
-      if (!_noMore && list.isNotEmpty)
+      if (_visibleCount <
+          (_filter == null
+              ? _items.length
+              : _items
+                  .where((x) =>
+                      (asMap(x)['type'] as String? ?? 'info') == _filter)
+                  .length))
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
           child: SizedBox(
             width: double.infinity,
             height: 38,
             child: OutlinedButton(
-              onPressed: _loadingMore ? null : _loadMore,
+              onPressed: _showMore,
               style: OutlinedButton.styleFrom(
                 foregroundColor: v2TextPrimary,
                 backgroundColor: Colors.white,
@@ -1103,19 +1090,13 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
-              child: _loadingMore
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: v2TextMuted))
-                  : Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(PhosphorIcons.caretDown(), size: 16),
-                      const SizedBox(width: 6),
-                      Text('Pakia zaidi',
-                          style: GoogleFonts.inter(
-                              fontSize: 14, fontWeight: FontWeight.w600)),
-                    ]),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(PhosphorIcons.caretDown(), size: 16),
+                const SizedBox(width: 6),
+                Text('Pakia zaidi',
+                    style: GoogleFonts.inter(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+              ]),
             ),
           ),
         ),
