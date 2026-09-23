@@ -133,8 +133,8 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
       return _toast('Namba ya WhatsApp iwe tarakimu 9 baada ya +255');
     }
     final updated = wa.isEmpty
-        ? _data.copyWith(name: name, clearWhatsapp: true)
-        : _data.copyWith(name: name, whatsapp: '0$wa');
+        ? _data.copyWith(jina: name, clearWhatsapp: true)
+        : _data.copyWith(jina: name, whatsapp: '0$wa');
 
     setState(() => _saving = true);
     try {

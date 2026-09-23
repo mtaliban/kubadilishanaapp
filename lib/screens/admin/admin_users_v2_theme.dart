@@ -393,7 +393,7 @@ class V2UserCard extends StatelessWidget {
               const SizedBox(width: 8),
               _bigStatusPill(
                 icon: isPaid
-                    ? PhosphorIcons.receiptCheck(PhosphorIconsStyle.fill)
+                    ? PhosphorIcons.receipt(PhosphorIconsStyle.fill)
                     : PhosphorIcons.receiptX(PhosphorIconsStyle.fill),
                 label: isPaid ? 'Amelipa' : 'Hajalipa',
                 bg: isPaid ? v2SuccessBg : v2DangerBg,

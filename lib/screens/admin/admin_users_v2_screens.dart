@@ -580,7 +580,10 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
   // ── Save ─────────────────────────────────────────────────────────────────
 
   Future<void> _hifadhi() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_jinaCtrl.text.trim().isEmpty || _simuCtrl.text.trim().isEmpty) {
+      setState(() => _error = 'Jaza jina na namba ya simu kwanza');
+      return;
+    }
     if (_cadreCode == null) {
       setState(() => _error = 'Chagua idara na kada kwanza');
       return;
