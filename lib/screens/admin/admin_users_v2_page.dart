@@ -743,6 +743,19 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     return PhosphorIcons.briefcase();
   }
 
+  IconData _userDeptIcon(Map user) {
+    final cat = '${user['category'] ?? ''}';
+    final cadre = '${user['cadre_display'] ?? user['cadre_code'] ?? ''}'.toLowerCase();
+    if (cat == 'health') return PhosphorIcons.heartbeat();
+    if (cat == 'education') {
+      if (cadre.contains('secondary') || cadre.contains('sekondari') || cadre.contains('sec'))
+        return PhosphorIcons.graduationCap();
+      return PhosphorIcons.bookOpen();
+    }
+    if (cat == 'service') return PhosphorIcons.buildings();
+    return PhosphorIcons.briefcase();
+  }
+
   // ── CARDS ──
   Widget _buildTimeline() {
     return Column(
@@ -754,17 +767,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
             isNewest: _page == 0 && i == 0,
             isLast: i == _users.length - 1,
             deptName: _deptName('${asMap(_users[i])['category'] ?? ''}'),
-            deptIcon: _deptIcon('${asMap(_users[i])['category'] ?? ''}'),
+            deptIcon: _userDeptIcon(asMap(_users[i])),
             onDotsTap: () => _onDotsTap(asMap(_users[i])),
-          ),
-        if (_loading && _users.isNotEmpty)
-          const Padding(
-            padding: EdgeInsets.all(14),
-            child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2.2, color: v2Accent)),
           ),
       ],
     );
@@ -999,21 +1003,47 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
   }
 
   Future<void> _pickCategory() async {
-    final opts = <({String value, String label, String? subtitle})>[
-      const (value: '', label: 'Zote', subtitle: null),
+    IconData _dIcon(String code) {
+      if (code.isEmpty) return PhosphorIcons.squaresFour();
+      if (code == 'health') return PhosphorIcons.heartbeat();
+      if (code == 'education') return PhosphorIcons.bookOpen();
+      if (code == 'service') return PhosphorIcons.buildings();
+      return PhosphorIcons.briefcase();
+    }
+    Color _dBg(String code) {
+      if (code.isEmpty) return v2SurfaceMuted;
+      if (code == 'health') return const Color(0xFFFFF1F2);
+      if (code == 'education') return v2AccentBg;
+      if (code == 'service') return const Color(0xFFF0FDF4);
+      return v2SurfaceMuted;
+    }
+    Color _dFg(String code) {
+      if (code.isEmpty) return v2TextSecondary;
+      if (code == 'health') return const Color(0xFFDC2626);
+      if (code == 'education') return v2Accent;
+      if (code == 'service') return const Color(0xFF16A34A);
+      return v2TextSecondary;
+    }
+    final items = [
+      (value: '', label: 'Idara Zote', icon: _dIcon(''), iconBg: _dBg(''), iconFg: _dFg('')),
       for (final d in widget.parent._departments)
         (
           value: '${d['code']}',
           label: '${d['display_name'] ?? d['name'] ?? d['code']}',
-          subtitle: null
+          icon: _dIcon('${d['code']}'),
+          iconBg: _dBg('${d['code']}'),
+          iconFg: _dFg('${d['code']}'),
         ),
     ];
-    final picked = await showSelectSheet<String>(context,
-        title: 'Chagua Idara', items: opts, selected: _category, searchable: false);
+    final picked = await showV2IconPicker(context,
+        title: 'Chagua Idara', items: items, selected: _category.isEmpty ? null : _category);
     if (picked == null) return;
     setState(() {
       _category = picked;
       _subjects = [];
+      _facilityId = null;
+      _facilityName = null;
+      _facilities = [];
     });
     if (picked == 'education') _loadSubjects();
   }
@@ -1150,9 +1180,10 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
+                  color: active ? v2AccentBg : Colors.white,
                   border: Border.all(
-                      color: active ? v2Accent : v2Border,
-                      width: active ? 1.4 : 1),
+                      color: active ? v2Accent : const Color(0xFFD1D9E6),
+                      width: active ? 1.5 : 1),
                   borderRadius: BorderRadius.circular(12)),
               child: Row(children: [
                 Icon(icon,

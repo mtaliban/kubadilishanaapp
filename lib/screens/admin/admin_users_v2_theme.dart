@@ -254,11 +254,18 @@ class V2UserCard extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: onDotsTap,
-                icon: Icon(PhosphorIcons.dotsThreeVertical(), size: 18),
-                color: v2TextMuted,
-                visualDensity: VisualDensity.compact,
+              InkWell(
+                onTap: onDotsTap,
+                borderRadius: BorderRadius.circular(9),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: v2AccentBg,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(PhosphorIcons.dotsThreeVertical(), size: 20, color: v2Accent),
+                ),
               ),
             ]),
             const SizedBox(height: 13),
@@ -269,7 +276,7 @@ class V2UserCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: v2SurfaceMuted,
+                color: v2AccentBg,
                 borderRadius: BorderRadius.circular(13),
               ),
               child: Row(crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,14 +288,14 @@ class V2UserCard extends StatelessWidget {
                       children: [
                         Row(children: [
                           Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill),
-                              size: 10, color: v2TextMuted),
+                              size: 10, color: v2Accent),
                           const SizedBox(width: 3),
                           const Text('ANATOKA',
                               style: TextStyle(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: .5,
-                                  color: v2TextMuted)),
+                                  color: v2Accent)),
                         ]),
                         const SizedBox(height: 5),
                         Text(
@@ -298,21 +305,24 @@ class V2UserCard extends StatelessWidget {
                           style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: v2TextPrimary),
+                              color: v2Accent),
                         ),
                         if (district.isNotEmpty)
                           Text(district,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontSize: 11, color: v2TextSecondary)),
+                                  fontSize: 11, color: v2Accent)),
                       ]),
                 ),
-                Container(
-                    width: 1,
-                    height: 38,
-                    color: v2Border,
-                    margin: const EdgeInsets.symmetric(horizontal: 10)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Container(width: 18, height: 1, color: v2Accent.withValues(alpha: .35)),
+                    const SizedBox(height: 2),
+                    Icon(PhosphorIcons.arrowRight(PhosphorIconsStyle.bold), size: 11, color: v2Accent),
+                  ]),
+                ),
                 // Anaelekea
                 Expanded(
                   child: Column(
@@ -320,14 +330,14 @@ class V2UserCard extends StatelessWidget {
                       children: [
                         Row(children: [
                           Icon(PhosphorIcons.flag(PhosphorIconsStyle.fill),
-                              size: 10, color: v2TextMuted),
+                              size: 10, color: v2Accent),
                           const SizedBox(width: 3),
                           const Text('ANAELEKEA',
                               style: TextStyle(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: .5,
-                                  color: v2TextMuted)),
+                                  color: v2Accent)),
                         ]),
                         const SizedBox(height: 5),
                         if (dests.isEmpty)
@@ -702,6 +712,89 @@ Widget _addOption(BuildContext ctx, IconData icon, String title, String subtitle
       ]),
     ),
   );
+}
+
+// ═══════════════════════════════ Icon Picker Sheet ═══════════════════════════════
+Future<String?> showV2IconPicker(
+  BuildContext context, {
+  required String title,
+  required List<({String value, String label, IconData icon, Color iconBg, Color iconFg})> items,
+  String? selected,
+}) {
+  return showModalBottomSheet<String>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _V2IconPickerSheet(title: title, items: items, selected: selected),
+  );
+}
+
+class _V2IconPickerSheet extends StatelessWidget {
+  final String title;
+  final List<({String value, String label, IconData icon, Color iconBg, Color iconFg})> items;
+  final String? selected;
+  const _V2IconPickerSheet({required this.title, required this.items, this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: v2Surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(width: 36, height: 4,
+                  decoration: BoxDecoration(color: v2Border, borderRadius: BorderRadius.circular(2))),
+            ),
+            const SizedBox(height: 16),
+            Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: v2TextPrimary)),
+            const SizedBox(height: 12),
+            for (int i = 0; i < items.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              _row(context, items[i]),
+            ],
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, ({String value, String label, IconData icon, Color iconBg, Color iconFg}) item) {
+    final isSel = selected == item.value;
+    return InkWell(
+      onTap: () => Navigator.pop(context, item.value),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSel ? v2AccentBg : v2Surface,
+          border: Border.all(color: isSel ? v2Accent : v2Border, width: isSel ? 1.5 : 1.0),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+                color: isSel ? v2AccentBg : item.iconBg,
+                borderRadius: BorderRadius.circular(10)),
+            child: Icon(item.icon, size: 19, color: isSel ? v2Accent : item.iconFg),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(item.label, style: TextStyle(
+              fontSize: 14, fontWeight: FontWeight.w600,
+              color: isSel ? v2Accent : v2TextPrimary))),
+          if (isSel) Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill), size: 18, color: v2Accent),
+        ]),
+      ),
+    );
+  }
 }
 
 // ═══════════════════════════════ Delete dialog ═══════════════════════════════

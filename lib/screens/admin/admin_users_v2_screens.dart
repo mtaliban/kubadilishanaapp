@@ -57,15 +57,15 @@ InputDecoration v2FieldDec(String hint, {Widget? prefixIcon}) => InputDecoration
       hintStyle: const TextStyle(fontSize: 13.5, color: v2TextMuted),
       prefixIcon: prefixIcon,
       filled: true,
-      fillColor: v2Surface,
+      fillColor: Colors.white,
       contentPadding:
           const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: v2Border)),
+          borderSide: const BorderSide(color: Color(0xFFD0D7E2))),
       enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: v2Border)),
+          borderSide: const BorderSide(color: Color(0xFFD0D7E2))),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
           borderSide: const BorderSide(color: v2Accent, width: 1.5)),
@@ -686,10 +686,10 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     final showMasomo = _category == 'education';
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: const Color(0xFFF8F9FA),
+        surfaceTintColor: const Color(0xFFF8F9FA),
         elevation: 0,
         title: Text(_isEditing ? 'Hariri Mtumiaji' : 'Mtumiaji Mpya',
             style: const TextStyle(
@@ -707,7 +707,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: v2Accent.withValues(alpha: .6),
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 11),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12))),
             icon: _saving
@@ -1400,45 +1400,16 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: const Color(0xFFF8F9FA),
+        surfaceTintColor: const Color(0xFFF8F9FA),
         elevation: 0,
         title: const Text('Ongeza Admin',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: v2TextPrimary)),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _saving ? null : _hifadhi,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: v2Accent,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: v2Accent.withValues(alpha: .6),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12))),
-              icon: _saving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Icon(PhosphorIcons.check(), size: 17),
-              label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 14.5)),
-            ),
-          ),
-        ),
       ),
       body: Form(
         key: _formKey,
@@ -1499,6 +1470,26 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                   obscure: true,
                   validator: (v) =>
                       (v == null || v.length < 6) ? 'Herufi 6+' : null),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _saving ? null : _hifadhi,
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: v2Accent,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: v2Accent.withValues(alpha: .6),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  icon: _saving
+                      ? const SizedBox(width: 15, height: 15,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Icon(PhosphorIcons.check(), size: 16),
+                  label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                ),
+              ),
             ]),
       ),
     );
@@ -1716,7 +1707,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                     backgroundColor: v2Accent,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
                 icon: _busy
@@ -1739,7 +1730,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                 style: OutlinedButton.styleFrom(
                     foregroundColor: v2Accent,
                     side: const BorderSide(color: v2Accent),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
                 icon: Icon(PhosphorIcons.downloadSimple(), size: 17),
