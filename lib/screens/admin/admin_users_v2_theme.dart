@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -119,7 +121,7 @@ class V2IconChip extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════ Kadi ya mtumiaji (pana, nyeupe) ═══════════
+// ═══════════════════════════════ Kadi ya mtumiaji — TICKET DESIGN ═══════════
 class V2UserCard extends StatelessWidget {
   final Map<String, dynamic> user;
   final String timeText;
@@ -140,11 +142,32 @@ class V2UserCard extends StatelessWidget {
     required this.onDotsTap,
   });
 
+  // ── Namba: "0778259957" -> "0778 259 957" ──
+  static String _fmtLocal(String p) {
+    final d = p.replaceAll(RegExp(r'\D'), '');
+    if (d.length == 10) {
+      return '${d.substring(0, 4)} ${d.substring(4, 7)} ${d.substring(7)}';
+    }
+    if (d.length == 12 && d.startsWith('255')) {
+      return '0${d.substring(3, 6)} ${d.substring(6, 9)} ${d.substring(9)}';
+    }
+    return p;
+  }
+
+  static Future<void> _launchWa(String phone) async {
+    var d = phone.replaceAll(RegExp(r'\D'), '');
+    if (d.startsWith('0')) d = '255${d.substring(1)}';
+    await v2Launch('https://wa.me/$d');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pageBg = Theme.of(context).scaffoldBackgroundColor;
+
     final name = user['full_name'] as String? ?? '';
     final phone =
         user['phone_primary'] as String? ?? user['phone'] as String? ?? '';
+    final whatsapp = user['phone_alt'] as String? ?? '';
     final cadre =
         user['cadre_display'] as String? ?? user['cadre_code'] as String? ?? '';
     final station =
@@ -157,6 +180,13 @@ class V2UserCard extends StatelessWidget {
     final isAdmin = user['is_admin'] as bool? ?? false;
     final initials = v2Initials(name);
 
+    // Rangi kulingana na idara
+    final cat = '${user['category'] ?? ''}'.toLowerCase();
+    final isHealth = cat == 'health';
+    final tone = isHealth ? v2Success : v2Accent;
+    final toneBg = isHealth ? v2SuccessBg : v2AccentBg;
+
+    // Maeneo anayotaka kwenda
     final rawDests =
         ((user['desired_destinations'] ?? user['destinations']) as List?) ?? [];
     final dests = rawDests
@@ -171,293 +201,374 @@ class V2UserCard extends StatelessWidget {
         .where((s) => s.isNotEmpty)
         .toList();
 
+    final firstDest =
+        dests.isEmpty ? '—' : dests.first.split(',').first.trim();
+    final restDests = dests.length > 1 ? dests.sublist(1) : <String>[];
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: v2Surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: v2Border, width: 0.8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: v2Border),
       ),
-      child: Opacity(
-        opacity: isActive ? 1.0 : 0.72,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── HEADER: avatar (2 herufi + dot kubwa) + jina + simu clickable + dots ──
-            Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-              Stack(clipBehavior: Clip.none, children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: const BoxDecoration(
-                      color: v2AccentBg, shape: BoxShape.circle),
-                  alignment: Alignment.center,
-                  child: Text(initials,
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: v2Accent)),
-                ),
-                Positioned(
-                  right: -2,
-                  bottom: -2,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: isActive ? v2Success : v2Danger,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── SEHEMU YA JUU ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Avatar + Jina + Menu ⋮
+                Row(children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration:
+                        BoxDecoration(color: toneBg, shape: BoxShape.circle),
+                    alignment: Alignment.center,
+                    child: Text(initials,
+                        style: TextStyle(
+                            color: tone,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600)),
                   ),
-                ),
-              ]),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(v2TitleCase(name),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(v2TitleCase(name),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16.5,
-                            color: v2TextPrimary)),
-                    const SizedBox(height: 3),
-                    if (phone.isNotEmpty)
-                      GestureDetector(
-                        onTap: () => v2Launch(
-                            'tel:+${phone.replaceAll(RegExp(r'\D'), '')}'),
-                        child: Row(children: [
-                          Icon(PhosphorIcons.phone(),
-                              size: 12, color: v2Accent),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(v2FmtPhone(phone),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 13,
-                                    color: v2Accent,
-                                    fontWeight: FontWeight.w600)),
-                          ),
-                        ]),
-                      )
-                    else if (cadre.isNotEmpty)
-                      Text(cadre,
-                          style: const TextStyle(
-                              fontSize: 12.5,
-                              color: v2TextSecondary,
-                              fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              InkWell(
-                onTap: onDotsTap,
-                borderRadius: BorderRadius.circular(9),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: v2AccentBg,
-                    borderRadius: BorderRadius.circular(9),
+                            color: v2TextPrimary,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600)),
                   ),
-                  child: Icon(PhosphorIcons.dotsThreeVertical(PhosphorIconsStyle.bold), size: 22, color: v2Accent),
-                ),
-              ),
-            ]),
-            const SizedBox(height: 13),
+                  InkWell(
+                    onTap: onDotsTap,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFF1F3F7),
+                          borderRadius: BorderRadius.circular(8)),
+                      alignment: Alignment.center,
+                      child: Icon(
+                          PhosphorIcons.dotsThreeVertical(
+                              PhosphorIconsStyle.bold),
+                          size: 19,
+                          color: v2TextSecondary),
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 10),
 
-            // ── BOX: ANATOKA → ANAELEKEA ──
-            Container(
-              width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: v2AccentBg,
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                // Anatoka
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [
-                          Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill),
-                              size: 10, color: v2Accent),
-                          const SizedBox(width: 3),
-                          const Text('ANATOKA',
-                              style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: .5,
-                                  color: v2Accent)),
-                        ]),
-                        const SizedBox(height: 5),
-                        Text(
-                          region.isEmpty ? '—' : region,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: v2Accent),
-                        ),
-                        if (district.isNotEmpty)
-                          Text(district,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 11, color: v2Accent)),
-                      ]),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
-                      size: 16, color: v2Accent),
-                ),
-                // Anaelekea
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [
-                          Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill),
-                              size: 10, color: v2Accent),
-                          const SizedBox(width: 3),
-                          const Text('ANAELEKEA',
-                              style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: .5,
-                                  color: v2Accent)),
-                        ]),
-                        const SizedBox(height: 5),
-                        if (dests.isEmpty)
-                          const Text('—',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: v2Accent))
-                        else ...[
-                          Wrap(spacing: 4, runSpacing: 3, children: [
-                            for (final d in dests.take(2))
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                    color: v2Accent.withValues(alpha: .12),
-                                    borderRadius: BorderRadius.circular(6)),
-                                child: Text(d,
-                                    style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: v2Accent),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1),
-                              ),
-                            if (dests.length > 2)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                    color: v2Accent.withValues(alpha: .12),
-                                    borderRadius: BorderRadius.circular(6)),
-                                child: Text('+${dests.length - 2}',
-                                    style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: v2Accent)),
-                              ),
-                          ]),
-                        ],
-                      ]),
-                ),
-              ]),
+                // 2. Idara pill + Kada plain text
+                Row(children: [
+                  _pill(deptName, deptIcon, toneBg, tone),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(cadre,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: v2TextPrimary, fontSize: 13)),
+                  ),
+                  if (isAdmin) ...[
+                    const SizedBox(width: 6),
+                    _pill('Admin',
+                        PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
+                        v2Accent, Colors.white),
+                  ],
+                ]),
+                const SizedBox(height: 10),
+
+                // 3. Simu + WhatsApp chips (pana, clickable)
+                Row(children: [
+                  Expanded(
+                    child: _phoneChip(
+                      PhosphorIcons.phone(),
+                      _fmtLocal(phone),
+                      v2AccentBg,
+                      v2Accent,
+                      () => v2Launch(
+                          'tel:+${phone.replaceAll(RegExp(r'\D'), '')}'),
+                    ),
+                  ),
+                  if (whatsapp.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _phoneChip(
+                        PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
+                        _fmtLocal(whatsapp),
+                        v2SuccessBg,
+                        v2Success,
+                        () => _launchWa(whatsapp),
+                      ),
+                    ),
+                  ],
+                ]),
+              ],
             ),
-            const SizedBox(height: 10),
+          ),
 
-            // ── Idara + Kada (mstari 1 — chips mbili) ──
-            Row(children: [
-              Flexible(child: _tag(deptName, deptIcon, v2AccentBg, v2Accent)),
-              if (cadre.isNotEmpty) ...[
-                const SizedBox(width: 7),
-                Flexible(
-                  child: _tag(cadre,
-                      PhosphorIcons.identificationBadge(), v2AccentBg, v2Accent),
-                ),
-              ],
-              if (isAdmin) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                      color: v2Accent,
-                      borderRadius: BorderRadius.circular(7)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
-                        size: 10, color: Colors.white),
-                    const SizedBox(width: 3),
-                    const Text('Admin',
-                        style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white)),
-                  ]),
-                ),
-              ],
-            ]),
-            const SizedBox(height: 7),
+          // ── MSTARI WA TIKETI (dashes + notch) ──
+          _V2TicketCut(pageBg: pageBg),
 
-            // ── Hali ya mtumiaji + malipo (mstari 2 — chips mbili) ──
-            Row(children: [
-              Flexible(
-                child: _tag(
-                  isActive ? 'Hai' : 'Amesitishwa',
-                  isActive
-                      ? PhosphorIcons.circle(PhosphorIconsStyle.fill)
-                      : PhosphorIcons.prohibit(PhosphorIconsStyle.fill),
-                  isActive ? v2SuccessBg : v2DangerBg,
-                  isActive ? v2Success : v2Danger,
-                ),
-              ),
-              const SizedBox(width: 7),
-              Flexible(
-                child: _tag(
-                  isPaid ? 'Amelipa' : 'Hajalipa',
-                  isPaid
-                      ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
-                      : PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
-                  isPaid ? v2SuccessBg : v2DangerBg,
-                  isPaid ? v2Success : v2Danger,
-                ),
-              ),
+          // ── ANATOKA → ANAELEKEA ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [
+                  Expanded(
+                    child: _V2Place(
+                      label: 'ANATOKA',
+                      place: region.isEmpty ? '—' : region,
+                      sub: district,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      _V2DashedLine(width: 14, color: v2Accent),
+                      const SizedBox(width: 2),
+                      Icon(PhosphorIcons.airplaneTilt(), size: 18, color: v2Accent),
+                      const SizedBox(width: 2),
+                      _V2DashedLine(width: 14, color: v2Accent),
+                    ]),
+                  ),
+                  Expanded(
+                    child: _V2Place(
+                      label: 'ANAELEKEA',
+                      place: firstDest,
+                      sub: restDests.isEmpty
+                          ? ''
+                          : '+ mikoa ${restDests.length} mingine',
+                      alignEnd: true,
+                    ),
+                  ),
+                ]),
+                if (restDests.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: restDests
+                        .map((t) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: v2AccentBg,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(t.split(',').first.trim(),
+                                  style: const TextStyle(
+                                      color: v2Accent,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                            ))
+                        .toList(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // ── HALI + MALIPO ──
+          Container(height: 1, color: v2Border),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+            child: Wrap(spacing: 6, runSpacing: 6, children: [
+              isActive
+                  ? _pill('● Hai', null, v2SuccessBg, v2Success)
+                  : _pill('● Amesitishwa', null, const Color(0xFFF1F3F7),
+                      v2TextSecondary),
+              isPaid
+                  ? _pill('Amelipa',
+                      PhosphorIcons.check(PhosphorIconsStyle.bold),
+                      v2SuccessBg, v2Success)
+                  : _pill('Hajalipa',
+                      PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
+                      v2DangerBg, v2Danger),
             ]),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _tag(String label, IconData icon, Color bg, Color fg) => Container(
+  // ── Pill yenye radius 999 (idara, admin, hali, malipo) ──
+  Widget _pill(String label, IconData? icon, Color bg, Color fg) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration:
-            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(9)),
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 12, color: fg),
-          const SizedBox(width: 4),
-          Flexible(
-              child: Text(label,
-                  style: TextStyle(
-                      color: fg, fontSize: 11, fontWeight: FontWeight.w700),
-                  overflow: TextOverflow.ellipsis)),
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: fg),
+            const SizedBox(width: 4),
+          ],
+          Text(label,
+              style: TextStyle(
+                  color: fg, fontSize: 12, fontWeight: FontWeight.w600)),
         ]),
       );
+
+  // ── Chip ya simu/WhatsApp (inabonyezwa) ──
+  Widget _phoneChip(
+      IconData icon, String number, Color bg, Color fg, VoidCallback onTap) {
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(children: [
+            Icon(icon, size: 17, color: fg),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(number,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: fg, fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Sehemu ya kata tiketi (dashes + notch mbili) ──────────────────────────
+class _V2TicketCut extends StatelessWidget {
+  final Color pageBg;
+  const _V2TicketCut({required this.pageBg});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 20,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: CustomPaint(
+                painter: _V2DashPainter(
+                    color: v2Border, dash: 6, gap: 5, stroke: 1.5),
+              ),
+            ),
+          ),
+          Positioned(left: -10, top: 0, child: _notch(pageBg)),
+          Positioned(right: -10, top: 0, child: _notch(pageBg)),
+        ],
+      ),
+    );
+  }
+
+  Widget _notch(Color bg) => Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+      );
+}
+
+// ── Dashes za usawa (ANATOKA↔ANAELEKEA) ──────────────────────────────────
+class _V2DashedLine extends StatelessWidget {
+  final double width;
+  final Color color;
+  const _V2DashedLine({required this.width, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: 2,
+      child: CustomPaint(
+        painter: _V2DashPainter(color: color, dash: 3, gap: 2, stroke: 1.5),
+      ),
+    );
+  }
+}
+
+class _V2DashPainter extends CustomPainter {
+  final Color color;
+  final double dash, gap, stroke;
+  const _V2DashPainter(
+      {required this.color,
+      required this.dash,
+      required this.gap,
+      required this.stroke});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = stroke;
+    final y = size.height / 2;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(math.min(x + dash, size.width), y),
+        paint,
+      );
+      x += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _V2DashPainter old) =>
+      old.color != color || old.dash != dash || old.gap != gap;
+}
+
+// ── Jina la mahali (ANATOKA / ANAELEKEA) ─────────────────────────────────
+class _V2Place extends StatelessWidget {
+  final String label, place, sub;
+  final bool alignEnd;
+  const _V2Place(
+      {required this.label,
+      required this.place,
+      required this.sub,
+      this.alignEnd = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final align = alignEnd ? TextAlign.right : TextAlign.left;
+    final cross =
+        alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+    return Column(
+      crossAxisAlignment: cross,
+      children: [
+        Text(label,
+            textAlign: align,
+            style: const TextStyle(
+                color: v2TextMuted, fontSize: 11, letterSpacing: .3)),
+        Text(place,
+            textAlign: align,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                color: v2TextPrimary,
+                fontSize: 19,
+                fontWeight: FontWeight.w600,
+                height: 1.25)),
+        if (sub.isNotEmpty)
+          Text(sub,
+              textAlign: align,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: v2TextMuted, fontSize: 12)),
+      ],
+    );
+  }
 }
 
 // ═══════════════════════════════ Skeleton ═══════════════════════════════

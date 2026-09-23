@@ -482,7 +482,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF3F5F9),
       body: SafeArea(
         child: Stack(
           children: [
