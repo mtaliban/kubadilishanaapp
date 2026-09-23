@@ -1054,7 +1054,8 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
     });
     if (picked == 'education') {
       _loadSubjects();
-    } else if (_districtId != null) {
+    }
+    if (_districtId != null) {
       _loadFacilities();
     }
   }
@@ -1130,7 +1131,9 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
     if (_districtId == null) return;
     final facIcon = _category == 'health'
         ? PhosphorIcons.heartbeat()
-        : PhosphorIcons.buildings();
+        : _category == 'education'
+            ? PhosphorIcons.graduationCap()
+            : PhosphorIcons.buildings();
     final picked =
         await Navigator.of(context).push<({String? id, String? name})>(
       MaterialPageRoute(
@@ -1309,12 +1312,15 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                   if (_category == 'education')
                     sel(PhosphorIcons.bookOpen(),
                         _subjectName ?? 'Masomo yote', _pickSubject,
-                        active: _subjectCode != null)
-                  else
+                        active: _subjectCode != null),
+                  if (_category == 'education') const SizedBox(height: 8),
+                  if (_category != 'education' || _districtId != null)
                     sel(
                         _category == 'health'
                             ? PhosphorIcons.heartbeat()
-                            : PhosphorIcons.buildings(),
+                            : _category == 'education'
+                                ? PhosphorIcons.graduationCap()
+                                : PhosphorIcons.buildings(),
                         _loadingFacilities
                             ? 'Inapakia vituo...'
                             : (_facilityName ?? 'Vituo vyote'),

@@ -699,10 +699,10 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     final showMasomo = _category == 'education';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F9FA),
-        surfaceTintColor: const Color(0xFFF8F9FA),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         elevation: 0,
         title: Text(_isEditing ? 'Hariri Mtumiaji' : 'Mtumiaji Mpya',
             style: const TextStyle(
@@ -710,36 +710,10 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                 fontWeight: FontWeight.w700,
                 color: v2TextPrimary)),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-          child: ElevatedButton.icon(
-            onPressed: _saving ? null : _hifadhi,
-            style: ElevatedButton.styleFrom(
-                backgroundColor: v2Accent,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: v2Accent.withValues(alpha: .6),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12))),
-            icon: _saving
-                ? const SizedBox(
-                    width: 15,
-                    height: 15,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
-                : Icon(PhosphorIcons.check(), size: 16),
-            label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 14)),
-          ),
-        ),
-      ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
             if (_error != null)
               Container(
@@ -1046,6 +1020,31 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                     (v) => setState(() => _verified = v)),
               ]),
             ),
+            const SizedBox(height: 20),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              ElevatedButton.icon(
+                onPressed: _saving ? null : _hifadhi,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: v2Accent,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: v2Accent.withValues(alpha: .6),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 9),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10))),
+                icon: _saving
+                    ? const SizedBox(
+                        width: 13,
+                        height: 13,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : Icon(PhosphorIcons.floppyDisk(), size: 14),
+                label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 12.5)),
+              ),
+            ]),
           ],
         ),
       ),
@@ -1413,10 +1412,10 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F9FA),
-        surfaceTintColor: const Color(0xFFF8F9FA),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         elevation: 0,
         title: const Text('Ongeza Admin',
             style: TextStyle(
@@ -1484,25 +1483,30 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                   validator: (v) =>
                       (v == null || v.length < 6) ? 'Herufi 6+' : null),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
+              Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                ElevatedButton.icon(
                   onPressed: _saving ? null : _hifadhi,
                   style: ElevatedButton.styleFrom(
                       backgroundColor: v2Accent,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: v2Accent.withValues(alpha: .6),
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 9),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10))),
                   icon: _saving
-                      ? const SizedBox(width: 15, height: 15,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Icon(PhosphorIcons.check(), size: 16),
+                      ? const SizedBox(
+                          width: 13,
+                          height: 13,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : Icon(PhosphorIcons.floppyDisk(), size: 14),
                   label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 12.5)),
                 ),
-              ),
+              ]),
             ]),
       ),
     );

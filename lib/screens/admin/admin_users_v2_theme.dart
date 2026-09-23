@@ -264,13 +264,13 @@ class V2UserCard extends StatelessWidget {
                     color: v2AccentBg,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: Icon(PhosphorIcons.dotsThreeVertical(), size: 20, color: v2Accent),
+                  child: Icon(PhosphorIcons.dotsThreeVertical(PhosphorIconsStyle.bold), size: 22, color: v2Accent),
                 ),
               ),
             ]),
             const SizedBox(height: 13),
 
-            // ── BOX: ANATOKA (kushoto) | ANAELEKEA (kulia) ──
+            // ── BOX: ANATOKA → ANAELEKEA ──
             Container(
               width: double.infinity,
               padding:
@@ -279,7 +279,7 @@ class V2UserCard extends StatelessWidget {
                 color: v2AccentBg,
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                 // Anatoka
                 Expanded(
@@ -316,12 +316,9 @@ class V2UserCard extends StatelessWidget {
                       ]),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Container(width: 18, height: 1, color: v2Accent.withValues(alpha: .35)),
-                    const SizedBox(height: 2),
-                    Icon(PhosphorIcons.arrowRight(PhosphorIconsStyle.bold), size: 11, color: v2Accent),
-                  ]),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Icon(PhosphorIcons.arrowRight(PhosphorIconsStyle.bold),
+                      size: 16, color: v2Accent),
                 ),
                 // Anaelekea
                 Expanded(
@@ -329,7 +326,7 @@ class V2UserCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(children: [
-                          Icon(PhosphorIcons.flag(PhosphorIconsStyle.fill),
+                          Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill),
                               size: 10, color: v2Accent),
                           const SizedBox(width: 3),
                           const Text('ANAELEKEA',
@@ -345,15 +342,15 @@ class V2UserCard extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: v2TextPrimary))
-                        else
+                                  color: v2Accent))
+                        else ...[
                           Wrap(spacing: 4, runSpacing: 3, children: [
-                            for (final d in dests)
+                            for (final d in dests.take(2))
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                    color: v2AccentBg,
+                                    color: v2Accent.withValues(alpha: .12),
                                     borderRadius: BorderRadius.circular(6)),
                                 child: Text(d,
                                     style: const TextStyle(
@@ -363,87 +360,104 @@ class V2UserCard extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 1),
                               ),
+                            if (dests.length > 2)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                    color: v2Accent.withValues(alpha: .12),
+                                    borderRadius: BorderRadius.circular(6)),
+                                child: Text('+${dests.length - 2}',
+                                    style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: v2Accent)),
+                              ),
                           ]),
+                        ],
                       ]),
                 ),
               ]),
             ),
-            const SizedBox(height: 11),
+            const SizedBox(height: 10),
 
-            // ── CHIPS: idara + hali + kada + malipo + admin ──
-            Wrap(spacing: 7, runSpacing: 7, children: [
-              // Idara (imetoka kwenye box)
-              if (deptName.isNotEmpty)
-                _tag(deptName, deptIcon, v2AccentBg, v2Accent),
-              // Hali
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                    color: isActive ? v2SuccessBg : v2DangerBg,
-                    borderRadius: BorderRadius.circular(9)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                          color: isActive ? v2Success : v2Danger,
-                          shape: BoxShape.circle)),
-                  const SizedBox(width: 5),
-                  Text(isActive ? 'Hai' : 'Amesitishwa',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isActive ? v2Success : v2Danger)),
-                ]),
+            // ── Idara + Kada (mstari 1) ──
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: v2SurfaceMuted,
+                borderRadius: BorderRadius.circular(10),
               ),
-              // Kada
-              if (cadre.isNotEmpty)
-                _tag(cadre, PhosphorIcons.identificationBadge(),
-                    v2AccentBg, v2Accent),
-              // Malipo
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                    color: isPaid ? v2SuccessBg : v2DangerBg,
-                    borderRadius: BorderRadius.circular(9)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(
-                      isPaid
-                          ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
-                          : PhosphorIcons.warningCircle(
-                              PhosphorIconsStyle.fill),
-                      size: 12,
-                      color: isPaid ? v2Success : v2Danger),
-                  const SizedBox(width: 4),
-                  Text(isPaid ? 'Amelipa' : 'Hajalipa',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isPaid ? v2Success : v2Danger)),
-                ]),
-              ),
-              // Admin
-              if (isAdmin)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: v2Accent,
-                      borderRadius: BorderRadius.circular(9)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
-                        size: 12, color: Colors.white),
-                    const SizedBox(width: 4),
-                    const Text('Admin',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white)),
-                  ]),
+              child: Row(children: [
+                Icon(deptIcon, size: 13, color: v2Accent),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    cadre.isNotEmpty
+                        ? '$deptName  ·  $cadre'
+                        : deptName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: v2TextPrimary),
+                  ),
                 ),
-            ]),
+                if (isAdmin) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                        color: v2Accent,
+                        borderRadius: BorderRadius.circular(7)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(
+                          PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
+                          size: 10,
+                          color: Colors.white),
+                      const SizedBox(width: 3),
+                      const Text('Admin',
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white)),
+                    ]),
+                  ),
+                ],
+              ]),
+            ),
+            const SizedBox(height: 8),
+
+            // ── Hali ya malipo (mstari 2 — button pana) ──
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: isPaid ? v2SuccessBg : v2DangerBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                        isPaid
+                            ? PhosphorIcons.checkCircle(
+                                PhosphorIconsStyle.fill)
+                            : PhosphorIcons.warningCircle(
+                                PhosphorIconsStyle.fill),
+                        size: 15,
+                        color: isPaid ? v2Success : v2Danger),
+                    const SizedBox(width: 7),
+                    Text(
+                        isPaid ? 'Amelipa' : 'Hajalipa',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isPaid ? v2Success : v2Danger)),
+                  ]),
+            ),
           ],
         ),
       ),
