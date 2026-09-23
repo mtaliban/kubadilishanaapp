@@ -8,6 +8,7 @@ import 'admin_add_admin_page.dart';
 import 'admin_add_user_page.dart';
 import 'admin_import_users_page.dart';
 import 'admin_users_v2_screens.dart';
+import 'admin_view_user_page.dart';
 import 'admin_users_v2_theme.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -210,6 +211,52 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   String _uid(dynamic u) =>
       (u as Map)['user_id']?.toString() ?? u['_id']?.toString() ?? '';
 
+  static UserDetails _toUserDetails(Map<String, dynamic> u) {
+    final station = (u['current_station'] as Map?) ?? {};
+    final dests = ((u['desired_destinations'] ?? u['destinations']) as List?) ?? [];
+    final subjects = (u['subjects'] as List?) ?? [];
+    final createdRaw = u['created_at']?.toString() ?? '';
+    DateTime created;
+    try {
+      created = DateTime.parse(createdRaw).toLocal();
+    } catch (_) {
+      created = DateTime.now();
+    }
+    return UserDetails(
+      name: '${u['full_name'] ?? ''}',
+      idara: '${u['category'] ?? u['department'] ?? ''}',
+      kada: '${u['cadre_display'] ?? u['cadre_code'] ?? u['designation'] ?? ''}',
+      employer: u['employer']?.toString(),
+      masomo: subjects.map((s) {
+        if (s is Map) return '${s['code'] ?? s['name'] ?? s}';
+        return '$s';
+      }).toList(),
+      phone: '${u['phone_primary'] ?? ''}',
+      whatsapp: u['phone_alt']?.toString() ?? u['phone_whatsapp']?.toString(),
+      mkoa: station['region_name']?.toString(),
+      wilaya: station['district_name']?.toString(),
+      kituo: station['facility_name']?.toString(),
+      destinations: dests.map<(String, String)>((d) {
+        if (d is Map) {
+          return (
+            '${d['district_name'] ?? d['district'] ?? ''}',
+            '${d['region_name'] ?? d['region'] ?? ''}',
+          );
+        }
+        return ('', '$d');
+      }).toList(),
+      active: '${u['status'] ?? 'active'}'.toLowerCase() != 'disabled',
+      paid: u['is_paid'] as bool? ?? u['is_verified'] as bool? ?? false,
+      verified: u['is_verified'] as bool? ?? false,
+      hasPassword: u['has_password'] as bool? ?? false,
+      contactAllowed: u['contact_enabled'] as bool? ?? false,
+      role: u['is_admin'] as bool? ?? false ? 'Admin' : 'Mtumiaji',
+      createdAt: created,
+      seenBy: (u['seen_by_count'] ?? u['seen_by'] ?? 0) as int? ?? 0,
+      online: u['is_online'] as bool? ?? false,
+    );
+  }
+
   String _deptName(String code) {
     for (final d in _departments) {
       if ('${d['code']}' == code) {
@@ -305,25 +352,25 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       case V2Action.angalia:
         final usr = Map<String, dynamic>.from(asMap(user));
         await Navigator.of(context).push<void>(MaterialPageRoute(
-          builder: (detailCtx) => V2UserDetailScreen(
-            user: usr,
-            onHariri: () async {
-              final saved = await Navigator.of(detailCtx).push<bool>(
-                MaterialPageRoute(
-                  builder: (_) =>
-                      V2UserFormScreen(existing: usr, regions: _regions),
-                ),
-              );
-              if (saved == true && mounted) {
-                if (detailCtx.mounted) Navigator.of(detailCtx).pop();
-                _load();
-              }
+          builder: (detailCtx) => UserDetailsPage(
+            user: _toUserDetails(usr),
+            onEdit: () {
+              Navigator.of(detailCtx).push<bool>(MaterialPageRoute(
+                builder: (_) =>
+                    V2UserFormScreen(existing: usr, regions: _regions),
+              )).then((saved) {
+                if (saved == true && mounted) {
+                  if (detailCtx.mounted) Navigator.of(detailCtx).pop();
+                  _load();
+                }
+              });
             },
-            onFuta: () async {
+            onDelete: () async {
               if (detailCtx.mounted) Navigator.of(detailCtx).pop();
               await _deleteUser(_uid(usr), '${usr['full_name'] ?? ''}',
                   '${usr['phone_primary'] ?? ''}');
             },
+            onToggleLock: () => _toggleSuspend(usr),
           ),
         ));
         break;
