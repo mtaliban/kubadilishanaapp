@@ -382,18 +382,24 @@ class V2UserCard extends StatelessWidget {
           Container(height: 1, color: v2Border),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-            child: Wrap(spacing: 6, runSpacing: 6, children: [
-              isActive
-                  ? _pill('● Hai', null, v2SuccessBg, v2Success)
-                  : _pill('● Amesitishwa', null, const Color(0xFFF1F3F7),
-                      v2TextSecondary),
-              isPaid
-                  ? _pill('Amelipa',
-                      PhosphorIcons.check(PhosphorIconsStyle.bold),
-                      v2SuccessBg, v2Success)
-                  : _pill('Hajalipa',
-                      PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
-                      v2DangerBg, v2Danger),
+            child: Row(children: [
+              _bigStatusPill(
+                icon: PhosphorIcons.userCircle(PhosphorIconsStyle.fill),
+                label: isActive ? 'Hai' : 'Amesitishwa',
+                bg: isActive ? v2SuccessBg : const Color(0xFFF1F3F7),
+                fg: isActive ? v2Success : v2TextSecondary,
+                circleBg: isActive ? v2Success : v2TextSecondary,
+              ),
+              const SizedBox(width: 8),
+              _bigStatusPill(
+                icon: isPaid
+                    ? PhosphorIcons.receiptCheck(PhosphorIconsStyle.fill)
+                    : PhosphorIcons.receiptX(PhosphorIconsStyle.fill),
+                label: isPaid ? 'Amelipa' : 'Hajalipa',
+                bg: isPaid ? v2SuccessBg : v2DangerBg,
+                fg: isPaid ? v2Success : v2Danger,
+                circleBg: isPaid ? v2Success : v2Danger,
+              ),
             ]),
           ),
         ],
@@ -414,6 +420,39 @@ class V2UserCard extends StatelessWidget {
           Text(label,
               style: TextStyle(
                   color: fg, fontSize: 12, fontWeight: FontWeight.w600)),
+        ]),
+      );
+
+  // ── Pill kubwa ya hali (Hai/Amesitishwa, Amelipa/Hajalipa) ──
+  Widget _bigStatusPill({
+    required IconData icon,
+    required String label,
+    required Color bg,
+    required Color fg,
+    required Color circleBg,
+  }) =>
+      Container(
+        padding: const EdgeInsets.fromLTRB(8, 6, 14, 6),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(color: circleBg, shape: BoxShape.circle),
+            child: Icon(icon, size: 18, color: Colors.white),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: fg,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ]),
       );
 
