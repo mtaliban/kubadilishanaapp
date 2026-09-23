@@ -207,7 +207,17 @@ class V2UserFormScreen extends StatefulWidget {
 }
 
 class _V2UserFormScreenState extends State<V2UserFormScreen> {
-  final _formKey = GlobalKey<FormState>();
+  // ── Step wizard ──
+  int _step = 0;
+  bool _sameAsPhone = false;
+  bool _pickingDest = false;
+
+  static const _stepTitles = [
+    'Taarifa binafsi',
+    'Kazi',
+    'Mahali na hali ya akaunti',
+  ];
+
   late final TextEditingController _jinaCtrl;
   late final TextEditingController _simuCtrl;
   late final TextEditingController _waCtrl;
@@ -655,15 +665,171 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     super.dispose();
   }
 
+  // ── Step validation + navigation ─────────────────────────────────────────
+
+  String? _validateStep() {
+    if (_step == 0) {
+      if (_jinaCtrl.text.trim().isEmpty) return 'Andika jina kamili';
+      if (_simuCtrl.text.replaceAll(RegExp(r'\D'), '').length < 9) {
+        return 'Namba ya simu iwe tarakimu 9 baada ya +255';
+      }
+      if (!_isEditing && _passCtrl.text.length < 6) {
+        return 'Nywila iwe angalau herufi 6';
+      }
+    }
+    if (_step == 1 && _cadreCode == null) return 'Chagua kada kwanza';
+    return null;
+  }
+
+  Future<void> _next() async {
+    final err = _validateStep();
+    if (err != null) {
+      setState(() => _error = err);
+      return;
+    }
+    setState(() => _error = null);
+    if (_step < 2) {
+      setState(() => _step++);
+      return;
+    }
+    await _hifadhi();
+  }
+
+  void _back() {
+    if (_step > 0) {
+      setState(() {
+        _step--;
+        _error = null;
+      });
+    } else {
+      Navigator.maybePop(context);
+    }
+  }
+
   // ── UI helpers ───────────────────────────────────────────────────────────
 
-  Widget _label(String t) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(t,
-            style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: v2TextSecondary)),
+  Widget _errorBox() => Container(
+        margin: const EdgeInsets.only(top: 6, bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: v2DangerBg, borderRadius: BorderRadius.circular(10)),
+        child: Row(children: [
+          Icon(PhosphorIcons.warningCircle(), size: 15, color: v2Danger),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text(_error!,
+                  style: const TextStyle(fontSize: 12.5, color: v2Danger))),
+        ]),
+      );
+
+  Widget _secHdr(String title, IconData icon, {String? trailing}) => Padding(
+        padding: const EdgeInsets.only(top: 14, bottom: 2),
+        child: Row(children: [
+          Icon(icon, size: 18, color: v2Accent),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text(title,
+                  style: const TextStyle(
+                      color: v2TextPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600))),
+          if (trailing != null)
+            Text(trailing,
+                style: const TextStyle(color: v2TextMuted, fontSize: 12)),
+        ]),
+      );
+
+  Widget _lbl(String text, {bool req = false, String? trailing}) => Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 6),
+        child: Row(children: [
+          Expanded(
+            child: Text.rich(TextSpan(
+              text: text,
+              style: const TextStyle(
+                  color: v2TextPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600),
+              children: [
+                if (req)
+                  const TextSpan(
+                      text: ' *', style: TextStyle(color: v2Danger)),
+              ],
+            )),
+          ),
+          if (trailing != null)
+            Text(trailing,
+                style: const TextStyle(color: v2TextMuted, fontSize: 12)),
+        ]),
+      );
+
+  InputDecoration _inDec(IconData icon, String hint,
+      {bool prefix255 = false, Color? iconColor}) {
+    OutlineInputBorder b(Color col, [double w = 1]) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: col, width: w),
+        );
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: v2TextMuted, fontSize: 14),
+      isDense: true,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding:
+          const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.only(left: 12, right: 8),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 18, color: iconColor ?? v2TextMuted),
+          if (prefix255) ...[
+            const SizedBox(width: 10),
+            Text('+255', style: const TextStyle(color: v2TextMuted, fontSize: 14)),
+            const SizedBox(width: 8),
+            Container(width: 1, height: 18, color: v2Border),
+          ],
+        ]),
+      ),
+      prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+      border: b(const Color(0xFFCFD5DF)),
+      enabledBorder: b(const Color(0xFFCFD5DF)),
+      focusedBorder: b(v2Accent, 1.5),
+    );
+  }
+
+  Widget _toggleRow(
+          String title, String sub, bool value, ValueChanged<bool> onChange) =>
+      InkWell(
+        onTap: () => onChange(!value),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+          child: Row(children: [
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            color: v2TextPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600)),
+                    Text(sub,
+                        style: const TextStyle(
+                            color: v2TextMuted, fontSize: 12)),
+                  ]),
+            ),
+            Transform.scale(
+              scale: 0.8,
+              child: Switch(
+                value: value,
+                onChanged: onChange,
+                activeTrackColor: v2Accent,
+                inactiveTrackColor: const Color(0xFFCFD5DF),
+                thumbColor: const WidgetStatePropertyAll(Colors.white),
+                trackOutlineColor:
+                    const WidgetStatePropertyAll(Colors.transparent),
+              ),
+            ),
+          ]),
+        ),
       );
 
   Widget _selectRow({
@@ -700,219 +866,296 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     );
   }
 
-  // ═══════════════════════════════ BUILD (fomu) ═══════════════════════════
+  // ═══════════════════════════════ BUILD (wizard) ══════════════════════════
 
   @override
   Widget build(BuildContext context) {
-    final showMasomo = _category == 'education';
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FA),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        title: Text(_isEditing ? 'Hariri Mtumiaji' : 'Mtumiaji Mpya',
-            style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: v2TextPrimary)),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: v2Border)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: _saving ? null : _hifadhi,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: v2Accent,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: v2Accent.withValues(alpha: .55),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(13))),
-              icon: _saving
-                  ? const SizedBox(
-                      width: 15,
-                      height: 15,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Icon(PhosphorIcons.floppyDisk(), size: 16),
-              label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 14)),
+      backgroundColor: const Color(0xFFF3F5F9),
+      body: SafeArea(
+        child: Column(children: [
+          _buildWizardHeader(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 20),
+              child: [_buildStep1, _buildStep2, _buildStep3][_step](),
             ),
+          ),
+          _buildWizardFooter(),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildWizardHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(4, 8, 14, 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: v2Border)),
+      ),
+      child: Column(children: [
+        Row(children: [
+          IconButton(
+            onPressed: _back,
+            icon: Icon(PhosphorIcons.arrowLeft(), size: 20, color: v2TextPrimary),
+          ),
+          Expanded(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_isEditing ? 'Hariri Mtumiaji' : 'Mtumiaji mpya',
+                      style: const TextStyle(
+                          color: v2TextPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600)),
+                  Text(
+                      'Hatua ${_step + 1} kati ya 3 · ${_stepTitles[_step]}',
+                      style: const TextStyle(color: v2TextMuted, fontSize: 12)),
+                ]),
+          ),
+        ]),
+        const SizedBox(height: 6),
+        Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: Row(
+            children: List.generate(3, (i) {
+              return Expanded(
+                child: Container(
+                  height: 4,
+                  margin: EdgeInsets.only(right: i < 2 ? 6 : 0),
+                  decoration: BoxDecoration(
+                    color: i <= _step ? v2Accent : const Color(0xFFCFD5DF),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildWizardFooter() {
+    final isLast = _step == 2;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 10, 14, 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: v2Border)),
+      ),
+      child: Row(children: [
+        if (_step > 0)
+          TextButton.icon(
+            onPressed: _saving ? null : _back,
+            icon: Icon(PhosphorIcons.caretLeft(), size: 18, color: v2TextSecondary),
+            label: const Text('Rudi',
+                style: TextStyle(
+                    color: v2TextSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600)),
+          ),
+        const Spacer(),
+        SizedBox(
+          height: 40,
+          child: FilledButton(
+            onPressed: _saving ? null : _next,
+            style: FilledButton.styleFrom(
+              backgroundColor: v2Accent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              textStyle: const TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            child: _saving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: isLast
+                        ? [
+                            Icon(PhosphorIcons.floppyDisk(), size: 18),
+                            const SizedBox(width: 6),
+                            const Text('Hifadhi'),
+                          ]
+                        : [
+                            const Text('Endelea'),
+                            const SizedBox(width: 6),
+                            Icon(PhosphorIcons.arrowRight(), size: 18),
+                          ],
+                  ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  // ── HATUA 1: Taarifa binafsi ──────────────────────────────────────────────
+
+  Widget _buildStep1() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (_error != null) _errorBox(),
+      _secHdr('Taarifa binafsi', PhosphorIcons.user()),
+      _lbl('Jina kamili', req: true),
+      TextField(
+        controller: _jinaCtrl,
+        textCapitalization: TextCapitalization.words,
+        style: const TextStyle(color: v2TextPrimary, fontSize: 14),
+        decoration: _inDec(PhosphorIcons.user(), 'mf. Juma Kiswili'),
+      ),
+      _lbl('Namba ya simu', req: true),
+      TextField(
+        controller: _simuCtrl,
+        keyboardType: TextInputType.phone,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        style: const TextStyle(color: v2TextPrimary, fontSize: 14),
+        decoration:
+            _inDec(PhosphorIcons.phone(), '712 345 678', prefix255: true),
+      ),
+      _lbl('WhatsApp', trailing: 'hiari'),
+      GestureDetector(
+        onTap: () => setState(() => _sameAsPhone = !_sameAsPhone),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: Checkbox(
+                value: _sameAsPhone,
+                onChanged: (v) => setState(() => _sameAsPhone = v ?? false),
+                activeColor: v2Accent,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text('Ni sawa na namba ya simu',
+                style: TextStyle(color: v2TextPrimary, fontSize: 13)),
+          ]),
+        ),
+      ),
+      if (!_sameAsPhone)
+        TextField(
+          controller: _waCtrl,
+          keyboardType: TextInputType.phone,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: const TextStyle(color: v2TextPrimary, fontSize: 14),
+          decoration: _inDec(
+              PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
+              '689 225 170',
+              prefix255: true,
+              iconColor: v2Success),
+        ),
+      _lbl(_isEditing ? 'Nywila mpya (hiari)' : 'Nywila', req: !_isEditing),
+      TextField(
+        controller: _passCtrl,
+        obscureText: !_showPass,
+        style: const TextStyle(color: v2TextPrimary, fontSize: 14),
+        decoration:
+            _inDec(PhosphorIcons.lockSimple(), 'Angalau herufi 6').copyWith(
+          suffixIcon: IconButton(
+            onPressed: () => setState(() => _showPass = !_showPass),
+            icon: Icon(
+                _showPass ? PhosphorIcons.eyeSlash() : PhosphorIcons.eye(),
+                size: 16,
+                color: v2TextMuted),
           ),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      const SizedBox(height: 4),
+      const Text('Angalau herufi 6',
+          style: TextStyle(color: v2TextMuted, fontSize: 12)),
+    ]);
+  }
+
+  // ── HATUA 2: Kazi ─────────────────────────────────────────────────────────
+
+  Widget _buildStep2() {
+    final showMasomo = _category == 'education';
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (_error != null) _errorBox(),
+      _secHdr('Kazi', PhosphorIcons.briefcase()),
+      _lbl('Idara', req: true),
+      // Dept cards (kutoka API)
+      if (_departments.isEmpty)
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+              color: v2SurfaceMuted,
+              borderRadius: BorderRadius.circular(10)),
+          child: const Row(children: [
+            SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: v2Accent)),
+            SizedBox(width: 10),
+            Text('Inapakia idara...', style: TextStyle(fontSize: 12, color: v2TextMuted)),
+          ]),
+        )
+      else
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            if (_error != null)
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    color: v2DangerBg,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Row(children: [
-                  Icon(PhosphorIcons.warningCircle(),
-                      size: 15, color: v2Danger),
-                  const SizedBox(width: 8),
-                  Expanded(
-                      child: Text(_error!,
-                          style: const TextStyle(
-                              fontSize: 12.5, color: v2Danger))),
-                ]),
+            for (final d in _departments)
+              _V2IdaraCard(
+                code: '${d['code']}',
+                label: '${d['display_name'] ?? d['name'] ?? d['code']}',
+                selected: _category == '${d['code']}',
+                onTap: () {
+                  final code = '${d['code']}';
+                  if (_category == code) return;
+                  setState(() {
+                    _category = code;
+                    _cadreCode = null;
+                    _cadres = [];
+                    _masomo.clear();
+                    _subjects = [];
+                  });
+                  _loadCadres();
+                  if (code == 'education') _loadSubjects();
+                },
               ),
-
-            // ── TAARIFA ZA MSINGI ──
-            v2SectionHeader('Taarifa za msingi', PhosphorIcons.user()),
-            _label('Jina Kamili *'),
-            TextFormField(
-              controller: _jinaCtrl,
-              textCapitalization: TextCapitalization.words,
-              decoration: v2FieldDec('mf. Juma Kiswili',
-                  prefixIcon: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Icon(PhosphorIcons.user(),
-                        size: 16, color: v2TextMuted),
-                  )),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Jina linahitajika' : null,
-            ),
-            const SizedBox(height: 12),
-
-            _label('Namba ya Simu *'),
-            TextFormField(
-              controller: _simuCtrl,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: v2FieldDec('0712345678',
-                  prefixIcon: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Icon(PhosphorIcons.phone(),
-                        size: 16, color: v2TextMuted),
-                  )),
-              validator: (v) => (v == null || v.trim().length < 9)
-                  ? 'Namba si sahihi'
-                  : null,
-            ),
-            const SizedBox(height: 12),
-
-            _label('WhatsApp (hiari)'),
-            TextFormField(
-              controller: _waCtrl,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: v2FieldDec('0755666777',
-                  prefixIcon: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Icon(PhosphorIcons.whatsappLogo(),
-                        size: 16, color: v2TextMuted),
-                  )),
-            ),
-            const SizedBox(height: 12),
-
-            _label(_isEditing
-                ? 'Nywila Mpya (acha wazi kama hubadilishi)'
-                : 'Nywila *'),
-            TextFormField(
-              controller: _passCtrl,
-              obscureText: !_showPass,
-              decoration: v2FieldDec('Herufi 6+',
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Icon(PhosphorIcons.lockSimple(),
-                            size: 16, color: v2TextMuted),
-                      ))
-                  .copyWith(
-                suffixIcon: IconButton(
-                  onPressed: () => setState(() => _showPass = !_showPass),
-                  icon: Icon(
-                      _showPass
-                          ? PhosphorIcons.eyeSlash()
-                          : PhosphorIcons.eye(),
-                      size: 16,
-                      color: v2TextMuted),
-                ),
-              ),
-              validator: (v) {
-                if (_isEditing && (v == null || v.isEmpty)) return null;
-                if (v == null || v.length < 6) return 'Herufi 6+';
-                return null;
-              },
-            ),
-
-            // ── KAZI ──
-            v2SectionHeader('Kazi', PhosphorIcons.briefcase()),
-            _label('Idara *'),
-            _selectRow(
-              icon: PhosphorIcons.squaresFour(),
-              text: _deptLabel(),
-              placeholder: 'Chagua idara',
-              onTap: _pickCategory,
-            ),
-            const SizedBox(height: 12),
-
-            _label('Kada *'),
-            _selectRow(
-              icon: PhosphorIcons.identificationBadge(),
-              text: _cadreLabel().isEmpty
-                  ? (_category.isEmpty ? 'Chagua idara kwanza' : 'Chagua kada')
-                  : _cadreLabel(),
-              placeholder:
-                  _cadreLabel().isEmpty ? 'Chagua kada' : _cadreLabel(),
-              onTap: _category.isEmpty ? null : _pickCadre,
-            ),
-            const SizedBox(height: 12),
-
-            if (_category.isNotEmpty && _category != 'education') ...[
-              _label('Wizara / Taasisi (hiari)'),
-              TextFormField(
-                initialValue: _wizara,
-                onChanged: (v) => _wizara = v,
-                decoration: v2FieldDec('mf. Wizara ya Afya'),
-              ),
-            ],
-
-            if (showMasomo) ...[
-              const SizedBox(height: 4),
-              Row(children: [
-                const Expanded(
-                    child: Text('Masomo anayofundisha',
-                        style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: v2TextSecondary))),
-                if (_masomo.isNotEmpty)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                        color: v2AccentBg,
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Text('${_masomo.length} imechaguliwa',
-                        style: const TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: v2Accent)),
-                  ),
-              ]),
-              const SizedBox(height: 8),
-              if (_subjects.isEmpty && _masomo.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
+          ],
+        ),
+      _lbl('Kada', req: true),
+      _selectRow(
+        icon: PhosphorIcons.identificationBadge(),
+        text: _cadreLabel().isEmpty
+            ? (_category.isEmpty ? 'Chagua idara kwanza' : 'Chagua kada')
+            : _cadreLabel(),
+        placeholder: 'Chagua kada',
+        onTap: _category.isEmpty ? null : _pickCadre,
+      ),
+      if (showMasomo) ...[
+        const SizedBox(height: 4),
+        Row(children: [
+          const Expanded(
+              child: Text('Masomo anayofundisha',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: v2TextPrimary))),
+          if (_masomo.isNotEmpty)
+            Text('${_masomo.length} umechagua',
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: v2Accent)),
+        ]),
+        const SizedBox(height: 8),
+        if (_subjects.isEmpty && _masomo.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
                       color: v2SurfaceMuted,
                       borderRadius: BorderRadius.circular(10)),
                   child: const Row(children: [
@@ -952,121 +1195,133 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                 ),
             ],
 
-            // ── MAHALI ANAKO ──
-            v2SectionHeader('Mahali anapoangua', PhosphorIcons.mapPin()),
-            _label('Mkoa'),
-            _selectRow(
-              icon: PhosphorIcons.mapPin(),
-              text: _regionName ?? 'Mikoa yote',
-              placeholder: 'Mikoa yote',
-              onTap: _pickMkoa,
-            ),
-            const SizedBox(height: 10),
-            _label('Wilaya'),
-            _selectRow(
-              icon: PhosphorIcons.city(),
-              text: _districtName ?? 'Wilaya zote',
-              placeholder: 'Wilaya zote',
-              enabled: _regionId != null,
-              onTap: _pickWilaya,
-            ),
-            const SizedBox(height: 10),
-            _label('Kituo / Shule'),
-            _selectRow(
-              icon: PhosphorIcons.buildings(),
-              text: _facilityName ?? 'Vituo vyote',
-              placeholder: 'Vituo vyote',
-              enabled: _districtId != null,
-              onTap: _pickKituo,
-            ),
+    ]); // end _buildStep2
+  }
 
-            // ── MAHALI ANAPOTAKA KWENDA ──
-            v2SectionHeader(
-                'Anapotaka kwenda (${_kwenda.length})', PhosphorIcons.flag()),
-            if (_kwenda.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    color: v2SurfaceMuted,
-                    borderRadius: BorderRadius.circular(10)),
-                child: const Text('Hajaongezi bado — bonyeza kitufe cha chini',
-                    style: TextStyle(fontSize: 12, color: v2TextMuted)),
-              )
-            else
-              ..._kwenda.asMap().entries.map((e) => Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                        color: v2Surface,
-                        border: Border.all(color: v2Border),
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Row(children: [
-                      Icon(PhosphorIcons.flag(),
-                          size: 15, color: v2Accent),
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: Text(
-                              (e.value['district_name'] ?? '').isNotEmpty
-                                  ? '${e.value['district_name']}, ${e.value['region_name']}'
-                                  : e.value['region_name'] ?? '',
-                              style: const TextStyle(fontSize: 12.5))),
-                      InkWell(
-                        onTap: () =>
-                            setState(() => _kwenda.removeAt(e.key)),
-                        child: Icon(PhosphorIcons.x(),
-                            size: 15, color: v2Danger),
-                      ),
-                    ]),
-                  )),
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: _addKwenda,
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                decoration: BoxDecoration(
-                    border: Border.all(
-                        color: v2Accent,
-                        style: BorderStyle.solid,
-                        width: 1.2),
-                    borderRadius: BorderRadius.circular(10)),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(PhosphorIcons.plus(),
-                          size: 15, color: v2Accent),
-                      const SizedBox(width: 6),
-                      const Text('Ongeza mahali anapotaka kwenda',
-                          style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: v2Accent)),
-                    ]),
-              ),
-            ),
+  // ── HATUA 3: Mahali na hali ya akaunti ────────────────────────────────────
 
-            // ── WEZESHA ──
-            v2SectionHeader('Hali ya akaunti', PhosphorIcons.gearSix()),
-            Container(
-              decoration: BoxDecoration(
-                  border: Border.all(color: v2Border),
-                  borderRadius: BorderRadius.circular(12)),
-              child: Column(children: [
-                _check('Akaunti hai', _active, (v) => setState(() => _active = v)),
-                const Divider(height: 1, color: v2Border),
-                _check('Mwenye haki za Admin', _admin,
-                    (v) => setState(() => _admin = v)),
-                const Divider(height: 1, color: v2Border),
-                _check('Amelipa / Amethibitishwa', _verified,
-                    (v) => setState(() => _verified = v)),
-              ]),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
+  Widget _buildStep3() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (_error != null) _errorBox(),
+
+      _secHdr('Mahali anapofanyia kazi', PhosphorIcons.mapPin()),
+      _lbl('Mkoa'),
+      _selectRow(
+        icon: PhosphorIcons.mapPin(),
+        text: _regionName ?? 'Chagua mkoa',
+        placeholder: 'Chagua mkoa',
+        onTap: _pickMkoa,
       ),
-    );
+      const SizedBox(height: 10),
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _lbl('Wilaya'),
+                _selectRow(
+                  icon: PhosphorIcons.city(),
+                  text: _districtName ?? 'Chagua',
+                  placeholder: 'Chagua',
+                  enabled: _regionId != null,
+                  onTap: _pickWilaya,
+                ),
+              ]),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _lbl('Kituo / shule'),
+                _selectRow(
+                  icon: PhosphorIcons.buildings(),
+                  text: _facilityName ?? 'Chagua',
+                  placeholder: 'Chagua',
+                  enabled: _districtId != null,
+                  onTap: _pickKituo,
+                ),
+              ]),
+        ),
+      ]),
+
+      _secHdr('Anapotaka kwenda', PhosphorIcons.flag(),
+          trailing: _kwenda.isNotEmpty ? '${_kwenda.length} mikoa' : null),
+      const SizedBox(height: 8),
+      Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: v2Border),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (_kwenda.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: _kwenda.asMap().entries.map((e) {
+                  final d = e.value;
+                  final label = (d['district_name'] ?? '').isNotEmpty
+                      ? d['district_name']!.split(',').first.trim()
+                      : d['region_name'] ?? '';
+                  return GestureDetector(
+                    onTap: () => setState(() => _kwenda.removeAt(e.key)),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 11, vertical: 6),
+                      decoration: BoxDecoration(
+                          color: v2AccentBg,
+                          borderRadius: BorderRadius.circular(999)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Text(label,
+                            style: const TextStyle(
+                                color: v2Accent,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600)),
+                        const SizedBox(width: 4),
+                        Icon(PhosphorIcons.x(), size: 13, color: v2Accent),
+                      ]),
+                    ),
+                  );
+                }).toList(),
+              ),
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text('Bado hujaongeza mkoa wowote.',
+                  style: TextStyle(color: v2TextMuted, fontSize: 12)),
+            ),
+          _V2DashedAddButton(
+            label: 'Ongeza mkoa',
+            onTap: _addKwenda,
+          ),
+        ]),
+      ),
+
+      _secHdr('Hali ya akaunti', PhosphorIcons.gearSix()),
+      const SizedBox(height: 8),
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: v2Border),
+        ),
+        child: Column(children: [
+          _toggleRow('Akaunti hai', 'Anaweza kuingia kwenye app', _active,
+              (v) => setState(() => _active = v)),
+          const Divider(height: 1, color: v2Border),
+          _toggleRow('Haki za admin', 'Anaweza kusimamia watumiaji', _admin,
+              (v) => setState(() => _admin = v)),
+          const Divider(height: 1, color: v2Border),
+          _toggleRow('Amelipa', 'Malipo yamethibitishwa', _verified,
+              (v) => setState(() => _verified = v)),
+        ]),
+      ),
+    ]);
   }
 
   Widget _subjectChip(String label, String code) {
@@ -1093,16 +1348,165 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     );
   }
 
-  Widget _check(String label, bool value, ValueChanged<bool> onChange) =>
-      CheckboxListTile(
-        value: value,
-        onChanged: (v) => onChange(v ?? false),
-        activeColor: v2Accent,
-        dense: true,
-        controlAffinity: ListTileControlAffinity.leading,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-        title: Text(label, style: const TextStyle(fontSize: 13)),
-      );
+}
+
+// ── _V2IdaraCard — dept selection card ────────────────────────────────────────
+class _V2IdaraCard extends StatelessWidget {
+  final String code;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _V2IdaraCard({
+    required this.code,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  IconData get _icon {
+    switch (code.toLowerCase()) {
+      case 'health':
+        return PhosphorIcons.heartbeat(PhosphorIconsStyle.fill);
+      case 'education':
+        return PhosphorIcons.graduationCap(PhosphorIconsStyle.fill);
+      case 'agriculture':
+        return PhosphorIcons.plant(PhosphorIconsStyle.fill);
+      case 'water':
+        return PhosphorIcons.drop(PhosphorIconsStyle.fill);
+      case 'finance':
+        return PhosphorIcons.currencyDollar(PhosphorIconsStyle.fill);
+      default:
+        return PhosphorIcons.briefcase(PhosphorIconsStyle.fill);
+    }
+  }
+
+  Color get _color {
+    switch (code.toLowerCase()) {
+      case 'health':
+        return const Color(0xFF10B981);
+      case 'education':
+        return const Color(0xFF3B82F6);
+      case 'agriculture':
+        return const Color(0xFF84CC16);
+      case 'water':
+        return const Color(0xFF06B6D4);
+      case 'finance':
+        return const Color(0xFFF59E0B);
+      default:
+        return v2Accent;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _color;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.08) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? color : const Color(0xFFE5E7EB),
+            width: selected ? 2.0 : 1.2,
+          ),
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: selected ? color.withValues(alpha: 0.15) : const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(_icon, size: 20, color: selected ? color : v2TextMuted),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            maxLines: 2,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected ? color : v2TextSecondary,
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── _V2DashedAddButton — dashed-border add button ─────────────────────────────
+class _V2DashedAddButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _V2DashedAddButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: CustomPaint(
+        painter: _DashedBorderPainter(
+          color: v2Accent.withValues(alpha: 0.5),
+          radius: 10,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(PhosphorIcons.plus(), size: 15, color: v2Accent),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: v2Accent,
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  const _DashedBorderPainter({required this.color, required this.radius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    const dashLen = 6.0;
+    const gapLen = 4.0;
+    final rRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0.75, 0.75, size.width - 1.5, size.height - 1.5),
+      Radius.circular(radius),
+    );
+    final path = Path()..addRRect(rRect);
+    final metric = path.computeMetrics().first;
+    double dist = 0;
+    while (dist < metric.length) {
+      final end = (dist + dashLen).clamp(0.0, metric.length);
+      canvas.drawPath(metric.extractPath(dist, end), paint);
+      dist += dashLen + gapLen;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter old) => old.color != color;
 }
 
 // ═══════════════════════════════ DETAIL SCREEN ═══════════════════════════════
