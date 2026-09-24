@@ -20,6 +20,7 @@ class AuthUser {
   final bool contactEnabled;
   final Map<String, dynamic>? currentStation;
   final List<String> subjects;
+  final List<String> wantedRegions; // majina ya mikoa anayotaka kwenda
 
   AuthUser({
     required this.userId,
@@ -35,6 +36,7 @@ class AuthUser {
     this.contactEnabled = false,
     this.currentStation,
     this.subjects = const [],
+    this.wantedRegions = const [],
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
@@ -51,6 +53,11 @@ class AuthUser {
         contactEnabled: json['contact_enabled'] ?? false,
         currentStation: json['current_station'],
         subjects: (json['subjects'] as List?)?.map((s) => s.toString()).toList() ?? [],
+        wantedRegions: (json['desired_destinations'] as List?)
+                ?.map((d) => (d is Map ? d['region_name'] : null)?.toString() ?? '')
+                .where((r) => r.isNotEmpty)
+                .toList() ??
+            [],
       );
 
   AuthUser copyWith({bool? isVerified, bool? contactEnabled}) => AuthUser(
@@ -67,6 +74,7 @@ class AuthUser {
         contactEnabled: contactEnabled ?? this.contactEnabled,
         currentStation: currentStation,
         subjects: subjects,
+        wantedRegions: wantedRegions,
       );
 }
 

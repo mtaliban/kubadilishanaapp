@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /* ============================================================
@@ -11,7 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 /// Mtumiaji aliyeingia (wewe)
 class DashMe {
   final String name;
-  final String idara; // afya / elimu / kilimo / umma
+  final String idara; // afya / elimu / kilimo / umma (au health / education)
   final String kada;
   final List<String> subjects; // walimu tu, mf. ['Hisabati', 'Fizikia']
   final String mkoa;
@@ -85,15 +85,15 @@ String _idaraKey(String raw) {
 ({String label, IconData icon, _Tone tone}) _idaraInfo(String raw) {
   switch (_idaraKey(raw)) {
     case 'afya':
-      return (label: 'Afya', icon: PhosphorIcons.heartbeat(), tone: _Tone.green);
+      return (label: 'Afya', icon: TablerIcons.heartRateMonitor, tone: _Tone.green);
     case 'elimu':
-      return (label: 'Elimu', icon: PhosphorIcons.graduationCap(), tone: _Tone.blue);
+      return (label: 'Elimu', icon: TablerIcons.school, tone: _Tone.blue);
     case 'kilimo':
-      return (label: 'Kilimo na ufugaji', icon: PhosphorIcons.plant(), tone: _Tone.green);
+      return (label: 'Kilimo na ufugaji', icon: TablerIcons.plant2, tone: _Tone.green);
     case 'umma':
-      return (label: 'Watumishi wa umma', icon: PhosphorIcons.bank(), tone: _Tone.amber);
+      return (label: 'Watumishi wa umma', icon: TablerIcons.buildingBank, tone: _Tone.amber);
     default:
-      return (label: raw, icon: PhosphorIcons.briefcase(), tone: _Tone.blue);
+      return (label: raw, icon: TablerIcons.briefcase, tone: _Tone.blue);
   }
 }
 
@@ -326,7 +326,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
                 _IconText(c: c, icon: id.icon, iconColor: fg, text: kadaLine),
                 _IconText(
                     c: c,
-                    icon: PhosphorIcons.mapPin(),
+                    icon: TablerIcons.mapPin,
                     text: '${me.wilaya}, ${me.mkoa}'),
               ],
             ),
@@ -334,12 +334,12 @@ class _UserDashboardViewState extends State<UserDashboardView>
           me.paid
               ? _Pill(
                   label: 'Umelipa',
-                  icon: PhosphorIcons.receipt(),
+                  icon: TablerIcons.receipt,
                   fg: c.green,
                   bg: c.greenBg)
               : _Pill(
                   label: 'Haujalipa',
-                  icon: PhosphorIcons.receiptX(),
+                  icon: TablerIcons.receiptOff,
                   fg: c.red,
                   bg: c.redBg),
         ],
@@ -364,7 +364,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
                 Text('WAKITOKEA', style: k()),
                 const SizedBox(height: 2),
                 Row(children: [
-                  Icon(all ? PhosphorIcons.globe() : PhosphorIcons.mapPin(),
+                  Icon(all ? TablerIcons.world : TablerIcons.mapPin,
                       size: 17, color: c.muted),
                   const SizedBox(width: 6),
                   Flexible(
@@ -419,8 +419,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
                             fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(width: 6),
-                  Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill),
-                      size: 17, color: c.green),
+                  Icon(TablerIcons.mapPinFilled, size: 17, color: c.green),
                 ]),
               ],
             ),
@@ -493,7 +492,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
             Expanded(
               child: _MiniDropdown(
                 c: c,
-                icon: PhosphorIcons.buildings(),
+                icon: TablerIcons.buildingCommunity,
                 allLabel: 'Wilaya zote',
                 value: wilaya,
                 options: wilayas,
@@ -508,9 +507,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
             Expanded(
               child: _MiniDropdown(
                 c: c,
-                icon: teacher
-                    ? PhosphorIcons.graduationCap()
-                    : PhosphorIcons.building(),
+                icon: teacher ? TablerIcons.school : TablerIcons.building,
                 allLabel: teacher ? 'Shule zote' : 'Vituo vyote',
                 value: kituo,
                 options: vituo,
@@ -526,7 +523,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
           const SizedBox(height: 8),
           _MiniDropdown(
             c: c,
-            icon: PhosphorIcons.gridFour(),
+            icon: TablerIcons.layoutGrid,
             allLabel: 'Idara zote',
             value: idaraFilter,
             options: idaras,
@@ -585,7 +582,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
         child: Column(
           children: [
-            Icon(PhosphorIcons.userMinus(), size: 26, color: c.muted),
+            Icon(TablerIcons.usersMinus, size: 26, color: c.muted),
             const SizedBox(height: 4),
             Text('Hakuna wenzako hapa',
                 style: TextStyle(
@@ -604,7 +601,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
           _OutlineBtn(
             c: c,
             label: 'Iliyopita',
-            icon: PhosphorIcons.caretLeft(),
+            icon: TablerIcons.chevronLeft,
             leading: true,
             onTap: p > 0 ? () => setState(() => page = p - 1) : null,
           ),
@@ -616,7 +613,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
           _OutlineBtn(
             c: c,
             label: 'Inayofuata',
-            icon: PhosphorIcons.caretRight(),
+            icon: TablerIcons.chevronRight,
             onTap: p < pages - 1 ? () => setState(() => page = p + 1) : null,
           ),
         ],
@@ -639,7 +636,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
             padding: const EdgeInsets.fromLTRB(12, 10, 10, 8),
             child: Row(
               children: [
-                Icon(PhosphorIcons.phoneSlash(), size: 18, color: c.amber),
+                Icon(TablerIcons.phoneOff, size: 18, color: c.amber),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text.rich(TextSpan(
@@ -657,7 +654,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
                 _TonalBtn(
                   c: c,
                   label: 'Changia',
-                  trailing: PhosphorIcons.arrowRight(),
+                  trailing: TablerIcons.arrowRight,
                   onTap: () {
                     setState(() => _toastVisible = false);
                     widget.onChangia?.call();
@@ -835,7 +832,7 @@ class _PeerTicket extends StatelessWidget {
                           mine.contains(s.toLowerCase())
                               ? _Pill(
                                   label: s,
-                                  icon: PhosphorIcons.check(),
+                                  icon: TablerIcons.check,
                                   fg: Colors.white,
                                   bg: c.blue)
                               : _Pill(
@@ -854,13 +851,13 @@ class _PeerTicket extends StatelessWidget {
                     if (comesFromWanted)
                       _Pill(
                           label: 'Anatoka unakotaka',
-                          icon: PhosphorIcons.checkCircle(),
+                          icon: TablerIcons.circleCheck,
                           fg: c.green,
                           bg: c.greenBg),
                     if (peer.experience != null)
                       _Pill(
                           label: 'Uzoefu: ${peer.experience}',
-                          icon: PhosphorIcons.briefcase(),
+                          icon: TablerIcons.briefcase,
                           fg: c.muted,
                           bg: c.soft),
                   ],
@@ -869,7 +866,7 @@ class _PeerTicket extends StatelessWidget {
             ),
           ),
 
-          // Vitufe
+          // Vitufe (havipiti upana hata kwenye simu nyembamba)
           Container(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
             decoration: BoxDecoration(
@@ -878,7 +875,7 @@ class _PeerTicket extends StatelessWidget {
                 ? Row(
                     children: [
                       _StackedBtn(
-                          icon: PhosphorIcons.phone(),
+                          icon: TablerIcons.phone,
                           label: 'Piga',
                           fg: c.blue,
                           bg: c.blueBg,
@@ -886,7 +883,7 @@ class _PeerTicket extends StatelessWidget {
                           onTap: onCall),
                       const SizedBox(width: 6),
                       _StackedBtn(
-                          icon: PhosphorIcons.chatText(),
+                          icon: TablerIcons.message,
                           label: 'SMS',
                           fg: c.text,
                           bg: c.soft,
@@ -894,7 +891,7 @@ class _PeerTicket extends StatelessWidget {
                           onTap: onSms),
                       const SizedBox(width: 6),
                       _StackedBtn(
-                          icon: PhosphorIcons.whatsappLogo(),
+                          icon: TablerIcons.brandWhatsapp,
                           label: 'WhatsApp',
                           fg: c.green,
                           bg: c.greenBg,
@@ -907,7 +904,7 @@ class _PeerTicket extends StatelessWidget {
                     children: [
                       _CircleBtn(
                           c: c,
-                          icon: PhosphorIcons.phone(),
+                          icon: TablerIcons.phone,
                           label: 'Piga',
                           fg: c.blue,
                           bg: c.blueBg,
@@ -915,7 +912,7 @@ class _PeerTicket extends StatelessWidget {
                           onTap: onCall),
                       _CircleBtn(
                           c: c,
-                          icon: PhosphorIcons.chatText(),
+                          icon: TablerIcons.message,
                           label: 'SMS',
                           fg: c.text,
                           bg: c.soft,
@@ -923,7 +920,7 @@ class _PeerTicket extends StatelessWidget {
                           onTap: onSms),
                       _CircleBtn(
                           c: c,
-                          icon: PhosphorIcons.whatsappLogo(),
+                          icon: TablerIcons.brandWhatsapp,
                           label: 'WhatsApp',
                           fg: c.green,
                           bg: c.greenBg,
@@ -940,17 +937,17 @@ class _PeerTicket extends StatelessWidget {
   Widget _matchBadge(int m) => switch (m) {
         >= 2 => _Pill(
             label: 'Inalingana',
-            icon: PhosphorIcons.checkCircle(),
+            icon: TablerIcons.circleCheck,
             fg: c.green,
             bg: c.greenBg),
         1 => _Pill(
             label: 'Kiasi',
-            icon: PhosphorIcons.circleHalf(),
+            icon: TablerIcons.circleHalf2,
             fg: c.amber,
             bg: c.amberBg),
         _ => _Pill(
             label: 'Hakuna',
-            icon: PhosphorIcons.xCircle(),
+            icon: TablerIcons.circleX,
             fg: c.muted,
             bg: c.soft),
       };
@@ -1092,7 +1089,7 @@ class _PlaneLine extends StatelessWidget {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       dash(),
       const SizedBox(width: 2),
-      Icon(PhosphorIcons.airplane(), size: short ? 16 : 18, color: c.blue),
+      Icon(TablerIcons.plane, size: short ? 16 : 18, color: c.blue),
       const SizedBox(width: 2),
       dash(),
     ]);
@@ -1180,7 +1177,7 @@ class _MiniDropdown extends StatelessWidget {
                           style:
                               TextStyle(color: c.text, fontSize: 14))),
                   if (o == value)
-                    Icon(PhosphorIcons.check(), size: 16, color: c.blue),
+                    Icon(TablerIcons.check, size: 16, color: c.blue),
                 ]),
               ))
           .toList(),
@@ -1204,7 +1201,7 @@ class _MiniDropdown extends StatelessWidget {
                     color: value != null ? c.text : c.muted,
                     fontSize: 13)),
           ),
-          Icon(PhosphorIcons.caretDown(), size: 14, color: c.muted),
+          Icon(TablerIcons.chevronDown, size: 14, color: c.muted),
         ]),
       ),
     );
@@ -1263,7 +1260,7 @@ class _StackedBtn extends StatelessWidget {
                     Positioned(
                       top: 5,
                       right: 6,
-                      child: Icon(PhosphorIcons.lock(),
+                      child: Icon(TablerIcons.lock,
                           size: 11, color: fg.withValues(alpha: .6)),
                     ),
                 ],
@@ -1329,7 +1326,7 @@ class _CircleBtn extends StatelessWidget {
                         border: Border.all(
                             color: c.borderStrong, width: .5),
                       ),
-                      child: Icon(PhosphorIcons.lock(),
+                      child: Icon(TablerIcons.lock,
                           size: 10, color: c.muted),
                     ),
                   ),
@@ -1584,9 +1581,9 @@ class _DashboardAnnouncementState extends State<DashboardAnnouncement> {
 
     final c = _AC.of(context);
     final (fg, bg, icon) = switch (widget.kind) {
-      AnnouncementKind.taarifa => (c.blue, c.blueBg, PhosphorIcons.megaphone()),
-      AnnouncementKind.onyo => (c.amber, c.amberBg, PhosphorIcons.warning()),
-      AnnouncementKind.mafanikio => (c.green, c.greenBg, PhosphorIcons.checkCircle()),
+      AnnouncementKind.taarifa => (c.blue, c.blueBg, TablerIcons.speakerphone),
+      AnnouncementKind.onyo => (c.amber, c.amberBg, TablerIcons.alertTriangle),
+      AnnouncementKind.mafanikio => (c.green, c.greenBg, TablerIcons.circleCheck),
     };
     final msg = _calm(widget.message);
     final long = msg.length > 90;
@@ -1677,7 +1674,7 @@ class _DashboardAnnouncementState extends State<DashboardAnnouncement> {
                         child: SizedBox(
                           width: 26,
                           height: 26,
-                          child: Icon(PhosphorIcons.x(), size: 14, color: c.muted),
+                          child: Icon(TablerIcons.x, size: 14, color: c.muted),
                         ),
                       ),
                     ),
