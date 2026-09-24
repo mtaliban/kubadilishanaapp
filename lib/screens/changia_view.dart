@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /* ============================================================
@@ -86,6 +86,15 @@ class _ChangiaViewState extends State<ChangiaView> {
   }
 
   @override
+  void didUpdateWidget(covariant ChangiaView old) {
+    super.didUpdateWidget(old);
+    if (old.history != widget.history) {
+      items = List.of(widget.history);
+      filter = null;
+    }
+  }
+
+  @override
   void dispose() {
     amountCtrl.dispose();
     phoneCtrl.dispose();
@@ -107,6 +116,7 @@ class _ChangiaViewState extends State<ChangiaView> {
   static String _groupLocal(String p) {
     final d = _digits(p);
     if (d.length == 10) return '${d.substring(0, 4)} ${d.substring(4, 7)} ${d.substring(7)}';
+    if (d.length == 9) return '${d.substring(0, 3)} ${d.substring(3, 6)} ${d.substring(6)}';
     return p;
   }
 
@@ -225,14 +235,14 @@ class _ChangiaViewState extends State<ChangiaView> {
   Widget _header(_PC c) => Row(
         children: [
           if (widget.onBack != null) ...[
-            _SquareIcon(c: c, icon: PhosphorIcons.arrowLeft(), onTap: widget.onBack!),
+            _SquareIcon(c: c, icon: TablerIcons.arrowLeft, onTap: widget.onBack!),
             const SizedBox(width: 10),
           ],
           Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(color: c.amberBg, borderRadius: BorderRadius.circular(12)),
-            child: Icon(PhosphorIcons.handshake(), size: 21, color: c.amber),
+            child: Icon(TablerIcons.heartHandshake, size: 21, color: c.amber),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -280,7 +290,7 @@ class _ChangiaViewState extends State<ChangiaView> {
                   ),
                   _TonalBtn(
                     c: c,
-                    icon: copied ? PhosphorIcons.check() : PhosphorIcons.copy(),
+                    icon: copied ? TablerIcons.check : TablerIcons.copy,
                     label: copied ? 'Imenakiliwa' : 'Nakili',
                     onTap: _copy,
                   ),
@@ -302,7 +312,7 @@ class _ChangiaViewState extends State<ChangiaView> {
             _Input(
               c: c,
               controller: amountCtrl,
-              icon: PhosphorIcons.money(),
+              icon: TablerIcons.cash,
               prefix: 'TZS',
               keyboard: TextInputType.number,
               formatters: [FilteringTextInputFormatter.digitsOnly],
@@ -313,7 +323,7 @@ class _ChangiaViewState extends State<ChangiaView> {
             _Input(
               c: c,
               controller: phoneCtrl,
-              icon: PhosphorIcons.phone(),
+              icon: TablerIcons.phone,
               prefix: '+255',
               hint: '712 345 678',
               keyboard: TextInputType.phone,
@@ -363,15 +373,14 @@ class _ChangiaViewState extends State<ChangiaView> {
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : Row(
+                          : const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text('Tuma'),
-                                const SizedBox(width: 6),
-                                Icon(PhosphorIcons.paperPlaneTilt(), size: 15),
+                                Text('Tuma'),
+                                SizedBox(width: 6),
+                                Icon(TablerIcons.send, size: 15),
                               ],
                             ),
                     ),
@@ -399,7 +408,7 @@ class _ChangiaViewState extends State<ChangiaView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            Icon(PhosphorIcons.clockCounterClockwise(), size: 18, color: c.blue),
+            Icon(TablerIcons.history, size: 18, color: c.blue),
             const SizedBox(width: 8),
             Text('Historia ya malipo',
                 style: TextStyle(color: c.text, fontSize: 14, fontWeight: FontWeight.w600)),
@@ -448,8 +457,7 @@ class _ChangiaViewState extends State<ChangiaView> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text('Hakuna malipo hapa',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: c.muted, fontSize: 12)),
+                  textAlign: TextAlign.center, style: TextStyle(color: c.muted, fontSize: 12)),
             )
           else
             for (var i = 0; i < list.length; i++) ...[
@@ -463,11 +471,9 @@ class _ChangiaViewState extends State<ChangiaView> {
 
   Widget _historyRow(_PC c, Contribution h) {
     final (label, fg, bg, icon) = switch (h.status) {
-      ContributionStatus.approved =>
-        ('Imekamilika', c.green, c.greenBg, PhosphorIcons.checkCircle()),
-      ContributionStatus.pending => ('Inasubiri', c.amber, c.amberBg, PhosphorIcons.clock()),
-      ContributionStatus.rejected =>
-        ('Imekataliwa', c.red, c.redBg, PhosphorIcons.xCircle()),
+      ContributionStatus.approved => ('Imekamilika', c.green, c.greenBg, TablerIcons.circleCheck),
+      ContributionStatus.pending => ('Inasubiri', c.amber, c.amberBg, TablerIcons.clock),
+      ContributionStatus.rejected => ('Imekataliwa', c.red, c.redBg, TablerIcons.circleX),
     };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -488,8 +494,7 @@ class _ChangiaViewState extends State<ChangiaView> {
                 Row(children: [
                   Expanded(
                     child: Text('TZS ${_money(h.amount)}',
-                        style:
-                            TextStyle(color: c.text, fontSize: 15, fontWeight: FontWeight.w600)),
+                        style: TextStyle(color: c.text, fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                   _Pill(label: label, fg: fg, bg: bg),
                 ]),
@@ -501,16 +506,15 @@ class _ChangiaViewState extends State<ChangiaView> {
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                          color: c.redBg, borderRadius: BorderRadius.circular(10)),
+                      decoration:
+                          BoxDecoration(color: c.redBg, borderRadius: BorderRadius.circular(10)),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(PhosphorIcons.warningCircle(), size: 15, color: c.red),
+                          Icon(TablerIcons.alertCircle, size: 15, color: c.red),
                           const SizedBox(width: 6),
                           Expanded(
-                            child:
-                                Text(h.reason!, style: TextStyle(color: c.red, fontSize: 12)),
+                            child: Text(h.reason!, style: TextStyle(color: c.red, fontSize: 12)),
                           ),
                         ],
                       ),
@@ -519,12 +523,11 @@ class _ChangiaViewState extends State<ChangiaView> {
                   const SizedBox(height: 6),
                   _TonalBtn(
                     c: c,
-                    icon: PhosphorIcons.chatCircle(),
+                    icon: TablerIcons.messageCircle,
                     label: 'Wasiliana na admin',
                     height: 28,
                     onTap: widget.onContactAdmin ??
-                        () => launchUrl(
-                            Uri.parse('https://wa.me/${_intl(widget.supportWhatsapp)}'),
+                        () => launchUrl(Uri.parse('https://wa.me/${_intl(widget.supportWhatsapp)}'),
                             mode: LaunchMode.externalApplication),
                   ),
                 ],
@@ -544,24 +547,22 @@ class _ChangiaViewState extends State<ChangiaView> {
             Text('MASWALI AU MATATIZO?', style: _k(c)),
             _SupportRow(
               c: c,
-              icon: PhosphorIcons.phoneCall(),
+              icon: TablerIcons.phoneCall,
               fg: c.blue,
               bg: c.blueBg,
               label: 'Piga simu',
               value: _groupLocal(widget.supportPhone),
-              onTap: () =>
-                  launchUrl(Uri(scheme: 'tel', path: '+${_intl(widget.supportPhone)}')),
+              onTap: () => launchUrl(Uri(scheme: 'tel', path: '+${_intl(widget.supportPhone)}')),
             ),
             Divider(height: 1, color: c.border),
             _SupportRow(
               c: c,
-              icon: PhosphorIcons.whatsappLogo(),
+              icon: TablerIcons.brandWhatsapp,
               fg: c.green,
               bg: c.greenBg,
               label: 'SMS / WhatsApp',
               value: _prettyIntl(widget.supportWhatsapp),
-              onTap: () => launchUrl(
-                  Uri.parse('https://wa.me/${_intl(widget.supportWhatsapp)}'),
+              onTap: () => launchUrl(Uri.parse('https://wa.me/${_intl(widget.supportWhatsapp)}'),
                   mode: LaunchMode.externalApplication),
             ),
           ],
@@ -625,17 +626,15 @@ class _StepTitle extends StatelessWidget {
             width: 22,
             height: 22,
             alignment: Alignment.center,
-            decoration:
-                BoxDecoration(color: done ? c.green : c.blue, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: done ? c.green : c.blue, shape: BoxShape.circle),
             child: done
-                ? Icon(PhosphorIcons.check(), size: 13, color: Colors.white)
+                ? const Icon(TablerIcons.check, size: 13, color: Colors.white)
                 : Text('$n',
                     style: const TextStyle(
                         color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(width: 8),
-          Text(text,
-              style: TextStyle(color: c.text, fontSize: 14, fontWeight: FontWeight.w600)),
+          Text(text, style: TextStyle(color: c.text, fontSize: 14, fontWeight: FontWeight.w600)),
         ]),
       );
 }
@@ -741,8 +740,7 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-        child: Text(label,
-            style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
+        child: Text(label, style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
       );
 }
 
@@ -756,8 +754,7 @@ class _SquareIcon extends StatelessWidget {
   Widget build(BuildContext context) => Material(
         color: c.card,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: c.border)),
+            borderRadius: BorderRadius.circular(10), side: BorderSide(color: c.border)),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
@@ -800,11 +797,10 @@ class _SupportRow extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(label, style: TextStyle(color: c.muted, fontSize: 12)),
                 Text(value,
-                    style: TextStyle(
-                        color: c.text, fontSize: 14, fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: c.text, fontSize: 14, fontWeight: FontWeight.w600)),
               ]),
             ),
-            Icon(PhosphorIcons.caretRight(), size: 18, color: c.muted),
+            Icon(TablerIcons.chevronRight, size: 18, color: c.muted),
           ]),
         ),
       );
