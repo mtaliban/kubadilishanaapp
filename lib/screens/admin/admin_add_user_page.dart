@@ -456,14 +456,14 @@ class _NewUserPageState extends State<NewUserPage> {
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: last
-                          ? const [
+                          ? [
                               Icon(PhosphorIcons.floppyDisk(), size: 18),
-                              SizedBox(width: 6),
-                              Text('Hifadhi'),
+                              const SizedBox(width: 6),
+                              const Text('Hifadhi'),
                             ]
-                          : const [
-                              Text('Endelea'),
-                              SizedBox(width: 6),
+                          : [
+                              const Text('Endelea'),
+                              const SizedBox(width: 6),
                               Icon(PhosphorIcons.arrowRight(), size: 18),
                             ],
                     ),

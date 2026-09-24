@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:excel/excel.dart';
+import 'package:excel/excel.dart' hide Border, TextSpan, BorderSide;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -18,7 +18,7 @@ class _Idara {
   const _Idara(this.key, this.title, this.subtitle, this.icon, this.tone);
 }
 
-const _idara = [
+final _idara = [
   _Idara('afya', 'Afya', 'Watumishi wa afya', PhosphorIcons.heartbeat(), _Tone.green),
   _Idara('elimu', 'Elimu', 'Walimu', PhosphorIcons.graduationCap(), _Tone.blue),
   _Idara('kilimo', 'Kilimo na ufugaji', 'Maafisa ugani na mifugo', PhosphorIcons.plant(), _Tone.green),
