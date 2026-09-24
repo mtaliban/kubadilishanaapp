@@ -121,6 +121,9 @@ class UserDashboardView extends StatefulWidget {
   /// A = stacked (default), B = circles
   final ContactButtonStyle contactStyle;
 
+  /// Widgets zinazowekwa juu, kabla ya kadi ya "Karibu" (mf. DashboardAnnouncement)
+  final List<Widget> top;
+
   const UserDashboardView({
     super.key,
     required this.me,
@@ -130,6 +133,7 @@ class UserDashboardView extends StatefulWidget {
     this.pageSize = 10,
     this.toastBottom = 16,
     this.contactStyle = ContactButtonStyle.stacked,
+    this.top = const [],
   });
 
   @override
@@ -240,6 +244,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
         ListView(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
           children: [
+            ...widget.top,
             _welcome(c),
             const SizedBox(height: 10),
             _routeBanner(c),
@@ -1501,4 +1506,241 @@ class _Cl {
         _Tone.green => (green, greenBg),
         _Tone.amber => (amber, amberBg),
       };
+}
+
+/* ============================================================
+   TANGAZO LA DASHIBODI
+   Weka ndani ya `top` ya UserDashboardView.
+   Aina inafuata ile admin aliyochagua: taarifa / onyo / mafanikio
+   ============================================================ */
+enum AnnouncementKind { taarifa, onyo, mafanikio }
+
+AnnouncementKind announcementKindFrom(String raw) {
+  switch (raw.trim().toLowerCase()) {
+    case 'onyo':
+    case 'warning':
+      return AnnouncementKind.onyo;
+    case 'mafanikio':
+    case 'success':
+      return AnnouncementKind.mafanikio;
+    default:
+      return AnnouncementKind.taarifa;
+  }
+}
+
+class DashboardAnnouncement extends StatefulWidget {
+  final String title;
+  final String message;
+  final AnnouncementKind kind;
+  final DateTime? date;
+
+  /// Inaitwa ukibonyeza ×. Hifadhi (mf. SharedPreferences) ili lisionekane tena.
+  final VoidCallback? onClose;
+
+  const DashboardAnnouncement({
+    super.key,
+    required this.title,
+    required this.message,
+    this.kind = AnnouncementKind.taarifa,
+    this.date,
+    this.onClose,
+  });
+
+  @override
+  State<DashboardAnnouncement> createState() => _DashboardAnnouncementState();
+}
+
+class _DashboardAnnouncementState extends State<DashboardAnnouncement> {
+  bool open = false;
+  bool visible = true;
+
+  static String _calm(String s) {
+    final t = s.trim();
+    final letters = t.replaceAll(RegExp(r'[^A-Za-z]'), '');
+    if (letters.isEmpty || letters != letters.toUpperCase()) return t;
+    final lower = t.toLowerCase();
+    return lower.replaceAllMapped(
+      RegExp(r'(^|[.!?]\s+)([a-z])'),
+      (m) => '${m[1]}${m[2]!.toUpperCase()}',
+    );
+  }
+
+  static String _when(DateTime? d) {
+    if (d == null) return '';
+    final now = DateTime.now();
+    final days = DateTime(now.year, now.month, now.day)
+        .difference(DateTime(d.year, d.month, d.day))
+        .inDays;
+    if (days <= 0) return 'Leo';
+    if (days == 1) return 'Jana';
+    if (days < 7) return 'Siku $days';
+    const m = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des'];
+    return '${d.day} ${m[d.month - 1]}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!visible) return const SizedBox.shrink();
+
+    final c = _AC.of(context);
+    final (fg, bg, icon) = switch (widget.kind) {
+      AnnouncementKind.taarifa => (c.blue, c.blueBg, PhosphorIcons.megaphone()),
+      AnnouncementKind.onyo => (c.amber, c.amberBg, PhosphorIcons.warning()),
+      AnnouncementKind.mafanikio => (c.green, c.greenBg, PhosphorIcons.checkCircle()),
+    };
+    final msg = _calm(widget.message);
+    final long = msg.length > 90;
+    final when = _when(widget.date);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 4, color: fg),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration:
+                          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+                      child: Icon(icon, size: 17, color: fg),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Expanded(
+                              child: Text(_calm(widget.title),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      color: c.text,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600)),
+                            ),
+                            if (when.isNotEmpty)
+                              Text(when, style: TextStyle(color: c.muted, fontSize: 11)),
+                          ]),
+                          const SizedBox(height: 2),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 180),
+                            alignment: Alignment.topCenter,
+                            child: Text(
+                              msg,
+                              maxLines: open ? null : 2,
+                              overflow: open ? null : TextOverflow.ellipsis,
+                              style: TextStyle(color: c.muted, fontSize: 13, height: 1.4),
+                            ),
+                          ),
+                          if (long)
+                            GestureDetector(
+                              onTap: () => setState(() => open = !open),
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  open ? 'Punguza' : 'Soma zaidi',
+                                  style: TextStyle(
+                                      color: c.blue,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Material(
+                      color: c.soft,
+                      borderRadius: BorderRadius.circular(8),
+                      child: InkWell(
+                        onTap: () {
+                          setState(() => visible = false);
+                          widget.onClose?.call();
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: 26,
+                          height: 26,
+                          child: Icon(PhosphorIcons.x(), size: 14, color: c.muted),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/* ============================================================
+   RANGI — MATANGAZO
+   ============================================================ */
+class _AC {
+  final Color card, soft, border, text, muted;
+  final Color blue, blueBg, green, greenBg, amber, amberBg;
+
+  const _AC({
+    required this.card,
+    required this.soft,
+    required this.border,
+    required this.text,
+    required this.muted,
+    required this.blue,
+    required this.blueBg,
+    required this.green,
+    required this.greenBg,
+    required this.amber,
+    required this.amberBg,
+  });
+
+  static const light = _AC(
+    card: Color(0xFFFFFFFF),
+    soft: Color(0xFFF1F3F7),
+    border: Color(0xFFE3E7EE),
+    text: Color(0xFF111827),
+    muted: Color(0xFF5B6475),
+    blue: Color(0xFF1E66E0),
+    blueBg: Color(0xFFE8F0FD),
+    green: Color(0xFF0F7A52),
+    greenBg: Color(0xFFE3F5EC),
+    amber: Color(0xFF9A5B00),
+    amberBg: Color(0xFFFFF1D6),
+  );
+
+  static const dark = _AC(
+    card: Color(0xFF181D26),
+    soft: Color(0xFF212833),
+    border: Color(0xFF2A3240),
+    text: Color(0xFFEEF1F6),
+    muted: Color(0xFFA8B1C1),
+    blue: Color(0xFF7AA7FF),
+    blueBg: Color(0xFF1C2A44),
+    green: Color(0xFF5FD49A),
+    greenBg: Color(0xFF15302A),
+    amber: Color(0xFFF0B35A),
+    amberBg: Color(0xFF3A2C14),
+  );
+
+  static _AC of(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? dark : light;
 }
