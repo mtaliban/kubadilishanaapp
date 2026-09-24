@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
 /* ============================================================
    MODEL
@@ -219,7 +219,7 @@ class _MaoniViewState extends State<MaoniView> {
                 child: SizedBox(
                     width: 36,
                     height: 36,
-                    child: Icon(PhosphorIcons.arrowLeft(), size: 18, color: c.text)),
+                    child: Icon(TablerIcons.arrowLeft, size: 18, color: c.text)),
               ),
             ),
             const SizedBox(width: 10),
@@ -229,7 +229,7 @@ class _MaoniViewState extends State<MaoniView> {
             height: 40,
             decoration:
                 BoxDecoration(color: c.blueBg, borderRadius: BorderRadius.circular(12)),
-            child: Icon(PhosphorIcons.chatText(), size: 21, color: c.blue),
+            child: Icon(TablerIcons.message2, size: 21, color: c.blue),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -257,7 +257,7 @@ class _MaoniViewState extends State<MaoniView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            Icon(PhosphorIcons.pencil(), size: 16, color: c.blue),
+            Icon(TablerIcons.pencil, size: 16, color: c.blue),
             const SizedBox(width: 6),
             Text('Ujumbe wako',
                 style: TextStyle(
@@ -322,7 +322,7 @@ class _MaoniViewState extends State<MaoniView> {
                         : Row(mainAxisSize: MainAxisSize.min, children: [
                             const Text('Tuma'),
                             const SizedBox(width: 6),
-                            Icon(PhosphorIcons.paperPlaneTilt(), size: 15),
+                            Icon(TablerIcons.send, size: 15),
                           ]),
                   ),
                 ),
@@ -343,7 +343,7 @@ class _MaoniViewState extends State<MaoniView> {
               width: 52,
               height: 52,
               decoration: BoxDecoration(color: c.blueBg, shape: BoxShape.circle),
-              child: Icon(PhosphorIcons.chatCircle(), size: 26, color: c.blue),
+              child: Icon(TablerIcons.messageCircleQuestion, size: 26, color: c.blue),
             ),
             const SizedBox(height: 10),
             Text('Hujatuma maoni bado',
@@ -386,14 +386,14 @@ class _MaoniViewState extends State<MaoniView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          btn('Iliyopita', PhosphorIcons.caretLeft(), true,
+          btn('Iliyopita', TablerIcons.chevronLeft, true,
               p > 0 ? () => setState(() => page = p - 1) : null),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text('${p + 1} / $pages',
                 style: TextStyle(color: c.muted, fontSize: 13)),
           ),
-          btn('Inayofuata', PhosphorIcons.caretRight(), false,
+          btn('Inayofuata', TablerIcons.chevronRight, false,
               p < pages - 1 ? () => setState(() => page = p + 1) : null),
         ],
       ),
@@ -415,7 +415,7 @@ class _MaoniViewState extends State<MaoniView> {
               width: 30,
               height: 30,
               decoration: BoxDecoration(color: c.greenBg, shape: BoxShape.circle),
-              child: Icon(PhosphorIcons.check(), size: 16, color: c.green),
+              child: Icon(TablerIcons.check, size: 16, color: c.green),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -455,12 +455,12 @@ class _FeedbackCard extends StatelessWidget {
               ans
                   ? _Pill(
                       label: 'Yamejibiwa',
-                      icon: PhosphorIcons.checkCircle(),
+                      icon: TablerIcons.circleCheck,
                       fg: c.green,
                       bg: c.greenBg)
                   : _Pill(
                       label: 'Inasubiri jibu',
-                      icon: PhosphorIcons.clock(),
+                      icon: TablerIcons.clock,
                       fg: c.amber,
                       bg: c.amberBg),
               const Spacer(),
@@ -472,7 +472,7 @@ class _FeedbackCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Dot(icon: PhosphorIcons.user(), fg: c.muted, bg: c.soft),
+                _Dot(icon: TablerIcons.user, fg: c.muted, bg: c.soft),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -490,7 +490,7 @@ class _FeedbackCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _Dot(icon: PhosphorIcons.shieldCheck(), fg: c.blue, bg: c.blueBg),
+                  _Dot(icon: TablerIcons.shieldCheck, fg: c.blue, bg: c.blueBg),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Container(

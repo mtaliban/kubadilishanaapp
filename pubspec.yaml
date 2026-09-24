@@ -35,6 +35,7 @@ dependencies:
   # `IconData` ni `final class` — patched ndani (API ile ile, icons zile zile).
   phosphor_flutter:
     path: packages/phosphor_flutter
+  tabler_icons_plus: ^3.19.0
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10
   shimmer: ^3.0.0
