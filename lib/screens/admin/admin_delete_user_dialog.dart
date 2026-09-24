@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /// Dirisha dogo la mraba la kuthibitisha kufuta.
 /// Inarudisha true mtumiaji akibonyeza "Futa".
@@ -68,7 +68,7 @@ class _DeleteDialog extends StatelessWidget {
                   color: redBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(TablerIcons.trash, size: 20, color: red),
+                child: Icon(PhosphorIcons.trash(), size: 20, color: red),
               ),
               const SizedBox(height: 10),
               Text.rich(

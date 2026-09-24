@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /* ============================================================
    MODEL
@@ -47,7 +47,7 @@ Future<void> showMkoaViewDialog(
           children: [
             _Header(
               c: c,
-              icon: TablerIcons.mountains,
+              icon: PhosphorIcons.mountains(),
               iconFg: c.blue,
               iconBg: c.blueBg,
               title: mkoa.name,
@@ -91,7 +91,7 @@ Future<void> showMkoaViewDialog(
                 const SizedBox(width: 6),
                 _SmallBtn(
                   label: 'Hariri',
-                  icon: TablerIcons.pencil,
+                  icon: PhosphorIcons.pencil(),
                   fg: c.blue,
                   bg: c.blueBg,
                   onTap: () {
@@ -176,7 +176,7 @@ class _EditDialogState extends State<_EditDialog> {
           children: [
             _Header(
               c: c,
-              icon: TablerIcons.mountains,
+              icon: PhosphorIcons.mountains(),
               iconFg: c.blue,
               iconBg: c.blueBg,
               overline: isNew ? 'Ongeza mkoa' : 'Hariri mkoa',
@@ -192,7 +192,7 @@ class _EditDialogState extends State<_EditDialog> {
                 child: _Field(
                   c: c,
                   controller: nameCtrl,
-                  icon: TablerIcons.tag,
+                  icon: PhosphorIcons.tag(),
                   hint: 'mf. Dar es Salaam',
                   capitalization: TextCapitalization.sentences,
                 ),
@@ -211,7 +211,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Hai',
-                        icon: TablerIcons.circleCheck,
+                        icon: PhosphorIcons.checkCircle(),
                         iconColor: c.green,
                         on: active,
                         onTap: () => setState(() => active = true),
@@ -219,7 +219,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Imezimwa',
-                        icon: TablerIcons.circleOff,
+                        icon: PhosphorIcons.prohibit(),
                         iconColor: c.muted,
                         on: !active,
                         onTap: () => setState(() => active = false),
@@ -249,7 +249,7 @@ class _EditDialogState extends State<_EditDialog> {
                   opacity: canSave ? 1 : .45,
                   child: _SmallBtn(
                     label: 'Hifadhi',
-                    icon: TablerIcons.deviceFloppy,
+                    icon: PhosphorIcons.floppyDisk(),
                     fg: c.blue,
                     bg: c.blueBg,
                     onTap: canSave ? _save : null,
@@ -307,7 +307,7 @@ Future<bool> showMkoaDeleteDialog(BuildContext context, Mkoa mkoa) async {
                         decoration: BoxDecoration(
                             color: c.blueBg,
                             borderRadius: BorderRadius.circular(12)),
-                        child: Icon(TablerIcons.mountains,
+                        child: Icon(PhosphorIcons.mountains(),
                             size: 22, color: c.blue),
                       ),
                       Positioned(
@@ -321,7 +321,7 @@ Future<bool> showMkoaDeleteDialog(BuildContext context, Mkoa mkoa) async {
                             shape: BoxShape.circle,
                             border: Border.all(color: c.card, width: 2),
                           ),
-                          child: const Icon(TablerIcons.trash,
+                          child: Icon(PhosphorIcons.trash(),
                               size: 11, color: Colors.white),
                         ),
                       ),
@@ -461,7 +461,7 @@ class _Header extends StatelessWidget {
             child: SizedBox(
               width: 32,
               height: 32,
-              child: Icon(TablerIcons.x, size: 16, color: c.muted),
+              child: Icon(PhosphorIcons.x(), size: 16, color: c.muted),
             ),
           ),
         ),

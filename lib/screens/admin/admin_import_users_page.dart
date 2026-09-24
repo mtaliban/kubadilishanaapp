@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /* ============================================================
    IDARA NA SAFU ZA FAILI
@@ -19,10 +19,10 @@ class _Idara {
 }
 
 const _idara = [
-  _Idara('afya', 'Afya', 'Watumishi wa afya', TablerIcons.heartRateMonitor, _Tone.green),
-  _Idara('elimu', 'Elimu', 'Walimu', TablerIcons.school, _Tone.blue),
-  _Idara('kilimo', 'Kilimo na ufugaji', 'Maafisa ugani na mifugo', TablerIcons.plant2, _Tone.green),
-  _Idara('umma', 'Watumishi wa umma', 'Utawala na idara nyingine', TablerIcons.buildingBank, _Tone.amber),
+  _Idara('afya', 'Afya', 'Watumishi wa afya', PhosphorIcons.heartbeat(), _Tone.green),
+  _Idara('elimu', 'Elimu', 'Walimu', PhosphorIcons.graduationCap(), _Tone.blue),
+  _Idara('kilimo', 'Kilimo na ufugaji', 'Maafisa ugani na mifugo', PhosphorIcons.plant(), _Tone.green),
+  _Idara('umma', 'Watumishi wa umma', 'Utawala na idara nyingine', PhosphorIcons.bank(), _Tone.amber),
 ];
 
 class ImportColumn {
@@ -292,7 +292,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
         children: [
           IconButton(
             onPressed: () => Navigator.maybePop(context),
-            icon: Icon(TablerIcons.arrowLeft, size: 21, color: c.text),
+            icon: Icon(PhosphorIcons.arrowLeft(), size: 21, color: c.text),
           ),
           Expanded(
             child: Column(
@@ -343,7 +343,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
                         style: TextStyle(color: c.text, fontSize: 15)),
                   ),
                   Icon(
-                      ddOpen ? TablerIcons.chevronUp : TablerIcons.chevronDown,
+                      ddOpen ? PhosphorIcons.caretUp() : PhosphorIcons.caretDown(),
                       size: 18,
                       color: c.muted),
                 ],
@@ -410,7 +410,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
                   ],
                 ),
               ),
-              if (sel) Icon(TablerIcons.check, size: 18, color: c.blue),
+              if (sel) Icon(PhosphorIcons.check(), size: 18, color: c.blue),
             ],
           ),
         ),
@@ -473,7 +473,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
           subtitle: 'Excel (.xlsx) · safu tayari',
           trailing: _TonalButton(
             c: c,
-            icon: templateDone ? TablerIcons.check : TablerIcons.download,
+            icon: templateDone ? PhosphorIcons.check() : PhosphorIcons.downloadSimple(),
             label: templateDone ? 'Imepakuliwa' : 'Pakua',
             onTap: _downloadTemplate,
           ),
@@ -503,7 +503,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
                         strokeWidth: 2.5, color: c.blue),
                   )
                 else
-                  Icon(TablerIcons.cloudUpload, size: 30, color: c.blue),
+                  Icon(PhosphorIcons.cloudArrowUp(), size: 30, color: c.blue),
                 const SizedBox(height: 6),
                 Text(reading ? 'Inasoma faili…' : 'Gusa kuchagua faili',
                     style: TextStyle(
@@ -532,7 +532,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
           trailing: IconButton(
             onPressed: () => setState(() => file = null),
             tooltip: 'Ondoa faili',
-            icon: Icon(TablerIcons.x, size: 18, color: c.muted),
+            icon: Icon(PhosphorIcons.x(), size: 18, color: c.muted),
           ),
         ),
         const SizedBox(height: 10),
@@ -556,7 +556,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(TablerIcons.alertTriangle, size: 16, color: c.red),
+                Icon(PhosphorIcons.warning(), size: 16, color: c.red),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -605,7 +605,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
             opacity: canImport || importing ? 1 : .45,
             child: _TonalButton(
               c: c,
-              icon: TablerIcons.databaseImport,
+              icon: PhosphorIcons.database(),
               label: f == null || f.valid.isEmpty
                   ? 'Import'
                   : 'Import watumiaji ${f.valid.length}',
@@ -658,7 +658,7 @@ class _Step extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: done
-                      ? const Icon(TablerIcons.check,
+                      ? Icon(PhosphorIcons.check(),
                           size: 15, color: Colors.white)
                       : Text('$number',
                           style: const TextStyle(
@@ -750,7 +750,7 @@ class _FileCard extends StatelessWidget {
       child: Row(
         children: [
           _IconTile(
-              icon: TablerIcons.fileSpreadsheet, tone: _Tone.green, c: c),
+              icon: PhosphorIcons.table(), tone: _Tone.green, c: c),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

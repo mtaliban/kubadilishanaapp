@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /* ============================================================
    MODEL
@@ -51,7 +51,7 @@ Future<void> showSomoViewDialog(
           children: [
             _Header(
               c: c,
-              icon: TablerIcons.book2,
+              icon: PhosphorIcons.bookOpen(),
               iconFg: c.amber,
               iconBg: c.amberBg,
               title: somo.name,
@@ -94,7 +94,7 @@ Future<void> showSomoViewDialog(
                 const SizedBox(width: 6),
                 _SmallBtn(
                   label: 'Hariri',
-                  icon: TablerIcons.pencil,
+                  icon: PhosphorIcons.pencil(),
                   fg: c.blue,
                   bg: c.blueBg,
                   onTap: () {
@@ -187,7 +187,7 @@ class _EditDialogState extends State<_EditDialog> {
           children: [
             _Header(
               c: c,
-              icon: TablerIcons.book2,
+              icon: PhosphorIcons.bookOpen(),
               iconFg: c.amber,
               iconBg: c.amberBg,
               overline: isNew ? 'Ongeza somo' : 'Hariri somo',
@@ -203,7 +203,7 @@ class _EditDialogState extends State<_EditDialog> {
                 child: _Field(
                   c: c,
                   controller: nameCtrl,
-                  icon: TablerIcons.tag,
+                  icon: PhosphorIcons.tag(),
                   hint: 'mf. Mathematics',
                   capitalization: TextCapitalization.sentences,
                 ),
@@ -214,7 +214,7 @@ class _EditDialogState extends State<_EditDialog> {
                 child: _Field(
                   c: c,
                   controller: codeCtrl,
-                  icon: TablerIcons.hash,
+                  icon: PhosphorIcons.hash(),
                   hint: 'mf. MATH',
                   mono: true,
                   formatters: [_UpperFormatter()],
@@ -234,7 +234,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Primary',
-                        icon: TablerIcons.school,
+                        icon: PhosphorIcons.graduationCap(),
                         iconColor: c.blue,
                         on: level == 'Primary',
                         onTap: () => setState(() => level = 'Primary'),
@@ -242,7 +242,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Secondary',
-                        icon: TablerIcons.school,
+                        icon: PhosphorIcons.graduationCap(),
                         iconColor: c.amber,
                         on: level == 'Secondary',
                         onTap: () => setState(() => level = 'Secondary'),
@@ -265,7 +265,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Hai',
-                        icon: TablerIcons.circleCheck,
+                        icon: PhosphorIcons.checkCircle(),
                         iconColor: c.green,
                         on: active,
                         onTap: () => setState(() => active = true),
@@ -273,7 +273,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Imezimwa',
-                        icon: TablerIcons.circleOff,
+                        icon: PhosphorIcons.prohibit(),
                         iconColor: c.muted,
                         on: !active,
                         onTap: () => setState(() => active = false),
@@ -303,7 +303,7 @@ class _EditDialogState extends State<_EditDialog> {
                   opacity: canSave ? 1 : .45,
                   child: _SmallBtn(
                     label: 'Hifadhi',
-                    icon: TablerIcons.deviceFloppy,
+                    icon: PhosphorIcons.floppyDisk(),
                     fg: c.blue,
                     bg: c.blueBg,
                     onTap: canSave ? _save : null,
@@ -373,7 +373,7 @@ Future<bool> showSomoDeleteDialog(BuildContext context, Somo somo) async {
                             color: c.amberBg,
                             borderRadius: BorderRadius.circular(12)),
                         child:
-                            Icon(TablerIcons.book2, size: 22, color: c.amber),
+                            Icon(PhosphorIcons.bookOpen(), size: 22, color: c.amber),
                       ),
                       Positioned(
                         right: 0,
@@ -386,7 +386,7 @@ Future<bool> showSomoDeleteDialog(BuildContext context, Somo somo) async {
                             shape: BoxShape.circle,
                             border: Border.all(color: c.card, width: 2),
                           ),
-                          child: const Icon(TablerIcons.trash,
+                          child: Icon(PhosphorIcons.trash(),
                               size: 11, color: Colors.white),
                         ),
                       ),
@@ -527,7 +527,7 @@ class _Header extends StatelessWidget {
             child: SizedBox(
               width: 32,
               height: 32,
-              child: Icon(TablerIcons.x, size: 16, color: c.muted),
+              child: Icon(PhosphorIcons.x(), size: 16, color: c.muted),
             ),
           ),
         ),

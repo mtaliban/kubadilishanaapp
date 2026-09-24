@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /* ============================================================
    MODEL
@@ -45,17 +45,17 @@ class IdaraIcon {
   const IdaraIcon(this.icon, this.tone);
 }
 
-const Map<String, IdaraIcon> kIdaraIcons = {
-  'heart': IdaraIcon(TablerIcons.heartRateMonitor, IdaraTone.red),
-  'school': IdaraIcon(TablerIcons.school, IdaraTone.blue),
-  'plant': IdaraIcon(TablerIcons.plant2, IdaraTone.green),
-  'users': IdaraIcon(TablerIcons.usersGroup, IdaraTone.blue),
-  'bank': IdaraIcon(TablerIcons.buildingBank, IdaraTone.amber),
-  'briefcase': IdaraIcon(TablerIcons.briefcase, IdaraTone.blue),
+final Map<String, IdaraIcon> kIdaraIcons = {
+  'heart': IdaraIcon(PhosphorIcons.heartbeat(), IdaraTone.red),
+  'school': IdaraIcon(PhosphorIcons.graduationCap(), IdaraTone.blue),
+  'plant': IdaraIcon(PhosphorIcons.plant(), IdaraTone.green),
+  'users': IdaraIcon(PhosphorIcons.usersThree(), IdaraTone.blue),
+  'bank': IdaraIcon(PhosphorIcons.bank(), IdaraTone.amber),
+  'briefcase': IdaraIcon(PhosphorIcons.briefcase(), IdaraTone.blue),
 };
 
 IdaraIcon idaraIcon(String key) =>
-    kIdaraIcons[key] ?? const IdaraIcon(TablerIcons.briefcase, IdaraTone.blue);
+    kIdaraIcons[key] ?? IdaraIcon(PhosphorIcons.briefcase(), IdaraTone.blue);
 
 /* ============================================================
    1. ANGALIA
@@ -112,7 +112,7 @@ Future<void> showIdaraViewDialog(
                 const SizedBox(width: 6),
                 _SmallBtn(
                   label: 'Hariri',
-                  icon: TablerIcons.pencil,
+                  icon: PhosphorIcons.pencil(),
                   fg: c.blue,
                   bg: c.blueBg,
                   onTap: () {
@@ -220,7 +220,7 @@ class _EditDialogState extends State<_EditDialog> {
                 child: _Field(
                   c: c,
                   controller: nameCtrl,
-                  icon: TablerIcons.tag,
+                  icon: PhosphorIcons.tag(),
                   hint: 'mf. Afya',
                   capitalization: TextCapitalization.sentences,
                 ),
@@ -231,7 +231,7 @@ class _EditDialogState extends State<_EditDialog> {
                 child: _Field(
                   c: c,
                   controller: codeCtrl,
-                  icon: TablerIcons.hash,
+                  icon: PhosphorIcons.hash(),
                   hint: 'mf. afya',
                   mono: true,
                   formatters: [_CodeFormatter()],
@@ -282,7 +282,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Hai',
-                        icon: TablerIcons.circleCheck,
+                        icon: PhosphorIcons.checkCircle(),
                         iconColor: c.green,
                         on: active,
                         onTap: () => setState(() => active = true),
@@ -290,7 +290,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Imezimwa',
-                        icon: TablerIcons.circleOff,
+                        icon: PhosphorIcons.prohibit(),
                         iconColor: c.muted,
                         on: !active,
                         onTap: () => setState(() => active = false),
@@ -315,7 +315,7 @@ class _EditDialogState extends State<_EditDialog> {
                   opacity: canSave ? 1 : .45,
                   child: _SmallBtn(
                     label: 'Hifadhi',
-                    icon: TablerIcons.deviceFloppy,
+                    icon: PhosphorIcons.floppyDisk(),
                     fg: c.blue,
                     bg: c.blueBg,
                     onTap: canSave ? _save : null,
@@ -396,7 +396,7 @@ Future<bool> showIdaraDeleteDialog(BuildContext context, Idara idara) async {
                             shape: BoxShape.circle,
                             border: Border.all(color: c.card, width: 2),
                           ),
-                          child: const Icon(TablerIcons.trash, size: 11, color: Colors.white),
+                          child: Icon(PhosphorIcons.trash(), size: 11, color: Colors.white),
                         ),
                       ),
                     ],
@@ -527,7 +527,7 @@ class _Header extends StatelessWidget {
             child: SizedBox(
               width: 32,
               height: 32,
-              child: Icon(TablerIcons.x, size: 16, color: c.muted),
+              child: Icon(PhosphorIcons.x(), size: 16, color: c.muted),
             ),
           ),
         ),

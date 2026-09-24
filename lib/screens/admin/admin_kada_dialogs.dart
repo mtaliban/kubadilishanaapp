@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /* ============================================================
    MODEL
@@ -77,7 +77,7 @@ Future<void> showKadaViewDialog(
           children: [
             _Header(
               c: c,
-              icon: TablerIcons.briefcase,
+              icon: PhosphorIcons.briefcase(),
               iconFg: c.blue,
               iconBg: c.blueBg,
               title: kada.displayName,
@@ -144,7 +144,7 @@ Future<void> showKadaViewDialog(
                 const SizedBox(width: 6),
                 _SmallBtn(
                   label: 'Hariri',
-                  icon: TablerIcons.pencil,
+                  icon: PhosphorIcons.pencil(),
                   fg: c.blue,
                   bg: c.blueBg,
                   onTap: () {
@@ -256,7 +256,7 @@ class _EditDialogState extends State<_EditDialog> {
           children: [
             _Header(
               c: c,
-              icon: TablerIcons.briefcase,
+              icon: PhosphorIcons.briefcase(),
               iconFg: c.blue,
               iconBg: c.blueBg,
               overline: isNew ? 'Ongeza kada' : 'Hariri kada',
@@ -273,7 +273,7 @@ class _EditDialogState extends State<_EditDialog> {
                 child: _Field(
                   c: c,
                   controller: nameCtrl,
-                  icon: TablerIcons.tag,
+                  icon: PhosphorIcons.tag(),
                   hint: 'mf. Nurse',
                   capitalization: TextCapitalization.sentences,
                 ),
@@ -284,7 +284,7 @@ class _EditDialogState extends State<_EditDialog> {
                 child: _Field(
                   c: c,
                   controller: codeCtrl,
-                  icon: TablerIcons.hash,
+                  icon: PhosphorIcons.hash(),
                   hint: 'mf. nurse',
                   mono: true,
                   formatters: [_CodeFormatter()],
@@ -344,7 +344,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Bila',
-                        icon: TablerIcons.minus,
+                        icon: PhosphorIcons.minus(),
                         iconColor: c.muted,
                         on: level == '',
                         onTap: () => setState(() => level = ''),
@@ -352,7 +352,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Primary',
-                        icon: TablerIcons.school,
+                        icon: PhosphorIcons.graduationCap(),
                         iconColor: c.blue,
                         on: level == 'Primary',
                         onTap: () => setState(() => level = 'Primary'),
@@ -360,7 +360,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Secondary',
-                        icon: TablerIcons.school,
+                        icon: PhosphorIcons.graduationCap(),
                         iconColor: c.amber,
                         on: level == 'Secondary',
                         onTap: () => setState(() => level = 'Secondary'),
@@ -401,7 +401,7 @@ class _EditDialogState extends State<_EditDialog> {
                             ),
                           ),
                           child: requiresSubjects
-                              ? const Icon(TablerIcons.check,
+                              ? Icon(PhosphorIcons.check(),
                                   size: 12, color: Colors.white)
                               : null,
                         ),
@@ -429,7 +429,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Hai',
-                        icon: TablerIcons.circleCheck,
+                        icon: PhosphorIcons.checkCircle(),
                         iconColor: c.green,
                         on: active,
                         onTap: () => setState(() => active = true),
@@ -437,7 +437,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Imezimwa',
-                        icon: TablerIcons.circleOff,
+                        icon: PhosphorIcons.prohibit(),
                         iconColor: c.muted,
                         on: !active,
                         onTap: () => setState(() => active = false),
@@ -467,7 +467,7 @@ class _EditDialogState extends State<_EditDialog> {
                   opacity: canSave ? 1 : .45,
                   child: _SmallBtn(
                     label: 'Hifadhi',
-                    icon: TablerIcons.deviceFloppy,
+                    icon: PhosphorIcons.floppyDisk(),
                     fg: c.blue,
                     bg: c.blueBg,
                     onTap: canSave ? _save : null,
@@ -537,7 +537,7 @@ Future<bool> showKadaDeleteDialog(BuildContext context, Kada kada) async {
                         decoration: BoxDecoration(
                             color: c.blueBg,
                             borderRadius: BorderRadius.circular(12)),
-                        child: Icon(TablerIcons.briefcase,
+                        child: Icon(PhosphorIcons.briefcase(),
                             size: 22, color: c.blue),
                       ),
                       Positioned(
@@ -551,7 +551,7 @@ Future<bool> showKadaDeleteDialog(BuildContext context, Kada kada) async {
                             shape: BoxShape.circle,
                             border: Border.all(color: c.card, width: 2),
                           ),
-                          child: const Icon(TablerIcons.trash,
+                          child: Icon(PhosphorIcons.trash(),
                               size: 11, color: Colors.white),
                         ),
                       ),
@@ -691,7 +691,7 @@ class _Header extends StatelessWidget {
             child: SizedBox(
               width: 32,
               height: 32,
-              child: Icon(TablerIcons.x, size: 16, color: c.muted),
+              child: Icon(PhosphorIcons.x(), size: 16, color: c.muted),
             ),
           ),
         ),

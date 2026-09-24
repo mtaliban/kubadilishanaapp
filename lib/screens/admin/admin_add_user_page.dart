@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /* ============================================================
    DATA YA FOMU (inayorudishwa ukibonyeza Hifadhi)
@@ -52,32 +52,32 @@ class _Idara {
   const _Idara(this.key, this.title, this.subtitle, this.icon, this.tone);
 }
 
-const List<_Idara> kIdara = [
-  _Idara('afya', 'Afya', 'Watumishi wa afya', TablerIcons.heartRateMonitor, _Tone.green),
-  _Idara('elimu', 'Elimu', 'Walimu', TablerIcons.school, _Tone.blue),
-  _Idara('kilimo', 'Kilimo na ufugaji', 'Maafisa ugani na mifugo', TablerIcons.plant2, _Tone.green),
-  _Idara('umma', 'Watumishi wa umma', 'Utawala na idara nyingine', TablerIcons.buildingBank, _Tone.amber),
+final List<_Idara> kIdara = [
+  _Idara('afya', 'Afya', 'Watumishi wa afya', PhosphorIcons.heartbeat(), _Tone.green),
+  _Idara('elimu', 'Elimu', 'Walimu', PhosphorIcons.graduationCap(), _Tone.blue),
+  _Idara('kilimo', 'Kilimo na ufugaji', 'Maafisa ugani na mifugo', PhosphorIcons.plant(), _Tone.green),
+  _Idara('umma', 'Watumishi wa umma', 'Utawala na idara nyingine', PhosphorIcons.bank(), _Tone.amber),
 ];
 
 // idara -> [ (kada, maelezo, icon) ]
-const Map<String, List<(String, String, IconData)>> kKada = {
+final Map<String, List<(String, String, IconData)>> kKada = {
   'afya': [
-    ('Clinical Officer', 'Afisa tabibu', TablerIcons.stethoscope),
-    ('Assistant Nursing Officer', 'Muuguzi msaidizi', TablerIcons.nurse),
-    ('Nutrition Officer II', 'Afisa lishe', TablerIcons.apple),
+    ('Clinical Officer', 'Afisa tabibu', PhosphorIcons.stethoscope()),
+    ('Assistant Nursing Officer', 'Muuguzi msaidizi', PhosphorIcons.stethoscope()),
+    ('Nutrition Officer II', 'Afisa lishe', PhosphorIcons.appleLogo()),
   ],
   'elimu': [
-    ('Mwalimu wa Elimu ya Msingi', 'Shule ya msingi', TablerIcons.chalkboard),
-    ('Mwalimu wa Elimu ya Sekondari', 'Shule ya sekondari', TablerIcons.school),
-    ('Nutrition Officer II', 'Afisa lishe', TablerIcons.apple),
+    ('Mwalimu wa Elimu ya Msingi', 'Shule ya msingi', PhosphorIcons.chalkboard()),
+    ('Mwalimu wa Elimu ya Sekondari', 'Shule ya sekondari', PhosphorIcons.graduationCap()),
+    ('Nutrition Officer II', 'Afisa lishe', PhosphorIcons.appleLogo()),
   ],
   'kilimo': [
-    ('Afisa Kilimo', 'Mazao', TablerIcons.plant),
-    ('Afisa Mifugo', 'Mifugo', TablerIcons.paw),
+    ('Afisa Kilimo', 'Mazao', PhosphorIcons.plant()),
+    ('Afisa Mifugo', 'Mifugo', PhosphorIcons.pawPrint()),
   ],
   'umma': [
-    ('Afisa Utumishi', 'Rasilimali watu', TablerIcons.users),
-    ('Mhasibu', 'Fedha', TablerIcons.calculator),
+    ('Afisa Utumishi', 'Rasilimali watu', PhosphorIcons.users()),
+    ('Mhasibu', 'Fedha', PhosphorIcons.calculator()),
   ],
 };
 
@@ -372,7 +372,7 @@ class _NewUserPageState extends State<NewUserPage> {
             children: [
               IconButton(
                 onPressed: _back,
-                icon: Icon(TablerIcons.arrowLeft, size: 21, color: c.text),
+                icon: Icon(PhosphorIcons.arrowLeft(), size: 21, color: c.text),
               ),
               Expanded(
                 child: Column(
@@ -426,7 +426,7 @@ class _NewUserPageState extends State<NewUserPage> {
           if (step > 0)
             TextButton.icon(
               onPressed: _back,
-              icon: Icon(TablerIcons.chevronLeft, size: 18, color: c.muted),
+              icon: Icon(PhosphorIcons.caretLeft(), size: 18, color: c.muted),
               label: Text('Rudi',
                   style: TextStyle(
                       color: c.muted,
@@ -457,14 +457,14 @@ class _NewUserPageState extends State<NewUserPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: last
                           ? const [
-                              Icon(TablerIcons.deviceFloppy, size: 18),
+                              Icon(PhosphorIcons.floppyDisk(), size: 18),
                               SizedBox(width: 6),
                               Text('Hifadhi'),
                             ]
                           : const [
                               Text('Endelea'),
                               SizedBox(width: 6),
-                              Icon(TablerIcons.arrowRight, size: 18),
+                              Icon(PhosphorIcons.arrowRight(), size: 18),
                             ],
                     ),
             ),
@@ -479,12 +479,12 @@ class _NewUserPageState extends State<NewUserPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Section(icon: TablerIcons.userCircle, title: 'Taarifa binafsi', c: c),
+        _Section(icon: PhosphorIcons.userCircle(), title: 'Taarifa binafsi', c: c),
         _Label('Jina kamili', required: true, c: c),
         _Input(
           c: c,
           controller: nameCtrl,
-          icon: TablerIcons.user,
+          icon: PhosphorIcons.user(),
           hint: 'mf. Juma Kiswili',
           capitalization: TextCapitalization.words,
         ),
@@ -492,7 +492,7 @@ class _NewUserPageState extends State<NewUserPage> {
         _Input(
           c: c,
           controller: phoneCtrl,
-          icon: TablerIcons.phone,
+          icon: PhosphorIcons.phone(),
           hint: '712 345 678',
           prefix255: true,
           keyboard: TextInputType.phone,
@@ -526,7 +526,7 @@ class _NewUserPageState extends State<NewUserPage> {
           _Input(
             c: c,
             controller: waCtrl,
-            icon: TablerIcons.brandWhatsapp,
+            icon: PhosphorIcons.whatsappLogo(),
             iconColor: c.green,
             hint: '689 225 170',
             prefix255: true,
@@ -536,12 +536,12 @@ class _NewUserPageState extends State<NewUserPage> {
         _Input(
           c: c,
           controller: pwCtrl,
-          icon: TablerIcons.lock,
+          icon: PhosphorIcons.lock(),
           hint: 'Angalau herufi 6',
           obscure: !showPw,
           suffix: IconButton(
             onPressed: () => setState(() => showPw = !showPw),
-            icon: Icon(showPw ? TablerIcons.eyeOff : TablerIcons.eye,
+            icon: Icon(showPw ? PhosphorIcons.eyeSlash() : PhosphorIcons.eye(),
                 size: 19, color: c.muted),
           ),
         ),
@@ -566,11 +566,11 @@ class _NewUserPageState extends State<NewUserPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Section(icon: TablerIcons.briefcase2, title: 'Kazi', c: c),
+        _Section(icon: PhosphorIcons.briefcaseMetal(), title: 'Kazi', c: c),
         _Label('Idara', required: true, c: c),
         _IconDropdown(
           c: c,
-          icon: TablerIcons.buildingCommunity,
+          icon: PhosphorIcons.buildings(),
           hint: 'Chagua idara',
           options: idaraOpts,
           value: idara,
@@ -588,7 +588,7 @@ class _NewUserPageState extends State<NewUserPage> {
         _Label('Kada', required: true, c: c),
         _IconDropdown(
           c: c,
-          icon: TablerIcons.idBadge2,
+          icon: PhosphorIcons.identificationBadge(),
           hint: 'Chagua kada',
           disabledHint: 'Chagua idara kwanza',
           enabled: idara != null,
@@ -614,8 +614,8 @@ class _NewUserPageState extends State<NewUserPage> {
                       c: c,
                       label: m,
                       icon: masomo.contains(m)
-                          ? TablerIcons.check
-                          : TablerIcons.book2,
+                          ? PhosphorIcons.check()
+                          : PhosphorIcons.bookOpen(),
                       selected: masomo.contains(m),
                       onTap: () => setState(() {
                         masomo.contains(m) ? masomo.remove(m) : masomo.add(m);
@@ -631,16 +631,16 @@ class _NewUserPageState extends State<NewUserPage> {
   /* ================= HATUA 3 ================= */
   Widget _step3(FormColors c) {
     final mkoaOpts = kMikoa
-        .map((m) => _Opt(m, m, TablerIcons.mapPin, subtitle: 'Mkoa'))
+        .map((m) => _Opt(m, m, PhosphorIcons.mapPin(), subtitle: 'Mkoa'))
         .toList();
     final wilayaOpts = (kWilaya[mkoa] ?? const <String>[])
-        .map((w) => _Opt(w, w, TablerIcons.buildingCommunity, subtitle: mkoa))
+        .map((w) => _Opt(w, w, PhosphorIcons.buildings(), subtitle: mkoa))
         .toList();
     final kituoOpts = (kVituo[wilaya] ?? const <String>[])
         .map((k) => _Opt(
               k,
               k,
-              _isHealth(k) ? TablerIcons.buildingHospital : TablerIcons.school,
+              _isHealth(k) ? PhosphorIcons.hospital() : PhosphorIcons.graduationCap(),
               subtitle: wilaya,
               tone: _isHealth(k) ? _Tone.green : _Tone.blue,
             ))
@@ -649,11 +649,11 @@ class _NewUserPageState extends State<NewUserPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Section(icon: TablerIcons.map2, title: 'Mahali anapofanyia kazi', c: c),
+        _Section(icon: PhosphorIcons.mapTrifold(), title: 'Mahali anapofanyia kazi', c: c),
         _Label('Mkoa', c: c),
         _IconDropdown(
           c: c,
-          icon: TablerIcons.mapPin,
+          icon: PhosphorIcons.mapPin(),
           hint: 'Chagua mkoa',
           options: mkoaOpts,
           value: mkoa,
@@ -672,7 +672,7 @@ class _NewUserPageState extends State<NewUserPage> {
         _Label('Wilaya', c: c),
         _IconDropdown(
           c: c,
-          icon: TablerIcons.buildingCommunity,
+          icon: PhosphorIcons.buildings(),
           hint: 'Chagua wilaya',
           disabledHint: 'Chagua mkoa kwanza',
           enabled: mkoa != null,
@@ -690,7 +690,7 @@ class _NewUserPageState extends State<NewUserPage> {
         _Label('Kituo / shule', c: c),
         _IconDropdown(
           c: c,
-          icon: TablerIcons.building,
+          icon: PhosphorIcons.building(),
           hint: 'Chagua kituo',
           disabledHint: 'Chagua wilaya kwanza',
           enabled: wilaya != null,
@@ -707,7 +707,7 @@ class _NewUserPageState extends State<NewUserPage> {
 
         // Anapotaka kwenda
         _Section(
-          icon: TablerIcons.route,
+          icon: PhosphorIcons.path(),
           title: 'Anapotaka kwenda',
           c: c,
           trailing: '${to.length} mikoa',
@@ -759,8 +759,8 @@ class _NewUserPageState extends State<NewUserPage> {
                             c: c,
                             label: m,
                             icon: to.contains(m)
-                                ? TablerIcons.check
-                                : TablerIcons.mapPin,
+                                ? PhosphorIcons.check()
+                                : PhosphorIcons.mapPin(),
                             selected: to.contains(m),
                             onTap: () => setState(() {
                               to.contains(m) ? to.remove(m) : to.add(m);
@@ -795,7 +795,7 @@ class _NewUserPageState extends State<NewUserPage> {
         ),
 
         // Hali ya akaunti
-        _Section(icon: TablerIcons.shieldCog, title: 'Hali ya akaunti', c: c),
+        _Section(icon: PhosphorIcons.shield(), title: 'Hali ya akaunti', c: c),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
@@ -807,7 +807,7 @@ class _NewUserPageState extends State<NewUserPage> {
             children: [
               _ToggleRow(
                 c: c,
-                icon: TablerIcons.userCheck,
+                icon: PhosphorIcons.userCheck(),
                 title: 'Akaunti hai',
                 sub: 'Anaweza kuingia kwenye app',
                 value: active,
@@ -816,7 +816,7 @@ class _NewUserPageState extends State<NewUserPage> {
               Divider(height: 1, color: c.border),
               _ToggleRow(
                 c: c,
-                icon: TablerIcons.shieldLock,
+                icon: PhosphorIcons.shieldChevron(),
                 title: 'Haki za admin',
                 sub: 'Anaweza kusimamia watumiaji',
                 value: admin,
@@ -825,7 +825,7 @@ class _NewUserPageState extends State<NewUserPage> {
               Divider(height: 1, color: c.border),
               _ToggleRow(
                 c: c,
-                icon: TablerIcons.receipt,
+                icon: PhosphorIcons.receipt(),
                 title: 'Amelipa',
                 sub: 'Malipo yamethibitishwa',
                 value: paid,
@@ -916,7 +916,7 @@ class _IconDropdown extends StatelessWidget {
                     ),
                   ),
                   Icon(
-                    isOpen ? TablerIcons.chevronUp : TablerIcons.chevronDown,
+                    isOpen ? PhosphorIcons.caretUp() : PhosphorIcons.caretDown(),
                     size: 18,
                     color: c.muted,
                   ),
@@ -988,7 +988,7 @@ class _IconDropdown extends StatelessWidget {
                                         ),
                                       ),
                                       if (picked)
-                                        Icon(TablerIcons.check,
+                                        Icon(PhosphorIcons.check(),
                                             size: 18, color: c.blue),
                                     ],
                                   ),
@@ -1242,13 +1242,13 @@ class _DestChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(TablerIcons.mapPin, size: 14, color: c.blue),
+            Icon(PhosphorIcons.mapPin(), size: 14, color: c.blue),
             const SizedBox(width: 4),
             Text(label,
                 style: TextStyle(
                     color: c.blue, fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(width: 4),
-            Icon(TablerIcons.x, size: 13, color: c.blue),
+            Icon(PhosphorIcons.x(), size: 13, color: c.blue),
           ],
         ),
       ),
@@ -1276,7 +1276,7 @@ class _DashedButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(TablerIcons.plus, size: 17, color: c.blue),
+              Icon(PhosphorIcons.plus(), size: 17, color: c.blue),
               const SizedBox(width: 6),
               Text(label,
                   style: TextStyle(

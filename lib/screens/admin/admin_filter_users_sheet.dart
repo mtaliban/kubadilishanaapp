@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /* ============================================================
    KICHUJIO
@@ -60,12 +60,12 @@ class _Opt {
   const _Opt(this.value, this.label, this.icon, [this.tone = _Tone.blue]);
 }
 
-const _idara = [
-  _Opt(null, 'Idara zote', TablerIcons.layoutGrid),
-  _Opt('afya', 'Afya', TablerIcons.heartRateMonitor, _Tone.green),
-  _Opt('elimu', 'Elimu', TablerIcons.school),
-  _Opt('kilimo', 'Kilimo na ufugaji', TablerIcons.plant2, _Tone.green),
-  _Opt('umma', 'Watumishi wa umma', TablerIcons.buildingBank, _Tone.amber),
+final _idara = [
+  _Opt(null, 'Idara zote', PhosphorIcons.gridFour()),
+  _Opt('afya', 'Afya', PhosphorIcons.heartbeat(), _Tone.green),
+  _Opt('elimu', 'Elimu', PhosphorIcons.graduationCap()),
+  _Opt('kilimo', 'Kilimo na ufugaji', PhosphorIcons.plant(), _Tone.green),
+  _Opt('umma', 'Watumishi wa umma', PhosphorIcons.bank(), _Tone.amber),
 ];
 
 bool _isHealth(String s) =>
@@ -118,25 +118,25 @@ class _FilterSheetState extends State<_FilterSheet> {
     final elimu = idara == 'elimu';
 
     final mkoaOpts = [
-      const _Opt(null, 'Mikoa yote', TablerIcons.mapPin),
-      ...widget.mikoa.map((m) => _Opt(m, m, TablerIcons.mapPin)),
+      _Opt(null, 'Mikoa yote', PhosphorIcons.mapPin()),
+      ...widget.mikoa.map((m) => _Opt(m, m, PhosphorIcons.mapPin())),
     ];
     final wilayaOpts = [
-      const _Opt(null, 'Wilaya zote', TablerIcons.buildingCommunity),
+      _Opt(null, 'Wilaya zote', PhosphorIcons.buildings()),
       ...(widget.wilaya[mkoa] ?? const <String>[])
-          .map((w) => _Opt(w, w, TablerIcons.buildingCommunity)),
+          .map((w) => _Opt(w, w, PhosphorIcons.buildings())),
     ];
     final lastOpts = elimu
         ? [
-            const _Opt(null, 'Masomo yote', TablerIcons.books),
-            ...widget.masomo.map((m) => _Opt(m, m, TablerIcons.book2)),
+            _Opt(null, 'Masomo yote', PhosphorIcons.books()),
+            ...widget.masomo.map((m) => _Opt(m, m, PhosphorIcons.bookOpen())),
           ]
         : [
-            const _Opt(null, 'Vituo vyote', TablerIcons.building),
+            _Opt(null, 'Vituo vyote', PhosphorIcons.building()),
             ...(widget.vituo[wilaya] ?? const <String>[]).map((k) => _Opt(
                   k,
                   k,
-                  _isHealth(k) ? TablerIcons.buildingHospital : TablerIcons.school,
+                  _isHealth(k) ? PhosphorIcons.hospital() : PhosphorIcons.graduationCap(),
                   _isHealth(k) ? _Tone.green : _Tone.blue,
                 )),
           ];
@@ -171,7 +171,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               ),
               child: Row(
                 children: [
-                  Icon(TablerIcons.filter, size: 20, color: c.blue),
+                  Icon(PhosphorIcons.funnel(), size: 20, color: c.blue),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text('Vichujio',
@@ -183,7 +183,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                   Opacity(
                     opacity: any ? 1 : .5,
                     child: _SmallButton(
-                      icon: TablerIcons.refresh,
+                      icon: PhosphorIcons.arrowsClockwise(),
                       label: 'Futa vyote',
                       fg: c.blue,
                       bg: any ? c.blueBg : Colors.transparent,
@@ -282,7 +282,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   _SmallButton(
-                    icon: TablerIcons.x,
+                    icon: PhosphorIcons.x(),
                     label: 'Funga',
                     fg: c.muted,
                     bg: c.soft,
@@ -439,7 +439,7 @@ class _Dropdown extends StatelessWidget {
                           color: enabled ? c.text : c.muted, fontSize: 15),
                     ),
                   ),
-                  Icon(isOpen ? TablerIcons.chevronUp : TablerIcons.chevronDown,
+                  Icon(isOpen ? PhosphorIcons.caretUp() : PhosphorIcons.caretDown(),
                       size: 18, color: c.muted),
                 ],
               ),
@@ -484,7 +484,7 @@ class _Dropdown extends StatelessWidget {
                                           color: c.text, fontSize: 14)),
                                 ),
                                 if (picked)
-                                  Icon(TablerIcons.check, size: 18, color: c.blue),
+                                  Icon(PhosphorIcons.check(), size: 18, color: c.blue),
                               ],
                             ),
                           ),

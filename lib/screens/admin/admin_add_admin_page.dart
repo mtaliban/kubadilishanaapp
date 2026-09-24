@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /* ============================================================
    DATA INAYORUDISHWA
@@ -153,7 +153,7 @@ class _AddAdminPageState extends State<AddAdminPage> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.maybePop(context),
-                    icon: Icon(TablerIcons.arrowLeft, size: 21, color: c.text),
+                    icon: Icon(PhosphorIcons.arrowLeft(), size: 21, color: c.text),
                   ),
                   Expanded(
                     child: Column(
@@ -189,7 +189,7 @@ class _AddAdminPageState extends State<AddAdminPage> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(TablerIcons.shieldCheck, size: 20, color: c.blue),
+                          Icon(PhosphorIcons.shieldCheck(), size: 20, color: c.blue),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text.rich(
@@ -212,7 +212,7 @@ class _AddAdminPageState extends State<AddAdminPage> {
                     ),
 
                     _Section(
-                        icon: TablerIcons.userShield,
+                        icon: PhosphorIcons.userGear(),
                         title: 'Taarifa za admin',
                         c: c),
 
@@ -220,7 +220,7 @@ class _AddAdminPageState extends State<AddAdminPage> {
                     _Input(
                       c: c,
                       controller: nameCtrl,
-                      icon: TablerIcons.user,
+                      icon: PhosphorIcons.user(),
                       hint: 'mf. Hamisi Selemani',
                       capitalization: TextCapitalization.words,
                     ),
@@ -229,20 +229,20 @@ class _AddAdminPageState extends State<AddAdminPage> {
                     _Input(
                       c: c,
                       controller: emailCtrl,
-                      icon: TablerIcons.mail,
+                      icon: PhosphorIcons.envelope(),
                       hint: 'jina@mfano.com',
                       keyboard: TextInputType.emailAddress,
                       error: emailBad,
                       suffix: _emailOk
-                          ? Icon(TablerIcons.circleCheck,
+                          ? Icon(PhosphorIcons.checkCircle(),
                               size: 19, color: c.green)
                           : null,
                     ),
                     _Hint(
                       c: c,
                       icon: emailBad
-                          ? TablerIcons.alertCircle
-                          : TablerIcons.infoCircle,
+                          ? PhosphorIcons.warningCircle()
+                          : PhosphorIcons.info(),
                       text: emailBad
                           ? 'Barua pepe si sahihi'
                           : 'Atatumia barua pepe hii kuingia',
@@ -253,7 +253,7 @@ class _AddAdminPageState extends State<AddAdminPage> {
                     _Input(
                       c: c,
                       controller: phoneCtrl,
-                      icon: TablerIcons.phone,
+                      icon: PhosphorIcons.phone(),
                       hint: '712 345 678',
                       keyboard: TextInputType.phone,
                       prefix255: true,
@@ -268,13 +268,13 @@ class _AddAdminPageState extends State<AddAdminPage> {
                     _Input(
                       c: c,
                       controller: pwCtrl,
-                      icon: TablerIcons.lock,
+                      icon: PhosphorIcons.lock(),
                       hint: 'Angalau herufi 6',
                       obscure: !showPw,
                       suffix: IconButton(
                         onPressed: () => setState(() => showPw = !showPw),
                         icon: Icon(
-                            showPw ? TablerIcons.eyeOff : TablerIcons.eye,
+                            showPw ? PhosphorIcons.eyeSlash() : PhosphorIcons.eye(),
                             size: 19,
                             color: c.muted),
                       ),
@@ -296,7 +296,7 @@ class _AddAdminPageState extends State<AddAdminPage> {
                     ),
 
                     _Section(
-                        icon: TablerIcons.key,
+                        icon: PhosphorIcons.key(),
                         title: 'Atakachoweza kufanya',
                         c: c),
                     const SizedBox(height: 8),
@@ -309,17 +309,17 @@ class _AddAdminPageState extends State<AddAdminPage> {
                         children: [
                           _Perm(
                               c: c,
-                              icon: TablerIcons.usersGroup,
+                              icon: PhosphorIcons.usersThree(),
                               text: 'Kusimamia watumiaji'),
                           Divider(height: 1, color: c.border),
                           _Perm(
                               c: c,
-                              icon: TablerIcons.speakerphone,
+                              icon: PhosphorIcons.megaphone(),
                               text: 'Kutuma matangazo'),
                           Divider(height: 1, color: c.border),
                           _Perm(
                               c: c,
-                              icon: TablerIcons.creditCardPay,
+                              icon: PhosphorIcons.creditCard(),
                               text: 'Kuthibitisha malipo'),
                         ],
                       ),
@@ -386,8 +386,8 @@ class _AddAdminPageState extends State<AddAdminPage> {
                                       children: [
                                         Icon(
                                             showErr
-                                                ? TablerIcons.alertCircle
-                                                : TablerIcons.userPlus,
+                                                ? PhosphorIcons.warningCircle()
+                                                : PhosphorIcons.userPlus(),
                                             size: 14),
                                         const SizedBox(width: 5),
                                         Text(showErr
@@ -592,7 +592,7 @@ class _Perm extends StatelessWidget {
           Expanded(
             child: Text(text, style: TextStyle(color: c.text, fontSize: 14)),
           ),
-          Icon(TablerIcons.check, size: 18, color: c.green),
+          Icon(PhosphorIcons.check(), size: 18, color: c.green),
         ],
       ),
     );

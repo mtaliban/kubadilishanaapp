@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /* ============================================================
    MODEL
@@ -59,7 +59,7 @@ Future<void> showWilayaViewDialog(
           children: [
             _Header(
               c: c,
-              icon: TablerIcons.mapTrifold,
+              icon: PhosphorIcons.mapTrifold(),
               iconFg: c.blue,
               iconBg: c.blueBg,
               title: wilaya.name,
@@ -114,7 +114,7 @@ Future<void> showWilayaViewDialog(
                 const SizedBox(width: 6),
                 _SmallBtn(
                   label: 'Hariri',
-                  icon: TablerIcons.pencil,
+                  icon: PhosphorIcons.pencil(),
                   fg: c.blue,
                   bg: c.blueBg,
                   onTap: () {
@@ -249,7 +249,7 @@ class _EditDialogState extends State<_EditDialog> {
                             child: SizedBox(
                               width: 32,
                               height: 32,
-                              child: Icon(TablerIcons.x,
+                              child: Icon(PhosphorIcons.x(),
                                   size: 16, color: c.muted),
                             ),
                           ),
@@ -274,7 +274,7 @@ class _EditDialogState extends State<_EditDialog> {
                         fillColor: c.soft,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 10),
-                        prefixIcon: Icon(TablerIcons.search,
+                        prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
                             size: 17, color: c.muted),
                         prefixIconConstraints:
                             const BoxConstraints(minWidth: 40, minHeight: 0),
@@ -355,7 +355,7 @@ class _EditDialogState extends State<_EditDialog> {
           children: [
             _Header(
               c: c,
-              icon: TablerIcons.mapTrifold,
+              icon: PhosphorIcons.mapTrifold(),
               iconFg: c.blue,
               iconBg: c.blueBg,
               overline: isNew ? 'Ongeza wilaya' : 'Hariri wilaya',
@@ -371,7 +371,7 @@ class _EditDialogState extends State<_EditDialog> {
                 child: _Field(
                   c: c,
                   controller: nameCtrl,
-                  icon: TablerIcons.tag,
+                  icon: PhosphorIcons.tag(),
                   hint: 'mf. Ilala',
                   capitalization: TextCapitalization.sentences,
                 ),
@@ -399,7 +399,7 @@ class _EditDialogState extends State<_EditDialog> {
                     ),
                     child: Row(
                       children: [
-                        Icon(TablerIcons.map,
+                        Icon(PhosphorIcons.mapTrifold(),
                             size: 17, color: c.blue),
                         const SizedBox(width: 8),
                         Expanded(
@@ -415,7 +415,7 @@ class _EditDialogState extends State<_EditDialog> {
                             ),
                           ),
                         ),
-                        Icon(TablerIcons.chevronDown,
+                        Icon(PhosphorIcons.caretDown(),
                             size: 16, color: c.muted),
                       ],
                     ),
@@ -436,7 +436,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Hai',
-                        icon: TablerIcons.circleCheck,
+                        icon: PhosphorIcons.checkCircle(),
                         iconColor: c.green,
                         on: active,
                         onTap: () => setState(() => active = true),
@@ -444,7 +444,7 @@ class _EditDialogState extends State<_EditDialog> {
                       _SegBtn(
                         c: c,
                         label: 'Imezimwa',
-                        icon: TablerIcons.circleOff,
+                        icon: PhosphorIcons.prohibit(),
                         iconColor: c.muted,
                         on: !active,
                         onTap: () => setState(() => active = false),
@@ -474,7 +474,7 @@ class _EditDialogState extends State<_EditDialog> {
                   opacity: canSave ? 1 : .45,
                   child: _SmallBtn(
                     label: 'Hifadhi',
-                    icon: TablerIcons.deviceFloppy,
+                    icon: PhosphorIcons.floppyDisk(),
                     fg: c.blue,
                     bg: c.blueBg,
                     onTap: canSave ? _save : null,
@@ -533,7 +533,7 @@ Future<bool> showWilayaDeleteDialog(
                         decoration: BoxDecoration(
                             color: c.blueBg,
                             borderRadius: BorderRadius.circular(12)),
-                        child: Icon(TablerIcons.mapTrifold,
+                        child: Icon(PhosphorIcons.mapTrifold(),
                             size: 22, color: c.blue),
                       ),
                       Positioned(
@@ -547,7 +547,7 @@ Future<bool> showWilayaDeleteDialog(
                             shape: BoxShape.circle,
                             border: Border.all(color: c.card, width: 2),
                           ),
-                          child: const Icon(TablerIcons.trash,
+                          child: Icon(PhosphorIcons.trash(),
                               size: 11, color: Colors.white),
                         ),
                       ),
@@ -687,7 +687,7 @@ class _Header extends StatelessWidget {
             child: SizedBox(
               width: 32,
               height: 32,
-              child: Icon(TablerIcons.x, size: 16, color: c.muted),
+              child: Icon(PhosphorIcons.x(), size: 16, color: c.muted),
             ),
           ),
         ),
