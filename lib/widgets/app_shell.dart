@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../config/theme.dart';
+import 'user_top_bar.dart';
 
 const _kAdminPhone = '0763795801';
 
@@ -134,9 +135,6 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   final _badge = BadgeService();
-  final _hamburgerKey = GlobalKey();
-  final _avatarKey = GlobalKey();
-  OverlayEntry? _menuOverlay;
 
   // Global WS toast (payment events + namba ya simu)
   String? _toastMsg;
@@ -158,7 +156,6 @@ class _AppShellState extends State<AppShell> {
 
   @override
   void dispose() {
-    _closeMenu();
     _toastTimer?.cancel();
     WebSocketService().off('notification', _onWsNotification);
     WebSocketService().off('match.found', _onMatchFound);
@@ -253,177 +250,17 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  void _closeMenu() {
-    _menuOverlay?.remove();
-    _menuOverlay = null;
+  static const _tabRoutes = ['/dashboard', '/donate', '/feedback', '/profile'];
+
+  void _navigateTab(int idx) {
+    if (idx == widget.tabIndex) return;
+    _badge.clear(_tabRoutes[idx]);
+    Navigator.pushReplacementNamed(context, _tabRoutes[idx]);
   }
 
-  /// Herufi ya kwanza ya jina — kama web getInitial().
-  String _initials(String name) {
-    final parts = name.trim().split(' ').where((w) => w.isNotEmpty).toList();
-    if (parts.isEmpty) return 'M';
-    return parts[0][0].toUpperCase();
-  }
-
-  // ── Hamburger dropdown ──
-  void _showHamburgerMenu(AuthUser? user) {
-    _closeMenu();
-    final rb = _hamburgerKey.currentContext?.findRenderObject() as RenderBox?;
-    if (rb == null) return;
-    final pos = rb.localToGlobal(Offset.zero);
-    final sz = rb.size;
-    final counts = Map<String, int>.from(_badge.counts);
-
-    _menuOverlay = OverlayEntry(builder: (_) => Stack(children: [
-      Positioned.fill(child: GestureDetector(
-        onTap: _closeMenu,
-        behavior: HitTestBehavior.opaque,
-      )),
-      Positioned(
-        top: pos.dy + sz.height + 4,
-        left: pos.dx,
-        child: Material(
-          type: MaterialType.transparency,
-          child: Container(
-            width: 224,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFF3F4F6)),
-              boxShadow: [BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 20, offset: const Offset(0, 4))],
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              _dropLink(context, 'assets/icons/layout-dashboard.svg', 'Dashibodi', '/dashboard',
-                  counts, widget.tabIndex == 0),
-              _dropLink(context, 'assets/icons/hand-coins.svg', 'Changia', '/donate',
-                  counts, widget.tabIndex == 1),
-              _dropLink(context, 'assets/icons/clipboard-list.svg', 'Maoni na Malalamiko', '/feedback',
-                  counts, widget.tabIndex == 2),
-              _dropLink(context, 'assets/icons/user.svg', 'Wasifu', '/profile',
-                  counts, widget.tabIndex == 3),
-            ]),
-          ),
-        ),
-      ),
-    ]));
-    Overlay.of(context).insert(_menuOverlay!);
-  }
-
-  Widget _dropLink(BuildContext ctx, String svgAsset, String label, String route,
-      Map<String, int> counts, bool active) {
-    final badge = counts[route] ?? 0;
-    final color = active ? const Color(0xFF1E40AF) : const Color(0xFF374151);
-    return GestureDetector(
-      onTap: () {
-        _closeMenu();
-        if (!active) {
-          _badge.clear(route);
-          Navigator.pushReplacementNamed(ctx, route);
-        }
-      },
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(children: [
-          SvgPicture.asset(svgAsset, width: 18, height: 18,
-              colorFilter: ColorFilter.mode(color, BlendMode.srcIn)),
-          const SizedBox(width: 12),
-          Expanded(child: Text(label,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: color))),
-          if (badge > 0)
-            Container(
-              width: 20, height: 20,
-              decoration: const BoxDecoration(
-                  shape: BoxShape.circle, color: Color(0xFFDC2626)),
-              child: Center(child: Text(badge > 9 ? '9+' : '$badge',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold,
-                      color: Colors.white))),
-            ),
-        ]),
-      ),
-    );
-  }
-
-  // ── Avatar/profile dropdown ──
-  void _showProfileMenu() {
-    _closeMenu();
-    final rb = _avatarKey.currentContext?.findRenderObject() as RenderBox?;
-    if (rb == null) return;
-    final pos = rb.localToGlobal(Offset.zero);
-    final sz = rb.size;
-
-    _menuOverlay = OverlayEntry(builder: (_) => Stack(children: [
-      Positioned.fill(child: GestureDetector(
-        onTap: _closeMenu,
-        behavior: HitTestBehavior.opaque,
-      )),
-      Positioned(
-        top: pos.dy + sz.height + 4,
-        right: 12,
-        child: Material(
-          type: MaterialType.transparency,
-          child: Container(
-            width: 208,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFF3F4F6)),
-              boxShadow: [BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 20, offset: const Offset(0, 4))],
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              // Profile link
-              GestureDetector(
-                onTap: () {
-                  _closeMenu();
-                  if (widget.tabIndex != 3) {
-                    _badge.clear('/profile');
-                    Navigator.pushReplacementNamed(context, '/profile');
-                  }
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: const Row(children: [
-                    Icon(Icons.person_outline, size: 20, color: Color(0xFF374151)),
-                    SizedBox(width: 12),
-                    Text('Wasifu', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
-                        color: Color(0xFF374151))),
-                  ]),
-                ),
-              ),
-              // Logout — text-brand-red
-              GestureDetector(
-                onTap: () async {
-                  _closeMenu();
-                  await context.read<AuthProvider>().logout();
-                  if (mounted) Navigator.pushReplacementNamed(context, '/login');
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: const Row(children: [
-                    Icon(Icons.logout, size: 20, color: Color(0xFFDC2626)),
-                    SizedBox(width: 12),
-                    Text('Toka', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
-                        color: Color(0xFFDC2626))),
-                  ]),
-                ),
-              ),
-            ]),
-          ),
-        ),
-      ),
-    ]));
-    Overlay.of(context).insert(_menuOverlay!);
+  Future<void> _logout() async {
+    await context.read<AuthProvider>().logout();
+    if (mounted) Navigator.pushReplacementNamed(context, '/login');
   }
 
   // ── Bottom nav item ──
@@ -493,68 +330,14 @@ class _AppShellState extends State<AppShell> {
               // kikomo (Expanded inahitaji hilo ndani ya Stack).
               Positioned.fill(child: Column(children: [
 
-              // ══ TOP BAR (h-14 = 56px) ══════════════════════════════════════
-              // Kama web: fixed top-0 bg-white border-b shadow-sm
-              Container(
-                height: 56,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
-                  boxShadow: [BoxShadow(color: Color(0x0D000000), blurRadius: 2, offset: Offset(0, 1))],
-                ),
-                child: Row(children: [
-                  // ── LEFT: Hamburger ─────────────────────────────────────────
-                  // w-10 h-10 rounded-xl bg-brand-grey-100
-                  GestureDetector(
-                    onTap: () => _showHamburgerMenu(user),
-                    child: Container(
-                      key: _hamburgerKey,
-                      width: 40, height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.menu, size: 22, color: Color(0xFF374151)),
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // ── RIGHT: DUARA la initials — sawa na web (MobileTopBar) ──
-                  // web: w-8 h-8 rounded-full bg-brand-blue-50 border border-brand-blue-200
-                  GestureDetector(
-                    onTap: () => _showProfileMenu(),
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      key: _avatarKey,
-                      width: 40, height: 40,
-                      alignment: Alignment.center,
-                      child: Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.blue50,
-                          border: Border.all(color: AppColors.blue200, width: 1.5),
-                        ),
-                        child: Center(
-                          child: Text(
-                            _initials(user?.fullName ?? ''),
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.blue700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const _LangToggle(),
-                ]),
+              // ══ TOP BAR — UserTopBar mpya (menyu ya ≡ + duara la jina + SW|EN) ══
+              UserTopBar(
+                name: user?.fullName ?? '',
+                currentPage: UserPage.values[widget.tabIndex.clamp(0, 3)],
+                lang: LanguageProvider().lang,
+                onLangChanged: (l) => setState(() => LanguageProvider().setLang(l)),
+                onNavigate: (page) => _navigateTab(page.index),
+                onLogout: _logout,
               ),
 
               // ══ CONTENT ══════════════════════════════════════════════════════
@@ -600,55 +383,6 @@ class _AppShellState extends State<AppShell> {
           ),
         );
       },
-    );
-  }
-}
-
-// ── LangToggle — kama web: SW / EN buttons kando kando ───────────────────────
-class _LangToggle extends StatelessWidget {
-  const _LangToggle();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: LanguageProvider(),
-      builder: (context, _) {
-        final lang = LanguageProvider().lang;
-        return Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF1E40AF).withValues(alpha: 0.2)),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            _btn('SW', 'sw', lang, isLeft: true),
-            _btn('EN', 'en', lang, isLeft: false),
-          ]),
-        );
-      },
-    );
-  }
-
-  Widget _btn(String label, String code, String current, {required bool isLeft}) {
-    final active = current == code;
-    return GestureDetector(
-      onTap: () => LanguageProvider().setLang(code),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFF1E40AF) : Colors.transparent,
-          borderRadius: BorderRadius.only(
-            topLeft: isLeft ? const Radius.circular(7) : Radius.zero,
-            bottomLeft: isLeft ? const Radius.circular(7) : Radius.zero,
-            topRight: isLeft ? Radius.zero : const Radius.circular(7),
-            bottomRight: isLeft ? Radius.zero : const Radius.circular(7),
-          ),
-        ),
-        child: Text(label,
-          style: TextStyle(
-            fontSize: 10, fontWeight: FontWeight.bold,
-            color: active ? Colors.white : const Color(0xFF1E40AF),
-          )),
-      ),
     );
   }
 }
