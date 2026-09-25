@@ -94,9 +94,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: _step == 2 ? _mafanikio() : _fomu(),
+        // Fomu inakaa KATIKATI ya screen: ConstrainedBox(minHeight = urefu wa
+        // eneo linaloonekana) + Align(center) ndani ya SingleChildScrollView —
+        // keyboard ikifunguka au maudhui yakizidi, bado inasogea na kuonekana.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Align(
+                alignment: Alignment.center,
+                child: _step == 2 ? _mafanikio() : _fomu(),
+              ),
+            ),
+          ),
         ),
       ),
     );
