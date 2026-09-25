@@ -1,4 +1,4 @@
-/// Auth state — login, register, logout, session persistence, admin 2FA.
+// Auth state — login, register, logout, session persistence, admin 2FA.
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
@@ -10,6 +10,7 @@ class AuthUser {
   final String userId;
   final String fullName;
   final String phone;
+  final String phoneAlt;
   final String? email;
   final String? category;
   final String? cadreCode;
@@ -26,6 +27,7 @@ class AuthUser {
     required this.userId,
     required this.fullName,
     required this.phone,
+    this.phoneAlt = '',
     this.email,
     this.category,
     this.cadreCode,
@@ -43,6 +45,7 @@ class AuthUser {
         userId: json['user_id'] ?? '',
         fullName: json['full_name'] ?? '',
         phone: json['phone_primary'] ?? '',
+        phoneAlt: json['phone_alt'] ?? '',
         email: json['email'],
         category: json['category'],
         cadreCode: json['cadre_code'],
@@ -64,6 +67,7 @@ class AuthUser {
         userId: userId,
         fullName: fullName,
         phone: phone,
+        phoneAlt: phoneAlt,
         email: email,
         category: category,
         cadreCode: cadreCode,

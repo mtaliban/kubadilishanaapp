@@ -43,7 +43,7 @@ typedef AdminProfileData = AdminProfile;
    ============================================================ */
 class ProfileColors {
   final Color page, card, soft, border, borderStrong, text, muted, faint;
-  final Color blue, blueBg, blueRing, green;
+  final Color blue, blueBg, blueRing, green, danger, dangerBg;
 
   const ProfileColors({
     required this.page,
@@ -58,6 +58,8 @@ class ProfileColors {
     required this.blueBg,
     required this.blueRing,
     required this.green,
+    required this.danger,
+    required this.dangerBg,
   });
 
   static const light = ProfileColors(
@@ -73,6 +75,8 @@ class ProfileColors {
     blueBg: Color(0xFFE8F0FD),
     blueRing: Color(0xFFBBD2F8),
     green: Color(0xFF0F7A52),
+    danger: Color(0xFFB3261E),
+    dangerBg: Color(0xFFFCE9E8),
   );
 
   static const dark = ProfileColors(
@@ -88,6 +92,8 @@ class ProfileColors {
     blueBg: Color(0xFF1C2A44),
     blueRing: Color(0xFF2B4270),
     green: Color(0xFF5FD49A),
+    danger: Color(0xFFF2B8B5),
+    dangerBg: Color(0xFF3A2224),
   );
 
   static ProfileColors of(BuildContext context) =>
@@ -95,15 +101,57 @@ class ProfileColors {
 }
 
 /* ============================================================
-   UKURASA WA WASIFU
+   MSASAIDIZI
+   ============================================================ */
+String _digits(String s) => s.replaceAll(RegExp(r'\D'), '');
+
+/// Tarakimu za mitaa (bila 0 wala 255 mwanzoni).
+String _local9(String phone) {
+  var d = _digits(phone);
+  if (d.startsWith('255')) d = d.substring(3);
+  if (d.startsWith('0')) d = d.substring(1);
+  return d;
+}
+
+String _group9(String d) =>
+    d.length == 9 ? '${d.substring(0, 3)} ${d.substring(3, 6)} ${d.substring(6)}' : d;
+
+String _pretty(String phone) => '+255 ${_group9(_local9(phone))}';
+String _intl(String phone) => '+255${_local9(phone)}';
+
+String _titleCase(String s) => s
+    .trim()
+    .split(RegExp(r'\s+'))
+    .where((w) => w.isNotEmpty)
+    .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+    .join(' ');
+
+/// Herufi za mwanzo za jina (mf. "Amani Selemani" -> "AS").
+String _herufi(String jina) {
+  final p = jina.trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+  if (p.isEmpty) return '?';
+  return (p.first[0] + (p.length > 1 ? p[1][0] : '')).toUpperCase();
+}
+
+/// Tarakimu 9 (bila 0 wala 255 mwanzoni) au null kama si sahihi.
+String? _tarakimuTisa(String ingizo) {
+  var d = _digits(ingizo);
+  if (d.startsWith('255')) d = d.substring(3);
+  if (d.startsWith('0')) d = d.substring(1);
+  return RegExp(r'^[67]\d{8}$').hasMatch(d) ? d : null;
+}
+
+/* ============================================================
+   SKRINI 1: MAELEZO YA WASIFU
    ============================================================ */
 class AdminProfilePage extends StatefulWidget {
   final AdminProfile profile;
 
-  /// Inaitwa ukibonyeza Hifadhi.
-  final Future<void> Function(AdminProfile updated)? onSave;
+  /// Inaitwa ukibonyeza Hifadhi. Ikipokea profile mpya; irudishe true
+  /// kama imehifadhiwa (exception au false = imeshindikana).
+  final Future<bool> Function(AdminProfile updated) onSave;
 
-  const AdminProfilePage({super.key, required this.profile, this.onSave});
+  const AdminProfilePage({super.key, required this.profile, required this.onSave});
 
   @override
   State<AdminProfilePage> createState() => _AdminProfilePageState();
@@ -114,72 +162,11 @@ typedef AdminProfileScreen = AdminProfilePage;
 
 class _AdminProfilePageState extends State<AdminProfilePage> {
   late AdminProfile p;
-  bool editing = false;
-  bool saving = false;
-
-  final nameCtrl = TextEditingController();
-  final waCtrl = TextEditingController();
-  String _origName = '';
-  String _origWa = '';
 
   @override
   void initState() {
     super.initState();
     p = widget.profile;
-    nameCtrl.addListener(_onChange);
-    waCtrl.addListener(_onChange);
-  }
-
-  void _onChange() {
-    if (editing) setState(() {});
-  }
-
-  @override
-  void dispose() {
-    nameCtrl.dispose();
-    waCtrl.dispose();
-    super.dispose();
-  }
-
-  /* ---------- Msaidizi ---------- */
-  static String _digits(String s) => s.replaceAll(RegExp(r'\D'), '');
-
-  static String _local9(String phone) {
-    var d = _digits(phone);
-    if (d.startsWith('255')) d = d.substring(3);
-    if (d.startsWith('0')) d = d.substring(1);
-    if (d.length == 9) {
-      return '${d.substring(0, 3)} ${d.substring(3, 6)} ${d.substring(6)}';
-    }
-    return d;
-  }
-
-  static String _pretty(String phone) => '+255 ${_local9(phone)}';
-  static String _intl(String phone) => '255${_digits(_local9(phone))}';
-
-  static String _titleCase(String s) => s
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((w) => w.isNotEmpty)
-      .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
-      .join(' ');
-
-  bool get _hasWa => (p.whatsapp ?? '').trim().isNotEmpty;
-  bool get _hasEmail => p.email.trim().isNotEmpty;
-
-  int get _changes =>
-      (nameCtrl.text.trim() != _origName ? 1 : 0) +
-      (_digits(waCtrl.text) != _digits(_origWa) ? 1 : 0);
-
-  bool get _canSave =>
-      !saving && _changes > 0 && nameCtrl.text.trim().isNotEmpty;
-
-  /// Namba ya WhatsApp kama tarakimu 9 (mf. 712345678), au null kama acha tupu.
-  String? get _waNine {
-    var d = _digits(waCtrl.text);
-    if (d.startsWith('255')) d = d.substring(3);
-    if (d.startsWith('0')) d = d.substring(1);
-    return d.length == 9 ? d : null;
   }
 
   /* ---------- Vitendo ---------- */
@@ -189,63 +176,288 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
       ..showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  void _startEdit() {
-    _origName = _titleCase(p.name);
-    _origWa = _hasWa ? _local9(p.whatsapp!) : '';
-    nameCtrl.text = _origName;
-    waCtrl.text = _origWa;
-    setState(() => editing = true);
-  }
-
-  void _cancel() => setState(() => editing = false);
-
-  Future<void> _save() async {
-    final name = _titleCase(nameCtrl.text.trim());
-    final wa = _digits(waCtrl.text);
-    final nine = _waNine;
-    if (wa.isNotEmpty && nine == null) {
-      return _toast('Namba ya WhatsApp iwe tarakimu 9 baada ya +255');
-    }
-    // phone_alt huhifadhiwa kama '255XXXXXXXXX'. Kufuta WhatsApp
-    // lazima pitie null kwenye payload (ui: 'phone_alt': null).
-    final updated = nine == null
-        ? p.copyWith(name: name, clearWhatsapp: true)
-        : p.copyWith(name: name, whatsapp: '255$nine');
-
-    setState(() => saving = true);
-    try {
-      await widget.onSave?.call(updated);
-      if (!mounted) return;
-      setState(() {
-        p = updated;
-        editing = false;
-      });
+  Future<void> _hariri() async {
+    final mpya = await Navigator.of(context).push<AdminProfile>(
+      MaterialPageRoute(
+        builder: (_) => _ProfileEditScreen(profile: p, onSave: widget.onSave),
+      ),
+    );
+    if (mpya != null && mounted) {
+      setState(() => p = mpya);
       _toast('Mabadiliko yamehifadhiwa');
-    } catch (e) {
-      if (mounted) _toast('Imeshindikana kuhifadhi: $e');
-    } finally {
-      if (mounted) setState(() => saving = false);
     }
   }
 
-  Future<void> _copyEmail() async {
-    await Clipboard.setData(ClipboardData(text: p.email));
-    _toast('Barua pepe imenakiliwa');
-  }
-
-  Future<void> _call() async {
-    if (!await launchUrl(Uri(scheme: 'tel', path: '0${_digits(_local9(p.phone))}'))) {
-      _toast('Imeshindikana kufungua dialer');
+  Future<void> _piga() async {
+    try {
+      await launchUrl(Uri(scheme: 'tel', path: _intl(p.phone)));
+    } catch (_) {
+      if (mounted) _toast('Imeshindwa kufungua simu');
     }
   }
 
-  Future<void> _whatsapp() async {
-    if (!_hasWa) return;
-    if (!await launchUrl(
-      Uri.parse('https://wa.me/${_intl(p.whatsapp!)}'),
-      mode: LaunchMode.externalApplication,
-    )) {
-      _toast('Imeshindikana kufungua WhatsApp');
+  Future<void> _nakili(String namba) async {
+    await Clipboard.setData(ClipboardData(text: namba));
+    if (mounted) _toast('Namba imenakiliwa');
+  }
+
+  bool get _hasWa => _digits(p.whatsapp ?? '').isNotEmpty;
+  bool get _hasEmail => p.email.trim().isNotEmpty;
+
+  /* ---------- UI ---------- */
+  @override
+  Widget build(BuildContext context) {
+    final c = ProfileColors.of(context);
+    final name = _titleCase(p.name);
+    return Scaffold(
+      backgroundColor: c.page,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            Row(
+              children: [
+                _SquareButton(
+                  icon: PhosphorIcons.arrowLeft(),
+                  c: c,
+                  tooltip: 'Rudi',
+                  onTap: () => Navigator.maybePop(context),
+                ),
+                const Spacer(),
+                FilledButton.icon(
+                  onPressed: _hariri,
+                  icon: Icon(PhosphorIcons.pencilSimple(), size: 18),
+                  label: const Text('Hariri'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: c.blue,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 42),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    textStyle: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: CircleAvatar(
+                radius: 42,
+                backgroundColor: c.blueBg,
+                child: Text(
+                  _herufi(name),
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color: c.blue),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              name,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: c.text, fontSize: 22, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Center(child: _RolePill(role: p.role, c: c)),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionButton(
+                    icon: PhosphorIcons.phoneCall(),
+                    label: 'Piga simu',
+                    c: c,
+                    onTap: _piga,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ActionButton(
+                    icon: PhosphorIcons.copy(),
+                    label: 'Nakili namba',
+                    c: c,
+                    onTap: () => _nakili(_intl(p.phone)),
+                  ),
+                ),
+              ],
+            ),
+            _SectionTitle('Taarifa binafsi', c: c),
+            _Card(c: c, children: [
+              _ViewRow(
+                c: c,
+                icon: PhosphorIcons.user(),
+                label: 'Jina kamili',
+                value: name,
+              ),
+            ]),
+            _SectionTitle('Mawasiliano', c: c),
+            _Card(c: c, children: [
+              _ViewRow(
+                c: c,
+                icon: PhosphorIcons.envelopeSimple(),
+                label: 'Barua pepe',
+                labelExtra: p.emailVerified && _hasEmail
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(width: 6),
+                          Icon(PhosphorIcons.sealCheck(PhosphorIconsStyle.fill),
+                              size: 13, color: c.green),
+                          const SizedBox(width: 3),
+                          Text('Imethibitishwa',
+                              style: TextStyle(
+                                  color: c.green,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      )
+                    : null,
+                value: _hasEmail ? p.email : 'Haijawekwa',
+                empty: !_hasEmail,
+                onOngeza: _hasEmail ? null : _hariri,
+              ),
+              _ViewRow(
+                c: c,
+                icon: PhosphorIcons.phone(),
+                label: 'Namba ya simu',
+                value: _pretty(p.phone),
+                trailing: IconButton(
+                  tooltip: 'Nakili',
+                  icon: Icon(PhosphorIcons.copy(), size: 20, color: c.muted),
+                  onPressed: () => _nakili(_intl(p.phone)),
+                ),
+              ),
+              _ViewRow(
+                c: c,
+                icon: PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
+                label: 'WhatsApp / simu ya pili',
+                value: _hasWa ? _pretty(p.whatsapp!) : 'Haijawekwa',
+                empty: !_hasWa,
+                onOngeza: _hasWa ? null : _hariri,
+              ),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/* ============================================================
+   SKRINI 2: HARIRI WASIFU
+   ============================================================ */
+class _ProfileEditScreen extends StatefulWidget {
+  final AdminProfile profile;
+  final Future<bool> Function(AdminProfile updated) onSave;
+
+  const _ProfileEditScreen({required this.profile, required this.onSave});
+
+  @override
+  State<_ProfileEditScreen> createState() => _ProfileEditScreenState();
+}
+
+class _ProfileEditScreenState extends State<_ProfileEditScreen> {
+  late final nameCtrl =
+      TextEditingController(text: _titleCase(widget.profile.name));
+  late final waCtrl = TextEditingController(
+      text: widget.profile.whatsapp == null
+          ? ''
+          : _local9(widget.profile.whatsapp!));
+  bool saving = false;
+  String? kosa;
+
+  @override
+  void initState() {
+    super.initState();
+    nameCtrl.addListener(_onChange);
+    waCtrl.addListener(_onChange);
+  }
+
+  void _onChange() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    waCtrl.dispose();
+    super.dispose();
+  }
+
+  /* ---------- Hali ---------- */
+  String get _jinaSafi => nameCtrl.text.trim().replaceAll(RegExp(r'\s+'), ' ');
+  bool get _waTupu => waCtrl.text.trim().isEmpty;
+  String? get _waTisa => _waTupu ? null : _tarakimuTisa(waCtrl.text);
+
+  String? get _kosaJina => _jinaSafi.isEmpty ? 'Weka jina kamili' : null;
+  String? get _kosaWa =>
+      (!_waTupu && _waTisa == null) ? 'Weka namba sahihi, mfano 712 345 678' : null;
+
+  bool get _imebadilika {
+    final waAsili =
+        widget.profile.whatsapp == null ? null : _local9(widget.profile.whatsapp!);
+    final waMpya = _waTupu ? null : (_waTisa ?? _digits(waCtrl.text));
+    return _jinaSafi != _titleCase(widget.profile.name) || waMpya != waAsili;
+  }
+
+  bool get _inaweza =>
+      _imebadilika && _kosaJina == null && _kosaWa == null && !saving;
+
+  /* ---------- Vitendo ---------- */
+  Future<bool> _thibitishaKutoka() async {
+    if (!_imebadilika || saving) return true;
+    final toka = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Toka bila kuhifadhi?'),
+        content: const Text('Mabadiliko uliyofanya yatapotea.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Endelea kuhariri')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Toka')),
+        ],
+      ),
+    );
+    return toka == true;
+  }
+
+  Future<void> _hifadhi() async {
+    if (!_inaweza) return;
+    final tisa = _waTisa;
+    final mpya = tisa == null
+        ? widget.profile.copyWith(name: _jinaSafi, clearWhatsapp: true)
+        : widget.profile.copyWith(name: _jinaSafi, whatsapp: '0$tisa');
+
+    setState(() {
+      saving = true;
+      kosa = null;
+    });
+    try {
+      final ok = await widget.onSave(mpya);
+      if (!mounted) return;
+      if (ok) {
+        Navigator.pop(context, mpya);
+      } else {
+        setState(() {
+          saving = false;
+          kosa = 'Imeshindwa kuhifadhi. Jaribu tena.';
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          saving = false;
+          kosa = 'Imeshindwa kuhifadhi. Angalia mtandao kisha ujaribu tena.';
+        });
+      }
     }
   }
 
@@ -254,9 +466,11 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   Widget build(BuildContext context) {
     final c = ProfileColors.of(context);
     return PopScope(
-      canPop: !editing,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && editing) _cancel();
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final nav = Navigator.of(context);
+        if (await _thibitishaKutoka()) nav.pop();
       },
       child: Scaffold(
         backgroundColor: c.page,
@@ -264,25 +478,174 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                child: editing ? _editTopBar(c) : _viewTopBar(c),
-              ),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, box) => SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: (box.maxHeight - 16).clamp(0, double.infinity),
-                      ),
-                      child: Center(
-                        child: editing ? _editBody(c) : _viewBody(c),
-                      ),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Row(
+                  children: [
+                    _SquareButton(
+                      icon: PhosphorIcons.x(),
+                      c: c,
+                      tooltip: 'Funga',
+                      onTap: () => Navigator.maybePop(context),
                     ),
-                  ),
+                    Expanded(
+                      child: Text('Hariri wasifu',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: c.text,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(width: 40),
+                  ],
                 ),
               ),
-              if (editing) _footer(c),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: c.blueBg,
+                          child: Text(
+                            _herufi(_jinaSafi.isEmpty
+                                ? _titleCase(widget.profile.name)
+                                : _jinaSafi),
+                            style: TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w600,
+                                color: c.blue),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _jinaSafi.isEmpty
+                                    ? _titleCase(widget.profile.name)
+                                    : _jinaSafi,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    color: c.text,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                              Text(widget.profile.role,
+                                  style:
+                                      TextStyle(color: c.blue, fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    _SectionTitle('Unaweza kubadilisha',
+                        c: c, icon: PhosphorIcons.pencilSimple()),
+                    _Card(
+                      c: c,
+                      padding: const EdgeInsets.all(14),
+                      children: [
+                        _FieldLabel('Jina kamili', c: c),
+                        TextField(
+                          controller: nameCtrl,
+                          textCapitalization: TextCapitalization.words,
+                          textInputAction: TextInputAction.next,
+                          style: TextStyle(color: c.text, fontSize: 16),
+                          cursorColor: c.blue,
+                          decoration: _mapambo(
+                            c,
+                            ikoni: PhosphorIcons.user(),
+                            kosa: _imebadilika ? _kosaJina : null,
+                            futa: nameCtrl.text.isEmpty
+                                ? null
+                                : () => nameCtrl.clear(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _FieldLabel('WhatsApp / simu ya pili',
+                            c: c, trailing: 'hiari'),
+                        TextField(
+                          controller: waCtrl,
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]')),
+                          ],
+                          style: TextStyle(color: c.text, fontSize: 16),
+                          cursorColor: c.blue,
+                          decoration: _mapambo(
+                            c,
+                            ikoni: PhosphorIcons.whatsappLogo(
+                                PhosphorIconsStyle.fill),
+                            kiambishi: '+255',
+                            hint: '712 345 678',
+                            kosa: _kosaWa,
+                          ),
+                        ),
+                        if (_kosaWa == null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6, left: 2),
+                            child: Text('Acha wazi kama huna namba ya pili.',
+                                style: TextStyle(color: c.muted, fontSize: 12)),
+                          ),
+                      ],
+                    ),
+                    _SectionTitle('Haziwezi kubadilishwa',
+                        c: c, icon: PhosphorIcons.lockSimple()),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: c.soft,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        children: [
+                          _LockedRow(
+                              c: c,
+                              icon: PhosphorIcons.envelopeSimple(),
+                              text: _hasEmail
+                                  ? widget.profile.email
+                                  : 'Haijawekwa'),
+                          Divider(height: 1, thickness: 1, color: c.border),
+                          _LockedRow(
+                              c: c,
+                              icon: PhosphorIcons.phone(),
+                              text: _pretty(widget.profile.phone)),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 2),
+                      child: Text(
+                          'Kubadilisha hizi, wasiliana na admin mwenzako.',
+                          style: TextStyle(color: c.muted, fontSize: 12)),
+                    ),
+                    if (kosa != null)
+                      Container(
+                        margin: const EdgeInsets.only(top: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: c.dangerBg,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(PhosphorIcons.warning(PhosphorIconsStyle.fill),
+                                size: 18, color: c.danger),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(kosa!,
+                                  style: TextStyle(
+                                      color: c.danger, fontSize: 13)),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              _editFooter(c),
             ],
           ),
         ),
@@ -290,243 +653,9 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     );
   }
 
-  /* ================= KUANGALIA ================= */
-  Widget _viewTopBar(ProfileColors c) {
-    return Row(
-      children: [
-        _SquareButton(
-          icon: PhosphorIcons.caretLeft(),
-          c: c,
-          tooltip: 'Rudi',
-          onTap: () => Navigator.maybePop(context),
-        ),
-        const Spacer(),
-        SizedBox(
-          height: 36,
-          child: FilledButton.icon(
-            onPressed: _startEdit,
-            icon: Icon(PhosphorIcons.pencilSimple(), size: 16),
-            label: const Text('Hariri'),
-            style: FilledButton.styleFrom(
-              backgroundColor: c.blue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              textStyle:
-                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _viewBody(ProfileColors c) {
-    final name = _titleCase(p.name);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 14, 8, 4),
-          child: Column(
-            children: [
-              Text(name,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: c.text,
-                      fontSize: 21,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3)),
-              const SizedBox(height: 8),
-              _RolePill(role: p.role, c: c),
-            ],
-          ),
-        ),
-
-        _GroupTitle('TAARIFA BINAFSI', c: c),
-        _Group(c: c, children: [
-          _ViewRow(
-            c: c,
-            icon: PhosphorIcons.user(),
-            label: 'Jina kamili',
-            value: name,
-          ),
-        ]),
-
-        _GroupTitle('MAWASILIANO', c: c),
-        _Group(c: c, children: [
-          _ViewRow(
-            c: c,
-            icon: PhosphorIcons.envelope(),
-            label: 'Barua pepe',
-            labelExtra: p.emailVerified && _hasEmail
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(width: 6),
-                      Icon(PhosphorIcons.sealCheck(PhosphorIconsStyle.fill),
-                          size: 13, color: c.green),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: Text('Imethibitishwa',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                color: c.green,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600)),
-                      ),
-                    ],
-                  )
-                : null,
-            value: _hasEmail ? p.email : 'Haijawekwa',
-            empty: !_hasEmail,
-            action: _CircleAction(
-              icon: PhosphorIcons.copy(),
-              c: c,
-              tooltip: 'Nakili',
-              onTap: _hasEmail ? _copyEmail : null,
-            ),
-          ),
-          _ViewRow(
-            c: c,
-            icon: PhosphorIcons.phone(),
-            label: 'Namba ya simu',
-            value: _pretty(p.phone),
-            action: _CircleAction(
-              icon: PhosphorIcons.phoneCall(),
-              c: c,
-              tooltip: 'Piga',
-              onTap: _call,
-            ),
-          ),
-          _ViewRow(
-            c: c,
-            icon: PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
-            label: 'WhatsApp / simu ya pili',
-            value: _hasWa ? _pretty(p.whatsapp!) : 'Haijawekwa',
-            empty: !_hasWa,
-            action: _CircleAction(
-              icon: PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
-              c: c,
-              tooltip: 'WhatsApp',
-              onTap: _hasWa ? _whatsapp : null,
-            ),
-          ),
-        ]),
-      ],
-    );
-  }
-
-  /* ================= KUHARIRI ================= */
-  Widget _editTopBar(ProfileColors c) {
-    return Row(
-      children: [
-        _SquareButton(
-          icon: PhosphorIcons.x(),
-          c: c,
-          tooltip: 'Funga',
-          onTap: _cancel,
-        ),
-        Expanded(
-          child: Text('Hariri wasifu',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: c.text,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600)),
-        ),
-        const SizedBox(width: 38),
-      ],
-    );
-  }
-
-  Widget _editBody(ProfileColors c) {
-    final liveName =
-        nameCtrl.text.trim().isEmpty ? '—' : nameCtrl.text.trim();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 16, 8, 2),
-          child: Column(
-            children: [
-              Text(liveName,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: c.text,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(height: 2),
-              Text(p.role, style: TextStyle(color: c.blue, fontSize: 12)),
-            ],
-          ),
-        ),
-
-        _GroupTitle('UNAWEZA KUBADILISHA', c: c,
-            icon: PhosphorIcons.pencil()),
-        _Group(
-          c: c,
-          padding: const EdgeInsets.all(14),
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _FieldLabel('Jina kamili', c: c),
-                _EditField(
-                  c: c,
-                  controller: nameCtrl,
-                  icon: PhosphorIcons.user(),
-                  capitalization: TextCapitalization.words,
-                  clearable: true,
-                ),
-                const SizedBox(height: 14),
-                _FieldLabel('WhatsApp / simu ya pili', c: c,
-                    trailing: 'hiari'),
-                _EditField(
-                  c: c,
-                  controller: waCtrl,
-                  icon: PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
-                  prefix255: true,
-                  keyboard: TextInputType.phone,
-                  hint: '712 345 678',
-                ),
-                const SizedBox(height: 6),
-                Text('Acha tupu kama huna namba ya pili.',
-                    style: TextStyle(color: c.muted, fontSize: 12)),
-              ],
-            ),
-          ],
-        ),
-
-        _GroupTitle('HAZIWEZI KUBADILISHWA', c: c,
-            icon: PhosphorIcons.lockSimple()),
-        _Group(c: c, children: [
-          _LockedRow(
-            c: c,
-            icon: PhosphorIcons.envelope(),
-            text: _hasEmail ? p.email : 'Haijawekwa',
-          ),
-          _LockedRow(
-              c: c,
-              icon: PhosphorIcons.phone(),
-              text: _pretty(p.phone)),
-        ]),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-          child: Text('Kubadilisha hizi, wasiliana na admin mwenzako.',
-              style: TextStyle(color: c.muted, fontSize: 12)),
-        ),
-      ],
-    );
-  }
-
-  Widget _footer(ProfileColors c) {
-    final n = _changes;
+  Widget _editFooter(ProfileColors c) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: c.card,
         border: Border(top: BorderSide(color: c.border)),
@@ -535,70 +664,107 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
         children: [
           Expanded(
             child: Text(
-              n == 0 ? 'Hakuna mabadiliko' : 'Mabadiliko $n',
+              _imebadilika ? 'Una mabadiliko' : 'Hakuna mabadiliko',
               style: TextStyle(
-                  color: n == 0 ? c.muted : c.blue,
-                  fontSize: 12,
+                  color: _imebadilika ? c.blue : c.muted,
+                  fontSize: 13,
                   fontWeight:
-                      n == 0 ? FontWeight.w400 : FontWeight.w600),
+                      _imebadilika ? FontWeight.w600 : FontWeight.w400),
             ),
           ),
-          SizedBox(
-            height: 36,
-            child: OutlinedButton(
-              onPressed: saving ? null : _cancel,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: c.blue,
-                side: BorderSide(color: c.blueRing),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                textStyle: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              child: const Text('Ghairi'),
+          OutlinedButton(
+            onPressed: saving ? null : () => Navigator.maybePop(context),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: c.text,
+              side: BorderSide(color: c.borderStrong),
+              minimumSize: const Size(0, 46),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              textStyle:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
+            child: const Text('Ghairi'),
           ),
           const SizedBox(width: 8),
-          Opacity(
-            opacity: _canSave || saving ? 1 : .45,
-            child: SizedBox(
-              height: 36,
-              child: FilledButton(
-                onPressed: _canSave ? _save : null,
-                style: FilledButton.styleFrom(
-                  backgroundColor: c.blue,
-                  disabledBackgroundColor: c.blue,
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  textStyle: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600),
-                ),
-                child: saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(PhosphorIcons.floppyDisk(), size: 16),
-                          const SizedBox(width: 6),
-                          const Text('Hifadhi'),
-                        ],
-                      ),
-              ),
+          FilledButton.icon(
+            onPressed: _inaweza ? _hifadhi : null,
+            icon: saving
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2.5, color: Colors.white))
+                : Icon(PhosphorIcons.floppyDisk(), size: 18),
+            label: const Text('Hifadhi'),
+            style: FilledButton.styleFrom(
+              backgroundColor: c.blue,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(0, 46),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              textStyle:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ),
         ],
       ),
     );
   }
+
+  InputDecoration _mapambo(
+    ProfileColors c, {
+    required IconData ikoni,
+    String? kiambishi,
+    String? hint,
+    String? kosa,
+    VoidCallback? futa,
+  }) {
+    OutlineInputBorder b(Color col, [double w = 1]) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: col, width: w),
+        );
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: c.faint, fontSize: 16),
+      errorText: kosa,
+      errorStyle: TextStyle(color: c.blue, fontSize: 12),
+      isDense: true,
+      filled: true,
+      fillColor: c.card,
+      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+      prefixIcon: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(width: 12),
+          Icon(ikoni, size: 20, color: c.muted),
+          if (kiambishi != null) ...[
+            const SizedBox(width: 8),
+            Text(kiambishi, style: TextStyle(color: c.text, fontSize: 16)),
+            const SizedBox(width: 8),
+            Container(width: 1, height: 22, color: c.border),
+          ],
+          const SizedBox(width: 10),
+        ],
+      ),
+      prefixIconConstraints: const BoxConstraints(minHeight: 48),
+      suffixIcon: futa == null
+          ? null
+          : IconButton(
+              tooltip: 'Futa',
+              icon: Icon(PhosphorIcons.x(), size: 18, color: c.muted),
+              onPressed: futa,
+            ),
+      border: b(c.borderStrong),
+      enabledBorder: b(c.borderStrong),
+      focusedBorder: b(c.blue, 1.5),
+      errorBorder: b(c.blue),
+      focusedErrorBorder: b(c.blue, 1.5),
+    );
+  }
+
+  bool get _hasEmail => widget.profile.email.trim().isNotEmpty;
 }
 
 /* ============================================================
@@ -622,17 +788,48 @@ class _SquareButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: c.blueBg,
-        borderRadius: BorderRadius.circular(10),
+        color: c.soft,
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           child: SizedBox(
-            width: 38,
-            height: 38,
-            child: Icon(icon, size: 19, color: c.blue),
+            width: 40,
+            height: 40,
+            child: Icon(icon, size: 20, color: c.text),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final ProfileColors c;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.c,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 18, color: c.text),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: c.text,
+        side: BorderSide(color: c.borderStrong),
+        minimumSize: const Size.fromHeight(46),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle:
+            const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -646,20 +843,45 @@ class _RolePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: c.blueBg,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(PhosphorIcons.shieldCheck(), size: 14, color: c.blue),
-          const SizedBox(width: 5),
+          Icon(PhosphorIcons.shieldCheck(), size: 16, color: c.blue),
+          const SizedBox(width: 6),
           Text(role,
               style: TextStyle(
-                  color: c.blue,
-                  fontSize: 12,
+                  color: c.blue, fontSize: 13, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  final ProfileColors c;
+  final IconData? icon;
+  const _SectionTitle(this.text, {required this.c, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 22, 0, 8),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: c.muted),
+            const SizedBox(width: 6),
+          ],
+          Text(text,
+              style: TextStyle(
+                  color: c.text,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600)),
         ],
       ),
@@ -667,46 +889,24 @@ class _RolePill extends StatelessWidget {
   }
 }
 
-class _GroupTitle extends StatelessWidget {
-  final String text;
-  final ProfileColors c;
-  final IconData? icon;
-  const _GroupTitle(this.text, {required this.c, this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
-      child: Row(
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 14, color: c.blue),
-            const SizedBox(width: 6),
-          ],
-          Text(text,
-              style: TextStyle(
-                  color: c.blue,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: .3)),
-        ],
-      ),
-    );
-  }
-}
-
-class _Group extends StatelessWidget {
+class _Card extends StatelessWidget {
   final ProfileColors c;
   final List<Widget> children;
-  final EdgeInsets? padding;
+  final EdgeInsets padding;
 
-  const _Group({required this.c, required this.children, this.padding});
+  const _Card({
+    required this.c,
+    required this.children,
+    this.padding = EdgeInsets.zero,
+  });
 
   @override
   Widget build(BuildContext context) {
     final items = <Widget>[];
     for (var i = 0; i < children.length; i++) {
-      if (i > 0) items.add(Divider(height: 1, thickness: 1, color: c.border));
+      if (i > 0 && padding == EdgeInsets.zero) {
+        items.add(Divider(height: 1, thickness: 1, color: c.border));
+      }
       items.add(children[i]);
     }
     return Container(
@@ -730,7 +930,8 @@ class _ViewRow extends StatelessWidget {
   final Widget? labelExtra;
   final String value;
   final bool empty;
-  final Widget? action;
+  final Widget? trailing;
+  final VoidCallback? onOngeza;
 
   const _ViewRow({
     required this.c,
@@ -739,103 +940,96 @@ class _ViewRow extends StatelessWidget {
     this.labelExtra,
     required this.value,
     this.empty = false,
-    this.action,
+    this.trailing,
+    this.onOngeza,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 62),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: c.blue),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Text.rich na WidgetSpan: lebo na beji (mf.
-                  // "Imethibitishwa") zinafunga/kupishana mstari kwenye
-                  // skrini ndogo — hakuna RenderFlex inayoweza kumwaga.
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: label,
-                          style: TextStyle(color: c.muted, fontSize: 12),
-                        ),
-                        if (labelExtra != null)
-                          WidgetSpan(
-                            alignment: PlaceholderAlignment.middle,
-                            baseline: TextBaseline.alphabetic,
-                            child: labelExtra!,
-                          ),
-                      ],
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 1),
-                  Text(value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          color: empty
-                              ? c.blue.withValues(alpha: .55)
-                              : c.blue,
-                          fontSize: 14,
-                          fontWeight: empty
-                              ? FontWeight.w400
-                              : FontWeight.w600)),
-                ],
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: empty ? c.soft : c.blueBg,
+              borderRadius: BorderRadius.circular(10),
             ),
-            if (action != null) ...[
-              const SizedBox(width: 8),
-              action!,
-            ],
-          ],
-        ),
+            child: Icon(icon,
+                size: 19, color: empty ? c.muted : c.blue),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(label,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: c.muted, fontSize: 12)),
+                    ),
+                    ?labelExtra,
+                  ],
+                ),
+                const SizedBox(height: 1),
+                Text(value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        color: empty ? c.muted : c.text,
+                        fontSize: 15,
+                        fontWeight:
+                            empty ? FontWeight.w400 : FontWeight.w600)),
+              ],
+            ),
+          ),
+          if (empty && onOngeza != null)
+            TextButton(
+              onPressed: onOngeza,
+              style: TextButton.styleFrom(
+                foregroundColor: c.blue,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8),
+                textStyle: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              child: const Text('Ongeza'),
+            )
+          else if (!empty && trailing != null)
+            trailing!,
+        ],
       ),
     );
   }
 }
 
-class _CircleAction extends StatelessWidget {
-  final IconData icon;
+class _LockedRow extends StatelessWidget {
   final ProfileColors c;
-  final String tooltip;
-  final VoidCallback? onTap;
+  final IconData icon;
+  final String text;
 
-  const _CircleAction({
-    required this.icon,
-    required this.c,
-    required this.tooltip,
-    this.onTap,
-  });
+  const _LockedRow({required this.c, required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: onTap == null ? .45 : 1,
-      child: Tooltip(
-        message: tooltip,
-        child: Material(
-          color: c.blueBg,
-          shape: const CircleBorder(),
-          child: InkWell(
-            onTap: onTap,
-            customBorder: const CircleBorder(),
-            child: SizedBox(
-              width: 34,
-              height: 34,
-              child: Icon(icon, size: 17, color: c.blue),
-            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Row(
+        children: [
+          Icon(icon, size: 19, color: c.muted),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: c.muted, fontSize: 14)),
           ),
-        ),
+          Icon(PhosphorIcons.lockSimple(), size: 17, color: c.muted),
+        ],
       ),
     );
   }
@@ -852,122 +1046,14 @@ class _FieldLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Text(text,
-                style: TextStyle(
-                    color: c.blue,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600)),
-          ),
+          Text(text,
+              style: TextStyle(
+                  color: c.text, fontSize: 13, fontWeight: FontWeight.w600)),
           if (trailing != null)
-            Text(trailing!,
-                style: TextStyle(color: c.muted, fontSize: 12)),
+            Text(trailing!, style: TextStyle(color: c.muted, fontSize: 13)),
         ],
-      ),
-    );
-  }
-}
-
-class _EditField extends StatelessWidget {
-  final ProfileColors c;
-  final TextEditingController controller;
-  final IconData icon;
-  final bool prefix255;
-  final bool clearable;
-  final TextInputType? keyboard;
-  final TextCapitalization capitalization;
-  final String? hint;
-
-  const _EditField({
-    required this.c,
-    required this.controller,
-    required this.icon,
-    this.prefix255 = false,
-    this.clearable = false,
-    this.keyboard,
-    this.capitalization = TextCapitalization.none,
-    this.hint,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    OutlineInputBorder b(Color col, [double w = 1]) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: col, width: w),
-        );
-    return TextField(
-      controller: controller,
-      keyboardType: keyboard,
-      textCapitalization: capitalization,
-      style: TextStyle(color: c.blue, fontSize: 15),
-      cursorColor: c.blue,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: c.faint, fontSize: 15),
-        isDense: true,
-        filled: true,
-        fillColor: c.card,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.only(left: 12, right: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: c.blue),
-              if (prefix255) ...[
-                const SizedBox(width: 10),
-                Text('+255',
-                    style: TextStyle(color: c.blue, fontSize: 15)),
-                const SizedBox(width: 10),
-                Container(width: 1, height: 20, color: c.border),
-              ],
-            ],
-          ),
-        ),
-        prefixIconConstraints:
-            const BoxConstraints(minWidth: 0, minHeight: 0),
-        suffixIcon: clearable && controller.text.isNotEmpty
-            ? IconButton(
-                onPressed: controller.clear,
-                icon: Icon(PhosphorIcons.x(), size: 16, color: c.blue),
-              )
-            : null,
-        border: b(c.borderStrong),
-        enabledBorder: b(c.borderStrong),
-        focusedBorder: b(c.blue, 1.5),
-      ),
-    );
-  }
-}
-
-class _LockedRow extends StatelessWidget {
-  final ProfileColors c;
-  final IconData icon;
-  final String text;
-
-  const _LockedRow({required this.c, required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: .7,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        child: Row(
-          children: [
-            Icon(icon, size: 17, color: c.blue),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: c.blue, fontSize: 13)),
-            ),
-            Icon(PhosphorIcons.lockSimple(), size: 15, color: c.blue),
-          ],
-        ),
       ),
     );
   }

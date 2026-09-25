@@ -182,14 +182,23 @@ class _AdminShellState extends State<AdminShell> {
         profile: AdminProfile(
           name: user?.fullName ?? 'Admin',
           email: user?.email ?? '',
+          emailVerified: true,
           phone: user?.phone ?? '',
+          whatsapp: (user?.phoneAlt ?? '').trim().isEmpty
+              ? null
+              : user!.phoneAlt,
         ),
         onSave: (updated) async {
-          await ApiService().updateProfile({
-            'full_name': updated.name,
-            // phone_alt huhifadhiwa kama '255XXXXXXXXX' (au null kufuta).
-            'phone_alt': updated.whatsapp,
-          });
+          try {
+            await ApiService().updateProfile({
+              'full_name': updated.name,
+              // phone_alt huhifadhiwa kama '255XXXXXXXXX' (au null kufuta).
+              'phone_alt': updated.whatsapp,
+            });
+            return true;
+          } catch (_) {
+            return false;
+          }
         },
       ),
     ));

@@ -125,7 +125,7 @@ void main() {
 
   testWidgets('AdminProfilePage (view mode, data mbili)', (tester) async {
     // Hakuna API halisi hapa: onSave inajifanya tu.
-    Future<void> fakeSave(AdminProfile updated) async {}
+    Future<bool> fakeSave(AdminProfile updated) async => true;
 
     // 1) Taarifa kamili (WhatsApp ipo).
     var overflows = await pumpResponsive(
