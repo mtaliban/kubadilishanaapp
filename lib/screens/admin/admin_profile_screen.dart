@@ -967,8 +967,9 @@ class _ViewRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Flexible(
+                    Expanded(
                       child: Text(label,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: c.muted, fontSize: 12)),
                     ),
@@ -1048,9 +1049,13 @@ class _FieldLabel extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(text,
-              style: TextStyle(
-                  color: c.text, fontSize: 13, fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Text(text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    color: c.text, fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
           if (trailing != null)
             Text(trailing!, style: TextStyle(color: c.muted, fontSize: 13)),
         ],
