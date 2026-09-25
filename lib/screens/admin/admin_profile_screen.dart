@@ -301,22 +301,6 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 c: c,
                 icon: PhosphorIcons.envelopeSimple(),
                 label: 'Barua pepe',
-                labelExtra: p.emailVerified && _hasEmail
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(width: 6),
-                          Icon(PhosphorIcons.sealCheck(PhosphorIconsStyle.fill),
-                              size: 13, color: c.green),
-                          const SizedBox(width: 3),
-                          Text('Imethibitishwa',
-                              style: TextStyle(
-                                  color: c.green,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600)),
-                        ],
-                      )
-                    : null,
                 value: _hasEmail ? p.email : 'Haijawekwa',
                 empty: !_hasEmail,
                 onOngeza: _hasEmail ? null : _hariri,
@@ -927,7 +911,6 @@ class _ViewRow extends StatelessWidget {
   final ProfileColors c;
   final IconData icon;
   final String label;
-  final Widget? labelExtra;
   final String value;
   final bool empty;
   final Widget? trailing;
@@ -937,7 +920,6 @@ class _ViewRow extends StatelessWidget {
     required this.c,
     required this.icon,
     required this.label,
-    this.labelExtra,
     required this.value,
     this.empty = false,
     this.trailing,
@@ -965,17 +947,10 @@ class _ViewRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: c.muted, fontSize: 12)),
-                    ),
-                    ?labelExtra,
-                  ],
-                ),
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: c.muted, fontSize: 12)),
                 const SizedBox(height: 1),
                 Text(value,
                     maxLines: 1,
