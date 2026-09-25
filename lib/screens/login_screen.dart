@@ -130,8 +130,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
 
                     // ── Card — .card p-4, bg-white rounded-2xl shadow border-grey-100 ──
+                    // max-w-md (448px) kama web — kwenye simu kubwa/tablet inabaki
+                    // center na haistanuki yote ya screen.
                     Container(
-                      width: double.infinity,
+                      width: MediaQuery.of(context).size.width.clamp(0, 448).toDouble(),
                       padding: const EdgeInsets.all(16), // p-4
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -460,22 +462,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   fontSize: 12, // text-xs
                                   color: Color(0xFF1E40AF), // text-brand-blue hover:underline
                                   fontWeight: FontWeight.w500, // font-medium
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // ── "Sahau nenosiri?" — link ya kwenda /forgot-password ──
-                          const SizedBox(height: 8),
-                          Center(
-                            child: GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/forgot-password'),
-                              child: const Text(
-                                'Sahau nenosiri?',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF1E40AF),
-                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
