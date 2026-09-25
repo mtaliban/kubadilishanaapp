@@ -73,6 +73,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   void dispose() {
     _debounce?.cancel();
     _msgTimer?.cancel();
+    _liveTimer?.cancel();
     _search.removeListener(_onSearch);
     _search.dispose();
     super.dispose();
@@ -87,9 +88,12 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     });
   }
 
+  Timer? _liveTimer;
+
   void _flashLive() {
     setState(() => _live = true);
-    Future.delayed(const Duration(seconds: 8), () {
+    _liveTimer?.cancel();
+    _liveTimer = Timer(const Duration(seconds: 8), () {
       if (mounted) setState(() => _live = false);
     });
   }
@@ -937,31 +941,46 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Iliyopita
-          _pageBtn(
-            label: 'Iliyopita',
-            icon: PhosphorIcons.caretLeft(PhosphorIconsStyle.bold),
-            iconLeft: true,
-            filled: false,
-            enabled: canPrev,
-            onTap: () => _fetchPage(_page - 1),
+          // Iliyopita — Flexible+FittedBox: haikiuki kwenye simu ndogo/font kubwa
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _pageBtn(
+                label: 'Iliyopita',
+                icon: PhosphorIcons.caretLeft(PhosphorIconsStyle.bold),
+                iconLeft: true,
+                filled: false,
+                enabled: canPrev,
+                onTap: () => _fetchPage(_page - 1),
+              ),
+            ),
           ),
           // Ukurasa N / M
-          Text(
-            _loading ? '…' : '$current / $totalPages',
-            style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: v2TextSecondary),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                _loading ? '…' : '$current / $totalPages',
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: v2TextSecondary),
+              ),
+            ),
           ),
           // Inayofuata
-          _pageBtn(
-            label: 'Inayofuata',
-            icon: PhosphorIcons.caretRight(PhosphorIconsStyle.bold),
-            iconLeft: false,
-            filled: true,
-            enabled: canNext,
-            onTap: () => _fetchPage(_page + 1),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _pageBtn(
+                label: 'Inayofuata',
+                icon: PhosphorIcons.caretRight(PhosphorIconsStyle.bold),
+                iconLeft: false,
+                filled: true,
+                enabled: canNext,
+                onTap: () => _fetchPage(_page + 1),
+              ),
+            ),
           ),
         ],
       ),

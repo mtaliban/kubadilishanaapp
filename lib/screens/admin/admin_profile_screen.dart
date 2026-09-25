@@ -174,6 +174,14 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   bool get _canSave =>
       !saving && _changes > 0 && nameCtrl.text.trim().isNotEmpty;
 
+  /// Namba ya WhatsApp kama tarakimu 9 (mf. 712345678), au null kama acha tupu.
+  String? get _waNine {
+    var d = _digits(waCtrl.text);
+    if (d.startsWith('255')) d = d.substring(3);
+    if (d.startsWith('0')) d = d.substring(1);
+    return d.length == 9 ? d : null;
+  }
+
   /* ---------- Vitendo ---------- */
   void _toast(String msg) {
     ScaffoldMessenger.of(context)
@@ -192,14 +200,17 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   void _cancel() => setState(() => editing = false);
 
   Future<void> _save() async {
-    final name = nameCtrl.text.trim();
+    final name = _titleCase(nameCtrl.text.trim());
     final wa = _digits(waCtrl.text);
-    if (wa.isNotEmpty && wa.length != 9) {
+    final nine = _waNine;
+    if (wa.isNotEmpty && nine == null) {
       return _toast('Namba ya WhatsApp iwe tarakimu 9 baada ya +255');
     }
-    final updated = wa.isEmpty
+    // phone_alt huhifadhiwa kama '255XXXXXXXXX'. Kufuta WhatsApp
+    // lazima pitie null kwenye payload (ui: 'phone_alt': null).
+    final updated = nine == null
         ? p.copyWith(name: name, clearWhatsapp: true)
-        : p.copyWith(name: name, whatsapp: '0$wa');
+        : p.copyWith(name: name, whatsapp: '255$nine');
 
     setState(() => saving = true);
     try {
@@ -223,15 +234,19 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   }
 
   Future<void> _call() async {
-    await launchUrl(Uri(scheme: 'tel', path: '0${_digits(_local9(p.phone))}'));
+    if (!await launchUrl(Uri(scheme: 'tel', path: '0${_digits(_local9(p.phone))}'))) {
+      _toast('Imeshindikana kufungua dialer');
+    }
   }
 
   Future<void> _whatsapp() async {
     if (!_hasWa) return;
-    await launchUrl(
+    if (!await launchUrl(
       Uri.parse('https://wa.me/${_intl(p.whatsapp!)}'),
       mode: LaunchMode.externalApplication,
-    );
+    )) {
+      _toast('Imeshindikana kufungua WhatsApp');
+    }
   }
 
   /* ---------- UI ---------- */
@@ -354,11 +369,14 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                       Icon(PhosphorIcons.sealCheck(PhosphorIconsStyle.fill),
                           size: 13, color: c.green),
                       const SizedBox(width: 3),
-                      Text('Imethibitishwa',
-                          style: TextStyle(
-                              color: c.green,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600)),
+                      Flexible(
+                        child: Text('Imethibitishwa',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                color: c.green,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600)),
+                      ),
                     ],
                   )
                 : null,
@@ -739,15 +757,26 @@ class _ViewRow extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(label,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: c.muted, fontSize: 12)),
-                      ),
-                      if (labelExtra != null) labelExtra!,
-                    ],
+                  // Text.rich na WidgetSpan: lebo na beji (mf.
+                  // "Imethibitishwa") zinafunga/kupishana mstari kwenye
+                  // skrini ndogo — hakuna RenderFlex inayoweza kumwaga.
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: label,
+                          style: TextStyle(color: c.muted, fontSize: 12),
+                        ),
+                        if (labelExtra != null)
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            baseline: TextBaseline.alphabetic,
+                            child: labelExtra!,
+                          ),
+                      ],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 1),
                   Text(value,

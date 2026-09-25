@@ -421,7 +421,13 @@ class _NewUserPageState extends State<NewUserPage> {
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: c.border)),
       ),
-      child: Row(
+      // Wrap badala ya Row: vitufe vinashuka mstari chini kwenye skrini
+      // ndogo badala ya kumwaga (overflow ya piksel 78 kwenye 320px).
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 6,
+        runSpacing: 6,
         children: [
           if (step > 0)
             TextButton.icon(
@@ -433,7 +439,6 @@ class _NewUserPageState extends State<NewUserPage> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600)),
             ),
-          const Spacer(),
           SizedBox(
             height: 38,
             child: FilledButton(
@@ -516,8 +521,14 @@ class _NewUserPageState extends State<NewUserPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('Ni sawa na namba ya simu',
-                    style: TextStyle(color: c.text, fontSize: 14)),
+                Expanded(
+                  // Expanded: maandishi yanafupishwa kwenye skrini ndogo
+                  // badala ya kumwaga (overflow ya piksel 78 kwenye 320px).
+                  child: Text('Ni sawa na namba ya simu',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: c.text, fontSize: 14)),
+                ),
               ],
             ),
           ),
@@ -1054,7 +1065,12 @@ class _Section extends StatelessWidget {
                     color: c.text, fontSize: 15, fontWeight: FontWeight.w600)),
           ),
           if (trailing != null)
-            Text(trailing!, style: TextStyle(color: c.muted, fontSize: 12)),
+            Flexible(
+              child: Text(trailing!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: c.muted, fontSize: 12)),
+            ),
         ],
       ),
     );
@@ -1094,13 +1110,17 @@ class _Label extends StatelessWidget {
             ),
           ),
           if (trailing != null)
-            Text(trailing!,
-                style: TextStyle(
-                    color: trailingColor ?? c.muted,
-                    fontSize: 12,
-                    fontWeight: trailingColor != null
-                        ? FontWeight.w600
-                        : FontWeight.w400)),
+            Flexible(
+              child: Text(trailing!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: trailingColor ?? c.muted,
+                      fontSize: 12,
+                      fontWeight: trailingColor != null
+                          ? FontWeight.w600
+                          : FontWeight.w400)),
+            ),
         ],
       ),
     );

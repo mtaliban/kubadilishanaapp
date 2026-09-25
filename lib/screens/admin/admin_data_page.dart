@@ -463,8 +463,9 @@ class _AdminDataPageState extends State<AdminDataPage>
   // ─── BUILD ──────────────────────────────────────────────────────────────────
 
   Widget _tabBar() => Container(
-    color: Colors.white,
+    // Rangi iko ndani ya decoration (Container hairuhusu color + decoration).
     decoration: const BoxDecoration(
+      color: Colors.white,
       border: Border(bottom: BorderSide(color: _kGrey200)),
     ),
     child: TabBar(

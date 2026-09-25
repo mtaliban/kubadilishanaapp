@@ -47,6 +47,10 @@ class ApiService {
   void setToken(String token) => _token = token;
   void clearToken() => _token = null;
 
+  /// Test hook: kurudisha Dio ya ndani kwa ajili ya kuweka fake adapter
+  /// kwenye widget tests (test/helpers/fake_api.dart).
+  static Dio dioForTest(ApiService instance) => instance._dio;
+
   Future<void> saveToken(String token) async {
     _token = token;
     final prefs = await SharedPreferences.getInstance();

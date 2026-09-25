@@ -172,35 +172,38 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
             ]),
           ),
           Container(height: 1, color: _kGrey200),
-          // Filter row
+          // Filter row — SingleChildScrollView: font kubwa haikiuki chips
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              children: _filters.map((f) {
-                final selected = _filter == f;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _applyFilter(f)),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: selected ? _kBlue : _kGrey100,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: selected ? _kBlue : _kGrey200,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _filters.map((f) {
+                  final selected = _filter == f;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _applyFilter(f)),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: selected ? _kBlue : _kGrey100,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: selected ? _kBlue : _kGrey200,
+                          ),
                         ),
+                        child: Text(f,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: selected ? Colors.white : _kGrey500)),
                       ),
-                      child: Text(f,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: selected ? Colors.white : _kGrey500)),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ),
           Container(height: 1, color: _kGrey200),
@@ -330,13 +333,18 @@ class _CallCard extends StatelessWidget {
           ]),
         ])),
         if (dateStr.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: _kGrey100,
-              borderRadius: BorderRadius.circular(8)),
-            child: Text(dateStr,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _kGrey500)),
+          Flexible(
+            child: Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _kGrey100,
+                borderRadius: BorderRadius.circular(8)),
+              child: Text(dateStr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _kGrey500)),
+            ),
           ),
       ]),
     );

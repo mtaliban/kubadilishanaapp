@@ -332,8 +332,12 @@ class _AddAdminPageState extends State<AddAdminPage> {
                       decoration: BoxDecoration(
                         border: Border(top: BorderSide(color: c.border)),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                      // Wrap badala ya Row: vitufe vinashuka mstari chini
+                      // kwenye skrini ndogo badala ya kumwaga (overflow).
+                      child: Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 6,
+                        runSpacing: 6,
                         children: [
                           SizedBox(
                             height: 30,
@@ -353,7 +357,6 @@ class _AddAdminPageState extends State<AddAdminPage> {
                               child: const Text('Ghairi'),
                             ),
                           ),
-                          const SizedBox(width: 6),
                           SizedBox(
                             height: 30,
                             child: TextButton(
@@ -428,9 +431,13 @@ class _Section extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: c.blue),
           const SizedBox(width: 8),
-          Text(title,
-              style: TextStyle(
-                  color: c.text, fontSize: 15, fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Text(title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    color: c.text, fontSize: 15, fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );
@@ -465,7 +472,12 @@ class _Label extends StatelessWidget {
             ),
           ),
           if (trailing != null)
-            Text(trailing!, style: TextStyle(color: c.muted, fontSize: 12)),
+            Flexible(
+              child: Text(trailing!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: c.muted, fontSize: 12)),
+            ),
         ],
       ),
     );
@@ -486,10 +498,14 @@ class _Hint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 5),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 14, color: col),
           const SizedBox(width: 5),
-          Text(text, style: TextStyle(color: col, fontSize: 12)),
+          Expanded(
+            child: Text(text,
+                style: TextStyle(color: col, fontSize: 12)),
+          ),
         ],
       ),
     );

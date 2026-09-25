@@ -102,7 +102,10 @@ const _indexToKey = {
 // ─── AdminShell ───────────────────────────────────────────────────────────────
 
 class AdminShell extends StatefulWidget {
-  const AdminShell({super.key});
+  /// Hiari: badilisha body ya shell (inatumika kwenye tests za responsive).
+  /// Kama hutajapewa, shell inaonyesha ukurasa wa nav uliochaguliwa.
+  final Widget? child;
+  const AdminShell({super.key, this.child});
   @override
   State<AdminShell> createState() => _AdminShellState();
 }
@@ -184,7 +187,8 @@ class _AdminShellState extends State<AdminShell> {
         onSave: (updated) async {
           await ApiService().updateProfile({
             'full_name': updated.name,
-            if (updated.whatsapp != null) 'phone_alt': updated.whatsapp,
+            // phone_alt huhifadhiwa kama '255XXXXXXXXX' (au null kufuta).
+            'phone_alt': updated.whatsapp,
           });
         },
       ),
@@ -216,7 +220,7 @@ class _AdminShellState extends State<AdminShell> {
         onProfile: _openProfile,
         onLogout: _logout,
       ),
-      body: _pageFor(_idx),
+      body: widget.child ?? _pageFor(_idx),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -279,8 +283,11 @@ class _AdminShellState extends State<AdminShell> {
                       const SizedBox(height: 4),
                       Text(
                         label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 9,
+                          height: 1.0,
                           fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                           color: labelColor,
                         ),

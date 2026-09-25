@@ -9,7 +9,10 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._();
 
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  // LAZY: FirebaseMessaging.instance inadai Firebase.initializeApp() —
+  // tusiite wakati wa constructor (inavuruga tests na cold start).
+  FirebaseMessaging? _fcmRef;
+  FirebaseMessaging get _fcm => _fcmRef ??= FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 

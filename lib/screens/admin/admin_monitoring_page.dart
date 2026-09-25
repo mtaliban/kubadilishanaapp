@@ -78,14 +78,17 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
                   child: const Icon(Icons.monitor_heart_outlined, color: _kBlue, size: 22),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Moni', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                    Text('Matukio ya mfumo', style: TextStyle(fontSize: 12, color: _kGrey500)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Moni', maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                      Text('Matukio ya mfumo', maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 12, color: _kGrey500)),
+                    ],
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.refresh, color: _kBlue),
                   onPressed: _load,

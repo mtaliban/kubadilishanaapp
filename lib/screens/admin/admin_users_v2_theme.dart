@@ -383,22 +383,26 @@ class V2UserCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
             child: Row(children: [
-              _bigStatusPill(
-                icon: PhosphorIcons.userCircle(PhosphorIconsStyle.fill),
-                label: isActive ? 'Hai' : 'Amesitishwa',
-                bg: isActive ? v2SuccessBg : const Color(0xFFF1F3F7),
-                fg: isActive ? v2Success : v2TextSecondary,
-                circleBg: isActive ? v2Success : v2TextSecondary,
+              Expanded(
+                child: _bigStatusPill(
+                  icon: PhosphorIcons.userCircle(PhosphorIconsStyle.fill),
+                  label: isActive ? 'Hai' : 'Amesitishwa',
+                  bg: isActive ? v2SuccessBg : const Color(0xFFF1F3F7),
+                  fg: isActive ? v2Success : v2TextSecondary,
+                  circleBg: isActive ? v2Success : v2TextSecondary,
+                ),
               ),
               const SizedBox(width: 8),
-              _bigStatusPill(
-                icon: isPaid
-                    ? PhosphorIcons.receipt(PhosphorIconsStyle.fill)
-                    : PhosphorIcons.receiptX(PhosphorIconsStyle.fill),
-                label: isPaid ? 'Amelipa' : 'Hajalipa',
-                bg: isPaid ? v2SuccessBg : v2DangerBg,
-                fg: isPaid ? v2Success : v2Danger,
-                circleBg: isPaid ? v2Success : v2Danger,
+              Expanded(
+                child: _bigStatusPill(
+                  icon: isPaid
+                      ? PhosphorIcons.receipt(PhosphorIconsStyle.fill)
+                      : PhosphorIcons.receiptX(PhosphorIconsStyle.fill),
+                  label: isPaid ? 'Amelipa' : 'Hajalipa',
+                  bg: isPaid ? v2SuccessBg : v2DangerBg,
+                  fg: isPaid ? v2Success : v2Danger,
+                  circleBg: isPaid ? v2Success : v2Danger,
+                ),
               ),
             ]),
           ),
@@ -417,9 +421,13 @@ class V2UserCard extends StatelessWidget {
             Icon(icon, size: 14, color: fg),
             const SizedBox(width: 4),
           ],
-          Text(label,
-              style: TextStyle(
-                  color: fg, fontSize: 12, fontWeight: FontWeight.w600)),
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    color: fg, fontSize: 12, fontWeight: FontWeight.w600)),
+          ),
         ]),
       );
 
@@ -445,12 +453,16 @@ class V2UserCard extends StatelessWidget {
             child: Icon(icon, size: 18, color: Colors.white),
           ),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: fg,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: fg,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ]),
@@ -638,12 +650,14 @@ class V2SkeletonCard extends StatelessWidget {
               decoration: const BoxDecoration(
                   color: v2SurfaceMuted, shape: BoxShape.circle)),
           const SizedBox(width: 13),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            bar(150, 14),
-            const SizedBox(height: 9),
-            bar(110, 11),
-          ]),
-          const Spacer(),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              bar(double.infinity, 14),
+              const SizedBox(height: 9),
+              bar(double.infinity, 11),
+            ]),
+          ),
+          const SizedBox(width: 13),
           bar(70, 22),
         ]),
         const SizedBox(height: 13),

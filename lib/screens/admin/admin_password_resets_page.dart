@@ -107,14 +107,23 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
                   child: const Icon(Icons.lock_reset, color: _kBlue, size: 22),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Manenosiri',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
-                    Text('Maombi ya kubadilisha nywila',
-                        style: TextStyle(fontSize: 12, color: _kGrey500)),
-                  ],
+                // Expanded: jina/subtitle zinapishana mstari kwenye skrini ndogo
+                // badala ya kumwaga kulia (overflow ya piksel 111 kwenye 320px).
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Manenosiri',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                      Text('Maombi ya kubadilisha nywila',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 12, color: _kGrey500)),
+                    ],
+                  ),
                 ),
               ],
             ),
