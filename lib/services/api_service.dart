@@ -137,10 +137,11 @@ class ApiService {
         if (fullName != null) 'full_name': fullName,
       });
 
-  Future<Response> resetPassword(String phone, String newPassword) =>
+  Future<Response> resetPassword(String phone, String newPassword, {String? code}) =>
       post('/auth/reset-password', data: {
         'phone': phone,
         'new_password': newPassword,
+        if (code != null && code.isNotEmpty) 'code': code,
       });
 
   Future<Response> checkPhone(String phone) =>

@@ -465,6 +465,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
 
+                          // ── "Sahau nenosiri?" — link ya kwenda /forgot-password ──
+                          const SizedBox(height: 8),
+                          Center(
+                            child: GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, '/forgot-password'),
+                              child: const Text(
+                                'Sahau nenosiri?',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF1E40AF),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+
                           // ── Register button — NDANI ya card, mt-4
                           // Style: btn-primary transparent bg, color=brand-blue, border=2px brand-blue/0.3 ──
                           const SizedBox(height: 16), // mt-4

@@ -145,7 +145,11 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _badge.start();
-    _clearCurrentBadge();
+    // HUDUMA: badge.clear() inaita notifyListeners() — isitoke wakati wa build
+    // (ListenableBuilder hapo juu bado inajenga). Panga baada ya frame ya kwanza.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _clearCurrentBadge();
+    });
 
     // Sikiliza WS events kwa global toast
     WebSocketService().on('notification', _onWsNotification);
@@ -157,6 +161,7 @@ class _AppShellState extends State<AppShell> {
   @override
   void dispose() {
     _toastTimer?.cancel();
+    _badge.stop(); // simamisha timer ya polling (singelton — hakuna mwingine)
     WebSocketService().off('notification', _onWsNotification);
     WebSocketService().off('match.found', _onMatchFound);
     WebSocketService().off('announcement', _onAnnouncement);
@@ -296,7 +301,10 @@ class _AppShellState extends State<AppShell> {
               ),
           ]),
           const SizedBox(height: 2),
-          Text(label, style: TextStyle(
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
             fontSize: 9,
             fontWeight: active ? FontWeight.bold : FontWeight.w600,
             color: color,
@@ -353,9 +361,12 @@ class _AppShellState extends State<AppShell> {
             ]),
           ),
 
-          // ══ BOTTOM NAV (min-h-[52px]) ═══════════════════════════════════════
-          // Kama web MobileBottomNav: bg-white border-t shadow-up
-          bottomNavigationBar: Container(
+          // ══ BOTTOM NAV (min-h-[56px]) ═══════════════════════════════════════
+          // Kama web MobileBottomNav: bg-white border-t shadow-up.
+          // withNoTextScaling: lebo za nav hazikali na font kubwa ya mfumo
+          // (pattern ya iOS/Android) —azuia overflow kwenye simu ndogo.
+          bottomNavigationBar: MediaQuery.withNoTextScaling(
+            child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
               border: const Border(top: BorderSide(color: Color(0xFFF3F4F6))),
@@ -367,7 +378,7 @@ class _AppShellState extends State<AppShell> {
             child: SafeArea(
               top: false,
               child: SizedBox(
-                height: 52,
+                height: 56,
                 child: Row(children: [
                   _navItem(0, 'assets/icons/layout-dashboard.svg', 'Dashibodi',
                       '/dashboard', counts['/dashboard'] ?? 0),
@@ -380,6 +391,7 @@ class _AppShellState extends State<AppShell> {
                 ]),
               ),
             ),
+          ),
           ),
         );
       },

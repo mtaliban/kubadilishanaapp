@@ -217,8 +217,10 @@ Widget _fieldLabel(IconData icon, String label) => Padding(
       child: Row(children: [
         Icon(icon, size: 14, color: _kBlue),
         const SizedBox(width: 6), // gap-1.5=6px
-        Text(label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+        Expanded(
+          child: Text(label,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+        ),
       ]),
     );
 
@@ -551,11 +553,18 @@ class _StepBar extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(steps[i],
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-                        color: active ? _kGrey900 : _kGrey500)),
+                SizedBox(
+                  width: 56,
+                  child: Text(steps[i],
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.visible,
+                      softWrap: false,
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                          color: active ? _kGrey900 : _kGrey500)),
+                ),
               ]),
               // Right connector — blue if step i is done
               if (i < steps.length - 1)
@@ -694,7 +703,10 @@ class _Step1IdentityState extends State<_Step1Identity> {
         child: Row(children: [
           Icon(PhosphorIcons.checkCircle(), size: 11, color: _kGreen600),
           const SizedBox(width: 4),
-          Text(availableMsg, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _kGreen600)),
+          Expanded(
+            child: Text(availableMsg,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _kGreen600)),
+          ),
         ]),
       )];
     }
@@ -704,7 +716,10 @@ class _Step1IdentityState extends State<_Step1Identity> {
         child: Row(children: [
           Icon(PhosphorIcons.warningCircle(), size: 11, color: _kRed500),
           const SizedBox(width: 4),
-          Text(takenMsg, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _kRed500)),
+          Expanded(
+            child: Text(takenMsg,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _kRed500)),
+          ),
         ]),
       )];
     }

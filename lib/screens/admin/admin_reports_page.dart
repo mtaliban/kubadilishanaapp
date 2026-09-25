@@ -14,6 +14,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
 
 // ── Rangi (zinazolingana na esstranfer.com/admin) ───────────────────────────
@@ -38,6 +40,63 @@ String _fmt(int n) {
     buf.write(s[i]);
   }
   return buf.toString();
+}
+
+/// Namba ya simu kwa mfumo: 2557XXXXXXXX -> +255 7XX XXX XXX
+String _simuSafi(String s) {
+  final d = s.replaceAll(RegExp(r'\D'), '');
+  if (d.length == 12 && d.startsWith('255')) {
+    return '+255 ${d.substring(3, 6)} ${d.substring(6, 9)} ${d.substring(9)}';
+  }
+  return s;
+}
+
+Future<void> _pigaSimu(BuildContext context, String simu) async {
+  final ok = await launchUrl(Uri(scheme: 'tel', path: '+$simu'));
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Imeshindwa kufungua simu')));
+  }
+}
+
+Future<void> _nakiliNamba(BuildContext context, String simu) async {
+  await Clipboard.setData(ClipboardData(text: '+$simu'));
+  if (context.mounted) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Namba imenakiliwa')));
+  }
+}
+
+/// Menyu ya chini ya namba ya simu: Piga simu / Nakili namba.
+void _menyuNamba(BuildContext context, String simu) {
+  if (simu.trim().isEmpty) return;
+  showModalBottomSheet(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) => SafeArea(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        ListTile(
+          leading: const Icon(Icons.call_outlined),
+          title: const Text('Piga simu'),
+          onTap: () {
+            Navigator.pop(ctx);
+            _pigaSimu(context, simu);
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.copy_outlined),
+          title: const Text('Nakili namba'),
+          onTap: () {
+            Navigator.pop(ctx);
+            _nakiliNamba(context, simu);
+          },
+        ),
+        const SizedBox(height: 8),
+      ]),
+    ),
+  );
 }
 
 /// Item ya picker sheet (Mkoa/Idara/Ngazi).
@@ -583,9 +642,13 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
           Container(width: 8, height: 8,
               decoration: const BoxDecoration(color: _cLiveGreen, shape: BoxShape.circle)),
           const SizedBox(width: 8),
-          const Text('LIVE — mabadiliko yanaonekana papo hapo',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 12.5, color: _cTextDark)),
+          const Flexible(
+            child: Text('LIVE — mabadiliko yanaonekana papo hapo',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 12.5, color: _cTextDark)),
+          ),
         ],
       ),
     );
@@ -593,10 +656,10 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   // ── Mini tab bar (Statistics / Watumiaji) ──────────────────────────────────
   Widget _miniTabBar() {
+    // Wrap badala ya Row: tabs zinakaa ndani hata kwenye simu ndogo/font kubwa.
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
+      Wrap(spacing: 22, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
         _tabLabel('Statistics', active: _tab == 'overview', onTap: () => setState(() => _tab = 'overview')),
-        const SizedBox(width: 22),
         _tabLabel('Watumiaji', active: _tab == 'users', onTap: () => setState(() => _tab = 'users')),
       ]),
       const SizedBox(height: 8),
@@ -871,9 +934,6 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         ),
       ),
       const SizedBox(height: 12),
-      Text('Jumla: ${_fmt(_usersTotal)}',
-          style: const TextStyle(fontSize: 13, color: _cTextGrey)),
-      const SizedBox(height: 10),
       if (_usersLoading)
         const Padding(
           padding: EdgeInsets.all(32),
@@ -895,42 +955,89 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       else
         Container(
           decoration: BoxDecoration(
+            color: _cBg,
             border: Border.all(color: _cBorder),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: const WidgetStatePropertyAll(_cCardBg),
-              headingTextStyle: const TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 12.5, color: _cTextDark),
-              dataTextStyle: const TextStyle(fontSize: 13.5, color: _cTextDark),
-              columnSpacing: 28,
-              columns: const [
-                DataColumn(label: Text('Jina')),
-                DataColumn(label: Text('Simu')),
-                DataColumn(label: Text('Kada')),
-              ],
-              rows: [
-                for (final u in _users)
-                  DataRow(cells: [
-                    DataCell(SizedBox(
-                        width: 180,
-                        child: Text('${u['full_name'] ?? ''}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w600)))),
-                    DataCell(Text('${u['phone_primary'] ?? u['phone'] ?? ''}',
-                        style: const TextStyle(
-                            color: _cBlue, fontWeight: FontWeight.w600))),
-                    DataCell(_KadaChip(
-                        '${u['cadre_display'] ?? u['cadre_code'] ?? '—'}')),
-                  ]),
-              ],
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(children: [
+                const Text('Watumiaji',
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w500, color: _cTextDark)),
+                const Spacer(),
+                Text(_fmt(_usersTotal),
+                    style: const TextStyle(fontSize: 13, color: _cTextGrey)),
+              ]),
             ),
-          ),
+            const SizedBox(height: 10),
+            // Jedwali lote linasogea pamoja — hakuna safu iliyofungwa.
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: DataTable(
+                headingRowHeight: 36,
+                dataRowMinHeight: 46,
+                dataRowMaxHeight: 46,
+                columnSpacing: 28,
+                headingTextStyle: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w700, color: _cTextGrey),
+                dataTextStyle: const TextStyle(fontSize: 13, color: _cTextDark),
+                columns: const [
+                  DataColumn(label: Text('Jina')),
+                  DataColumn(label: Text('Simu')),
+                  DataColumn(label: Text('Kada')),
+                  DataColumn(label: Text('Mkoa')),
+                  DataColumn(label: Text('Idara')),
+                ],
+                rows: [
+                  for (final u in _users)
+                    DataRow(cells: [
+                      DataCell(Text('${u['full_name'] ?? ''}')),
+                      // Simu: ukigusa -> menyu (Piga simu / Nakili namba).
+                      DataCell(
+                        InkWell(
+                          onTap: () => _menyuNamba(
+                              context, '${u['phone_primary'] ?? u['phone'] ?? ''}'),
+                          child: Text(
+                            _simuSafi('${u['phone_primary'] ?? u['phone'] ?? ''}'),
+                            style: TextStyle(
+                                color: _cBlue,
+                                fontWeight: FontWeight.w500,
+                                decoration: TextDecoration.underline,
+                                decorationColor: _cBlue.withValues(alpha: 0.4)),
+                          ),
+                        ),
+                      ),
+                      DataCell(_KadaChip(
+                          '${u['cadre_display'] ?? u['cadre_code'] ?? '—'}')),
+                      DataCell(Text(_mkoaWa(u))),
+                      DataCell(Text(_idaraYa(u))),
+                    ]),
+                ],
+              ),
+            ),
+          ]),
         ),
     ]);
+  }
+
+  /// Mkoa wa mtumiaji: current_station.region_name (au region ya moja kwa moja).
+  String _mkoaWa(Map u) {
+    final st = (u['current_station'] ?? u['station']) as Map? ?? const {};
+    final v =
+        '${st['region_name'] ?? u['region_name'] ?? u['region'] ?? ''}'.trim();
+    return v.isEmpty ? '—' : v;
+  }
+
+  /// Idara ya mtumiaji: category -> jina la idara (au department ya moja kwa moja).
+  String _idaraYa(Map u) {
+    final cat = '${u['category'] ?? ''}'.trim();
+    if (cat.isNotEmpty) return _deptLabel(cat);
+    final v = '${u['department'] ?? u['department_name'] ?? ''}'.trim();
+    return v.isEmpty ? '—' : v;
   }
 }
 
@@ -956,20 +1063,34 @@ class StatCard extends StatelessWidget {
         color: _cCardBg,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(value,
-              style: TextStyle(
-                  fontSize: 28, fontWeight: FontWeight.w800, color: valueColor)),
-          const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: _cTextGrey, fontSize: 13.5)),
-          if (sub != null) ...[
-            const SizedBox(height: 2),
-            Text(sub!, style: const TextStyle(color: _cTextGrey, fontSize: 11.5)),
+      // Namba kubwa hazikali kabisa na font kubwa; FittedBox inapunguza
+      // yaliyomo badala ya kubeyuka nje ya grid yenye childAspectRatio.
+      alignment: Alignment.centerLeft,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(value,
+                maxLines: 1,
+                style: TextStyle(
+                    fontSize: 28, fontWeight: FontWeight.w800, color: valueColor)),
+            const SizedBox(height: 4),
+            Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: _cTextGrey, fontSize: 13.5)),
+            if (sub != null) ...[
+              const SizedBox(height: 2),
+              Text(sub!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: _cTextGrey, fontSize: 11.5)),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1422,19 +1543,10 @@ class _KadaChip extends StatelessWidget {
         color: _cBlueBg,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.menu_book_rounded, size: 13, color: _cBlue),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(label,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: _cBlue, fontWeight: FontWeight.w700, fontSize: 11.5)),
-          ),
-        ],
-      ),
+      child: Text(label,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+              color: _cBlue, fontWeight: FontWeight.w700, fontSize: 11.5)),
     );
   }
 }

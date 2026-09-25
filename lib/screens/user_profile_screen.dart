@@ -350,8 +350,13 @@ class _SectionCard extends StatelessWidget {
             child: Center(child: Icon(icon, size: 15, color: _kBlue)),
           ),
           const SizedBox(width: 10),
-          Text(title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900)),
+          Expanded(
+            child: Text(title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900)),
+          ),
         ]),
         Container(margin: const EdgeInsets.symmetric(vertical: 12), height: 1, color: _kGrey200),
         ...children,
@@ -369,13 +374,19 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (value.isEmpty) return const SizedBox.shrink();
+    // Flexible lebo + Expanded thamani: kwenye simu ndogo lebo inapungua
+    // (ellipsis) badala ya Row kubeyuka nje ya kadi.
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(
-          width: 100,
-          child: Text(label, style: const TextStyle(fontSize: 12, color: _kGrey400, fontWeight: FontWeight.w500)),
+        Flexible(
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontSize: 12, color: _kGrey400, fontWeight: FontWeight.w500)),
         ),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(value, style: const TextStyle(fontSize: 13, color: _kGrey700, fontWeight: FontWeight.w600)),
         ),

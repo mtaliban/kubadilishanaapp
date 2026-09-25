@@ -620,22 +620,27 @@ class _StepTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
-        child: Row(children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 22,
-            height: 22,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: done ? c.green : c.blue, shape: BoxShape.circle),
-            child: done
-                ? const Icon(TablerIcons.check, size: 13, color: Colors.white)
-                : Text('$n',
-                    style: const TextStyle(
-                        color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-          ),
-          const SizedBox(width: 8),
-          Text(text, style: TextStyle(color: c.text, fontSize: 14, fontWeight: FontWeight.w600)),
-        ]),
+        // Wrap badala ya Row: kichwa kirefu kinasokota mstari mpya kwenye
+        // simu ndogo / font kubwa badala ya kubeyuka nje ya kadi.
+        child: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 22,
+              height: 22,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: done ? c.green : c.blue, shape: BoxShape.circle),
+              child: done
+                  ? const Icon(TablerIcons.check, size: 13, color: Colors.white)
+                  : Text('$n',
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+            ),
+            const SizedBox(width: 8),
+            Text(text, style: TextStyle(color: c.text, fontSize: 14, fontWeight: FontWeight.w600)),
+          ],
+        ),
       );
 }
 

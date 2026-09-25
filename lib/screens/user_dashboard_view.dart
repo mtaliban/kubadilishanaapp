@@ -1055,15 +1055,23 @@ class _Pill extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           border: border != null ? Border.all(color: border!) : null,
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (icon != null) ...[
-            Icon(icon, size: size + 1, color: fg),
-            const SizedBox(width: 4)
-          ],
-          Text(label,
-              style: TextStyle(
-                  color: fg, fontSize: size, fontWeight: FontWeight.w600)),
-        ]),
+        // Flexible + ellipsis: pill haiwezi kuzidi upana wa mzazi (font kubwa).
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 220),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            if (icon != null) ...[
+              Icon(icon, size: size + 1, color: fg),
+              const SizedBox(width: 4)
+            ],
+            Flexible(
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: fg, fontSize: size, fontWeight: FontWeight.w600)),
+            ),
+          ]),
+        ),
       );
 }
 

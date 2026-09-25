@@ -273,17 +273,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         final id = r['id'] ?? r['region_id'];
                         final name = r['name']?.toString() ?? r['region_name']?.toString() ?? '';
                         final isFollowed = _followedRegionIds.contains(id);
-                        return CheckboxListTile(
-                          title: Text(name, style: const TextStyle(fontSize: 14, color: _kGrey700)),
-                          value: isFollowed,
-                          activeColor: _kBlue,
-                          checkColor: Colors.white,
-                          onChanged: (checked) {
-                            setState(() {
-                              if (checked == true) { _followedRegionIds.add(id); }
-                              else { _followedRegionIds.remove(id); }
-                            });
-                          },
+                        return Material(
+                          type: MaterialType.transparency,
+                          // ListTile inahitaji Material yake ili ink/ripple isifichwe
+                          // na Container yenye background hapo juu.
+                          child: CheckboxListTile(
+                            title: Text(name, style: const TextStyle(fontSize: 14, color: _kGrey700)),
+                            value: isFollowed,
+                            activeColor: _kBlue,
+                            checkColor: Colors.white,
+                            onChanged: (checked) {
+                              setState(() {
+                                if (checked == true) { _followedRegionIds.add(id); }
+                                else { _followedRegionIds.remove(id); }
+                              });
+                            },
+                          ),
                         );
                       }),
                     Container(height: 1, color: _kGrey200),
@@ -321,17 +326,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Center(child: Icon(icon, size: 14, color: _kBlue)),
       ),
       const SizedBox(width: 8),
-      Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _kGrey700, letterSpacing: 0.2)),
+      Expanded(
+        child: Text(title,
+            style: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w800, color: _kGrey700, letterSpacing: 0.2)),
+      ),
     ]);
   }
 
   Widget _buildNotifSwitch({required String key, required String title, required String subtitle}) {
-    return SwitchListTile(
-      title: Text(title, style: const TextStyle(fontSize: 14, color: _kGrey700, fontWeight: FontWeight.w500)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: _kGrey400)),
-      value: _notifPrefs[key] ?? false,
-      activeColor: _kBlue,
-      onChanged: (val) => setState(() { _notifPrefs = Map.from(_notifPrefs)..[key] = val; }),
+    return Material(
+      type: MaterialType.transparency,
+      // ListTile inahitaji Material yake ili ink/ripple isifichwe na Container
+      // yenye background ya WhiteCard.
+      child: SwitchListTile(
+        title: Text(title, style: const TextStyle(fontSize: 14, color: _kGrey700, fontWeight: FontWeight.w500)),
+        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: _kGrey400)),
+        value: _notifPrefs[key] ?? false,
+        activeThumbColor: _kBlue,
+        onChanged: (val) => setState(() { _notifPrefs = Map.from(_notifPrefs)..[key] = val; }),
+      ),
     );
   }
 }
