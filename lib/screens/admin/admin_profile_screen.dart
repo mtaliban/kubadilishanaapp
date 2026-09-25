@@ -201,6 +201,18 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     if (mounted) _toast('Namba imenakiliwa');
   }
 
+  Future<void> _whatsapp() async {
+    if (!_hasWa) return;
+    try {
+      await launchUrl(
+        Uri.parse('https://wa.me/255${_local9(p.whatsapp!)}'),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {
+      if (mounted) _toast('Imeshindwa kufungua WhatsApp');
+    }
+  }
+
   bool get _hasWa => _digits(p.whatsapp ?? '').isNotEmpty;
   bool get _hasEmail => p.email.trim().isNotEmpty;
 
@@ -323,6 +335,16 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 value: _hasWa ? _pretty(p.whatsapp!) : 'Haijawekwa',
                 empty: !_hasWa,
                 onOngeza: _hasWa ? null : _hariri,
+                trailing: _hasWa
+                    ? IconButton(
+                        tooltip: 'Fungua WhatsApp',
+                        icon: Icon(PhosphorIcons.whatsappLogo(
+                            PhosphorIconsStyle.fill),
+                            size: 20,
+                            color: c.green),
+                        onPressed: _whatsapp,
+                      )
+                    : null,
               ),
             ]),
           ],
