@@ -117,12 +117,18 @@ class _SahauNambaScreenState extends State<SahauNambaScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // "< Rudi"
+        // Fomu inakaa KATIKATI ya screen: ConstrainedBox(minHeight = urefu wa
+        // eneo linaloonekana) + Column(center) ndani ya SingleChildScrollView —
+        // keyboard ikifunguka au maudhui yakizidi, bado inasogea na kuonekana.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
               InkWell(
                 onTap: () => Navigator.maybePop(context),
                 borderRadius: BorderRadius.circular(8),
@@ -210,7 +216,9 @@ class _SahauNambaScreenState extends State<SahauNambaScreen> {
                 child: const Text('Rudi kwenye kuingia',
                     style: TextStyle(fontSize: 13, color: _kBlue)),
               ),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
