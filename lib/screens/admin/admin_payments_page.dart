@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
+import '../../services/websocket_service.dart';
 
 const _cBlue     = Color(0xFF1959D6);
 const _cBlueBg   = Color(0xFFEAF1FF);
@@ -146,15 +147,27 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   final Set<String> _smsOpen = {};
   final _searchCtrl = TextEditingController();
 
+  // ── LIVE halisi: WS inaita _load() malipo mapya yanapofika ──
+  // (Bila hii "Live" ilikuwa ni maandishi tu — malipo mapya yangeonekana
+  //  baada ya refresh mwenyewe tu. Badge pekee ndiyo iliongezekwa.)
+  void _onWs(Map<String, dynamic> payload) {
+    final type = (payload['type'] ?? payload['event'])?.toString() ?? '';
+    if (type == 'payment.submitted' || type == 'payment.message') {
+      if (mounted) _load();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _load();
     _searchCtrl.addListener(() { if (mounted) setState(() => _page = 0); });
+    WebSocketService().on('notification', _onWs);
   }
 
   @override
   void dispose() {
+    WebSocketService().off('notification', _onWs);
     _scroll.dispose();
     _searchCtrl.dispose();
     super.dispose();
