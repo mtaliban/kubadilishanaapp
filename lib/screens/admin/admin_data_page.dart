@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import '../../services/websocket_service.dart';
 import 'admin_idara_dialogs.dart';
 import 'admin_masomo_dialogs.dart';
 import 'admin_kada_dialogs.dart';
@@ -69,10 +70,31 @@ class _AdminDataPageState extends State<AdminDataPage>
     }
     _loadType('subjects');
     _loadType('regions');
+    WebSocketService().on('data.changed', _onWsDataChanged);
+  }
+
+  // ── LIVE: CRUD ya data (na admin mwenenzako) inarefresh list PAPO HAPO ──
+  // Backend inatuma `data.changed` (kind: department/subject/cadre/region/
+  // district/facility) kwa kila mtumiaji aliye online — tunapakia type husika.
+  void _onWsDataChanged(Map<String, dynamic> payload) {
+    final kind = '${payload['kind'] ?? ''}'.toLowerCase();
+    final type = switch (kind) {
+      'department' => 'departments',
+      'subject' => 'subjects',
+      'cadre' => 'cadres',
+      'region' => 'regions',
+      'district' => 'districts',
+      'facility' => 'facilities',
+      _ => '',
+    };
+    if (type.isEmpty || !mounted) return;
+    _cache.remove(type);
+    _loadType(type);
   }
 
   @override
   void dispose() {
+    WebSocketService().off('data.changed', _onWsDataChanged);
     _tabCtrl.dispose();
     for (final c in _searchCtrls.values) { c.dispose(); }
     super.dispose();
