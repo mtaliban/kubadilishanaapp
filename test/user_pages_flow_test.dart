@@ -315,10 +315,14 @@ void main() {
         'limit': 100,
         'source_region_id': 1,
         'district_id': 11,
+        'bypass_cache': true,
       });
       expect(routes.bodies.containsKey('board:region=1,district=11'), isTrue,
           reason: 'source_region_id + district_id zinafika server '
               '(filter ya server-side inafanya kazi)');
+      expect(routes.calls.last.contains('bypass_cache=true'), isTrue,
+          reason: 'Vichujio vinapitwa cache ya backend (5s) — board ya kale '
+              'yasiyochujwa hairudishwi wakati mtumiaji anachuja');
     });
 
     test('getRegions (chips) + getDistricts (wilaya) zinaload', () async {

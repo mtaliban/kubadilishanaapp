@@ -222,6 +222,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'limit': 100,
             if (rid != null) 'source_region_id': rid,
             if (did != null) 'district_id': did,
+            // Vichujio vinapotumika, sieredi Redis cache ya backend (5s) —
+            // vinginevyo inaweza kurudisha board ya kale YASIYOCHUJWA.
+            if (rid != null || did != null) 'bypass_cache': true,
           });
       final data = asMap(res.data);
       if (mounted) {
