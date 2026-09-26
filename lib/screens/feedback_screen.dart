@@ -15,7 +15,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   bool _loading = true;
 
   void _onWs(dynamic payload) {
-    if (payload['type'] == 'feedback.replied' && mounted) _load();
+    // Admin akijibu (WS type=feedback.replied) — pakia majibu mapya papo hapo.
+    // Backend inatuma event 'notification' yenye type ndani ya data pia;
+    // tunakubili zote mbili ili jibu lifike kwa wakati bila refresh.
+    final type = (payload['type'] ??
+            (payload['data'] is Map ? payload['data']['type'] : null))
+        ?.toString();
+    if (type == 'feedback.replied' && mounted) _load();
   }
 
   @override

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../services/admin_badge_service.dart';
 
@@ -55,15 +56,25 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   int _page = 0;
   Map<String, String>? _flash;
 
+  // ── LIVE halisi: WS inaita _load() maoni mapya yanapofika ──
+  // (Bila hii "LIVE" ilikuwa ni maandishi tu — maoni mapya yangeonekana
+  //  baada ya refresh mwenyewe tu.)
+  void _onWs(Map<String, dynamic> payload) {
+    final type = (payload['type'] ?? payload['event'])?.toString() ?? '';
+    if (type == 'feedback.new' && mounted) _load();
+  }
+
   @override
   void initState() {
     super.initState();
     _load();
     _searchCtrl.addListener(_applyFilter);
+    WebSocketService().on('notification', _onWs);
   }
 
   @override
   void dispose() {
+    WebSocketService().off('notification', _onWs);
     _searchCtrl.dispose();
     _scroll.dispose();
     super.dispose();
@@ -98,10 +109,15 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
       _filtered = _all.where((item) {
         final m = asMap(item);
         final name  = (m['user_name'] as String? ?? m['full_name'] as String? ?? '').toLowerCase();
-        final msg   = (m['message'] as String? ?? m['subject'] as String? ?? '').toLowerCase();
+        final msg   = (m['message'] as String? ?? '').toLowerCase();
+        final subj  = (m['subject'] as String? ?? '').toLowerCase();
         final phone = (m['user_phone'] as String? ?? m['phone'] as String? ?? '');
         final replied = _isReplied(m);
-        final matchQ = q.isEmpty || name.contains(q) || msg.contains(q) || phone.contains(q);
+        final matchQ = q.isEmpty ||
+            name.contains(q) ||
+            msg.contains(q) ||
+            subj.contains(q) ||
+            phone.contains(q);
         bool matchF = true;
         if (_filter == 'Hayajajibiwa') matchF = !replied;
         if (_filter == 'Yamejibiwa') matchF = replied;
