@@ -13,9 +13,9 @@ Map<String, dynamic> asMap(dynamic v) {
   if (v is Map<String, dynamic>) return v;
   if (v is Map) {
     return v.map((k, val) {
-      if (val is Map) return MapEntry(val.toString(), asMap(val));
-      if (val is List) return MapEntry(val.toString(), asList(val));
-      return MapEntry(val.toString(), val);
+      if (val is Map) return MapEntry(k.toString(), asMap(val));
+      if (val is List) return MapEntry(k.toString(), asList(val));
+      return MapEntry(k.toString(), val);
     });
   }
   return <String, dynamic>{};

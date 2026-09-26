@@ -2445,7 +2445,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
     final p = widget.parent;
     final items = [
       {'label': 'Mkoa wote', 'id': ''},
-      ...List<Map<String, String>>.from(p._regions.map((r) => {
+      ...List<Map<String, String>>.from(p._regions.map((r) => <String, String>{
         'label': '${r['name'] ?? r['region_name'] ?? ''}',
         'id':    '${r['id'] ?? r['region_id'] ?? ''}',
       })),
@@ -2456,7 +2456,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
       current: _regionId?.toString() ?? '',
       onPick: (v) {
         final id = v.isEmpty ? null : int.tryParse(v);
-        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
+        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => <String, String>{})['label'];
         setState(() {
           _regionId = id; _regionName = nm;
           _districtId = null; _districtName = null; _districts = [];
@@ -2474,7 +2474,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
     final p = widget.parent;
     final items = [
       {'label': 'Wilaya zote', 'id': ''},
-      ...List<Map<String, String>>.from(_districts.map((d) => {
+      ...List<Map<String, String>>.from(_districts.map((d) => <String, String>{
         'label': '${d['name'] ?? d['district_name'] ?? ''}',
         'id':    '${d['id'] ?? d['district_id'] ?? ''}',
       })),
@@ -2485,7 +2485,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
       current: _districtId?.toString() ?? '',
       onPick: (v) {
         final id = v.isEmpty ? null : int.tryParse(v);
-        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
+        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => <String, String>{})['label'];
         setState(() {
           _districtId = id; _districtName = nm;
           _facilityId = null; _facilityName = null; _facilities = [];
@@ -2502,7 +2502,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
     final p = widget.parent;
     final items = [
       {'label': 'Vituo vyote', 'id': ''},
-      ...List<Map<String, String>>.from(_facilities.map((f) => {
+      ...List<Map<String, String>>.from(_facilities.map((f) => <String, String>{
         'label': '${f['name'] ?? ''}',
         'id':    '${f['id'] ?? f['code'] ?? ''}',
       })),
@@ -2512,7 +2512,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
       items: items,
       current: _facilityId ?? '',
       onPick: (v) {
-        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => {})['label'];
+        final nm = v.isEmpty ? null : items.firstWhere((i) => i['id'] == v, orElse: () => <String, String>{})['label'];
         setState(() { _facilityId = v.isEmpty ? null : v; _facilityName = nm; });
         _queueCount();
       },
@@ -2524,7 +2524,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
     final p = widget.parent;
     final items = [
       {'label': 'Masomo yote', 'code': ''},
-      ...List<Map<String, String>>.from(_subjects.map((s) => {
+      ...List<Map<String, String>>.from(_subjects.map((s) => <String, String>{
         'label': '${s['name'] ?? s['subject_name'] ?? ''}',
         'code':  '${s['code'] ?? s['subject_code'] ?? ''}',
       })),
@@ -2534,7 +2534,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
       items: items,
       current: _subjectCode ?? '',
       onPick: (v) {
-        final nm = v.isEmpty ? null : items.firstWhere((i) => i['code'] == v, orElse: () => {})['label'];
+        final nm = v.isEmpty ? null : items.firstWhere((i) => i['code'] == v, orElse: () => <String, String>{})['label'];
         setState(() { _subjectCode = v.isEmpty ? null : v; _subjectName = nm; });
         _queueCount();
       },

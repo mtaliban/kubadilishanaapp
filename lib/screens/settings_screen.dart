@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../config/theme.dart';
+import '../utils/safe_cast.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
@@ -49,8 +50,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _notifLoading = true);
     try {
       final res = await ApiService().getMyProfile();
-      final data = res.data as Map<String, dynamic>;
-      final prefs = data['notification_prefs'] as Map<String, dynamic>? ?? {};
+      final data = asMap(res.data);
+      final prefs = asMap(data['notification_prefs']);
       setState(() {
         _notifPrefs = {
           'match_found': prefs['match_found'] == true,
@@ -110,18 +111,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       List<Map<String, dynamic>> regions = [];
       final regData = regionsRes.data;
       if (regData is List) {
-        regions = regData.cast<Map<String, dynamic>>();
+        regions = regData.map(asMap).toList();
       } else if (regData is Map) {
         final list = regData['regions'] ?? regData['items'] ?? [];
-        regions = (list as List).cast<Map<String, dynamic>>();
+        regions = asList(list).map(asMap).toList();
       }
 
       // Parse followed region ids
-      final followedData = followedRes.data as Map<String, dynamic>;
+      final followedData = asMap(followedRes.data);
       final followedList =
           (followedData['followed_regions'] as List<dynamic>?) ?? [];
       final ids =
-          followedList.map((r) => (r as Map<String, dynamic>)['region_id']).toSet();
+          asList(followedList).whereType<Map>().map((r) => r['region_id']).toSet();
 
       setState(() {
         _allRegions = regions;

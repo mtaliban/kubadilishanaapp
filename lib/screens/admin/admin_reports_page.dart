@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
 
 // ── Rangi (zinazolingana na esstranfer.com/admin) ───────────────────────────
 const _cBlue      = Color(0xFF1959D6);
@@ -194,7 +195,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     try {
       final r = await ApiService().adminStats();
       if (!mounted) return;
-      setState(() => _stats = (r.data as Map<String, dynamic>?) ?? {});
+      setState(() => _stats = asMap(r.data));
     } catch (_) {}
     try {
       final r = await ApiService().adminEvents(limit: 20);
@@ -222,7 +223,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         refresh: refresh,
       );
       if (!mounted) return;
-      setState(() { _data = (res.data as Map<String, dynamic>?) ?? {}; _loading = false; });
+      setState(() { _data = asMap(res.data); _loading = false; });
     } catch (e) {
       if (!mounted) return;
       setState(() { _error = e.toString(); if (firstLoad) _loading = false; });
@@ -418,7 +419,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   // ── Data helpers ──────────────────────────────────────────────────────────
   List<Map<String, dynamic>> _list(String key) =>
-      ((_data[key] as List?) ?? []).whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
+      ((_data[key] as List?) ?? []).whereType<Map>().map(asMap).toList();
 
   String _deptLabel(String code) {
     final d = _departments.firstWhere((x) => '${x['code']}' == code, orElse: () => null);
@@ -608,17 +609,17 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   // ── Stats getters ──────────────────────────────────────────────────────────
   int _statUsers() {
-    final totals = _stats['totals'] as Map<String, dynamic>? ?? {};
+    final totals = asMap(_stats['totals']);
     return (totals['users'] as num?)?.toInt() ?? _reportUsersTotal;
   }
 
   int _statUsers7d() {
-    final totals = _stats['totals'] as Map<String, dynamic>? ?? {};
+    final totals = asMap(_stats['totals']);
     return (totals['users_active_7d'] as num?)?.toInt() ?? 0;
   }
 
   int _statVerified() {
-    final totals = _stats['totals'] as Map<String, dynamic>? ?? {};
+    final totals = asMap(_stats['totals']);
     return (totals['users_verified'] as num?)?.toInt() ?? 0;
   }
 
@@ -769,7 +770,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   // ═══ OVERVIEW SECTIONS (mpangilio wa web) ═══════════════════════════════
   List<Widget> _overviewSections() {
-    final totals = _stats['totals'] as Map<String, dynamic>? ?? {};
+    final totals = asMap(_stats['totals']);
 
     final byCadreAll = _list('users_by_cadre');
     final priCount = byCadreAll
@@ -909,7 +910,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
           child: Center(
-            child: Text('Hakuna takwimu bado (jumla ya watumiaji: ${_fmt((totals['users'] as num?)?.toInt() ?? 0)})',
+            child: Text('Hakuna takwimu bado (jumla ya watumiaji: ${_fmt((asMap(totals)['users'] as num?)?.toInt() ?? 0)})',
                 style: const TextStyle(color: _cTextGrey, fontSize: 13)),
           ),
         ),

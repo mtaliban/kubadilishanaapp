@@ -7,6 +7,7 @@ import 'admin_kada_dialogs.dart';
 import 'admin_mikoa_dialogs.dart';
 import 'admin_wilaya_dialogs.dart';
 import 'admin_vituo_dialogs.dart';
+import '../../utils/safe_cast.dart';
 
 const _kBlue     = Color(0xFF1E40AF);
 const _kBlueBg   = Color(0xFFEFF6FF);
@@ -98,7 +99,7 @@ class _AdminDataPageState extends State<AdminDataPage>
     final q   = _searchCtrls[type]?.text.toLowerCase() ?? '';
 
     return all.where((raw) {
-      final m      = raw as Map<String, dynamic>;
+      final m      = asMap(raw);
       final name   = (m['name'] as String? ?? m['display_name'] as String? ?? '').toLowerCase();
       final code   = (m['code'] as String? ?? '').toLowerCase();
       final idStr  = m['id']?.toString() ?? '';
@@ -239,7 +240,7 @@ class _AdminDataPageState extends State<AdminDataPage>
 
       case 'cadres':
         if (!_cache.containsKey('departments')) await _loadType('departments');
-        final depts = (_cache['departments'] ?? []).cast<Map<String, dynamic>>();
+        final depts = asList(_cache['departments']).map(asMap).toList();
         final idaraList = depts
             .map((d) => (code: d['code'] as String? ?? '', name: d['name'] as String? ?? ''))
             .where((e) => e.code.isNotEmpty)
@@ -267,7 +268,7 @@ class _AdminDataPageState extends State<AdminDataPage>
 
       case 'districts':
         if (!_cache.containsKey('regions')) await _loadType('regions');
-        final regionsList = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
+        final regionsList = asList(_cache['regions']).map(asMap).toList();
         final mikoa = regionsList
             .map((r) => (id: r['id']?.toString() ?? '', name: r['name'] as String? ?? ''))
             .where((e) => e.id.isNotEmpty)
@@ -283,7 +284,7 @@ class _AdminDataPageState extends State<AdminDataPage>
 
       case 'facilities':
         if (!_cache.containsKey('regions')) await _loadType('regions');
-        final regionsList = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
+        final regionsList = asList(_cache['regions']).map(asMap).toList();
         final mikoa = regionsList
             .map((r) => (id: r['id']?.toString() ?? '', name: r['name'] as String? ?? ''))
             .where((e) => e.id.isNotEmpty)
@@ -297,7 +298,7 @@ class _AdminDataPageState extends State<AdminDataPage>
               final res = await ApiService().getDistricts(int.parse(regionId));
               final data = res.data;
               final list = data is List ? data : (data['results'] as List? ?? []);
-              return list.cast<Map<String, dynamic>>().map((d) => (
+              return asList(list).map((d) => (
                     id: d['id']?.toString() ?? '',
                     name: d['name'] as String? ?? '',
                   )).toList();
@@ -793,7 +794,7 @@ class _AdminDataPageState extends State<AdminDataPage>
   }
 
   Widget _regionFilterChip() {
-    final regions = (_cache['regions'] ?? []).cast<Map<String, dynamic>>();
+    final regions = asList(_cache['regions']).map(asMap).toList();
     final selId   = _regionFilters['districts'] ?? '';
     final selName = selId.isEmpty ? null
         : regions.firstWhere((r) => r['id'].toString() == selId,

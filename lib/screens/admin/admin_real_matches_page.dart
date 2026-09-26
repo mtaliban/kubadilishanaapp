@@ -14,6 +14,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
 
 const _kPrimary = Color(0xFF1E40AF);
 const _kBg      = Color(0xFFF8FAFC);
@@ -127,7 +128,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   List<dynamic> get _filtered {
     final ql = _q.toLowerCase();
     return _items.where((item) {
-      final m = item as Map<String, dynamic>;
+      final m = asMap(item);
       final a = m['user_a'] as Map? ?? {};
       final b = m['user_b'] as Map? ?? {};
       if (ql.isNotEmpty) {
@@ -497,7 +498,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14),
                   child: _MatchCard(
-                    match: m as Map<String, dynamic>,
+                    match: asMap(m),
                     deptLabel: _deptLabel,
                     cadreLabel: _cadreLabel,
                   ),
@@ -698,8 +699,8 @@ class _MatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final a = match['user_a'] as Map<String, dynamic>? ?? {};
-    final b = match['user_b'] as Map<String, dynamic>? ?? {};
+    final a = asMap(match['user_a']);
+    final b = asMap(match['user_b']);
     final score = (match['score'] as num?)?.toDouble() ?? 0.0;
     final sb = _scoreBadge(score);
     final cat = match['category'] as String? ?? a['category'] as String? ?? '';

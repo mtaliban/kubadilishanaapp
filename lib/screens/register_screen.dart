@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/select_sheet.dart';
 import '../widgets/picker_screen.dart';
+import '../utils/safe_cast.dart';
 
 const _kBlue = Color(0xFF1E40AF);
 const _kGrey300 = Color(0xFFD1D5DB);
@@ -1244,7 +1245,7 @@ class _Step5StationState extends State<_Step5Station> {
   @override
   void initState() {
     super.initState();
-    final cs = widget.initial['current_station'] as Map<String, dynamic>? ?? {};
+    final cs = asMap(widget.initial['current_station']);
     _regionId = cs['region_id'] as int?;
     _districtId = cs['district_id'] as int?;
     _facilityId = cs['facility_id'] as String?;

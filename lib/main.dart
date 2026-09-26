@@ -153,6 +153,42 @@ class _ErrorApp extends StatelessWidget {
   const _ErrorApp(this.message);
   @override
   Widget build(BuildContext context) {
+    // Kosa la mtandao (DNS/SocketException) — ujumbe wa kirafiki + Jaribu tena.
+    if (_ErrorWidget._isNetworkError(message)) {
+      return MaterialApp(
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.wifi_off_rounded, size: 64, color: Colors.grey.shade500),
+                  const SizedBox(height: 20),
+                  const Text('Hakuna mtandao',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      'App imeshindwa kufikia server.\nTafadhali angalia muunganisho wako wa intaneti kisha ujaribu tena.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: () => main(),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Jaribu tena'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return MaterialApp(
       home: Scaffold(
         backgroundColor: Colors.red.shade50,
@@ -188,8 +224,49 @@ class _ErrorApp extends StatelessWidget {
 class _ErrorWidget extends StatelessWidget {
   final String message;
   const _ErrorWidget(this.message);
+
+  /// Kama kosa ni la mtandao (SocketException/DNS/timeout) tushirikishe
+  /// mtumiaji kwa lugha rahisi badala ya exception ghafi.
+  static bool _isNetworkError(String m) {
+    return m.contains('SocketException') ||
+        m.contains('Failed host lookup') ||
+        m.contains('Failed host') ||
+        m.contains('Network is unreachable') ||
+        m.contains('Connection refused') ||
+        m.contains('Connection timed out') ||
+        m.contains('Connection closed') ||
+        m.contains('errno = 7') ||
+        m.contains('DioException') ||
+        m.contains('HandshakeException');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isNet = _isNetworkError(message);
+    if (isNet) {
+      // Kosa la mtandao — ujumbe wa kirafiki, si screen nyekundu ya exception
+      return Container(
+        color: Colors.white,
+        padding: const EdgeInsets.all(24),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.wifi_off_rounded,
+                size: 56, color: Colors.grey.shade500),
+            const SizedBox(height: 16),
+            const Text('Hakuna mtandao',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Text(
+              'App imeshindwa kufikia server.\nTafadhali angalia muunganisho wako wa intaneti.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       color: Colors.red.shade100,
       padding: const EdgeInsets.all(8),

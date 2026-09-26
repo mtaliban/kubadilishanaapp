@@ -1,6 +1,7 @@
 /// User profile public view — shows identity, station, destinations, subjects.
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../utils/safe_cast.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
@@ -43,7 +44,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     try {
       final res = await ApiService().get('/users/${widget.userId}');
       setState(() {
-        _user = res.data as Map<String, dynamic>;
+        _user = asMap(res.data);
         _loading = false;
       });
     } catch (e) {
@@ -270,10 +271,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   spacing: 6,
                   runSpacing: 6,
                   children: destinations.map((d) {
-                    final regionName =
-                        (d as Map<String, dynamic>)['region_name']
-                                ?.toString() ??
-                            d.toString();
+                    final regionName = d is Map
+                        ? (d['region_name']?.toString() ?? '')
+                        : d.toString();
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(

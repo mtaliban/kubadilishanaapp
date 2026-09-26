@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg  = Color(0xFFEFF6FF);
@@ -201,7 +202,7 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
                     itemCount: items.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
-                      final item = items[i] as Map<String, dynamic>;
+                      final item = asMap(items[i]);
                       final id = item['id']?.toString() ?? '';
                       final name = item['full_name'] as String? ?? item['user_name'] as String? ?? 'Mtumiaji';
                       final phone = item['phone'] as String? ?? item['phone_primary'] as String? ?? '';

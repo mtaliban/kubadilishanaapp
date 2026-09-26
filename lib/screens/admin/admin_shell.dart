@@ -19,6 +19,7 @@ import 'admin_reports_page.dart';
 import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';
 import 'admin_profile_screen.dart';
+import '../../utils/safe_cast.dart';
 
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey200 = Color(0xFFE5E7EB);
@@ -134,8 +135,8 @@ class _AdminShellState extends State<AdminShell> {
     try {
       final r = await ApiService().adminStats();
       if (!mounted) return;
-      final d = r.data as Map<String, dynamic>? ?? {};
-      final totals = (d['totals'] as Map<String, dynamic>?) ?? {};
+      final d = asMap(r.data);
+      final totals = asMap(d['totals']);
       setState(() => _userCount = (totals['users'] as num?)?.toInt() ?? 0);
     } catch (_) {}
   }

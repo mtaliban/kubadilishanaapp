@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg  = Color(0xFFEFF6FF);
@@ -144,7 +145,7 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
                   itemCount: _events.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
-                    final e = _events[i] as Map<String, dynamic>;
+                    final e = asMap(_events[i]);
                     final type = e['event_type'] as String? ?? e['type'] as String? ?? '';
                     final desc = e['description'] as String? ?? e['message'] as String? ?? type;
                     final ts = e['created_at'] as String? ?? e['timestamp'] as String? ?? '';
