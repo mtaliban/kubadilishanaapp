@@ -189,6 +189,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _onDistrictPick(String? name) {
+    if (name == _filterDistrict) return;
+    // Usipakie board wakati wilaya bado zinapakia (loadingDistricts) —
+    // zuia race condition ya requests mbili zinazoingia pamoja.
+    if (_loadingDistricts) return;
     setState(() => _filterDistrict = name);
     _loadBoard();
   }
