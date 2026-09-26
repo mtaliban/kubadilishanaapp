@@ -85,9 +85,11 @@ class AuthUser {
 }
 
 class AuthProvider extends ChangeNotifier {
-  final ApiService _api = ApiService();
+  final ApiService _api;
   final WebSocketService _ws = WebSocketService();
   final NotificationService _notif = NotificationService();
+
+  AuthProvider({ApiService? api}) : _api = api ?? ApiService();
 
   AuthUser? _user;
   bool _loading = false;
@@ -96,6 +98,10 @@ class AuthProvider extends ChangeNotifier {
 
   /// Admin 2FA: email inayosubiri OTP.
   String? pendingAdminEmail;
+
+  /// SECURITY: kuingia kwa simu — namba inayosubiri code ya SMS (hatua ya 2).
+  String? pendingOtpPhone;
+  bool get otpRequired => pendingOtpPhone != null;
 
   AuthUser? get user => _user;
   bool get loading => _loading;
@@ -131,19 +137,20 @@ class AuthProvider extends ChangeNotifier {
       final res = await _api.login(phone, password: password);
       final data = asMap(res.data);
       if (data['two_factor_required'] == true) {
-        // Admin 2FA — save email, return false so UI shows OTP input
-        pendingAdminEmail = data['email'] as String? ?? phone;
+        // SECURITY: hatua 1/2 — code ya SMS imetumwa; hakuna token bado.
+        pendingOtpPhone = phone;
+        pendingAdminEmail = null;
         _loading = false;
         notifyListeners();
         return false;
       }
-      final token = data['access_token'] as String;
-      await _api.saveToken(token);
-      _user = AuthUser.fromJson(data);
-      _setupRealtime();
+      // SECURITY: server yenye fix HAIRUDISHI token moja kwa moja kwa namba
+      // ya simu. Kama token ingewasili (server ya kale), TUNAIKATAA — kuingia
+      // bila uthibitisho wa SMS ni attack (mtu asiye mmiliki angeingia).
+      _error = 'Namba imekubalika — weka code ya SMS uliyotumiwa ili kuingia';
       _loading = false;
       notifyListeners();
-      return true;
+      return false;
     } catch (e) {
       _errorIsNetwork = _isNetworkError(e);
       _error = _errorIsNetwork
@@ -192,7 +199,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Admin login step 2 — OTP code → access_token.
+  /// Admin login step 2 — OTP code (email) → access_token.
   Future<bool> adminLoginOtp(String email, String code) async {
     _loading = true;
     _error = null;
@@ -206,6 +213,43 @@ class AuthProvider extends ChangeNotifier {
       _user = AuthUser.fromJson(data);
       _setupRealtime();
       pendingAdminEmail = null;
+      _loading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorIsNetwork = _isNetworkError(e);
+      _error = _errorIsNetwork
+          ? 'Kosa la mtandao — tafadhali angalia muunganisho wako na ujaribu tena.'
+          : _parseError(e);
+      _loading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// SECURITY: hatua ya 2 ya kuingia kwa simu — thibitisha code ya SMS
+  /// uliyotumwa; token inatolewa na server BAADA ya uthibitisho tu.
+  Future<bool> verifyOtp(String code) async {
+    final phone = pendingOtpPhone;
+    if (phone == null) return false;
+    _loading = true;
+    _error = null;
+    _errorIsNetwork = false;
+    notifyListeners();
+    try {
+      final res = await _api.verifyLoginOtp(phone, code);
+      final data = asMap(res.data);
+      final token = data['access_token'] as String?;
+      if (token == null) {
+        _error = 'Jibu lisilo la kawaida kutoka server';
+        _loading = false;
+        notifyListeners();
+        return false;
+      }
+      await _api.saveToken(token);
+      _user = AuthUser.fromJson(data);
+      _setupRealtime();
+      pendingOtpPhone = null;
       _loading = false;
       notifyListeners();
       return true;

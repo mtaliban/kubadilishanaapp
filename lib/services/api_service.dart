@@ -126,6 +126,11 @@ class ApiService {
   Future<Response> adminLoginOtp(String email, String code) =>
       post('/auth/login/2fa', data: {'email': email, 'code': code});
 
+  /// SECURITY: kuingia kwa simu ni hatua 2 — code ya SMS (tarakimu 6)
+  /// inathibitishwa hapa; token inatolewa BAADA ya uthibitisho tu.
+  Future<Response> verifyLoginOtp(String phone, String code) =>
+      post('/auth/login/2fa', data: {'phone': phone, 'code': code});
+
   Future<Response> register(Map<String, dynamic> data) =>
       post('/auth/register', data: data);
 

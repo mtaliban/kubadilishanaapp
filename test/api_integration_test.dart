@@ -82,6 +82,11 @@ class _Routes extends FakeApiAdapter {
       return _json(_usersPage(skip: skip, limit: limit, total: usersTotal));
     }
     if (path == '/auth/login') {
+      // SECURITY: login ya simu ni hatua 2 (SMS OTP) — hakuna token hapa.
+      return _json({'two_factor_required': true, 'phone': '0757000111'});
+    }
+    if (path == '/auth/login/2fa') {
+      // SECURITY: token inatolewa BAADA ya uthibitisho wa OTP tu.
       return _json({'access_token': 'tok-u2', 'user_id': 'u2', 'full_name': 'Mtumiaji Mpya'});
     }
     if (path == '/auth/me') {
@@ -215,7 +220,11 @@ void main() {
 
     test('login mpya inatoken mpya (hakuna token ya zamani)', () async {
       final auth = AuthProvider();
-      final ok = await auth.login('0757000111', password: 'pass1234');
+      // SECURITY: mtiririko wa sasa ni hatua 2 — namba → SMS OTP → token.
+      await auth.login('0757000111', password: 'pass1234');
+      expect(auth.otpRequired, isTrue,
+          reason: 'Hatua ya 1 hairudishi token tena — code ya SMS inahitajika');
+      final ok = await auth.verifyOtp('123456');
       expect(ok, isTrue);
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('kv_token'), 'tok-u2',

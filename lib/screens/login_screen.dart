@@ -77,7 +77,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final ok = await auth.login(val);
     if (!mounted) return;
 
-    if (auth.pendingAdminEmail != null) {
+    if (auth.otpRequired) {
+      // SECURITY: hatua 2 — code ya SMS imetumwa kwa namba hii; hakuna
+      // token bila uthibitisho (login ya namba TU ilikuwa attack).
+      setState(() { _twoFAEmail = null; _otpCtrl.clear(); });
+    } else if (auth.pendingAdminEmail != null) {
       // Admin 2FA — button inabadilika kuwa OTP input
       setState(() => _twoFAEmail = auth.pendingAdminEmail);
     } else if (ok) {
@@ -92,11 +96,22 @@ class _LoginScreenState extends State<LoginScreen> {
     if (code.length != 6 || _otpLoading) return;
     setState(() { _otpLoading = true; _error = null; _errorIsNetwork = false; });
     final auth = context.read<AuthProvider>();
-    final ok = await auth.adminLoginOtp(_twoFAEmail!, code);
+    // Simu (SMS OTP ya mtumiaji) AU email (2FA ya admin) — server inatofautisha.
+    final identifier = auth.pendingOtpPhone ?? _twoFAEmail;
+    if (identifier == null) {
+      setState(() => _otpLoading = false);
+      return;
+    }
+    final bool ok;
+    if (identifier == auth.pendingOtpPhone) {
+      ok = await auth.verifyOtp(code);
+    } else {
+      ok = await auth.adminLoginOtp(identifier, code);
+    }
     if (mounted) {
       setState(() => _otpLoading = false);
       if (ok) {
-        Navigator.pushReplacementNamed(context, '/admin');
+        Navigator.pushReplacementNamed(context, auth.isAdmin ? '/admin' : '/dashboard');
       } else if (auth.error != null) {
         setState(() { _error = auth.error!; _errorIsNetwork = auth.errorIsNetwork; });
       }
@@ -105,8 +120,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ── Cancel OTP — X button, rudi kwenye "Ingia" ──
   void _cancelOtp() {
+    final auth = context.read<AuthProvider>();
     setState(() { _twoFAEmail = null; _otpCtrl.clear(); _error = null; _errorIsNetwork = false; });
-    context.read<AuthProvider>().pendingAdminEmail = null;
+    auth.pendingAdminEmail = null;
+    auth.pendingOtpPhone = null;
   }
 
   @override
@@ -332,12 +349,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                           color: Color(0xFF15803D), // text-green-700
                                         ),
                                         children: [
-                                          const TextSpan(text: 'Code ya tarakimu 6 imetumwa kwa '),
                                           TextSpan(
-                                            text: _twoFAEmail,
+                                            text: 'Code ya tarakimu 6 imetumwa kwa ',
+                                            style: const TextStyle(
+                                              fontSize: 12, // text-xs
+                                              fontWeight: FontWeight.w600, // font-semibold
+                                              color: Color(0xFF15803D), // text-green-700
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: _twoFAEmail ?? 'namba yako ya simu (SMS)',
                                             style: const TextStyle(fontWeight: FontWeight.bold), // <strong>
                                           ),
-                                          const TextSpan(text: ' — angalia email yako'),
+                                          const TextSpan(
+                                            text: ' — iweke hapa chini ili kuingia',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF15803D),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -351,8 +382,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           // ═══════════════════════════════════════════════════════
                           // SEHEMU MOJA: btn-primary "Ingia" AU OTP input — pale pale
                           // Kama web: {!twoFA ? <button> : <div class="relative">input+X+spinner</div>}
+                          // SECURITY: OTP input pia inaonekana kwa kuingia kwa simu
+                          // (code ya SMS) — sio admin pekee tena.
                           // ═══════════════════════════════════════════════════════
-                          if (_twoFAEmail == null)
+                          if (_twoFAEmail == null && !auth.otpRequired)
                             // ── btn-primary w-full — bg-brand-blue rounded-md px-3 py-1 text-[11px] font-bold ──
                             SizedBox(
                               width: double.infinity,

@@ -179,6 +179,12 @@ class _DataRoutes extends FakeApiAdapter {
     }
 
     if (path == '/auth/login') {
+      // SECURITY: login ya simu ni hatua 2 (SMS OTP) — hakuna token hapa.
+      final loginBody = await parseBody();
+      return _json({'two_factor_required': true, 'phone': loginBody['phone']});
+    }
+    if (path == '/auth/login/2fa') {
+      // SECURITY: token inatolewa BAADA ya uthibitisho wa OTP tu.
       return _json({'access_token': 'tok-test', 'user_id': 'u1',
                     'full_name': 'Thea Shirima', 'is_admin': true});
     }
@@ -435,6 +441,9 @@ void main() {
       final auth = AuthProvider();
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await auth.login('0757000111', password: 'pass1234');
+      // SECURITY: mtiririko wa sasa ni hatua 2 — thibitisha OTP ili session
+      // iwekwe (_setupRealtime) kama kwenye app halisi.
+      await auth.verifyOtp('123456');
       // Jaza caches za reference data (mfano usajili umewahi kuzipakia)
       await ApiService().getRegions(); // cache /locations/regions
       await ApiService().getDistricts(1); // cache /locations/regions/1/districts
@@ -464,6 +473,8 @@ void main() {
       final auth = AuthProvider();
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await auth.login('0757000111', password: 'pass1234');
+      // SECURITY: hatua ya 2 (SMS OTP) kabla session/realtime ziwekwe.
+      await auth.verifyOtp('123456');
       for (final kind in ['department', 'subject', 'cadre', 'region', 'district']) {
         // Jaza cache husika
         await ApiService().getRegions();
