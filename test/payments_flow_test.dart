@@ -351,7 +351,8 @@ void main() {
       await ApiService().adminPaymentReply(orderId, 'Pole, thibitisha namba tena');
 
       final sent = routes.bodies['reply:$orderId']!;
-      expect(sent['message'], 'Pole, thibitisha namba tena');
+      expect(sent['reply'], 'Pole, thibitisha namba tena',
+          reason: 'field "reply" (backend PaymentReplyRequest) — sio "message"');
       final msgs = backend.payments.first['messages'] as List;
       expect(msgs, hasLength(1));
       expect(msgs.first['sender'], 'admin');

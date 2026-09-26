@@ -178,8 +178,13 @@ class _ChangiaViewState extends State<ChangiaView> {
     final amount = int.tryParse(_digits(amountCtrl.text)) ?? 0;
     final phone = _digits(_local9(phoneCtrl.text));
     if (amount <= 0) return _toast('Andika kiasi ulicholipa');
+    // Backend DonateRequest: amount ge=500 — zuia hapa badala ya 422 ya server
+    if (amount < 500) return _toast('Kiasi kiwe angalau TZS 500');
     if (phone.length != 9) return _toast('Namba iwe tarakimu 9 baada ya +255');
-    if (smsCtrl.text.trim().length <= 10) return _toast('Bandika SMS nzima ya malipo');
+    // Backend: sms_text min_length=10 — zuia hapa pia
+    if (smsCtrl.text.trim().length < 10) {
+      return _toast('Bandika SMS nzima ya malipo (herufi 10+)');
+    }
 
     setState(() => sending = true);
     try {

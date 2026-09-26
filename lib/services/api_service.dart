@@ -509,8 +509,10 @@ class ApiService {
     AppCache().invalidatePrefix('/admin/announcements');
     return post('/admin/announcements/$id/resend');
   }
-  Future<Response> adminPaymentReply(String orderId, String message) =>
-      post('/payments/admin/$orderId/reply', data: {'message': message});
+  /// BUG FIX: backend PaymentReplyRequest inahitaji field 'reply' (sio
+  /// 'message') — 'message' ilileta 422 kila mara admin alipojaribu kujibu.
+  Future<Response> adminPaymentReply(String orderId, String reply) =>
+      post('/payments/admin/$orderId/reply', data: {'reply': reply});
   Future<Response> getDataVersion() =>
       get('/locations/data-version', cacheTtl: _ttlStatic);
 }

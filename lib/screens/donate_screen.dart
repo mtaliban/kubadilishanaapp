@@ -96,12 +96,27 @@ class _DonateScreenState extends State<DonateScreen> {
   List<Contribution> get _contributions => _history.map((p) {
         final d =
             DateTime.tryParse('${p['created_at'] ?? ''}') ?? DateTime.now();
+        // Jibu la mwisho la admin (messages[] kutoka server — mazungumzo
+        // ya malipo; la mwisho ndilo la hivi karibuni)
+        String? adminReply;
+        final msgs = p['messages'];
+        if (msgs is List && msgs.isNotEmpty) {
+          for (final m in msgs.reversed) {
+            if (m is Map && m['sender'] == 'admin') {
+              final t = '${m['message'] ?? ''}'.trim();
+              if (t.isNotEmpty) {
+                adminReply = t;
+                break;
+              }
+            }
+          }
+        }
         return Contribution(
           id: '${p['payment_id'] ?? p['id'] ?? p['donation_id'] ?? ''}',
           amount: int.tryParse('${p['amount'] ?? 0}') ?? 0,
           createdAt: d,
           status: _statusOf(p['status']),
-          reason: (p['note'] ?? p['admin_note'])?.toString(),
+          reason: (p['note'] ?? p['admin_note'] ?? adminReply)?.toString(),
         );
       }).toList();
 
