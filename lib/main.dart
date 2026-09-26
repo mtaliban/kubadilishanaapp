@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'services/api_service.dart';
@@ -32,6 +33,40 @@ import 'widgets/app_shell.dart' show LanguageProvider;
 
 // Global error log — displayed in _ErrorApp if crash happens
 final List<String> _crashLog = [];
+
+// Version ya APK — inaonyeshwa kwenye screens za makosa ili screenshot
+// ionyeshe APK iliyotumika (husaidia kubaini kama mtumiaji bado anatumia
+// APK ya zamani isiyopata fixes).
+Future<PackageInfo?> _loadPackageInfo() async {
+  try {
+    return await PackageInfo.fromPlatform();
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Mstari "Toleo 1.0.9+9" — huru kwenye screens za makosa.
+class _VersionLine extends StatelessWidget {
+  const _VersionLine({this.light = false});
+  final bool light;
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo?>(
+      future: _loadPackageInfo(),
+      builder: (context, snap) {
+        final v = snap.data;
+        if (v == null) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Text('Toleo ${v.version}+${v.buildNumber}',
+              style: TextStyle(
+                  fontSize: 12,
+                  color: light ? Colors.grey.shade500 : Colors.red.shade300)),
+        );
+      },
+    );
+  }
+}
 
 void main() {
   runZonedGuarded(() async {
@@ -186,6 +221,7 @@ class _ErrorApp extends StatelessWidget {
                     icon: const Icon(Icons.refresh_rounded),
                     label: const Text('Jaribu tena'),
                   ),
+                  const _VersionLine(light: true),
                 ],
               ),
             ),
@@ -193,26 +229,50 @@ class _ErrorApp extends StatelessWidget {
         ),
       );
     }
+    // Kosa lingine — ujumbe wa kirafiki + Jaribu tena; maelezo ya kiufundi
+    // yamebaki chini (bado yanapatikana kwa screenshot kwa msanidi).
     return MaterialApp(
       home: Scaffold(
-        backgroundColor: Colors.red.shade50,
+        backgroundColor: Colors.white,
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Kosa la App',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
-                const SizedBox(height: 8),
-                const Text('Piga picha hii na itume kwa msanidi:',
-                    style: TextStyle(fontSize: 13)),
-                const SizedBox(height: 12),
-                Expanded(
+                const Spacer(),
+                Icon(Icons.error_outline_rounded,
+                    size: 64, color: Colors.red.shade300),
+                const SizedBox(height: 20),
+                const Text('Samahani, kosa lilitokea',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 10),
+                Text(
+                  'Bonyeza "Jaribu tena". Kama litarudia, funga app kisha ifungue tena.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => main(),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Jaribu tena'),
+                ),
+                const _VersionLine(),
+                const Spacer(),
+                // Maelezo ya kiufundi — piga picha na itume kwa msanidi.
+                Container(
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxHeight: 170),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: SingleChildScrollView(
                     child: SelectableText(
                       message,
-                      style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                      style: const TextStyle(
+                          fontSize: 10, fontFamily: 'monospace', color: Colors.red),
                     ),
                   ),
                 ),
