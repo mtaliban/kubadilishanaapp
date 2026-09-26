@@ -12,6 +12,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api_service.dart';
 import 'app_navigator.dart';
@@ -66,9 +67,15 @@ class NotificationService {
     channelDescription: 'Ujumbe mpya kutoka kwa wenzako',
     importance: Importance.max,
     priority: Priority.max,
+    icon: 'ic_notification',
+    largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
+    color: Color(0xFF1E40AF), // brand bluu — icon + heads-up accent
+    enableLights: true,
+    ledColor: Color(0xFF1E40AF),
+    ledOnMs: 800,
+    ledOffMs: 1500,
     enableVibration: true,
     playSound: true,
-    // Heads-up juu ya app nyingine (bila custom sound — default ya mfumo)
     channelShowBadge: true,
     styleInformation: BigTextStyleInformation(''),
   );
@@ -79,6 +86,13 @@ class NotificationService {
     channelDescription: 'Mechi mpya zilizopatikana',
     importance: Importance.max,
     priority: Priority.max,
+    icon: 'ic_notification',
+    largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
+    color: Color(0xFF1E40AF),
+    enableLights: true,
+    ledColor: Color(0xFF1E40AF),
+    ledOnMs: 800,
+    ledOffMs: 1500,
     enableVibration: true,
     playSound: true,
     channelShowBadge: true,
@@ -89,8 +103,11 @@ class NotificationService {
     'kubadilishana_general',
     'Matangazo',
     channelDescription: 'Matangazo na taarifa za jumla',
-    importance: Importance.defaultImportance,
-    priority: Priority.defaultPriority,
+    importance: Importance.high,
+    priority: Priority.high,
+    icon: 'ic_notification',
+    largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
+    color: Color(0xFF1E40AF),
     channelShowBadge: true,
     styleInformation: BigTextStyleInformation(''),
   );
@@ -114,7 +131,7 @@ class NotificationService {
     // ── Channels za Android — lazima zianze kabla ya arifa yoyote ──
     try {
       const initSettings = InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        android: AndroidInitializationSettings('ic_notification'),
       );
       await _localNotifications.initialize(
         initSettings,
