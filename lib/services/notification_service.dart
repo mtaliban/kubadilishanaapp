@@ -14,6 +14,7 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api_service.dart';
+import 'app_navigator.dart';
 
 /// Lazima iwe top-level — inasajiliwa na Android mpangilio wa app ikiwa imufungwa.
 @pragma('vm:entry-point')
@@ -254,10 +255,21 @@ class NotificationService {
 
   /// Inaitwa kutoka WebSocket events (AuthProvider._setupRealtime).
   /// Inatengeneza arifa ya ndani kama event ni ya arifa-zena.
+  /// Role-aware: admin apate event zake (malipo/maoni/watumiaji),
+  /// mtumiaji wa kawaida apate zake (ujumbe/mechi/malipo yake/matangazo).
   void showFromEvent(Map<String, dynamic> event) {
     final type = (event['event'] ?? event['type'])?.toString() ?? '';
-    // Event zinazoonyeshwa kama arifa (kama WhatsApp: ujumbe na mechi ndiyo muhimu)
-    const notifiable = {
+
+    // Event zinazoonyeshwa kwa ADMIN kama arifa
+    const adminNotifiable = {
+      'payment.submitted', // mtumiaji amelipa — admin ahudhumie
+      'payment.message',
+      'feedback.new', // maoni/mapendekezo mapya
+      'user.registered',
+      'password_reset.new',
+    };
+    // Event zinazoonyeshwa kwa MTUMIAJI kama arifa
+    const userNotifiable = {
       'notification',
       'notification.new',
       'message.new',
@@ -269,7 +281,11 @@ class NotificationService {
       'payment.rejected',
       'payment.message',
       'payment.reply',
+      'announcement',
+      'announcement.new',
     };
+    final isAdmin = adminPageNotifierAdminStatus();
+    final notifiable = isAdmin ? adminNotifiable : userNotifiable;
     if (!notifiable.contains(type)) return;
 
     // Data inaweza kuwa juu (top-level) au ndani ya 'data'/'payload'/'notification'
@@ -311,6 +327,17 @@ class NotificationService {
         return 'Malipo yameidhinishwa';
       case 'payment.rejected':
         return 'Malipo hayakuidhinishwa';
+      case 'payment.submitted':
+        return 'Malipo mapya — yangalia';
+      case 'feedback.new':
+        return 'Maoni mapya ya mtumiaji';
+      case 'user.registered':
+        return 'Mtumiaji mpya amejiunga';
+      case 'password_reset.new':
+        return 'Ombi la kubadilisha nywila';
+      case 'announcement':
+      case 'announcement.new':
+        return 'Tangazo jipya';
       default:
         return 'Kubadilishana';
     }

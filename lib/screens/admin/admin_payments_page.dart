@@ -13,6 +13,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
+import '../../services/admin_badge_service.dart';
 
 const _cBlue     = Color(0xFF1959D6);
 const _cBlueBg   = Color(0xFFEAF1FF);
@@ -270,6 +271,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       await ApiService().adminApproveDonation('${p['order_id']}');
       if (!mounted) return;
       _showSnack('Malipo yamethibitishwa ✓', _cGreen);
+      AdminBadgeService().refresh();
       await _load();
     } catch (e) {
       if (!mounted) return;
@@ -332,6 +334,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       await ApiService().adminRejectDonation('${p['order_id']}', note: reason);
       if (!mounted) return;
       _showSnack('Malipo yamekataliwa', _cAmber);
+      AdminBadgeService().refresh();
       await _load();
     } catch (e) {
       if (!mounted) return;

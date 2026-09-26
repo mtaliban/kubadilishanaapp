@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
+import '../../services/admin_badge_service.dart';
 
 // ─── Rangi (zingatia esstranfer.com/admin) ───────────────────────────────────
 const _kBlue    = Color(0xFF1959D6);
@@ -201,6 +202,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
       await ApiService().adminReplyFeedback(id, text);
       if (!mounted) return;
       _showFlash('success', 'Jibu limetumwa kwa mtumiaji');
+      AdminBadgeService().refresh();
       _load();
     } catch (e) {
       if (!mounted) return;

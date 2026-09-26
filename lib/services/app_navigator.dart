@@ -10,6 +10,9 @@ bool _currentUserIsAdmin = false;
 /// Called from AuthProvider._setupRealtime() once user info is known.
 void setAdminStatus(bool isAdmin) => _currentUserIsAdmin = isAdmin;
 
+/// Read admin status (kwa NotificationService role-aware routing).
+bool adminPageNotifierAdminStatus() => _currentUserIsAdmin;
+
 /// Admin: page index to open when notification is tapped.
 int _adminPageFromType(String type) {
   switch (type) {

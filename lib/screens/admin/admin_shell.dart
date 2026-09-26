@@ -3,6 +3,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
+import '../../services/admin_badge_service.dart';
 import '../../widgets/app_shell.dart' show LanguageProvider;
 import '../../widgets/admin_top_bar.dart';
 import '../../widgets/admin_drawer.dart';
@@ -115,11 +116,13 @@ class _AdminShellState extends State<AdminShell> {
   int _idx = 9;
   int _userCount = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final AdminBadgeService _badges = AdminBadgeService();
 
   @override
   void initState() {
     super.initState();
     _loadCount();
+    _badges.start();
     LanguageProvider().addListener(_onLangChange);
   }
 
@@ -127,9 +130,13 @@ class _AdminShellState extends State<AdminShell> {
 
   @override
   void dispose() {
+    _badges.stop();
     LanguageProvider().removeListener(_onLangChange);
     super.dispose();
   }
+
+  /// Hesabu upya badges baada ya admin kufanya kitendo (approve/reject/reply).
+  void refreshBadges() => _badges.refresh();
 
   Future<void> _loadCount() async {
     try {
@@ -230,7 +237,14 @@ class _AdminShellState extends State<AdminShell> {
         onProfile: _openProfile,
         onLogout: _logout,
       ),
-      body: widget.child ?? _pageFor(_idx),
+      body: Builder(builder: (ctx) {
+        // Kila ukurasa unaofunguliwa: futa badge yake + hesabu upya counts
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _clearBadgeForPage(_idx);
+          refreshBadges();
+        });
+        return widget.child ?? _pageFor(_idx);
+      }),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -254,9 +268,12 @@ class _AdminShellState extends State<AdminShell> {
         top: false,
         child: SizedBox(
           height: 68,
-          child: Row(
+          child: ListenableBuilder(
+            listenable: _badges,
+            builder: (context, _) => Row(
             children: bottomItems.map((item) {
               final active = _idx == item.index;
+              final badgeCount = _badgeForIndex(item.index);
               // Tile colors: colored when active, grey when inactive
               final fg = active ? item.tileFg : _kGrey500;
               final bg = active ? item.tileBg : _kGrey200;
@@ -291,27 +308,66 @@ class _AdminShellState extends State<AdminShell> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 9,
-                          height: 1.0,
-                          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                          color: labelColor,
+                      Stack(clipBehavior: Clip.none, children: [
+                        Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 9,
+                            height: 1.0,
+                            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                            color: labelColor,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
+                        if (badgeCount > 0)
+                          Positioned(
+                            top: -6, right: -14,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDC2626),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
+                              child: Center(
+                                child: Text(badgeCount > 9 ? '9+' : '$badgeCount',
+                                    style: const TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                      ]),
                     ],
                   ),
                 ),
               );
             }).toList(),
           ),
+          ),
         ),
       ),
     );
+  }
+
+  int _badgeForIndex(int index) {
+    switch (index) {
+      case 6: return _badges.payments;      // Malipo
+      case 8: return _badges.feedback;      // Maoni
+      case 9: return _badges.announcements; // Matangazo
+      default: return 0;
+    }
+  }
+
+  void _clearBadgeForPage(int index) {
+    switch (index) {
+      case 6: _badges.clearPayments();
+      case 8: _badges.clearFeedback();
+      case 9: _badges.clearAnnouncements();
+    }
   }
 }
 
