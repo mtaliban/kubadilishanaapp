@@ -286,6 +286,15 @@ class AuthProvider extends ChangeNotifier {
       _notif.onNotificationTapped = handleNotificationTap;
       _notif.init().catchError((_) {});
     });
+
+    // ── WebSocket events → arifa za ndani (kama WhatsApp) ──
+    // Event yoyote ya arifa ikija na screen haiyofunguliwa, ionyeshe heads-up.
+    // NotificationService inafanya dedupe dhidi ya FCM (event ile ile haionekani mara 2).
+    _ws.onAny((event) {
+      final type = (event['event'] ?? event['type'])?.toString() ?? '';
+      if (type.isEmpty || type == 'pong') return;
+      _notif.showFromEvent(event);
+    });
   }
 
   bool _isNetworkError(dynamic e) {

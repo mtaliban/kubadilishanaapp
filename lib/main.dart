@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'services/api_service.dart';
 import 'services/app_navigator.dart';
+import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -49,6 +51,8 @@ void main() {
 
     try {
       await Firebase.initializeApp();
+      // Background handler — arifa zinapoingia app ikiwa IMEFUNGWA (kama WhatsApp).
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     } catch (e) {
       _crashLog.add('[Firebase] $e');
     }
