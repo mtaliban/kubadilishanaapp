@@ -22,11 +22,12 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   // Notification prefs
+  // Funguo zinazokubaliwa na backend (NotificationPrefs):
+  // new_matches + messages. Backend haiwezi kutuma arifa za
+  // payment_status/announcements kwa sasa — hizo ni za app-side pekee.
   Map<String, bool> _notifPrefs = {
-    'match_found': false,
-    'payment_status': false,
-    'announcements': false,
-    'messages': false,
+    'new_matches': true,
+    'messages': true,
   };
   bool _notifLoading = true;
   bool _notifSaving = false;
@@ -54,10 +55,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final prefs = asMap(data['notification_prefs']);
       setState(() {
         _notifPrefs = {
-          'match_found': prefs['match_found'] == true,
-          'payment_status': prefs['payment_status'] == true,
-          'announcements': prefs['announcements'] == true,
-          'messages': prefs['messages'] == true,
+          'new_matches': prefs['new_matches'] as bool? ?? true,
+          'messages': prefs['messages'] as bool? ?? true,
         };
         _notifLoading = false;
       });
@@ -69,9 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _saveNotifPrefs() async {
     setState(() => _notifSaving = true);
     try {
-      await ApiService().patch('/users/me', data: {
-        'notification_prefs': _notifPrefs,
-      });
+      await ApiService().updateNotificationPrefs(_notifPrefs);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -217,11 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Center(child: CircularProgressIndicator(color: _kBlue)),
                   )
                 : Column(children: [
-                    _buildNotifSwitch(key: 'match_found', title: 'Mechi Zimepatikana', subtitle: 'Pokea arifa unapopata mechi mpya'),
-                    Container(height: 1, color: _kGrey200),
-                    _buildNotifSwitch(key: 'payment_status', title: 'Hali ya Malipo', subtitle: 'Arifa za malipo yaliyoidhinishwa au kukataliwa'),
-                    Container(height: 1, color: _kGrey200),
-                    _buildNotifSwitch(key: 'announcements', title: 'Matangazo', subtitle: 'Matangazo mapya kutoka kwa admin'),
+                    _buildNotifSwitch(key: 'new_matches', title: 'Mechi Zimepatikana', subtitle: 'Pokea arifa unapopata mechi mpya'),
                     Container(height: 1, color: _kGrey200),
                     _buildNotifSwitch(key: 'messages', title: 'Ujumbe', subtitle: 'Arifa za ujumbe mpya'),
                     Container(height: 1, color: _kGrey200),
