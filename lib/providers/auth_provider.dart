@@ -1,6 +1,8 @@
 // Auth state — login, register, logout, session persistence, admin 2FA.
 import 'package:flutter/material.dart';
+import '../services/admin_badge_service.dart';
 import '../services/api_service.dart';
+import '../services/app_cache.dart';
 import '../services/websocket_service.dart';
 import '../services/notification_service.dart';
 import '../services/app_navigator.dart';
@@ -245,9 +247,18 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     await _notif.removeToken();
     _ws.disconnect();
+    _ws.clearListeners(); // events za session ya zamani zisifanye kazi tena
     _user = null;
     pendingAdminEmail = null;
     await _api.removeToken();
+    // ── ISOLATION YA SESSION ──
+    // Cache yote ya GET (profiles, matches, admin lists, regions...) inafutwa
+    // ili mtumiaji mpya asiweze kuona data za aliyekuwa hapo awali (TTL ya
+    // cache ni dakika 2-30 — bila hii data za zamani zingerejea kwa screen).
+    AppCache().clear();
+    // Badges za admin (payments/feedback counts) ziwekwe sifuri.
+    AdminBadgeService().stop();
+    AdminBadgeService().reset();
     notifyListeners();
   }
 
@@ -273,6 +284,19 @@ class AuthProvider extends ChangeNotifier {
 
     _ws.on('account.disabled', (_) => logout());
     _ws.on('account.deleted', (_) => logout());
+
+    // ── Reference data imebadilishwa na admin (idara/somo/kada/mkoa/
+    // wilaya/kituo) → FUATA cache zote za reference data ili usajili,
+    // profile na filters vione vitu VIPYA MARA MOJA (bila kusubiri TTL
+    // ya cache ya dakika 30). Screen zinazofunguka zitapakia upya.
+    _ws.on('data.changed', (_) {
+      AppCache().invalidatePrefix('/locations/regions');
+      AppCache().invalidatePrefix('/locations/regions/');
+      AppCache().invalidatePrefix('/locations/districts/');
+      AppCache().invalidatePrefix('/cadres');
+      AppCache().invalidatePrefix('/locations/departments');
+      AppCache().invalidatePrefix('/admin/data/');
+    });
 
     _ws.on('user.verified', (event) {
       if (_user != null && event['user_id'] == _user!.userId) {

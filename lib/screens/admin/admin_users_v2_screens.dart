@@ -625,6 +625,10 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
             'phone_alt': _waCtrl.text.trim().isEmpty ? null : _waCtrl.text.trim(),
             'category': _category,
             'cadre_code': _cadreCode,
+            // Masomo ya mwalimu — yalikuwa hayatumwi kwenye save (data ilipotea!)
+            if (_category == 'education') 'subjects': _masomo.toList(),
+            if (_wizara != null && _wizara!.isNotEmpty)
+              'employment_sector': _wizara,
             'status': _active ? 'active' : 'disabled',
             'is_admin': _admin,
             'is_verified': _verified,
@@ -641,6 +645,10 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           'password': _passCtrl.text,
           'category': _category,
           'cadre_code': _cadreCode,
+          // Masomo ya mwalimu — yalikuwa hayatumwi kwenye create pia
+          if (_category == 'education') 'subjects': _masomo.toList(),
+          if (_wizara != null && _wizara!.isNotEmpty)
+            'employment_sector': _wizara,
           'is_admin': _admin,
           'is_verified': _verified,
           'status': _active ? 'active' : 'disabled',

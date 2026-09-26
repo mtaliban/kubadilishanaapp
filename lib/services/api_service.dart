@@ -253,8 +253,10 @@ class ApiService {
       });
   Future<Response> getPaymentStatus(String orderId) =>
       get('/payments/status/$orderId', useCache: false);
+  /// Bila cache — status ya malipo (approved/rejected) na jibu la admin
+  /// lazima yajitokeze PAPO HAPO (WS inaita _loadHistory kila event).
   Future<Response> getPaymentHistory() =>
-      get('/payments/my-history', cacheTtl: _ttlShort);
+      get('/payments/my-history', useCache: false);
 
   // ── Feedback ──
   Future<Response> submitFeedback({
@@ -262,8 +264,10 @@ class ApiService {
     required String message,
   }) =>
       post('/feedback', data: {'subject': subject, 'message': message});
+  /// Bila cache — jibu la admin na maoni mapya lazima yaonekane PAPO HAPO
+  /// (WS inaita _load() kila event; cache ya dakika 2 ingeficha jibu mpya).
   Future<Response> getMyFeedback({int limit = 50}) =>
-      get('/feedback/my', queryParameters: {'limit': limit}, cacheTtl: _ttlShort);
+      get('/feedback/my', queryParameters: {'limit': limit}, useCache: false);
 
   // ── Notifications (real-time — never cache) ──
   Future<Response> getNotifications({int limit = 50}) =>
@@ -338,10 +342,12 @@ class ApiService {
     AppCache().invalidatePrefix('/payments/admin');
     return post('/payments/admin/$orderId/reject', data: {'note': note});
   }
+  /// Bila cache — maoni mapya ya watumiaji lazima yaonekane PAPO HAPO
+  /// (WS/badge inaita refresh kila event; cache ingeficha maoni mapya).
   Future<Response> adminListFeedback({String status = '', String q = ''}) =>
       get('/feedback/admin/all',
           queryParameters: {'status': status, 'q': q},
-          cacheTtl: _ttlShort);
+          useCache: false);
   Future<Response> adminReplyFeedback(String feedbackId, String reply) async {
     AppCache().invalidatePrefix('/feedback/admin');
     return post('/feedback/admin/$feedbackId/reply', data: {'reply': reply});
@@ -414,7 +420,9 @@ class ApiService {
     return put('/admin/settings/contact', data: {'require_payment': requirePayment});
   }
   Future<Response> adminToggleContact(String userId) async {
-    AppCache().invalidatePrefix('/admin/users/$userId');
+    // Futa cache ya orodha YOTE — orodha ya watumiaji ina contact_enabled;
+    // bila hii list ya admin ilionyesha hali ya kale baada ya kubadilisha.
+    AppCache().invalidatePrefix('/admin/users');
     return patch('/admin/users/$userId/contact-toggle');
   }
   Future<Response> adminGetData(String type) =>

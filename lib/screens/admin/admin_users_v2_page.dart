@@ -1,14 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../services/admin_badge_service.dart';
 import '../../services/api_service.dart';
+import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/select_sheet.dart';
-import 'admin_add_admin_page.dart';
-import 'admin_add_user_page.dart';
 import 'admin_delete_user_dialog.dart';
 import 'admin_filter_users_sheet.dart';
-import 'admin_import_users_page.dart';
 import 'admin_users_v2_screens.dart';
 import 'admin_view_user_page.dart';
 import 'admin_users_v2_theme.dart';
@@ -36,8 +35,22 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   bool _live = false;
 
   final _search = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
   Timer? _debounce;
   Timer? _msgTimer;
+
+  // ── LIVE: orodha inajisasisha wakati watumiaji wanaingia/kuondoka ──
+  // (user.registered = mpya, user.updated_by_admin = edit ya admin mwenenzako,
+  //  user.removed = umefutwa — list inapakia upya bila refresh mwenyewe)
+  void _onWsUsers(Map<String, dynamic> payload) {
+    final type = (payload['event'] ?? payload['type'])?.toString() ?? '';
+    if (type == 'user.registered' ||
+        type == 'user.updated_by_admin' ||
+        type == 'user.removed' ||
+        type == 'data.changed') {
+      if (mounted) _load();
+    }
+  }
   String? _message;
   VoidCallback? _undoFn;
 
@@ -67,13 +80,22 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     _load();
     _loadRefs();
     _search.addListener(_onSearch);
+    WebSocketService().on('user.registered', _onWsUsers);
+    WebSocketService().on('user.updated_by_admin', _onWsUsers);
+    WebSocketService().on('user.removed', _onWsUsers);
+    WebSocketService().on('data.changed', _onWsUsers);
   }
 
   @override
   void dispose() {
+    WebSocketService().off('user.registered', _onWsUsers);
+    WebSocketService().off('user.updated_by_admin', _onWsUsers);
+    WebSocketService().off('user.removed', _onWsUsers);
+    WebSocketService().off('data.changed', _onWsUsers);
     _debounce?.cancel();
     _msgTimer?.cancel();
     _liveTimer?.cancel();
+    _scrollCtrl.dispose();
     _search.removeListener(_onSearch);
     _search.dispose();
     super.dispose();
@@ -166,6 +188,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     final old = _page;
     _page = page;
     try {
+      // useCache:false — kila ukurasa upye data halisi kutoka server
+      // (skip/limit za backend zinafanya kazi; cache isirudishe ukurasa wa kale).
       final r =
           await ApiService().adminUsers(params: _queryParams, useCache: false);
       if (!mounted) return;
@@ -175,9 +199,19 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
           (raw is List ? raw : map['data'] ?? map['results'] ?? [])) as List;
       setState(() {
         _users = list;
+        // _total inasasishwa KILA wakati — idadi ya watumiaji inaweza
+        // kuongezeka/kupungua (mf. wamefutwa) na Next/Ifuatayo itumie
+        // hesabu mpya (skip+limit < total).
         _total = (map['total'] as num?)?.toInt() ?? _total;
         _loading = false;
       });
+      // Nenda juu ya orodha — mtumiaji aone users wa ukurasa mpya kuanzia
+      // mwanzo (badala ya kukaa chini ambapo alibonyeza kitufe).
+      if (mounted && _scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut);
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -428,30 +462,48 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     if (opt == null || !mounted) return;
     switch (opt) {
       case V2AddOption.mtumiajiMpya:
-        await Navigator.of(context).push<void>(MaterialPageRoute(
-          builder: (_) => NewUserPage(onSave: (data) async { /* tuma kwenye API */ }),
+        // Mtumiaji mpya — form kamili ya V2 (V2UserFormScreen) inayotuma
+        // API halisi (adminCreateUser). Kurasa za zamani zilikuwa na
+        // onSave tupu — data haikuwahi kufika server.
+        final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
+          builder: (_) => V2UserFormScreen(regions: _regions),
         ));
+        if (saved == true) {
+          _showMsg('Mtumiaji ameongezwa');
+          AdminBadgeService().refresh();
+        }
         _load();
         break;
       case V2AddOption.ongezaAdmin:
-        await Navigator.of(context).push<void>(MaterialPageRoute(
-          builder: (_) => AddAdminPage(onSave: (d) async { /* d.name, d.email, d.phone, d.password */ }),
+        // Admin mpya — V2AddAdminScreen inatumia adminCreateUser(is_admin:true)
+        // na email inahitajika (backend inahitaji email kwa admin).
+        final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
+          builder: (_) => const V2AddAdminScreen(),
         ));
-        _load();
+        if (saved == true) {
+          _showMsg('Admin ameongezwa');
+          _load();
+        }
         break;
       case V2AddOption.importWatumiaji:
-        await Navigator.of(context).push<void>(MaterialPageRoute(
-          builder: (_) => ImportUsersPage(
-            onTemplateReady: (bytes, jina) async { /* hifadhi au shiriki kiolezo */ },
-            onImport: (idara, safu) async { /* tuma kwenye API */ },
-          ),
+        // Import ya Excel — V2ImportScreen inatumia adminImportUsersFile
+        // (upload halisi kwa /admin/users/import).
+        final imported = await Navigator.of(context).push<bool>(MaterialPageRoute(
+          builder: (_) => V2ImportScreen(departments: _departments),
         ));
-        _load();
+        if (imported == true) {
+          _showMsg('Watumiwa wameagizwa');
+          _load();
+        }
         break;
     }
   }
 
   // ── FILTERS SHEET ───────────────────────────────────────────────────────
+
+  // Wilaya za kila mkoa — zinapakiwa kutoka API /locations/regions/{id}/districts
+  // mtumiaji akichagua mkoa (zimetunzwa hapa ili sheet kazi zitumie).
+  final Map<String, List<String>> _wilayaCache = {};
 
   Future<void> _openFilters() async {
     final mikoa = _regions
@@ -486,7 +538,10 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       context,
       initial: initial,
       mikoa: mikoa,
-      wilaya: const {}, // wilaya zinapakiwa API — zinapanuliwa baadaye
+      // Wilaya zinapakiwa KWA API mkoa ukiuchagua (getDistricts) —
+      // hakuna tena orodha tupu ya wilaya.
+      wilaya: _wilayaCache,
+      onWilayaLoad: _loadWilayaFor,
       vituo: const {},
       masomo: const [],
       onChanged: (f) {
@@ -514,6 +569,33 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         _load();
       },
     );
+  }
+
+  /// Pakia wilaya za mkoa (jina) kutoka API — hurudisha orodha ya majina.
+  /// Matokeo yanatunzwa kwenye _wilayaCache ili sheet kazi nayo iyatumie.
+  Future<List<String>> _loadWilayaFor(String? mkoaName) async {
+    if (mkoaName == null) return const [];
+    if (_wilayaCache[mkoaName] != null) return _wilayaCache[mkoaName]!;
+    final region = _regions.firstWhere(
+      (r) => '${r['name'] ?? r['region_name'] ?? ''}' == mkoaName,
+      orElse: () => <String, dynamic>{},
+    );
+    final rId = region['id'] != null ? int.tryParse('${region['id']}') : null;
+    if (rId == null) return const [];
+    try {
+      final r = await ApiService().getDistricts(rId);
+      final raw = r.data;
+      final list = (raw is List
+              ? raw
+              : (raw['districts'] ?? raw['data'] ?? []) as List)
+          .map((d) => '${d['name'] ?? d['district_name'] ?? ''}')
+          .where((s) => s.isNotEmpty)
+          .toList();
+      _wilayaCache[mkoaName] = list;
+      return list;
+    } catch (_) {
+      return const [];
+    }
   }
 
   void _applySheetFilters() {
@@ -623,6 +705,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
 
   Widget _buildScrollBody() {
     return ListView(
+      controller: _scrollCtrl,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
       children: [

@@ -9,6 +9,8 @@
 ///  • offAny() kuondoa wildcard listeners (screens zote sasa hutumia dispose).
 import 'dart:async';
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../config/api.dart';
 
@@ -113,6 +115,10 @@ class WebSocketService {
     _reconnectTimer = Timer(Duration(seconds: delay), _doConnect);
   }
 
+  /// Test hook: ita event kama ilivyo incoming kwenye socket halisi.
+  @visibleForTesting
+  void dispatchEventForTest(Map<String, dynamic> event) => _handleEvent(event);
+
   void _handleEvent(Map<String, dynamic> event) {
     final type = (event['event'] ?? event['type']) as String?;
     if (type == null) return;
@@ -159,4 +165,9 @@ class WebSocketService {
   void offAny(WsEventCallback callback) {
     _listeners['*']?.remove(callback);
   }
+
+  /// Ondoa listeners ZOTE — logout/session mpya: callbacks za session ya
+  /// zamani zisipaswi kuendelea kupokea events (huingiza data za mtumiaji
+  /// wa zamani kwenye screens za mpya).
+  void clearListeners() => _listeners.clear();
 }

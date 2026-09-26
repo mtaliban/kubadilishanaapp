@@ -106,6 +106,18 @@ class UserDashboardView extends StatefulWidget {
   final DashMe me;
   final List<Peer> peers;
 
+  // ── Server-side filter (mikoa YOTE ya Tanzania + wilaya za API) ──
+  // Kama [onRegionTap] imetolewa, chips za mikoa zinaonyesha [allRegions]
+  // (mikoa yote kutoka /locations/regions) na kuchagua mkoa/wilaya
+  // kunafanya UI ya juu ipakie data mpya kutoka server — sio filter
+  // ya ndani ya peers zilizopakiwa tu.
+  final List<String> allRegions;
+  final String? activeRegion;
+  final List<String> activeRegionDistricts;
+  final String? activeDistrict;
+  final ValueChanged<String?>? onRegionTap;
+  final ValueChanged<String?>? onDistrictPick;
+
   /// Kiasi cha kuchangia kinachoonyeshwa kwenye toast
   final String price;
 
@@ -134,6 +146,12 @@ class UserDashboardView extends StatefulWidget {
     this.toastBottom = 16,
     this.contactStyle = ContactButtonStyle.stacked,
     this.top = const [],
+    this.allRegions = const [],
+    this.activeRegion,
+    this.activeRegionDistricts = const [],
+    this.activeDistrict,
+    this.onRegionTap,
+    this.onDistrictPick,
   });
 
   @override
@@ -437,7 +455,11 @@ class _UserDashboardViewState extends State<UserDashboardView>
       );
 
   Widget _regionChips(_Cl c) {
-    final items = <String?>[null, ..._regions];
+    // Server mode: onyesha MIKOA YOTE ya Tanzania (kutoka /locations/regions)
+    // badala ya mikoa ya wenzio waliofanana tu.
+    final serverMode = widget.onRegionTap != null &&
+        widget.allRegions.isNotEmpty;
+    final items = <String?>[null, ...(serverMode ? widget.allRegions : _regions)];
     return SizedBox(
       height: 38,
       child: ListView.separated(
@@ -446,9 +468,17 @@ class _UserDashboardViewState extends State<UserDashboardView>
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final r = items[i];
-          final on = r == region;
+          final on = serverMode
+              ? (r == widget.activeRegion)
+              : (r == region);
           return GestureDetector(
-            onTap: () => _setRegion(r),
+            onTap: () {
+              if (serverMode) {
+                widget.onRegionTap!(r);
+                return;
+              }
+              _setRegion(r);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -472,8 +502,14 @@ class _UserDashboardViewState extends State<UserDashboardView>
   }
 
   Widget _dropdownRow(_Cl c) {
+    final serverMode = widget.onRegionTap != null &&
+        widget.allRegions.isNotEmpty;
     final inR = _inRegion;
-    final wilayas = inR.map((p) => p.fromWilaya).toSet().toList()..sort();
+    // Server mode: wilaya zinakuja kutoka API (zote za mkoa uliouchagua);
+    // Local mode: wilaya za wenzio waliofanana tu.
+    final List<String> wilayas = serverMode
+        ? widget.activeRegionDistricts
+        : (inR.map((p) => p.fromWilaya).toSet().toList()..sort());
     final vituo = inR
         .where((p) => wilaya == null || p.fromWilaya == wilaya)
         .map((p) => p.fromKituo)
@@ -494,13 +530,19 @@ class _UserDashboardViewState extends State<UserDashboardView>
                 c: c,
                 icon: TablerIcons.buildingCommunity,
                 allLabel: 'Wilaya zote',
-                value: wilaya,
+                value: serverMode ? widget.activeDistrict : wilaya,
                 options: wilayas,
-                onChanged: (v) => setState(() {
-                  wilaya = v;
-                  kituo = null;
-                  page = 0;
-                }),
+                onChanged: (v) {
+                  if (serverMode) {
+                    widget.onDistrictPick?.call(v);
+                    return;
+                  }
+                  setState(() {
+                    wilaya = v;
+                    kituo = null;
+                    page = 0;
+                  });
+                },
               ),
             ),
             const SizedBox(width: 8),

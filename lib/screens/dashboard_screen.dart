@@ -50,6 +50,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   List<dynamic> _announcements = [];
 
+  // ── Server-side filter (mikoa YOTE + wilaya za mkoa kwa API) ──
+  List<String> _allRegions = const [];
+  final Map<String, int> _regionIds = {};
+  String? _filterRegion;
+  List<String> _filterDistricts = const [];
+  final Map<String, int> _districtIds = {};
+  String? _filterDistrict;
+  bool _loadingDistricts = false;
+
   // Global toast (juu ya screen) — kwa payment/contact_toggled notifications
   String? _globalToast;
   Timer? _globalToastTimer;
@@ -99,7 +108,89 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadInit();
+    _loadRegions();
     _setupRealtime();
+  }
+
+  /// Mikoa YOTE ya Tanzania kutoka /locations/regions — kwa ajili ya
+  /// kichujio cha dashibodi (chips). Bila hii chips zinaonyesha mikoa
+  /// ya wenzio waliofanana tu.
+  Future<void> _loadRegions() async {
+    try {
+      final res = await ApiService().getRegions();
+      final raw = res.data;
+      final list = raw is List
+          ? raw
+          : ((raw is Map ? raw['regions'] ?? raw['data'] : null) as List? ?? []);
+      if (!mounted) return;
+      final names = <String>[];
+      final ids = <String, int>{};
+      for (final r in list) {
+        if (r is! Map) continue;
+        final name = '${r['name'] ?? r['region_name'] ?? ''}'.trim();
+        if (name.isEmpty) continue;
+        final id = int.tryParse('${r['id'] ?? r['region_id'] ?? ''}');
+        if (id == null) continue;
+        names.add(name);
+        ids[name] = id;
+      }
+      names.sort();
+      setState(() {
+        _allRegions = names;
+        _regionIds.addAll(ids);
+      });
+    } catch (_) {
+      // kimya — chips zitatumia mikoa ya peers (fallback ya ndani)
+    }
+  }
+
+  /// Wilaya zote za mkoa — API /locations/regions/{id}/districts.
+  Future<void> _onRegionTap(String? name) async {
+    if (name == _filterRegion) return;
+    setState(() {
+      _filterRegion = name;
+      _filterDistrict = null;
+      _filterDistricts = const [];
+    });
+    if (name == null) return _loadBoard();
+    final rid = _regionIds[name];
+    if (rid == null) return _loadBoard();
+    setState(() => _loadingDistricts = true);
+    try {
+      final res = await ApiService().getDistricts(rid);
+      final raw = res.data;
+      final list = raw is List
+          ? raw
+          : ((raw is Map ? raw['districts'] ?? raw['data'] : null) as List? ?? []);
+      if (!mounted) return;
+      final names = <String>[];
+      final dids = <String, int>{};
+      for (final d in list) {
+        if (d is! Map) continue;
+        final n = '${d['name'] ?? d['district_name'] ?? ''}'.trim();
+        if (n.isEmpty) continue;
+        final id = int.tryParse('${d['id'] ?? d['district_id'] ?? ''}');
+        if (id == null) continue;
+        names.add(n);
+        dids[n] = id;
+      }
+      names.sort();
+      setState(() {
+        _filterDistricts = names;
+        _districtIds
+          ..clear()
+          ..addAll(dids);
+        _loadingDistricts = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingDistricts = false);
+    }
+    _loadBoard();
+  }
+
+  void _onDistrictPick(String? name) {
+    setState(() => _filterDistrict = name);
+    _loadBoard();
   }
 
   Future<void> _loadInit() async {
@@ -117,8 +208,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadBoard() async {
     if (mounted) setState(() => _loading = true);
     try {
+      // Vichujio vya server: mkoa/wilaya vinafanywa kwenye API
+      // (source_region_id / district_id kwenye current_station ya kila mtu).
+      final rid = _filterRegion == null ? null : _regionIds[_filterRegion];
+      final did = _filterDistrict == null ? null : _districtIds[_filterDistrict];
       final res = await ApiService().get('/matches/board',
-          queryParameters: {'scope': 'incoming', 'limit': 100});
+          queryParameters: {
+            'scope': 'incoming',
+            'limit': 100,
+            if (rid != null) 'source_region_id': rid,
+            if (did != null) 'district_id': did,
+          });
       final data = asMap(res.data);
       if (mounted) {
         setState(() {
@@ -308,6 +408,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     me: me,
                     peers: peers,
                     top: top,
+                    allRegions: _allRegions,
+                    activeRegion: _filterRegion,
+                    activeRegionDistricts: _filterDistricts,
+                    activeDistrict: _filterDistrict,
+                    onRegionTap: _onRegionTap,
+                    onDistrictPick: _onDistrictPick,
                     onChangia: () => Navigator.pushNamed(context, '/donate'),
                   ),
           ),

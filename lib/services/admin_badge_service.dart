@@ -89,6 +89,16 @@ class AdminBadgeService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Weka counts ZOTE sifuri + simamisha polling — logout/session mpya:
+  /// badges za mtumiaji wa zamani zisiwekee kwenye session mpya.
+  void reset() {
+    stop();
+    payments = 0;
+    feedback = 0;
+    announcements = 0;
+    notifyListeners();
+  }
+
   Future<void> refresh() async {
     try {
       final results = await Future.wait([

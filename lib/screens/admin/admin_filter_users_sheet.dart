@@ -17,6 +17,8 @@ class UserFilter {
 
 /// Inafungua dirisha la vichujio kutoka chini.
 /// [onChanged] inaitwa kila unapobadilisha kitu (orodha ichujwe papo hapo).
+/// [onWilayaLoad] inaitwa mkoa ukiuchagua — inapakia wilaya zake KWA API
+/// (mf. getDistricts) na kuzirudisha; bila hiyo orodha ya wilaya inabaki tupu.
 /// Inarudisha kichujio cha mwisho dirisha likifungwa.
 Future<UserFilter> showUserFilterSheet(
   BuildContext context, {
@@ -24,6 +26,7 @@ Future<UserFilter> showUserFilterSheet(
   ValueChanged<UserFilter>? onChanged,
   required List<String> mikoa,
   required Map<String, List<String>> wilaya, // mkoa -> wilaya
+  Future<List<String>> Function(String? mkoa)? onWilayaLoad,
   Map<String, List<String>> vituo = const {}, // wilaya -> vituo
   List<String> masomo = const [],
 }) async {
@@ -36,6 +39,7 @@ Future<UserFilter> showUserFilterSheet(
       initial: initial,
       mikoa: mikoa,
       wilaya: wilaya,
+      onWilayaLoad: onWilayaLoad,
       vituo: vituo,
       masomo: masomo,
       onChanged: (f) {
@@ -78,6 +82,7 @@ class _FilterSheet extends StatefulWidget {
   final UserFilter initial;
   final List<String> mikoa;
   final Map<String, List<String>> wilaya;
+  final Future<List<String>> Function(String? mkoa)? onWilayaLoad;
   final Map<String, List<String>> vituo;
   final List<String> masomo;
   final ValueChanged<UserFilter> onChanged;
@@ -86,6 +91,7 @@ class _FilterSheet extends StatefulWidget {
     required this.initial,
     required this.mikoa,
     required this.wilaya,
+    this.onWilayaLoad,
     required this.vituo,
     required this.masomo,
     required this.onChanged,
@@ -101,6 +107,36 @@ class _FilterSheetState extends State<_FilterSheet> {
   late String? wilaya = widget.initial.wilaya;
   late String? kituo = widget.initial.kituo;
   String? open;
+  bool _loadingWilaya = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mkoa uko tayari (edit/filters zilizopo) — pakia wilaya zake mara moja.
+    if (mkoa != null &&
+        widget.onWilayaLoad != null &&
+        (widget.wilaya[mkoa] == null || widget.wilaya[mkoa]!.isEmpty)) {
+      _ensureWilayaLoaded(mkoa);
+    }
+  }
+
+  /// Pakia wilaya za mkoa kwa API (kwa [onWilayaLoad]) — mara moja tu.
+  Future<void> _ensureWilayaLoaded(String? mk) async {
+    final load = widget.onWilayaLoad;
+    if (mk == null || load == null) return;
+    if (widget.wilaya[mk] != null && widget.wilaya[mk]!.isNotEmpty) return;
+    if (_loadingWilaya) return;
+    setState(() => _loadingWilaya = true);
+    try {
+      final list = await load(mk);
+      if (!mounted) return;
+      widget.wilaya[mk] = list; // cache — pili haiitaji network
+    } catch (_) {
+      // kimya — dropdown itaonyesha "Wilaya zote" tupu tu
+    } finally {
+      if (mounted) setState(() => _loadingWilaya = false);
+    }
+  }
 
   void _emit() => widget.onChanged(
       UserFilter(idara: idara, mkoa: mkoa, wilaya: wilaya, kituo: kituo));
@@ -121,10 +157,10 @@ class _FilterSheetState extends State<_FilterSheet> {
       _Opt(null, 'Mikoa yote', PhosphorIcons.mapPin()),
       ...widget.mikoa.map((m) => _Opt(m, m, PhosphorIcons.mapPin())),
     ];
+    final wilayaList = widget.wilaya[mkoa] ?? const <String>[];
     final wilayaOpts = [
       _Opt(null, 'Wilaya zote', PhosphorIcons.buildings()),
-      ...(widget.wilaya[mkoa] ?? const <String>[])
-          .map((w) => _Opt(w, w, PhosphorIcons.buildings())),
+      ...wilayaList.map((w) => _Opt(w, w, PhosphorIcons.buildings())),
     ];
     final lastOpts = elimu
         ? [
@@ -224,23 +260,42 @@ class _FilterSheetState extends State<_FilterSheet> {
                       open: open == 'mkoa',
                       onToggle: () =>
                           setState(() => open = open == 'mkoa' ? null : 'mkoa'),
-                      onPick: (v) => setState(() {
-                        if (v != mkoa) {
-                          wilaya = null;
-                          if (!elimu) kituo = null;
-                        }
-                        mkoa = v;
-                        open = null;
+                      onPick: (v) {
+                        setState(() {
+                          if (v != mkoa) {
+                            wilaya = null;
+                            if (!elimu) kituo = null;
+                          }
+                          mkoa = v;
+                          open = null;
+                        });
+                        // Pakia wilaya za mkoa huu KWA API papo hapo.
+                        _ensureWilayaLoaded(v);
                         _emit();
-                      }),
+                      },
                     ),
                     _Label('WILAYA', c: c),
+                    if (_loadingWilaya)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Row(children: [
+                          SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2)),
+                          SizedBox(width: 8),
+                          Text('Inapakia wilaya...',
+                              style: TextStyle(fontSize: 13)),
+                        ]),
+                      ),
                     _Dropdown(
                       c: c,
                       options: wilayaOpts,
                       value: wilaya,
-                      enabled: mkoa != null,
-                      disabledHint: 'Chagua mkoa kwanza',
+                      enabled: mkoa != null && !_loadingWilaya,
+                      disabledHint: _loadingWilaya
+                          ? 'Inapakia wilaya...'
+                          : 'Chagua mkoa kwanza',
                       open: open == 'wilaya',
                       onToggle: () => setState(
                           () => open = open == 'wilaya' ? null : 'wilaya'),
