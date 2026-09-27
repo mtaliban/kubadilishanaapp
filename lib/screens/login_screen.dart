@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // token bila uthibitisho (login ya namba TU ilikuwa attack).
       setState(() { _twoFAEmail = null; _otpCtrl.clear(); });
     } else if (auth.pendingAdminEmail != null) {
-      // Admin 2FA — button inabadilika kuwa OTP input
+      // Admin 2FA (email kutoka fomu hii au admin-login) — OTP input
       setState(() => _twoFAEmail = auth.pendingAdminEmail);
     } else if (ok) {
       Navigator.pushReplacementNamed(context, auth.isAdmin ? '/admin' : '/dashboard');

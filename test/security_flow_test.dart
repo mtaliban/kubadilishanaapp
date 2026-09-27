@@ -305,4 +305,62 @@ void main() {
       }
     });
   });
+
+  group('4. ADMIN OTP KWA FOMU KUU — regression ya "Field required"', () {
+    test('admin kwa fomu kuu: email inaenda pendingAdminEmail, SI pendingOtpPhone',
+        () async {
+      final auth = AuthProvider(api: api);
+      await auth.login('admin@kubadilishana.co.tz');
+
+      expect(auth.pendingAdminEmail, 'admin@kubadilishana.co.tz',
+          reason: 'Email ya admin inaingia 2FA ya email (adminLoginOtp)');
+      expect(auth.pendingOtpPhone, isNull,
+          reason: 'pendingOtpPhone ni ya SMS OTP (simu) — si email');
+      expect(auth.otpRequired, isFalse,
+          reason: 'otpRequired inaashiria SMS OTP ya mtumiaji pekee');
+    });
+
+    test('OTP ya admin inatumwa na identifier+email — server YA KALE inaikubali',
+        () async {
+      await api.login('admin@kubadilishana.co.tz');
+      // Fake inatoa 400 (kOtp hash haiwekwi kwenye email branch) — tunapima
+      // PAYLOAD tu ndiyo itumwayo; 400 ya fake si kosa la payload.
+      try {
+        await api.adminLoginOtp(
+            'admin@kubadilishana.co.tz', _SecurityRoutes.kOtp);
+      } on DioException catch (_) {}
+      final body = routes.bodies['POST /auth/login/2fa']!;
+      expect(body['email'], 'admin@kubadilishana.co.tz',
+          reason: 'Server ya KALE inasoma email — lazima iwe kwenye payload');
+      expect(body['identifier'], 'admin@kubadilishana.co.tz',
+          reason: 'Server MPYA inasoma identifier');
+      expect(body['code'], _SecurityRoutes.kOtp);
+    });
+
+    test('OTP ya simu inatumwa na identifier+phone+email — server zote zinaihifadhi',
+        () async {
+      await api.login('0757502446');
+      try {
+        await api.verifyLoginOtp('0757502446', _SecurityRoutes.kOtp);
+      } on DioException catch (_) {
+        // fake inaweza kutoa 429 kama OTP imeumika — body ndiyo muhimu
+      }
+      final body = routes.bodies['POST /auth/login/2fa']!;
+      expect(body['identifier'], '0757502446',
+          reason: 'Server MPYA inasoma identifier');
+      expect(body['phone'], '0757502446',
+          reason: 'Server mpya inasoma phone pia');
+      expect(body['email'], '0757502446',
+          reason: 'Server ya KALE inasoma email — bila hii: 422 Field required');
+    });
+
+    test('verifyOtp (provider) inafanya kazi na phone pending — SMS flow kamili',
+        () async {
+      final auth = AuthProvider(api: api);
+      await auth.login('0757502446');
+      final ok = await auth.verifyOtp(_SecurityRoutes.kOtp);
+      expect(ok, isTrue);
+      expect(auth.user, isNotNull);
+    });
+  });
 }

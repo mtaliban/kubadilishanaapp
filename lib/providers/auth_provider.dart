@@ -137,9 +137,16 @@ class AuthProvider extends ChangeNotifier {
       final res = await _api.login(phone, password: password);
       final data = asMap(res.data);
       if (data['two_factor_required'] == true) {
-        // SECURITY: hatua 1/2 — code ya SMS imetumwa; hakuna token bado.
-        pendingOtpPhone = phone;
-        pendingAdminEmail = null;
+        // SECURITY: hatua 1/2 — OTP imetumwa; hakuna token bado.
+        // Email (admin 2FA) na simu (SMS OTP) zinabaguliwa — verifyOtp ni ya
+        // SIMU pelee; email inaingia kupitia adminLoginOtp(identifier+email).
+        if (phone.contains('@')) {
+          pendingAdminEmail = data['email'] as String? ?? phone;
+          pendingOtpPhone = null;
+        } else {
+          pendingOtpPhone = phone;
+          pendingAdminEmail = null;
+        }
         _loading = false;
         notifyListeners();
         return false;
@@ -378,15 +385,31 @@ class AuthProvider extends ChangeNotifier {
   String _parseError(dynamic e) {
     try {
       final response = (e as dynamic).response;
+      final status = response?.statusCode;
       final detail = response?.data?['detail'];
-      if (detail is String) return detail;
-      if (detail is List && detail.isNotEmpty) return detail[0]['msg'] ?? detail.toString();
+      if (detail is String) {
+        // 503 = SMS/email OTP service haijasanidiwa (env vars za EC2) —
+        // ujumbe wa backend ni wazi; tuonyeshe kama ulivyo.
+        if (detail.contains('haujasanidiwa') || detail.contains('haikutumwa')) {
+          return detail;
+        }
+        return detail;
+      }
+      if (detail is List && detail.isNotEmpty) {
+        // 422 validation — si kosa la mtumiaji; usimtumane "Field required".
+        if (status == 422) {
+          return 'Ombi halilipatani na server — labda app ni ya zamani. '
+              'Sasisha app (pull-to-refresh au reinstall) na ujaribu tena.';
+        }
+        return detail[0]['msg'] ?? detail.toString();
+      }
     } catch (_) {}
     final s = e.toString();
     if (s.contains('401')) return 'Namba ya simu au password si sahihi. Tafadhali kagua na ujaribu tena.';
     if (s.contains('403')) return 'Hauruhusiwi kuingia';
     if (s.contains('422')) return 'Taarifa zilizowekwa si sahihi';
     if (s.contains('500')) return 'Hitilafu ya server — jaribu tena';
+    if (s.contains('503')) return 'Huduma ya uthibitisho (SMS) bado haiwashi — jaribu tena baada ya kidogo';
     return 'Namba ya simu au password si sahihi. Tafadhali kagua na ujaribu tena.';
   }
 }

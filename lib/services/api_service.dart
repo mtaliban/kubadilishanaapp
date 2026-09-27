@@ -123,13 +123,25 @@ class ApiService {
   Future<Response> adminLoginStep1(String email, String password) =>
       post('/auth/admin/login', data: {'email': email, 'password': password});
 
+  /// Hatua ya 2 ya 2FA — inafanya kazi na server MPYA na KALE:
+  /// - Server mpya (identifier|email|phone zote zinakubalika).
+  /// - Server KALE inasoma `email` pelee (kwa admin) — `identifier` + `email`
+  ///   zinatazama hio path; kwa SMS user server kale haikuwa na 2FA kabisa.
   Future<Response> adminLoginOtp(String email, String code) =>
-      post('/auth/login/2fa', data: {'email': email, 'code': code});
+      post('/auth/login/2fa', data: {'identifier': email, 'email': email, 'code': code});
 
   /// SECURITY: kuingia kwa simu ni hatua 2 — code ya SMS (tarakimu 6)
   /// inathibitishwa hapa; token inatolewa BAADA ya uthibitisho tu.
+  /// Payload ina `identifier` + `phone` + `email` — server mpya inasoma
+  /// `identifier|email|phone`, server ya KALE inasoma `email` (haikuwa na
+  /// SMS OTP kabisa — 503/401 itarudi, si 422).
   Future<Response> verifyLoginOtp(String phone, String code) =>
-      post('/auth/login/2fa', data: {'phone': phone, 'code': code});
+      post('/auth/login/2fa', data: {
+        'identifier': phone,
+        'phone': phone,
+        'email': phone,
+        'code': code,
+      });
 
   Future<Response> register(Map<String, dynamic> data) =>
       post('/auth/register', data: data);
