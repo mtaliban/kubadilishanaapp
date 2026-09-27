@@ -704,67 +704,86 @@ class _FeedbackCardState extends State<_FeedbackCard> {
           const Divider(height: 1, color: _kBorder),
           const SizedBox(height: 12),
 
-          // ── Andika jibu + Jibu ──
-          Row(children: [
-            Expanded(
-              child: TextField(
+          // ── ANDIKA JIBU (composer ya dhabiti — inaonekana kwa kila kadi) ──
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _kSoft,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _kBorder),
+            ),
+            child: Column(children: [
+              TextField(
                 controller: _ctrl,
+                maxLines: 2,
+                minLines: 1,
                 style: GoogleFonts.inter(fontSize: 14, color: _kInk),
                 decoration: InputDecoration(
-                  hintText: 'Andika jibu lako...',
+                  hintText: 'Andika jibu lako hapa...',
                   hintStyle: GoogleFonts.inter(fontSize: 13.5, color: _kGrey400),
                   filled: true,
-                  fillColor: _kSoft,
+                  fillColor: Colors.white,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kBorder)),
                   enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kBorder)),
                   focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(color: _kBlue)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _kBlue, width: 1.5)),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: _sending
-                  ? null
-                  : () async {
-                      final text = _ctrl.text.trim();
-                      if (text.isEmpty) return;
-                      setState(() => _sending = true);
-                      await widget.onReply(id, text);
-                      if (mounted) {
-                        _ctrl.clear();
-                        setState(() => _sending = false);
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kBlue,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
+              const SizedBox(height: 8),
+              // Button NYIA —— full width, haiwezi kufichwa wala kubonyezwa mbaya
+              SizedBox(
+                width: double.infinity,
+                height: 42,
+                child: ElevatedButton.icon(
+                  onPressed: _sending
+                      ? null
+                      : () async {
+                          final text = _ctrl.text.trim();
+                          if (text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Andika jibu kwanza'),
+                                  behavior: SnackBarBehavior.floating));
+                            return;
+                          }
+                          setState(() => _sending = true);
+                          await widget.onReply(id, text);
+                          if (mounted) {
+                            _ctrl.clear();
+                            setState(() => _sending = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        _sending ? _kGrey400 : _kBlue,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: _sending
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : Icon(PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill),
+                          size: 16),
+                  label: Text(_sending ? 'Inatuma...' : 'JIBU',
+                      style: GoogleFonts.inter(
+                          fontSize: 14, fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3)),
+                ),
               ),
-              icon: _sending
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
-                  : Icon(PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill),
-                      size: 15),
-              label: Text('Jibu',
-                  style: GoogleFonts.inter(
-                      fontSize: 13.5, fontWeight: FontWeight.w700)),
-            ),
-          ]),
+            ]),
+          ),
         ],
       ),
     );

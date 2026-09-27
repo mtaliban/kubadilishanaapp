@@ -362,14 +362,55 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 
   Future<void> _sendReply(String orderId, String msg) async {
+    // OPTIMISTIC: ujumbe uonekane HAPO HAPO kwenye chat (hakuna "nimeona
+    // situma"). Kisha tunathibitisha na server (messages za kweli).
+    setState(() {
+      for (final p in _payments) {
+        if ('${p['order_id']}' == orderId) {
+          final msgs = ((p['messages'] as List?) ?? [])
+              .whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
+          msgs.add({'from': 'admin', 'text': msg, 'at': DateTime.now().toIso8601String()});
+          p['messages'] = msgs;
+        }
+      }
+    });
     try {
       await ApiService().adminPaymentReply(orderId, msg);
       if (!mounted) return;
       _showSnack('Ujumbe umetumwa ✓', _cGreen);
-      await _load();
+      // Thibitisha na server: messages halisi za order hii
+      try {
+        final r = await ApiService().getPaymentMessages(orderId);
+        if (!mounted) return;
+        final raw = r.data;
+        final list = raw is List
+            ? raw
+            : (raw is Map ? (raw['messages'] ?? raw['items'] ?? []) : []) as List;
+        setState(() {
+          for (final p in _payments) {
+            if ('${p['order_id']}' == orderId) {
+              p['messages'] = list
+                  .whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
+            }
+          }
+        });
+      } catch (_) {}
+      await _load(); // list ya kina (counts/status)
     } catch (e) {
       if (!mounted) return;
-      _showSnack('Kosa: $e', _cRed);
+      // Ondoa optimistic message iliyoshindikana
+      setState(() {
+        for (final p in _payments) {
+          if ('${p['order_id']}' == orderId) {
+            final msgs = ((p['messages'] as List?) ?? [])
+                .whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
+            msgs.removeWhere((m) =>
+                '${m['from']}'.contains('admin') && '${m['text']}' == msg);
+            p['messages'] = msgs;
+          }
+        }
+      });
+      _showSnack('Ujumbe haukutumwa — jaribu tena', _cRed);
     }
   }
 
@@ -682,8 +723,12 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                       itemCount: msgs.length,
                       itemBuilder: (_, i) {
                         final m = msgs[i];
-                        final fromAdmin =
-                            '${m['from'] ?? m['sender'] ?? ''}'.contains('admin');
+                        // Backend inarudisha from/sender/role/admin —
+                        // tunaihakiki zote ili jibu la admin liwe upande sahihi.
+                        final sender = '${m['from'] ?? m['sender'] ?? m['role'] ?? ''}';
+                        final fromAdmin = sender.contains('admin') ||
+                            m['is_admin'] == true ||
+                            sender == 'staff';
                         return Align(
                           alignment: fromAdmin
                               ? Alignment.centerRight

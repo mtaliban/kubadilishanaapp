@@ -353,11 +353,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // REGRESSION: kitufe cha "Jibu" kilikuwa hakionekani kwa mtumiaji
-      expect(find.widgetWithText(ElevatedButton, 'Jibu'), findsOneWidget,
+      // REGRESSION: kitufe cha "JIBU" kilikuwa hakionekani kwa mtumiaji
+      expect(find.widgetWithText(ElevatedButton, 'JIBU'), findsOneWidget,
           reason: 'Admin lazima awe na button ya kujibu maoni');
       // Na field ya kuandikia jibu
-      expect(find.text('Andika jibu lako...'), findsOneWidget);
+      expect(find.text('Andika jibu lako hapa...'), findsOneWidget);
     });
 
     testWidgets('Admin anajibu → POST reply inatumwa na status inabadilika',
@@ -369,10 +369,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // TextFields: [0] = search 'Tafuta...', [1] = 'Andika jibu lako...'
+      // TextFields: [0] = search 'Tafuta...', [1] = 'Andika jibu lako hapa...'
       await tester.enterText(
           find.byType(TextField).last, 'Jibu la haraka la admin');
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Jibu'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'JIBU'));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
