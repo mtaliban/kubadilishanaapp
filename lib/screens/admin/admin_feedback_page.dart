@@ -81,14 +81,20 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    // SILENT REFRESH: spinner TU wakati hAKUNA data bado — refresh za
+    // reply/delete/WS zinabadilisha list HAPO HAPO bila kukatiza mtumiaji.
+    final first = _all.isEmpty && _loading;
+    setState(() {
+      if (first) _loading = true;
+      _error = null;
+    });
     try {
       final res = await ApiService().adminListFeedback(status: '', q: '');
       if (!mounted) return;
       final data = res.data;
       setState(() {
         _all = data is List ? data : (data['items'] as List? ?? data['results'] as List? ?? []);
-        _applyFilter();
+        _applyFilter(keepPage: true);
         _loading = false;
       });
     } catch (e) {
@@ -103,7 +109,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   int get _countUnanswered => _all.where((m) => !_isReplied(m)).length;
   int get _countAnswered => _all.where(_isReplied).length;
 
-  void _applyFilter() {
+  void _applyFilter({bool keepPage = false}) {
     final q = _searchCtrl.text.toLowerCase().trim();
     setState(() {
       _filtered = _all.where((item) {
@@ -123,7 +129,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
         if (_filter == 'Yamejibiwa') matchF = replied;
         return matchQ && matchF;
       }).toList();
-      _page = 0;
+      if (!keepPage) _page = 0;
     });
   }
 
@@ -361,7 +367,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                       ),
 
                     // ── Loading / Error / Empty / Cards ──
-                    if (_loading)
+                    if (_loading && _all.isEmpty)
                       const Padding(
                         padding: EdgeInsets.all(48),
                         child: Center(child: CircularProgressIndicator(color: _kBlue)),

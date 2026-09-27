@@ -175,7 +175,14 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
 
   // ── DATA: /payments/admin/all → {payments, counts, total_approved_tzs} ────
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    // SILENT REFRESH: spinner TU wakati hAKUNA data bado (kwanza kabisa).
+    // Refresh baada ya approve/reject au WS event inabadilisha list HAPO
+    // HAPO — hakuna spinner ya kukatiza, page/scroll zinadumu.
+    final first = _payments.isEmpty && _loading;
+    setState(() {
+      if (first) _loading = true;
+      _error = null;
+    });
     try {
       final res = await ApiService().adminAllDonations();
       if (!mounted) return;
@@ -188,7 +195,6 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
         _counts = c is Map ? c.cast<String, dynamic>() : {};
         _totalApprovedTzs = (map['total_approved_tzs'] as num?)?.toInt() ?? 0;
         _loading = false;
-        _page = 0;
       });
     } catch (e) {
       if (!mounted) return;
@@ -503,7 +509,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
             const SizedBox(height: 10),
 
             // ── Body ──
-            if (_loading)
+            if (_loading && _payments.isEmpty)
               ...List.generate(3, (_) => const Padding(
                     padding: EdgeInsets.only(bottom: 12),
                     child: _SkeletonCard(),

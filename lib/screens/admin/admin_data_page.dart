@@ -101,15 +101,24 @@ class _AdminDataPageState extends State<AdminDataPage>
   }
 
   Future<void> _loadType(String type) async {
-    setState(() { _loading[type] = true; _errors[type] = null; });
+    // SILENT REFRESH: spinner TU wakati tab haina data bado (kwanza kabisa).
+    // Refresh zilizofuata (baada ya add/edit/delete) zinabadilisha data
+    // HAPO HAPO — page haizunguki, haikati mtumiaji, scroll inadumu.
+    final first = !_cache.containsKey(type);
+    setState(() {
+      if (first) _loading[type] = true;
+      _errors[type] = null;
+    });
     try {
       final res = await ApiService().adminListData(type);
       if (!mounted) return;
       final data = res.data;
-      _cache[type] = data is List
-          ? data
-          : ((data['results'] ?? data['items'] ?? data['users'] ?? data['data'] ?? []) as List);
-      setState(() { _loading[type] = false; });
+      setState(() {
+        _cache[type] = data is List
+            ? data
+            : ((data['results'] ?? data['items'] ?? data['users'] ?? data['data'] ?? []) as List);
+        _loading[type] = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() { _loading[type] = false; _errors[type] = e.toString(); });

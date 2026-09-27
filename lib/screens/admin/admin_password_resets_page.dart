@@ -48,8 +48,13 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
   Future<void> _loadTab() async => _load(_currentStatus);
 
   Future<void> _load(String status) async {
-    if (_cache.containsKey(status)) return;
-    setState(() { _loading = true; _error = null; });
+    // SILENT REFRESH: spinner TU wakati tab haina data bado. Baada ya
+    // approve/reject, _cache imefutwa — data mpya inaingia bila kukatiza.
+    final first = !_cache.containsKey(status);
+    setState(() {
+      if (first) _loading = true;
+      _error = null;
+    });
     try {
       final res = await ApiService().adminListPasswordResets(status: status);
       if (!mounted) return;

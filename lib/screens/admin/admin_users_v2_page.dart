@@ -72,6 +72,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
 
   static const int _pageSize = 4; // users 4 tu kwa screen
   int _page = 0;
+  bool _pageLoading = false; // pagination ya kimya (spinner ndogo tu)
   bool get _hasNext => (_page + 1) * _pageSize < _total;
 
   @override
@@ -155,8 +156,12 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   }
 
   Future<void> _load() async {
+    // SILENT REFRESH: spinner TU wakati orodha bado tupu (kwanza kabisa).
+    // Refresh baada ya add/edit/delete inabadilisha data HAPO HAPO —
+    // page na scroll zinadumu (hakuna "kurudi tena").
+    final first = _users.isEmpty && _loading;
     setState(() {
-      _loading = true;
+      if (first) _loading = true;
       _error = null;
     });
     try {
@@ -184,7 +189,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
 
   Future<void> _fetchPage(int page) async {
     if (page < 0) return;
-    setState(() => _loading = true);
+    // SILENT pagination: hakuna spinner ya kukatiza — orodha ya kale inabaki
+    // hadi ukurasa mpya ifike (Next/Ifuatayo haiweki page "inazunguka").
+    setState(() => _pageLoading = true);
     final old = _page;
     _page = page;
     try {
@@ -203,7 +210,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         // kuongezeka/kupungua (mf. wamefutwa) na Next/Ifuatayo itumie
         // hesabu mpya (skip+limit < total).
         _total = (map['total'] as num?)?.toInt() ?? _total;
-        _loading = false;
+        _pageLoading = false;
       });
       // Nenda juu ya orodha — mtumiaji aone users wa ukurasa mpya kuanzia
       // mwanzo (badala ya kukaa chini ambapo alibonyeza kitufe).
@@ -216,7 +223,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       if (!mounted) return;
       setState(() {
         _page = old;
-        _loading = false;
+        _pageLoading = false;
       });
       _showMsg('Imeshindikana kupakia ukurasa. Jaribu tena.');
     }
@@ -1013,8 +1020,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     final totalPages =
         ((_total / _pageSize).ceil()).clamp(1, 999999).toInt();
     final current = _page + 1;
-    final canPrev = _page > 0 && !_loading;
-    final canNext = _hasNext && !_loading;
+    final canPrev = _page > 0 && !_pageLoading;
+    final canNext = _hasNext && !_pageLoading;
 
     return Container(
       padding: const EdgeInsets.only(top: 14),

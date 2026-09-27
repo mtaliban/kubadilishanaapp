@@ -210,7 +210,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadBoard() async {
-    if (mounted) setState(() => _loading = true);
+    // SILENT REFRESH: spinner TU wakati board bado tupu — kubadilisha filter
+    // au WS event haisumbui orodha iliyoonekana (hakuna "page kuzunguka").
+    if (mounted && _candidates.isEmpty) setState(() => _loading = true);
     try {
       // Vichujio vya server: mkoa/wilaya vinafanywa kwenye API
       // (source_region_id / district_id kwenye current_station ya kila mtu).

@@ -186,7 +186,13 @@ class _MyMatchesTabState extends State<_MyMatchesTab>
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    // SILENT REFRESH: spinner TU wakati bado hakuna matches — refresh za
+    // WS/pull zinasasisha orodha HAPO HAPO bila kuzunguka page.
+    final first = _matches.isEmpty && _loading;
+    setState(() {
+      if (first) _loading = true;
+      _error = null;
+    });
     try {
       final res  = await ApiService().get('/matches/me');
       final data = asMap(res.data);
@@ -199,7 +205,7 @@ class _MyMatchesTabState extends State<_MyMatchesTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (_loading) {
+    if (_loading && _matches.isEmpty) {
       return const Center(child: SizedBox(width: 24, height: 24,
         child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue)));
     }

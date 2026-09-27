@@ -163,8 +163,12 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   // ═══════════════════════ DATA ═══════════════════════
 
   Future<void> _load() async {
+    // SILENT REFRESH: spinner TU wakati orodha bado tupu (kwanza kabisa).
+    // Refresh baada ya send/delete inabadilisha historia HAPO HAPO —
+    // _visibleCount inadumu (mtumiaji abaki mahali alipo).
+    final first = _items.isEmpty && _loading;
     setState(() {
-      _loading = true;
+      if (first) _loading = true;
       _error = null;
     });
     try {
@@ -181,7 +185,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
         _items = list;
         _total = (map['total'] as num?)?.toInt() ?? list.length;
         _loading = false;
-        _visibleCount = _kPageSize;
+        if (first) _visibleCount = _kPageSize;
       });
     } catch (e) {
       if (!mounted) return;

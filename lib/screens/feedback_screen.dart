@@ -39,7 +39,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Future<void> _load() async {
     if (!mounted) return;
-    setState(() => _loading = true);
+    // SILENT REFRESH: spinner TU wakati orodha bado tupu (kwanza kabisa).
+    if (_items.isEmpty) setState(() => _loading = true);
     try {
       final res = await ApiService().getMyFeedback();
       final raw = res.data;
@@ -83,7 +84,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Widget build(BuildContext context) {
     return AppShell(
       tabIndex: 2,
-      child: _loading
+      child: _loading && _items.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _load,

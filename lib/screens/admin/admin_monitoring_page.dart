@@ -30,7 +30,13 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    // SILENT REFRESH: spinner TU wakati orodha bado tupu — refresh (na
+    // clear events) haikati mtumiaji wala kurudisha scroll.
+    final first = _events.isEmpty && _loading;
+    setState(() {
+      if (first) _loading = true;
+      _error = null;
+    });
     try {
       final res = await ApiService().adminGetMonitoring();
       if (!mounted) return;
@@ -98,7 +104,7 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
             ),
           ),
           const Divider(height: 1, color: _kGrey200),
-          if (_loading)
+          if (_loading && _events.isEmpty)
             const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
           else if (_error != null)
             Expanded(

@@ -69,7 +69,13 @@ class _State extends State<AdminDashboardPage>
   // ── Data loading ────────────────────────────────────────────────────────────
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    // SILENT REFRESH: spinner TU kwanza kabisa (hakuna data) — refresh za
+    // baadaye zinasasisha namba HAPO HAPO bila page kuzunguka.
+    final first = _stats.isEmpty && _loading;
+    setState(() {
+      if (first) _loading = true;
+      _error = null;
+    });
     try {
       final s = await ApiService().adminStats();
       if (!mounted) return;
@@ -189,7 +195,7 @@ class _State extends State<AdminDashboardPage>
               ),
             ),
 
-            if (_loading)
+            if (_loading && _stats.isEmpty)
               const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator(color: _kBlue)))
             else if (_error != null)
