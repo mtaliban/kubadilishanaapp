@@ -16,6 +16,7 @@ import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api_service.dart';
 import 'app_navigator.dart';
+import 'websocket_service.dart' show resolveNotificationEventType;
 
 /// Lazima iwe top-level — inasajiliwa na Android mpangilio wa app ikiwa imufungwa.
 @pragma('vm:entry-point')
@@ -275,7 +276,8 @@ class NotificationService {
   /// Role-aware: admin apate event zake (malipo/maoni/watumiaji),
   /// mtumiaji wa kawaida apate zake (ujumbe/mechi/malipo yake/matangazo).
   void showFromEvent(Map<String, dynamic> event) {
-    final type = (event['event'] ?? event['type'])?.toString() ?? '';
+    // type halisi (backend: {"event":"notification","type":"feedback.new"})
+    final type = resolveNotificationEventType(event);
 
     // Event zinazoonyeshwa kwa ADMIN kama arifa
     const adminNotifiable = {

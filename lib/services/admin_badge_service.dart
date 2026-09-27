@@ -41,7 +41,9 @@ class AdminBadgeService extends ChangeNotifier {
   }
 
   void _onWs(Map<String, dynamic> event) {
-    final type = (event['event'] ?? event['type'])?.toString() ?? '';
+    // Type halisi — envelope ya backend: {"event":"notification",
+    // "type":"feedback.new"} (bila hii badge ya Maoni haiongezeki).
+    final type = resolveNotificationEventType(event);
     switch (type) {
       case 'payment.submitted':
       case 'payment.message':

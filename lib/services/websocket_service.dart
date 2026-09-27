@@ -16,6 +16,20 @@ import '../config/api.dart';
 
 typedef WsEventCallback = void Function(Map<String, dynamic> event);
 
+/// Aina HALISI ya event ya WS.
+///
+/// Backend inatuma envelope: {"event": "notification", "type": "feedback.new",
+/// ...} — yaani jina la envelope kwenye 'event' na aina HALISI kwenye 'type'.
+/// Wateja wote lazima waitumie hii ili wasome 'feedback.new' badala ya
+/// 'notification' (ndiyo ilikuwa chanzo cha arifa za admin zisifikapo).
+String resolveNotificationEventType(Map<String, dynamic> event) {
+  final outer = (event['event'] ?? event['type'])?.toString() ?? '';
+  if (outer == 'notification' || outer == 'notification.new') {
+    return (event['type'] ?? event['notification_type'] ?? outer).toString();
+  }
+  return outer;
+}
+
 class WebSocketService {
   static final WebSocketService _instance = WebSocketService._();
   factory WebSocketService() => _instance;
