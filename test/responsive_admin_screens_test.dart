@@ -43,6 +43,7 @@ void main() {
           ? (ctx) => AdminShell(child: Builder(builder: builder))
           : builder,
       loggedIn: true,
+      isAdmin: true, // AdminShell ina guard — pima kama admin halisi
     );
     expect(overflows, isEmpty, reason: 'OVERFLOW kwenye $label');
   };

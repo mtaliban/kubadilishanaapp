@@ -53,10 +53,13 @@ Future<void> bootTestEnv({
 
 /// Inapump [builder] kwenye ukubwa wote za simu na text scales zote.
 /// Inarudisha orodha ya ujumbe wa overflow (matumaini: tupu).
+/// [isAdmin]: user ni admin (is_admin:true) — kwa screens za admin
+/// (AdminShell ina guard inayorudisha non-admin kwenye /login).
 Future<List<String>> pumpResponsive(
   WidgetTester tester,
   WidgetBuilder builder, {
   bool loggedIn = true,
+  bool isAdmin = false,
   bool withShell = false,
   int shellTab = 0,
 }) async {
@@ -89,13 +92,14 @@ Future<List<String>> pumpResponsive(
         // imeondolewa kwenye TestFlutterView toleo jipya).
         addTearDown(tester.view.reset);
 
-        await tester.pumpWidget(_wrap(
-          builder,
-          loggedIn: loggedIn,
-          withShell: withShell,
-          shellTab: shellTab,
-          textScale: scale,
-        ));
+    await tester.pumpWidget(_wrap(
+      builder,
+      loggedIn: loggedIn,
+      isAdmin: isAdmin,
+      withShell: withShell,
+      shellTab: shellTab,
+      textScale: scale,
+    ));
         // Pumps: animations, futures ndogo, shimmer n.k.
         await tester.pump(const Duration(milliseconds: 120));
         await tester.pump(const Duration(milliseconds: 300));
@@ -117,13 +121,16 @@ Future<List<String>> pumpResponsive(
 Widget _wrap(
   WidgetBuilder builder, {
   required bool loggedIn,
+  required bool isAdmin,
   required bool withShell,
   required int shellTab,
   required double textScale,
 }) {
   final auth = AuthProvider();
   if (loggedIn) {
-    auth.updateUser(AuthUser.fromJson(Map<String, dynamic>.from(fakeMe)));
+    final u = Map<String, dynamic>.from(fakeMe);
+    if (isAdmin) u['is_admin'] = true;
+    auth.updateUser(AuthUser.fromJson(u));
   }
   return MultiProvider(
     providers: [

@@ -124,6 +124,16 @@ class _AdminShellState extends State<AdminShell> {
     _loadCount();
     _badges.start();
     LanguageProvider().addListener(_onLangChange);
+    // SECURITY (defense-in-depth): server inazuiya admin APIs kwa user wa
+    // kawaida, lakini UI pia inalinda — user asiye admin aliyeanguka hapa
+    // (deep link/navigesheni ya mkono) anarudishwa /login mara moja.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      if (!auth.isAdmin) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    });
   }
 
   void _onLangChange() => setState(() {});
