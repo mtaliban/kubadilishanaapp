@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../screens/wasifu_view.dart';
 import '../services/api_service.dart';
+import '../services/app_cache.dart';
 import '../services/websocket_service.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_shell.dart';
@@ -81,15 +82,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _onWs(dynamic _) => _load();
 
   @override
+  int _cacheRev = 0;
+  late final VoidCallback _cacheListener;
+
   void initState() {
     super.initState();
     _load();
     WebSocketService().on('user.updated_by_admin', _onWs);
+    // LIVE: admin ameongeza mkoa/wilaya/kituo → profile ipakie upya PAPO HAPO
+    // (dropdowns za usajili-wa-pili/settings zione vitu vipya bila reload).
+    _cacheRev = AppCache().revision;
+    _cacheListener = () {
+      if (AppCache().revision != _cacheRev && mounted) {
+        _cacheRev = AppCache().revision;
+        _load();
+      }
+    };
+    AppCache().addListener(_cacheListener);
   }
 
   @override
   void dispose() {
     WebSocketService().off('user.updated_by_admin', _onWs);
+    AppCache().removeListener(_cacheListener);
     super.dispose();
   }
 

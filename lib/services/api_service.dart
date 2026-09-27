@@ -234,9 +234,12 @@ class ApiService {
       get('/locations/regions', cacheTtl: _ttlStatic);
   Future<Response> getDistricts(int regionId) =>
       get('/locations/regions/$regionId/districts', cacheTtl: _ttlSemiStatic);
+  /// limit=1000 — endpoint ina default ya 200; wilaya kubwa (mf. Arusha Cc)
+  /// zina vituo 300+ — bila limit, orodha inakatika na mtumiaji hataoni
+  /// kituo chake (kosa la usajili "kituo changu hakipo").
   Future<Response> getFacilities(int districtId, {String category = 'health'}) =>
       get('/locations/districts/$districtId/facilities',
-          queryParameters: {'category': category},
+          queryParameters: {'category': category, 'limit': 1000},
           cacheTtl: _ttlSemiStatic);
   Future<Response> getCadres({String? category}) =>
       get('/cadres',
@@ -251,6 +254,7 @@ class ApiService {
   Future<Response> getFacilitiesByRegion(int regionId, {String category = 'health', String? employmentSector}) =>
       get('/locations/regions/$regionId/facilities', queryParameters: {
         'category': category,
+        'limit': 1000, // onyo la default ya 200 — mkoa una vituo mamia
         if (employmentSector != null) 'employment_sector': employmentSector,
       }, cacheTtl: _ttlSemiStatic);
 

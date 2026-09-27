@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../services/app_cache.dart';
 import '../widgets/select_sheet.dart';
 import '../widgets/picker_screen.dart';
 import '../utils/safe_cast.dart';
@@ -826,10 +827,28 @@ class _Step2IdaraState extends State<_Step2Idara> {
   String? _error;
 
   @override
+  int _cacheRev = 0;
+  late final VoidCallback _cacheListener;
+
+  @override
   void initState() {
     super.initState();
     _selected = widget.initial['category'] ?? '';
+    _cacheRev = AppCache().revision;
+    _cacheListener = () {
+      if (AppCache().revision != _cacheRev && mounted) {
+        _cacheRev = AppCache().revision;
+        _load();
+      }
+    };
+    AppCache().addListener(_cacheListener);
     _load();
+  }
+
+  @override
+  void dispose() {
+    AppCache().removeListener(_cacheListener);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -1002,11 +1021,29 @@ class _Step4KadaState extends State<_Step4Kada> {
   String? _error;
 
   @override
+  int _cacheRev = 0;
+  late final VoidCallback _cacheListener;
+
+  @override
   void initState() {
     super.initState();
     _cadreCode = widget.initial['cadre_code'] ?? '';
     _selectedSubjects = List<String>.from(widget.initial['subjects'] ?? []);
+    _cacheRev = AppCache().revision;
+    _cacheListener = () {
+      if (AppCache().revision != _cacheRev && mounted) {
+        _cacheRev = AppCache().revision;
+        _loadCadres();
+      }
+    };
+    AppCache().addListener(_cacheListener);
     _loadCadres();
+  }
+
+  @override
+  void dispose() {
+    AppCache().removeListener(_cacheListener);
+    super.dispose();
   }
 
   Future<void> _loadCadres() async {
@@ -1242,6 +1279,9 @@ class _Step5StationState extends State<_Step5Station> {
       widget.initial['category'] == 'health' &&
       widget.initial['employment_sector'] == 'wizara_afya';
 
+  int _cacheRev = 0;
+  late final VoidCallback _cacheListener;
+
   @override
   void initState() {
     super.initState();
@@ -1249,7 +1289,23 @@ class _Step5StationState extends State<_Step5Station> {
     _regionId = cs['region_id'] as int?;
     _districtId = cs['district_id'] as int?;
     _facilityId = cs['facility_id'] as String?;
+    _cacheRev = AppCache().revision;
+    _cacheListener = () {
+      // LIVE: admin ameongeza mkoa/wilaya/kituo wakati hapa → pakia upya
+      // PAPO HAPO (silent — selection zinadumu, hakuna kuzunguka).
+      if (AppCache().revision != _cacheRev && mounted) {
+        _cacheRev = AppCache().revision;
+        _loadRegions();
+      }
+    };
+    AppCache().addListener(_cacheListener);
     _loadRegions();
+  }
+
+  @override
+  void dispose() {
+    AppCache().removeListener(_cacheListener);
+    super.dispose();
   }
 
   Future<void> _loadRegions() async {
@@ -1506,10 +1562,27 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
 
   String get _category => widget.initial['category'] as String? ?? 'health';
 
+  int _cacheRev = 0;
+  late final VoidCallback _cacheListener;
+
   @override
   void initState() {
     super.initState();
+    _cacheRev = AppCache().revision;
+    _cacheListener = () {
+      if (AppCache().revision != _cacheRev && mounted) {
+        _cacheRev = AppCache().revision;
+        _loadRegions();
+      }
+    };
+    AppCache().addListener(_cacheListener);
     _loadRegions();
+  }
+
+  @override
+  void dispose() {
+    AppCache().removeListener(_cacheListener);
+    super.dispose();
   }
 
   Future<void> _loadRegions() async {
