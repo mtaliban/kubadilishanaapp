@@ -321,14 +321,14 @@ void main() {
       // Maoni ya kale yaonekana
       expect(find.textContaining('Maoni ya kale ya mtumiaji'), findsOneWidget);
 
-      // Andika maoni mpya na TUMA (kitufe ni FilledButton "Tuma")
+      // Andika maoni mpya na TUMA (button kubwa ya "TUMA MAONI")
       await tester.enterText(find.byType(TextField).first, 'Hii ni maoni mapya ya sasa');
       await tester.pump();
       final callsBefore =
           routes.calls.where((c) => c == 'POST /feedback').length;
-      final tumaBtn = find.widgetWithText(FilledButton, 'Tuma');
+      final tumaBtn = find.widgetWithText(FilledButton, 'TUMA MAONI');
       expect(tumaBtn, findsOneWidget,
-          reason: 'Kitufe cha Tuma kipo');
+          reason: 'Kitufe cha Tuma kipo (kikubwa, full-width)');
       await tester.tap(tumaBtn);
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));

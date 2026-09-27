@@ -287,48 +287,39 @@ class _MaoniViewState extends State<MaoniView> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Text('${msgCtrl.text.length} / ${widget.maxLength}',
-                    style: TextStyle(color: c.muted, fontSize: 12)),
+          // Button KUBWA ya TUMA — full-width, haiwezi kupuuzwa (regression:
+          // button ndogo ya kulia + opacity hafifu ilifanya mtumiaji aisione).
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: FilledButton.icon(
+              onPressed: sending ? null : _send,
+              style: FilledButton.styleFrom(
+                backgroundColor: c.blue,
+                disabledBackgroundColor: c.blue.withValues(alpha: .55),
+                foregroundColor: Colors.white,
+                disabledForegroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                textStyle: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3),
               ),
-              Opacity(
-                opacity: _canSend || sending ? 1 : .45,
-                child: SizedBox(
-                  height: 34,
-                  child: FilledButton(
-                    onPressed: _canSend ? _send : null,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: c.blue,
-                      disabledBackgroundColor: c.blue,
-                      foregroundColor: Colors.white,
-                      disabledForegroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      minimumSize: const Size(0, 34),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9)),
-                      textStyle:
-                          const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                    ),
-                    child: sending
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Text('Tuma'),
-                            const SizedBox(width: 6),
-                            Icon(TablerIcons.send, size: 15),
-                          ]),
-                  ),
-                ),
-              ),
-            ],
+              icon: sending
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : Icon(TablerIcons.send, size: 18),
+              label: Text(sending ? 'Inatuma...' : 'TUMA MAONI'),
+            ),
           ),
+          const SizedBox(height: 6),
+          Text('${msgCtrl.text.length} / ${widget.maxLength}',
+              style: TextStyle(color: c.muted, fontSize: 12),
+              textAlign: TextAlign.end),
         ],
       ),
     );

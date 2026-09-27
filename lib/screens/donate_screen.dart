@@ -102,8 +102,14 @@ class _DonateScreenState extends State<DonateScreen> {
         final msgs = p['messages'];
         if (msgs is List && msgs.isNotEmpty) {
           for (final m in msgs.reversed) {
-            if (m is Map && m['sender'] == 'admin') {
-              final t = '${m['message'] ?? ''}'.trim();
+            if (m is! Map) continue;
+            // Backend inarudisha from/sender/role — jibu la admin litambuliwa
+            // kila sharti; text inaweza kuwa message|text|reply.
+            final sender =
+                '${m['sender'] ?? m['from'] ?? m['role'] ?? ''}';
+            final isAdminMsg = sender.contains('admin') || m['is_admin'] == true;
+            if (isAdminMsg) {
+              final t = '${m['message'] ?? m['text'] ?? m['reply'] ?? ''}'.trim();
               if (t.isNotEmpty) {
                 adminReply = t;
                 break;
