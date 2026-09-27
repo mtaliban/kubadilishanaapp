@@ -11,18 +11,9 @@ const _kGrey400   = Color(0xFF9CA3AF);
 const _kGrey500   = Color(0xFF6B7280);
 const _kGrey700   = Color(0xFF374151);
 const _kGrey900   = Color(0xFF111827);
-const _kGreen50   = Color(0xFFF0FDF4);
-const _kGreen200  = Color(0xFFBBF7D0);
 const _kGreen700  = Color(0xFF15803D);
-const _kRed50     = Color(0xFFFEF2F2);
-const _kRed200    = Color(0xFFFECACA);
 const _kRed700    = Color(0xFFB91C1C);
-const _kAmber50   = Color(0xFFFFFBEB);
-const _kAmber200  = Color(0xFFFDE68A);
 const _kAmber700  = Color(0xFFB45309);
-const _kPurple50  = Color(0xFFF5F3FF);
-const _kPurple200 = Color(0xFFDDD6FE);
-const _kPurple700 = Color(0xFF6D28D9);
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -197,7 +188,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ])),
                           ])
                         : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(14, 12, 14, 80),
+                            padding: const EdgeInsets.fromLTRB(0, 4, 0, 80),
                             itemCount: _notifications.length,
                             itemBuilder: (context, i) {
                               final n = _notifications[i];
@@ -205,37 +196,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               final type = (n['type'] as String?) ?? '';
                               final title = (n['title'] ?? '').toString();
                               final body  = (n['body']  ?? '').toString();
-                              final ago   = _timeAgo(n['created_at'] ?? '');
-                              final (iconData, iconColor, bgColor, bdColor) = _styleForType(type);
+                              final (iconData, iconColor) = _styleForType(type);
 
                               return GestureDetector(
                                 onTap: () => _onTap(n),
                                 child: Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  decoration: BoxDecoration(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  decoration: const BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: read ? _kGrey200 : _kBlue.withValues(alpha: 0.2),
-                                    ),
-                                    boxShadow: [BoxShadow(
-                                      color: const Color(0x08000000),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 2),
-                                    )],
+                                    border: Border(bottom: BorderSide(color: _kGrey200, width: 1)),
                                   ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(14),
-                                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                      // Icon circle
-                                      Container(
-                                        width: 46, height: 46,
-                                        decoration: BoxDecoration(
-                                          color: bgColor,
-                                          shape: BoxShape.circle,
+                                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                      // Icon circle + badge ya ESS
+                                      Stack(clipBehavior: Clip.none, children: [
+                                        Container(
+                                          width: 46, height: 46,
+                                          decoration: const BoxDecoration(
+                                            color: _kGrey100,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(child: Icon(iconData, size: 22, color: iconColor)),
                                         ),
-                                        child: Center(child: Icon(iconData, size: 22, color: iconColor)),
-                                      ),
+                                        // Badge ndogo ya ESS chini-kulia
+                                        Positioned(
+                                          right: -2, bottom: -2,
+                                          child: _essBadge(18),
+                                        ),
+                                      ]),
                                       const SizedBox(width: 12),
                                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -262,15 +249,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                                 ),
                                               ),
                                             ),
-                                          if (!read)
-                                            Container(
-                                              width: 8, height: 8,
-                                              margin: const EdgeInsets.only(left: 8, top: 5),
-                                              decoration: const BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: _kBlue,
-                                              ),
-                                            ),
                                         ]),
                                         if (body.isNotEmpty) ...[
                                           const SizedBox(height: 4),
@@ -280,7 +258,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                         ],
                                       ])),
                                     ]),
-                                  ),
                                 ),
                               );
                             },
@@ -292,28 +269,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  (IconData, Color, Color, Color) _styleForType(String type) {
+  /// Badge ndogo ya ESS logo chini-kulia ya icon circle (kama design ya picha)
+  Widget _essBadge(double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        border: Border.all(color: _kGrey200, width: 1),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(size * 0.14),
+        child: Image.asset('assets/images/ess_badge.png', fit: BoxFit.contain),
+      ),
+    );
+  }
+
+  (IconData, Color) _styleForType(String type) {
     switch (type) {
       case 'payment.approved':
-        return (Icons.check_circle_outline_rounded, _kGreen700, _kGreen50, _kGreen200);
+        return (Icons.check_circle_outline_rounded, _kGreen700);
       case 'payment.rejected':
-        return (Icons.cancel_outlined, _kRed700, _kRed50, _kRed200);
+        return (Icons.cancel_outlined, _kRed700);
       case 'payment.submitted':
       case 'payment.message':
       case 'payment.reply':
-        return (Icons.payment_rounded, _kAmber700, _kAmber50, _kAmber200);
+        return (Icons.payment_rounded, _kAmber700);
       case 'match.found':
-        return (Icons.handshake_rounded, _kPurple700, _kPurple50, _kPurple200);
+        return (Icons.handshake_rounded, _kAmber700);
       case 'admin.reply':
       case 'feedback.replied':
       case 'feedback.new':
-        return (Icons.rate_review_rounded, _kAmber700, _kAmber50, _kAmber200);
+        return (Icons.chat_bubble_outline_rounded, _kBlue);
       case 'announcement':
-        return (Icons.campaign_rounded, _kBlue, _kBlue50, _kBlue.withValues(alpha: 0.2));
+        return (Icons.campaign_rounded, _kGrey700);
       case 'password_reset.new':
-        return (Icons.key_rounded, _kGrey700, _kGrey100, _kGrey200);
+        return (Icons.key_rounded, _kGrey700);
       default:
-        return (Icons.notifications_rounded, _kBlue, _kBlue50, _kBlue.withValues(alpha: 0.2));
+        return (Icons.chat_bubble_outline_rounded, _kBlue);
     }
   }
 
@@ -328,10 +322,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final diffDays = today.difference(that).inDays;
       final hh = d.hour.toString().padLeft(2, '0');
       final mm = d.minute.toString().padLeft(2, '0');
-      if (diffDays == 0) return '$hh:$mm';
-      if (diffDays == 1) return 'Jana';
       const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ago','Sep','Okt','Nov','Des'];
-      return '${d.day} ${months[d.month - 1]}';
+      final date = '${d.day} ${months[d.month - 1]}';
+      if (diffDays == 0) return '$date · $hh:$mm';
+      if (diffDays == 1) return 'Jana';
+      return date;
     } catch (_) { return ''; }
   }
 
