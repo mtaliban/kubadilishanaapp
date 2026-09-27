@@ -1,0 +1,47 @@
+From a68d8753eb1e966d99311e59fca34346902c381c Mon Sep 17 00:00:00 2001
+From: root <root@e2b.local>
+Date: Sat, 26 Sep 2026 07:46:40 +0000
+Subject: [PATCH] feat(fcm): icon maalum + color ya brand kwenye push
+ notifications
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Push za FCM sasa zinatumia ic_notification (drawable nyeupe ya app) +
+color #1E40AF — status bar na heads-up zinaonyesha icon sahihi ya
+Kubadilishana badala ya duara jeupe.
+
+🤖 Generated with Codebuff
+Co-Authored-By: Codebuff <noreply@codebuff.com>
+---
+ app/services/fcm.py | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/app/services/fcm.py b/app/services/fcm.py
+index 05acea8..927d458 100644
+--- a/app/services/fcm.py
++++ b/app/services/fcm.py
+@@ -122,7 +122,10 @@ async def send_push_to_user(
+             image=image,
+         )
+ 
+-        # Android config — channel kulingana na aina ya event
++        # Android config — channel kulingana na aina ya event.
++        # icon: drawable nyeupe maalum ya app (ic_notification) — bila hii
++        # Android inaonyesha duara jeupe kwenye status bar/heads-up.
++        # color: accent ya brand kwenye icon na heads-up.
+         channel = _channel_for(data)
+         android_config = messaging.AndroidConfig(
+             priority="high",
+@@ -132,6 +135,8 @@ async def send_push_to_user(
+                 image=image,
+                 click_action="FLUTTER_NOTIFICATION_CLICK",
+                 channel_id=channel,
++                icon="ic_notification",
++                color="#1E40AF",
+             ),
+         )
+ 
+-- 
+2.34.1
+

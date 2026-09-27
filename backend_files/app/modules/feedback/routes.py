@@ -1,0 +1,200 @@
+"""Maoni na Malalamiko (Comments & Complaints).
+
+Mtumiaji anaweza kutuma maoni/malalamiko yake kwa admin moja kwa moja
+(na kumuona jibu la admin). Admin ana sehemu ya kusoma maoni yote na
+kumjibu mtumiaji (au kundi la watumiaji). Real-time: maoni mapya yanajulisha
+admin kupitia WS (event `feedback.new`) — hakuna refresh ya page.
+"""
+from datetime import datetime, timezone
+from bson import ObjectId
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from ...db import get_db
+from ...security import current_user, current_admin
+from ...services.fcm import send_push_to_user
+from ..messaging.ws_manager import manager
+
+router = APIRouter(prefix="/feedback", tags=["feedback"])
+
+
+def _out(f: dict) -> dict:
+    """Serialize feedback kwa JSON — datetimes lazima ziwe ISO strings,
+    vinginevyo WS send_json inafeli (TypeError: datetime not JSON serializable)
+    na malalamiko hayafiki admin real-time. Hii ndiyo ilikuwa sababu ya
+    "feedback hayafiki papo hapo" — subscriber inafanya isoformat, route
+    haikuwa."""
+    def _iso(v):
+        return v.isoformat() if isinstance(v, datetime) else v
+
+    return {
+        "id": str(f["_id"]),
+        "subject": f.get("subject", ""),
+        "message": f.get("message", ""),
+        "status": f.get("status", "open"),
+        "admin_reply": f.get("admin_reply"),
+        "admin_replied_at": _iso(f.get("admin_replied_at")),
+        "created_at": _iso(f["created_at"]),
+        "user_name": f.get("user_name"),
+        "user_phone": f.get("user_phone"),
+    }
+
+
+class FeedbackCreate(BaseModel):
+    subject: str = Field(..., min_length=2, max_length=120)
+    message: str = Field(..., min_length=3, max_length=2000)
+
+
+@router.post("", status_code=201)
+async def submit_feedback(body: FeedbackCreate, user=Depends(current_user)):
+    """Mtumiaji anatuma maoni/malalamiko yake kwa admin."""
+    db = get_db()
+    now = datetime.now(timezone.utc)
+    doc = {
+        "user_id": str(user["_id"]),
+        "user_name": user.get("full_name", ""),
+        "user_phone": user.get("phone_primary"),
+        "subject": body.subject.strip(),
+        "message": body.message.strip(),
+        "status": "open",
+        "admin_reply": None,
+        "admin_replied_at": None,
+        "created_at": now,
+    }
+    r = await db.feedback.insert_one(doc)
+    fid = str(r.inserted_id)
+    # Real-time: admin anajulishwa PAPO HAPO (WS) — maoni mapya yanaonekana
+    # kwenye page ya admin bila refresh. Pia tunahifadhi kwenye DB ili admin
+    # apate badge ya unread hata akiwa offline (kama malipo).
+    from datetime import timezone as _tz
+    admins = [str(u["_id"]) async for u in db.users.find({"is_admin": True}, {"_id": 1})]
+    out = _out(doc)
+    notif_body = f"{doc.get('subject', '')} — {doc.get('user_name', '')}"
+    for aid in admins:
+        notif_doc = {
+            "user_id": aid, "type": "feedback.new",
+            "title": "Maoni mapya ya mtumiaji",
+            "body": notif_body,
+            "data": {"feedback_id": fid},
+            "read": False, "created_at": now,
+        }
+        ins = await db.notifications.insert_one(notif_doc)
+        await manager.send_to_user(aid, {
+            "event": "notification",
+            "notification_id": str(ins.inserted_id),
+            "type": "feedback.new",
+            "title": "Maoni mapya ya mtumiaji",
+            "body": notif_body,
+            "data": {"type": "feedback.new", "feedback_id": fid},
+            "feedback": out,
+            "occurred_at": now.isoformat(),
+        })
+        # FCM push — admin apate arifa hata app ikiwa imefungwa (kama malipo).
+        #WS-FCM: background task — isisubiri (fast-fire-and-forget)
+        import asyncio
+        asyncio.create_task(send_push_to_user(
+            aid, "Maoni mapya ya mtumiaji", notif_body,
+            {"type": "feedback.new", "feedback_id": fid},
+        ))
+    return out
+
+
+@router.get("/my")
+async def my_feedback(user=Depends(current_user), limit: int = Query(50, le=200)):
+    """Maoni yangu + majibu ya admin."""
+    db = get_db()
+    q = {"user_id": str(user["_id"])}
+    cur = db.feedback.find(q).sort("created_at", -1).limit(limit)
+    return {"total": await db.feedback.count_documents(q), "items": [_out(f) async for f in cur]}
+
+
+# ─── Admin ────────────────────────────────────────────
+
+
+class FeedbackReply(BaseModel):
+    reply: str = Field(..., min_length=1, max_length=2000)
+
+
+@router.get("/admin/all")
+async def admin_list_feedback(_=Depends(current_admin), status: str = Query(""),
+                              q: str = Query(""), limit: int = Query(100, le=500)):
+    """Admin anaona maoni yote (open/replied) + anaweza kufuta.\n\n    Real-time: `feedback.new` WS event inamjulisha admin papo hapo bila refresh."""
+    db = get_db()
+    qd: dict = {}
+    if status:
+        qd["status"] = status
+    if q:
+        qd["$or"] = [
+            {"subject": {"$regex": q, "$options": "i"}},
+            {"message": {"$regex": q, "$options": "i"}},
+            {"user_name": {"$regex": q, "$options": "i"}},
+        ]
+    total = await db.feedback.count_documents(qd)
+    cur = db.feedback.find(qd).sort("created_at", -1).limit(limit)
+    items = [_out(f) async for f in cur]
+    counts = {}
+    async for r in db.feedback.aggregate([{"$group": {"_id": "$status", "n": {"$sum": 1}}}]):
+        counts[r["_id"]] = r["n"]
+    return {"total": total, "items": items,
+            "counts": {"open": counts.get("open", 0), "replied": counts.get("replied", 0)}}
+
+
+@router.post("/admin/{feedback_id}/reply")
+async def admin_reply(feedback_id: str, body: FeedbackReply, _=Depends(current_admin)):
+    """Admin anamjibu mtumiaji — jibu linaonekana kwenye maoni yake PAPO HAPO
+    (WS `feedback.replied` inamfikia mtumiaji bila refresh)."""
+    db = get_db()
+    try:
+        fid = ObjectId(feedback_id)
+    except Exception:
+        raise HTTPException(400, "Invalid feedback ID")
+    now = datetime.now(timezone.utc)
+    f = await db.feedback.find_one({"_id": fid})
+    if not f:
+        raise HTTPException(404, "Maoni hayapo")
+    await db.feedback.update_one(
+        {"_id": fid},
+        {"$set": {"status": "replied", "admin_reply": body.reply.strip(),
+                  "admin_replied_at": now, "replied_at": now}},
+    )
+    # Real-time kwa mtumiaji: jibu linaonekana PAPO HAPO (bila refresh).
+    # Pia tunahifadhi kwenye DB ili mtumiaji apate badge ya unread.
+    notif_doc = {
+        "user_id": f["user_id"], "type": "feedback.replied",
+        "title": "Jibu la Admin kwenye maoni yako",
+        "body": body.reply.strip()[:120],
+        "data": {"feedback_id": feedback_id},
+        "read": False, "created_at": now,
+    }
+    ins = await db.notifications.insert_one(notif_doc)
+    await manager.send_to_user(f["user_id"], {
+        "event": "notification",
+        "notification_id": str(ins.inserted_id),
+        "type": "feedback.replied",
+        "title": "Jibu la Admin kwenye maoni yako",
+        "body": body.reply.strip()[:120],
+        "data": {"type": "feedback.replied", "feedback_id": feedback_id},
+        "feedback": _out({**f, "status": "replied", "admin_reply": body.reply.strip(),
+                          "admin_replied_at": now}),
+        "occurred_at": now.isoformat(),
+    })
+    # FCM push — mtumiaji apate arifa hata app ikiwa imefungwa.
+    import asyncio
+    asyncio.create_task(send_push_to_user(
+        f["user_id"], "Jibu la Admin kwenye maoni yako",
+        body.reply.strip()[:120],
+        {"type": "feedback.replied", "feedback_id": feedback_id},
+    ))
+    return {"ok": True}
+
+
+@router.delete("/admin/{feedback_id}")
+async def admin_delete_feedback(feedback_id: str, _=Depends(current_admin)):
+    try:
+        fid = ObjectId(feedback_id)
+    except Exception:
+        raise HTTPException(400, "Invalid feedback ID")
+    r = await get_db().feedback.delete_one({"_id": fid})
+    if not r.deleted_count:
+        raise HTTPException(404, "Maoni hayapo")
+    return {"ok": True, "deleted": feedback_id}

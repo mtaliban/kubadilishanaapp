@@ -1,0 +1,61 @@
+════════════════════════════════════════════════════════════════
+ MWONGOZO RAHISI — SASISHA BACKEND KWENDA EC2 (dakika 5)
+════════════════════════════════════════════════════════════════
+
+NACHOTAKIWA:
+ Nakopya faili 6 zilizo hapa (backend_files/) kwenda EC2, halafu
+ uzime service. HAKUNA API, HAKUNA SMS, HAKUNA FUNUO zaidi.
+
+ Faili 6 ni hizi:
+   app/modules/auth/routes.py
+   app/modules/feedback/routes.py
+   app/modules/matches/routes.py
+   app/events/subscriber.py
+   app/services/fcm.py
+
+ NJIA YA 1 — Kama unatumia Termius / Putty / WinSCP:
+   1. Fungua WinSCP (au SFTP yoyote). Ingia EC2 kwa
+      username + password/key zako za kawaida.
+   2. Pande kushoto (kompyuta yako), ingia kwenye folda
+      ya project hii, fungua backend_files/.
+   3. Pande kulia (EC2), ingia kwenye folda ya backend yako
+      (ile yenye app/ na requirements.txt).
+   4. Kopya faili zote 5 hapo juu — kila moja ichukue nafasi
+      ya ile ya zamani (Overwrite = Ndiyo).
+   5. Kwenye terminal ya EC2, endesha:
+         sudo systemctl restart kv_backend
+      (au jina la service yako kama si hilo; kama unatumia
+      docker: sudo docker restart kv_backend)
+   6. I METAYE. Hakuna kitu kingine.
+
+ NJIA YA 2 — Kama unatumia terminal/ssh pekee:
+   Kwenye kompyuta yako (haipo EC2):
+     scp backend_files/app/modules/auth/routes.py \
+         user@16-171-23-21:/path/ya/backend/app/modules/auth/
+     scp backend_files/app/modules/feedback/routes.py \
+         user@16-171-23-21:/path/ya/backend/app/modules/feedback/
+     scp backend_files/app/modules/matches/routes.py \
+         user@16-171-23-21:/path/ya/backend/app/modules/matches/
+     scp backend_files/app/events/subscriber.py \
+         user@16-171-23-21:/path/ya/backend/app/events/
+     scp backend_files/app/services/fcm.py \
+         user@16-171-23-21:/path/ya/backend/app/services/
+
+   Kwenye EC2:
+     sudo systemctl restart kv_backend
+
+JINSI YA KUJUA IMEFANYIKA:
+  1. Fungua app (APK mpya kutoka GitHub Actions ya commit dea3a72).
+  2. Ingia kwa namba yako — INAINGIA MARA MOJA, bila code.
+  3. Tuma maoni — admin anapata arifa kama WhatsApp (juu ya simu
+     + mlio), kama app iko foreground au background.
+  4. Admin akipokea malipo — mtumiaji anapata arifa vile vile.
+
+KAMA APP HAIJAFANYA KAZI BAADA YA HII:
+  - Hakikisha APK ni MPYA (iOS: build ya sasa; Android: artifacts ya dea3a72).
+  - Angalia logs:  sudo journalctl -u kv_backend -n 50
+
+════════════════════════════════════════════════════════════════
+ HAKUNA SMS. HAKUNA API YA SMS. USERS: NAMBA TU.
+ ADMIN: EMAIL + CODE (kama awali). ARIFA: FCM PUSH (kama WhatsApp).
+════════════════════════════════════════════════════════════════
