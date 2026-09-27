@@ -130,22 +130,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(
-                  color: _kBlue50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
-                ),
-                child: const Icon(Icons.notifications_rounded, size: 20, color: _kBlue),
-              ),
-              const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Arifa Zako',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900)),
+                // Kichwa kikubwa 'Arifa' (kama design ya mwisho)
+                const Text('Arifa',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: _kGrey900)),
                 Text(unread > 0 ? '$unread hazijasomwa' : 'Zote zimesomwa',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     color: unread > 0 ? _kBlue : _kGrey500,
                     fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.normal,
                   )),
@@ -238,31 +229,43 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                       // Icon circle
                                       Container(
-                                        width: 44, height: 44,
+                                        width: 46, height: 46,
                                         decoration: BoxDecoration(
                                           color: bgColor,
                                           shape: BoxShape.circle,
-                                          border: Border.all(color: bdColor),
                                         ),
-                                        child: Center(child: Icon(iconData, size: 20, color: iconColor)),
+                                        child: Center(child: Icon(iconData, size: 22, color: iconColor)),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                        Row(children: [
+                                        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                           Expanded(child: Text(
                                             title,
                                             style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: read ? FontWeight.w500 : FontWeight.w700,
+                                              fontSize: 14.5,
+                                              fontWeight: read ? FontWeight.w600 : FontWeight.w800,
                                               color: _kGrey900,
+                                              height: 1.25,
                                             ),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                           )),
+                                          if (_shortTime(n['created_at'] ?? '').isNotEmpty)
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 8, top: 2),
+                                              child: Text(
+                                                _shortTime(n['created_at'] ?? ''),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: read ? _kGrey400 : _kBlue,
+                                                ),
+                                              ),
+                                            ),
                                           if (!read)
                                             Container(
                                               width: 8, height: 8,
-                                              margin: const EdgeInsets.only(left: 8, top: 3),
+                                              margin: const EdgeInsets.only(left: 8, top: 5),
                                               decoration: const BoxDecoration(
                                                 shape: BoxShape.circle,
                                                 color: _kBlue,
@@ -272,16 +275,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                         if (body.isNotEmpty) ...[
                                           const SizedBox(height: 4),
                                           Text(body,
-                                            style: const TextStyle(fontSize: 12, color: _kGrey500),
+                                            style: const TextStyle(fontSize: 13, color: _kGrey500, height: 1.35),
                                             maxLines: 2, overflow: TextOverflow.ellipsis),
-                                        ],
-                                        if (ago.isNotEmpty) ...[
-                                          const SizedBox(height: 6),
-                                          Row(children: [
-                                            const Icon(Icons.schedule_rounded, size: 11, color: _kGrey400),
-                                            const SizedBox(width: 4),
-                                            Text(ago, style: const TextStyle(fontSize: 11, color: _kGrey400)),
-                                          ]),
                                         ],
                                       ])),
                                     ]),
@@ -320,6 +315,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       default:
         return (Icons.notifications_rounded, _kBlue, _kBlue50, _kBlue.withValues(alpha: 0.2));
     }
+  }
+
+  /// Muda mfupi wa kulia ya kichwa — '10:32' (leo), 'Jana', '27 Sep' (zamani)
+  String _shortTime(String iso) {
+    if (iso.isEmpty) return '';
+    try {
+      final d = DateTime.parse(iso).toLocal();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final that = DateTime(d.year, d.month, d.day);
+      final diffDays = today.difference(that).inDays;
+      final hh = d.hour.toString().padLeft(2, '0');
+      final mm = d.minute.toString().padLeft(2, '0');
+      if (diffDays == 0) return '$hh:$mm';
+      if (diffDays == 1) return 'Jana';
+      const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ago','Sep','Okt','Nov','Des'];
+      return '${d.day} ${months[d.month - 1]}';
+    } catch (_) { return ''; }
   }
 
   String _timeAgo(String iso) {
