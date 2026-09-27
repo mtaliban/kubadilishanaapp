@@ -80,7 +80,17 @@ class _LoginScreenState extends State<LoginScreen> {
     if (auth.otpRequired) {
       // SECURITY: hatua 2 — code ya SMS imetumwa kwa namba hii; hakuna
       // token bila uthibitisho (login ya namba TU ilikuwa attack).
-      setState(() { _twoFAEmail = null; _otpCtrl.clear(); });
+      // DEV: kama server imerudisha dev_code (SMS haijasanidiwa kwenye
+      // server), tunaiweka moja kwa moja kwenye box — mtumiaji bado anaingia.
+      setState(() {
+        _twoFAEmail = null;
+        _otpCtrl.clear();
+        if (auth.pendingDevCode != null) {
+          _otpCtrl.text = auth.pendingDevCode!;
+          _error = 'SMS haijasanidiwa kwenye server — code yako ni: ${auth.pendingDevCode} '
+              '(weka AT_USERNAME/AT_API_KEY kwenye EC2 kupata SMS halisi)';
+        }
+      });
     } else if (auth.pendingAdminEmail != null) {
       // Admin 2FA (email kutoka fomu hii au admin-login) — OTP input
       setState(() => _twoFAEmail = auth.pendingAdminEmail);
@@ -124,6 +134,22 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() { _twoFAEmail = null; _otpCtrl.clear(); _error = null; _errorIsNetwork = false; });
     auth.pendingAdminEmail = null;
     auth.pendingOtpPhone = null;
+  }
+
+  // ── Tuma tena SMS code — namba ile ile, code mpya ──
+  Future<void> _resendOtp() async {
+    final auth = context.read<AuthProvider>();
+    final phone = auth.pendingOtpPhone;
+    if (phone == null || _otpLoading) return;
+    setState(() { _error = null; _errorIsNetwork = false; });
+    await auth.login(phone);
+    if (!mounted) return;
+    if (auth.pendingDevCode != null) {
+      setState(() {
+        _otpCtrl.text = auth.pendingDevCode!;
+        _error = 'SMS haijasanidiwa kwenye server — code yako ni: ${auth.pendingDevCode}';
+      });
+    }
   }
 
   @override
@@ -478,7 +504,23 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
 
-                          // ── "Sahau namba yako?" — NDANI ya card, mt-3, text-center text-xs text-grey-500 ──
+                          // ── Refresh: tuma code mpya ya SMS (code imepotea/imekwisha muda) ──
+                          if (auth.otpRequired)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: _otpLoading ? null : _resendOtp,
+                                icon: Icon(PhosphorIcons.arrowClockwise(), size: 14),
+                                label: const Text('Tuma code mpya',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF1E40AF),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              ),
+                            ),
                           const SizedBox(height: 12), // mt-3
                           Center(
                             child: GestureDetector(

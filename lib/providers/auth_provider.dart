@@ -101,6 +101,10 @@ class AuthProvider extends ChangeNotifier {
 
   /// SECURITY: kuingia kwa simu — namba inayosubiri code ya SMS (hatua ya 2).
   String? pendingOtpPhone;
+
+  /// DEV FALLBACK: server SMS haiipo — imerudisha code hapa ili itweke
+  /// moja kwa moja kwenye box ya OTP (bila hii mtumiaji hawezi kuingia).
+  String? pendingDevCode;
   bool get otpRequired => pendingOtpPhone != null;
 
   AuthUser? get user => _user;
@@ -132,6 +136,7 @@ class AuthProvider extends ChangeNotifier {
     _loading = true;
     _error = null;
     _errorIsNetwork = false;
+    pendingDevCode = null;
     notifyListeners();
     try {
       final res = await _api.login(phone, password: password);
@@ -146,6 +151,10 @@ class AuthProvider extends ChangeNotifier {
         } else {
           pendingOtpPhone = phone;
           pendingAdminEmail = null;
+          // DEV: SMS haijasanidiwa/haikufika server-side — code imerudishwa
+          // hapa (inawekwa moja kwa moja kwenye box ya OTP kwenye screen).
+          final devCode = data['dev_code']?.toString();
+          if (devCode != null && devCode.isNotEmpty) pendingDevCode = devCode;
         }
         _loading = false;
         notifyListeners();
@@ -154,7 +163,8 @@ class AuthProvider extends ChangeNotifier {
       // SECURITY: server yenye fix HAIRUDISHI token moja kwa moja kwa namba
       // ya simu. Kama token ingewasili (server ya kale), TUNAIKATAA — kuingia
       // bila uthibitisho wa SMS ni attack (mtu asiye mmiliki angeingia).
-      _error = 'Namba imekubalika — weka code ya SMS uliyotumiwa ili kuingia';
+      _error =
+          'Kosa la usalama: server hairudishi 2FA. Hakikisha backend ni ya karibuni.';
       _loading = false;
       notifyListeners();
       return false;
@@ -257,6 +267,7 @@ class AuthProvider extends ChangeNotifier {
       _user = AuthUser.fromJson(data);
       _setupRealtime();
       pendingOtpPhone = null;
+      pendingDevCode = null;
       _loading = false;
       notifyListeners();
       return true;
