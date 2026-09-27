@@ -245,8 +245,8 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// SECURITY: hatua ya 2 ya kuingia kwa simu — thibitisha code ya SMS
-  /// uliyotumwa; token inatolewa na server BAADA ya uthibitisho tu.
+  /// (LEGACY) Hatua ya 2 ya kuingia kwa namba — server za kale pekee.
+  /// Users wa sasa wanaingia kwa namba moja kwa moja (hakuna code).
   Future<bool> verifyOtp(String code) async {
     final phone = pendingOtpPhone;
     if (phone == null) return false;
@@ -420,7 +420,7 @@ class AuthProvider extends ChangeNotifier {
     if (s.contains('403')) return 'Hauruhusiwi kuingia';
     if (s.contains('422')) return 'Taarifa zilizowekwa si sahihi';
     if (s.contains('500')) return 'Hitilafu ya server — jaribu tena';
-    if (s.contains('503')) return 'Huduma ya uthibitisho (SMS) bado haiwashi — jaribu tena baada ya kidogo';
+    if (s.contains('503')) return 'Huduma bado haijaandaliwa — jaribu tena baada ya kidogo';
     return 'Namba ya simu au password si sahihi. Tafadhali kagua na ujaribu tena.';
   }
 }

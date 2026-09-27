@@ -92,18 +92,14 @@ class _LoginScreenState extends State<LoginScreen> {
     if (code.length != 6 || _otpLoading) return;
     setState(() { _otpLoading = true; _error = null; _errorIsNetwork = false; });
     final auth = context.read<AuthProvider>();
-    // Simu (SMS OTP ya mtumiaji) AU email (2FA ya admin) — server inatofautisha.
-    final identifier = auth.pendingOtpPhone ?? _twoFAEmail;
+    // 2FA ya ADMIN (email) pekee — users wanaingia kwa namba moja kwa moja.
+    final identifier = _twoFAEmail;
     if (identifier == null) {
       setState(() => _otpLoading = false);
       return;
     }
-    final bool ok;
-    if (identifier == auth.pendingOtpPhone) {
-      ok = await auth.verifyOtp(code);
-    } else {
-      ok = await auth.adminLoginOtp(identifier, code);
-    }
+    // Admin pekee — 2FA ya email.
+    final ok = await auth.adminLoginOtp(identifier, code);
     if (mounted) {
       setState(() => _otpLoading = false);
       if (ok) {
@@ -363,7 +359,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                           ),
                                           TextSpan(
-                                            text: _twoFAEmail ?? 'namba yako ya simu (SMS)',
+                                            text: _twoFAEmail ?? 'barua pepe yako',
                                             style: const TextStyle(fontWeight: FontWeight.bold), // <strong>
                                           ),
                                           const TextSpan(
@@ -388,7 +384,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           // SEHEMU MOJA: btn-primary "Ingia" AU OTP input — pale pale
                           // Kama web: {!twoFA ? <button> : <div class="relative">input+X+spinner</div>}
                           // SECURITY: OTP input pia inaonekana kwa kuingia kwa simu
-                          // (code ya SMS) — sio admin pekee tena.
+                          // (code ya email) — 2FA ni ya admin pekee.
                           // ═══════════════════════════════════════════════════════
                           if (_twoFAEmail == null && !auth.otpRequired)
                             // ── btn-primary w-full — bg-brand-blue rounded-md px-3 py-1 text-[11px] font-bold ──
