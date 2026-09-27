@@ -77,23 +77,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final ok = await auth.login(val);
     if (!mounted) return;
 
-    if (auth.otpRequired) {
-      // SECURITY: hatua 2 — code ya SMS imetumwa kwa namba hii; hakuna
-      // token bila uthibitisho (login ya namba TU ilikuwa attack).
-      // DEV: kama server imerudisha dev_code (SMS haijasanidiwa kwenye
-      // server), tunaiweka moja kwa moja kwenye box — mtumiaji bado anaingia.
-      setState(() {
-        _twoFAEmail = null;
-        _otpCtrl.clear();
-        if (auth.pendingDevCode != null) {
-          _otpCtrl.text = auth.pendingDevCode!;
-          _error = 'SMS haijasanidiwa kwenye server — code yako ni: ${auth.pendingDevCode} '
-              '(weka AT_USERNAME/AT_API_KEY kwenye EC2 kupata SMS halisi)';
-        }
-      });
-    } else if (auth.pendingAdminEmail != null) {
-      // Admin 2FA (email kutoka fomu hii au admin-login) — OTP input
-      setState(() => _twoFAEmail = auth.pendingAdminEmail);
+    if (auth.otpRequired || auth.pendingAdminEmail != null) {
+      // 2FA — OTP box inaonekana (kwa sasa: admin email tu).
+      setState(() { _twoFAEmail = auth.pendingAdminEmail; _otpCtrl.clear(); });
     } else if (ok) {
       Navigator.pushReplacementNamed(context, auth.isAdmin ? '/admin' : '/dashboard');
     } else if (auth.error != null) {
@@ -136,20 +122,13 @@ class _LoginScreenState extends State<LoginScreen> {
     auth.pendingOtpPhone = null;
   }
 
-  // ── Tuma tena SMS code — namba ile ile, code mpya ──
+  // ── Tuma tena code ya 2FA (admin email) ──
   Future<void> _resendOtp() async {
     final auth = context.read<AuthProvider>();
-    final phone = auth.pendingOtpPhone;
-    if (phone == null || _otpLoading) return;
+    final email = _twoFAEmail;
+    if (email == null || _otpLoading) return;
     setState(() { _error = null; _errorIsNetwork = false; });
-    await auth.login(phone);
-    if (!mounted) return;
-    if (auth.pendingDevCode != null) {
-      setState(() {
-        _otpCtrl.text = auth.pendingDevCode!;
-        _error = 'SMS haijasanidiwa kwenye server — code yako ni: ${auth.pendingDevCode}';
-      });
-    }
+    await auth.login(email);
   }
 
   @override
@@ -504,8 +483,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
 
-                          // ── Refresh: tuma code mpya ya SMS (code imepotea/imekwisha muda) ──
-                          if (auth.otpRequired)
+                          // ── Refresh: tuma code mpya ya 2FA (email ya admin) ──
+                          if (_twoFAEmail != null)
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton.icon(

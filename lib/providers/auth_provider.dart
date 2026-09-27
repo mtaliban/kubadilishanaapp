@@ -99,12 +99,10 @@ class AuthProvider extends ChangeNotifier {
   /// Admin 2FA: email inayosubiri OTP.
   String? pendingAdminEmail;
 
-  /// SECURITY: kuingia kwa simu — namba inayosubiri code ya SMS (hatua ya 2).
+  /// SECURITY: kuingia kwa simu — namba inayosubiri code (hatua ya 2).
+  /// (Kwa sasa users wanaingia kwa namba moja kwa moja; inabaki kwa uoegano
+  /// na server za kale.)
   String? pendingOtpPhone;
-
-  /// DEV FALLBACK: server SMS haiipo — imerudisha code hapa ili itweke
-  /// moja kwa moja kwenye box ya OTP (bila hii mtumiaji hawezi kuingia).
-  String? pendingDevCode;
   bool get otpRequired => pendingOtpPhone != null;
 
   AuthUser? get user => _user;
@@ -136,38 +134,41 @@ class AuthProvider extends ChangeNotifier {
     _loading = true;
     _error = null;
     _errorIsNetwork = false;
-    pendingDevCode = null;
     notifyListeners();
     try {
       final res = await _api.login(phone, password: password);
       final data = asMap(res.data);
-      if (data['two_factor_required'] == true) {
-        // SECURITY: hatua 1/2 — OTP imetumwa; hakuna token bado.
-        // Email (admin 2FA) na simu (SMS OTP) zinabaguliwa — verifyOtp ni ya
-        // SIMU pelee; email inaingia kupitia adminLoginOtp(identifier+email).
+      // Admin (email) tu ndiye anatumia 2FA — users wanaingia kwa namba moja
+      // kwa moja (token inarudi mara moja, kama zamani).
+      if (data['two_factor_required'] == true && data['access_token'] == null) {
         if (phone.contains('@')) {
           pendingAdminEmail = data['email'] as String? ?? phone;
           pendingOtpPhone = null;
-        } else {
-          pendingOtpPhone = phone;
-          pendingAdminEmail = null;
-          // DEV: SMS haijasanidiwa/haikufika server-side — code imerudishwa
-          // hapa (inawekwa moja kwa moja kwenye box ya OTP kwenye screen).
-          final devCode = data['dev_code']?.toString();
-          if (devCode != null && devCode.isNotEmpty) pendingDevCode = devCode;
+          _loading = false;
+          notifyListeners();
+          return false; // → OTP box ya email kwenye screen
         }
+      }
+      // Login ya moja kwa moja: token ipo → ingia mara moja.
+      final token = data['access_token'] as String?;
+      if (token == null) {
+        // two_factor_required bila token kwa NAMBA = server ya kale (SMS OTP)
+        // ambayo haijasasishwa EC2.
+        _error = phone.contains('@')
+            ? 'Jibu lisilo la kawaida kutoka server'
+            : 'Server bado iko kwenye version ya kale — sasisha backend (copy backend_files/ kwenda EC2) kuingia kwa namba';
         _loading = false;
         notifyListeners();
         return false;
       }
-      // SECURITY: server yenye fix HAIRUDISHI token moja kwa moja kwa namba
-      // ya simu. Kama token ingewasili (server ya kale), TUNAIKATAA — kuingia
-      // bila uthibitisho wa SMS ni attack (mtu asiye mmiliki angeingia).
-      _error =
-          'Kosa la usalama: server hairudishi 2FA. Hakikisha backend ni ya karibuni.';
+      await _api.saveToken(token);
+      _user = AuthUser.fromJson(data);
+      _setupRealtime();
+      pendingOtpPhone = null;
+      pendingAdminEmail = null;
       _loading = false;
       notifyListeners();
-      return false;
+      return true;
     } catch (e) {
       _errorIsNetwork = _isNetworkError(e);
       _error = _errorIsNetwork
@@ -267,7 +268,6 @@ class AuthProvider extends ChangeNotifier {
       _user = AuthUser.fromJson(data);
       _setupRealtime();
       pendingOtpPhone = null;
-      pendingDevCode = null;
       _loading = false;
       notifyListeners();
       return true;

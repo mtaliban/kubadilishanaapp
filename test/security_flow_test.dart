@@ -1,14 +1,14 @@
 // ============================================================================
 // test/security_flow_test.dart
-// TESTING YA USALAMA (security regression) — attacks zilizogunduliwa na
-// kurekebishwa kwenye mfumo:
-//   1. AUTH BYPASS (kubwa kuliko zote): login ya simu ilikuwa inarudisha
-//      token kwa NAMBA TU — mtu asiye mmiliki angeingia akaunti yoyote!
-//      Sasa: code ya SMS inahitajika (hatua 2) — token BAADA ya uthibitisho.
-//   2. OTP brute-force: majaribio 5 yasiyo sahihi → 429.
-//   3. OTP inatumika MARA MOJA (replay hairuhusiwi).
-//   4. User enumeration: lookup-by-name huficha namba za wasiothibitishwa.
-//   5. CORS: origin ya kigeni HAIRUHIWSHI (access-control-allow-origin).
+// TESTING YA USALAMA (security regression) — mtiririko wa kuingia:
+//   1. USERS: kuingia kwa NAMBA tu — token inarudi MARA MOJA (kama zamani).
+//      (Uamuzi wa mmiliki: hakuna OTP ya SMS kwa users — arifa ni PUSH ya
+//      FCM kama WhatsApp, siyo SMS.)
+//   2. ADMIN: 2FA ya EMAIL pekee — code ya tarakimu 6 inatumwa kwa email;
+//      token inatolewa na /auth/login/2fa BAADA ya kuthibitisha.
+//   3. OTP brute-force: majaribio 5 yasiyo sahihi → 429.
+//   4. OTP inatumika MARA MOJA (replay hairuhusiwi).
+//   5. User enumeration: lookup-by-name huficha namba za wasiothibitishwa.
 //   6. openapi.json SI wazi kwa umma (attacker haoni routes zote).
 // ============================================================================
 import 'dart:convert';
@@ -77,28 +77,27 @@ class _SecurityRoutes extends FakeApiAdapter {
       return decoded is Map<String, dynamic> ? decoded : {};
     }
 
-    // ── 1. LOGIN: simu → OTP (HAKUNA token!) ──
+    // ── 1. LOGIN: namba → token MARA MOJA; email (admin) → 2FA ya email ──
     if (path == '/auth/login' && options.method == 'POST') {
       final body = await parseBody();
       bodies['POST /auth/login'] = body;
       final identifier = '${body['phone'] ?? ''}';
       if (identifier.isEmpty) return _json({'detail': '422'}, 422);
       if (identifier.contains('@')) {
-        // Admin — 2FA ya email
+        // ADMIN — 2FA ya email pekee: OTP "inatumwa" (fake inaihifadhi hash).
+        otpHash = _hash(kOtp);
+        otpAttempts = 0;
+        otpUsed = false;
         return _json({'two_factor_required': true, 'email': identifier});
       }
-      otpHash = _hash(kOtp);
-      otpAttempts = 0;
-      otpUsed = false;
-      // SECURITY: hakuna access_token hapa — SMS OTP inahitajika.
+      // USER wa kawaida — token inarudi MARA MOJA (kama zamani).
       return _json({
-        'two_factor_required': true,
-        'phone': identifier,
-        'message': 'Code ya uthibitisho imetumwa kwa $identifier.',
+        ...Map<String, dynamic>.from(fakeMe),
+        'access_token': 'token-moja-kwa-moja',
       });
     }
 
-    // ── 2. VERIFY OTP (simu AU email) — token BAADA ya uthibitisho ──
+    // ── 2. VERIFY OTP (admin email) — token BAADA ya uthibitisho ──
     if (path == '/auth/login/2fa' && options.method == 'POST') {
       final body = await parseBody();
       bodies['POST /auth/login/2fa'] = body;
@@ -180,68 +179,76 @@ void main() {
     AppCache().clear();
   });
 
-  group('1. AUTH BYPASS (attack kubwa) — login ya simu ni hatua 2 sasa', () {
-    test('POST /auth/login kwa namba HAIRUDISHI token — OTP inahitajika',
-        () async {
+  group('1. LOGIN YA MOJA KWA MOJA — namba → token mara moja (kama zamani)', () {
+    test('POST /auth/login kwa namba inarudisha token MARA MOJA', () async {
       final res = await api.login('0757502446');
       final data = asMap(res.data);
 
-      expect(data['two_factor_required'], isTrue,
-          reason: 'SECURITY: hatua 2 inahitajika (SMS OTP)');
-      expect(data.containsKey('access_token'), isFalse,
-          reason: 'TOKEN HAIRUDISHWI kwa namba tu — mtu asiye mmiliki '
-              'angeingia akaunti yoyote aliyoiua namba yake!');
+      expect(data['access_token'], isNotNull,
+          reason: 'Users wanaingia kwa namba tu — hakuna OTP ya SMS');
+      expect(data.containsKey('two_factor_required'), isFalse,
+          reason: 'Hakuna hatua ya 2 kwa users');
       expect(routes.bodies['POST /auth/login']!['phone'], '0757502446');
     });
 
-    test('AuthProvider.login inaashiria hatua ya 2 (pendingOtpPhone)',
-        () async {
+    test('AuthProvider.login kwa namba → session kamili papo hapo', () async {
       final auth = AuthProvider(api: api);
       final ok = await auth.login('0757502446');
-      expect(ok, isFalse, reason: 'Hakuna token — mtiririko bado haujakamilika');
-      expect(auth.pendingOtpPhone, '0757502446',
-          reason: 'UI lazima ionyeshe OTP input sasa');
-      expect(auth.pendingAdminEmail, isNull,
-          reason: 'Hii SI admin 2FA — ni SMS OTP ya mtumiaji');
-    });
-
-    test('Kuingia kwa code SAHIHI kunatoa token + session inahifadhiwa',
-        () async {
-      await api.login('0757502446'); // step 1
-      final auth = AuthProvider(api: api);
-      await auth.login('0757502446');
-
-      final ok = await auth.verifyOtp(_SecurityRoutes.kOtp);
-      expect(ok, isTrue, reason: 'Code sahihi → imeingia');
+      expect(ok, isTrue, reason: 'Token ipo → imeingia moja kwa moja');
       expect(auth.user, isNotNull);
       expect(auth.pendingOtpPhone, isNull);
+      expect(auth.pendingAdminEmail, isNull);
 
       // Token imehifadhiwa kwenye prefs (session persistence)
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('kv_token'), 'token-moja-kwa-moja');
+    });
+  });
+
+  group('2. ADMIN 2FA YA EMAIL — hatua 2 inahitajika kwa admin PEKEE', () {
+    test('admin kwa fomu kuu: email inaenda pendingAdminEmail, SI pendingOtpPhone',
+        () async {
+      final auth = AuthProvider(api: api);
+      final ok = await auth.login('admin@kubadilishana.co.tz');
+
+      expect(ok, isFalse, reason: 'Hakuna token — 2FA inasubiri code ya email');
+      expect(auth.pendingAdminEmail, 'admin@kubadilishana.co.tz',
+          reason: 'Email ya admin inaingia 2FA ya email (adminLoginOtp)');
+      expect(auth.pendingOtpPhone, isNull);
+      expect(auth.otpRequired, isFalse);
+    });
+
+    test('Code SAHIHI ya admin inatoa token + session inahifadhiwa', () async {
+      final auth = AuthProvider(api: api);
+      await auth.login('admin@kubadilishana.co.tz'); // step 1
+      final ok = await auth.adminLoginOtp(
+          'admin@kubadilishana.co.tz', _SecurityRoutes.kOtp);
+      expect(ok, isTrue, reason: 'Code sahihi → imeingia');
+      expect(auth.user, isNotNull);
+      expect(auth.pendingAdminEmail, isNull);
+
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('kv_token'), 'token-salama-baada-ya-otp');
     });
 
-    test('Code mbaya HAIRUHUSU kuingia (hakuna token)', () async {
-      await api.login('0757502446');
+    test('Code MBAYA HAIRUHUSU kuingia (hakuna token)', () async {
       final auth = AuthProvider(api: api);
-      await auth.login('0757502446');
-
-      final ok = await auth.verifyOtp('000000');
+      await auth.login('admin@kubadilishana.co.tz');
+      final ok = await auth.adminLoginOtp('admin@kubadilishana.co.tz', '000000');
       expect(ok, isFalse);
       expect(auth.error, isNotNull);
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('kv_token'), isNull,
-          reason: 'Hakuna session bila uthibitisho wa SMS');
+      expect(prefs.getString('kv_token'), isNull);
     });
 
     test('OTP brute-force: majaribio mengi → 429 (blocked)', () async {
-      await api.login('0757502446');
+      await api.login('admin@kubadilishana.co.tz');
       DioException? last;
       // Majaribio 5 ya kwanza → 400; ya sita (attempts >= 5) → 429.
       for (var i = 0; i < 6; i++) {
         try {
-          await api.verifyLoginOtp('0757502446', '99999$i'.substring(0, 6));
+          await api.adminLoginOtp('admin@kubadilishana.co.tz', '99999$i'.substring(0, 6));
         } on DioException catch (e) {
           last = e;
         }
@@ -251,22 +258,41 @@ void main() {
     });
 
     test('OTP inatumika MARA MOJA — replay hairuhusiwi', () async {
-      await api.login('0757502446');
-      final r1 = await api.verifyLoginOtp('0757502446', _SecurityRoutes.kOtp);
+      await api.login('admin@kubadilishana.co.tz');
+      final r1 = await api.adminLoginOtp(
+          'admin@kubadilishana.co.tz', _SecurityRoutes.kOtp);
       expect(r1.data['access_token'], isNotNull);
 
+      // OTP mpya kwa jaribio la replay (fake inahifadhi used flag kwa OTP moja)
+      routes.otpUsed = true;
       DioException? replay;
       try {
-        await api.verifyLoginOtp('0757502446', _SecurityRoutes.kOtp);
+        await api.adminLoginOtp('admin@kubadilishana.co.tz', _SecurityRoutes.kOtp);
       } on DioException catch (e) {
         replay = e;
       }
       expect(replay?.response?.statusCode, anyOf(400, 429),
           reason: 'Code ile ile HAIRUHUSU kuingia mara ya pili');
     });
+
+    test('OTP ya admin inatumwa na identifier+email — server YA KALE inaikubali',
+        () async {
+      await api.login('admin@kubadilishana.co.tz');
+      routes.otpUsed = true; // fake inaruhusu body kuwasilishwa tu
+      try {
+        await api.adminLoginOtp(
+            'admin@kubadilishana.co.tz', _SecurityRoutes.kOtp);
+      } on DioException catch (_) {}
+      final body = routes.bodies['POST /auth/login/2fa']!;
+      expect(body['email'], 'admin@kubadilishana.co.tz',
+          reason: 'Server ya KALE inasoma email — lazima iwe kwenye payload');
+      expect(body['identifier'], 'admin@kubadilishana.co.tz',
+          reason: 'Server MPYA inasoma identifier');
+      expect(body['code'], _SecurityRoutes.kOtp);
+    });
   });
 
-  group('2. USER ENUMERATION — lookup-by-name huficha namba', () {
+  group('3. USER ENUMERATION — lookup-by-name huficha namba', () {
     test('Namba ya mtumiaji asiyyethibitishwa inafichwa (***), phone_alt haipo',
         () async {
       final res = await api.post('/auth/lookup-by-name',
@@ -277,7 +303,7 @@ void main() {
       final u = users.first;
       expect(u['phone_primary'], contains('***'),
           reason: 'ANTI-ENUMERATION: namba kamili HAIONEKANI kwa mtu '
-              'asiyethibitisha umiliki (kuingia kunahitaji namba KAMILI + SMS)');
+              'asiyethibitisha umiliki');
       expect(u.containsKey('phone_alt'), isFalse,
           reason: 'Namba mbadala haionyeshwi kabisa');
     });
@@ -292,7 +318,7 @@ void main() {
     });
   });
 
-  group('3. HARDENING — docs wazi', () {
+  group('4. HARDENING — docs wazi', () {
     test('openapi.json inazuiwa (401) — attacker haoni routes zote', () async {
       // Fake ya security inawakilisha nginx guard ya production:
       // /openapi.json ni ya admin pekee.
@@ -303,64 +329,6 @@ void main() {
         expect(e.response?.statusCode, 401,
             reason: 'openapi.json HAIRUHUSU kwa mtu yeyote bila auth');
       }
-    });
-  });
-
-  group('4. ADMIN OTP KWA FOMU KUU — regression ya "Field required"', () {
-    test('admin kwa fomu kuu: email inaenda pendingAdminEmail, SI pendingOtpPhone',
-        () async {
-      final auth = AuthProvider(api: api);
-      await auth.login('admin@kubadilishana.co.tz');
-
-      expect(auth.pendingAdminEmail, 'admin@kubadilishana.co.tz',
-          reason: 'Email ya admin inaingia 2FA ya email (adminLoginOtp)');
-      expect(auth.pendingOtpPhone, isNull,
-          reason: 'pendingOtpPhone ni ya SMS OTP (simu) — si email');
-      expect(auth.otpRequired, isFalse,
-          reason: 'otpRequired inaashiria SMS OTP ya mtumiaji pekee');
-    });
-
-    test('OTP ya admin inatumwa na identifier+email — server YA KALE inaikubali',
-        () async {
-      await api.login('admin@kubadilishana.co.tz');
-      // Fake inatoa 400 (kOtp hash haiwekwi kwenye email branch) — tunapima
-      // PAYLOAD tu ndiyo itumwayo; 400 ya fake si kosa la payload.
-      try {
-        await api.adminLoginOtp(
-            'admin@kubadilishana.co.tz', _SecurityRoutes.kOtp);
-      } on DioException catch (_) {}
-      final body = routes.bodies['POST /auth/login/2fa']!;
-      expect(body['email'], 'admin@kubadilishana.co.tz',
-          reason: 'Server ya KALE inasoma email — lazima iwe kwenye payload');
-      expect(body['identifier'], 'admin@kubadilishana.co.tz',
-          reason: 'Server MPYA inasoma identifier');
-      expect(body['code'], _SecurityRoutes.kOtp);
-    });
-
-    test('OTP ya simu inatumwa na identifier+phone+email — server zote zinaihifadhi',
-        () async {
-      await api.login('0757502446');
-      try {
-        await api.verifyLoginOtp('0757502446', _SecurityRoutes.kOtp);
-      } on DioException catch (_) {
-        // fake inaweza kutoa 429 kama OTP imeumika — body ndiyo muhimu
-      }
-      final body = routes.bodies['POST /auth/login/2fa']!;
-      expect(body['identifier'], '0757502446',
-          reason: 'Server MPYA inasoma identifier');
-      expect(body['phone'], '0757502446',
-          reason: 'Server mpya inasoma phone pia');
-      expect(body['email'], '0757502446',
-          reason: 'Server ya KALE inasoma email — bila hii: 422 Field required');
-    });
-
-    test('verifyOtp (provider) inafanya kazi na phone pending — SMS flow kamili',
-        () async {
-      final auth = AuthProvider(api: api);
-      await auth.login('0757502446');
-      final ok = await auth.verifyOtp(_SecurityRoutes.kOtp);
-      expect(ok, isTrue);
-      expect(auth.user, isNotNull);
     });
   });
 }

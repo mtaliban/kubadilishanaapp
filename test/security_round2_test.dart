@@ -208,28 +208,26 @@ void main() {
     });
   });
 
-  group('4. OTP LOGIN REGRESSION — auth bypass fix bado imedumu', () {
-    test('login ya simu INAKATAA token moja kwa moja — 2FA required', () async {
+  group('4. LOGIN YA MOJA KWA MOJA — namba → token mara moja (kama zamani)', () {
+    test('login ya simu inaingia moja kwa moja — hakuna OTP ya SMS kwa users',
+        () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
 
-      // Server ya KALE ingetoa token hapa — app lazima ikatae (security fix).
-      final legacyServer = FakeApiAdapter(routes: {
+      final directServer = FakeApiAdapter(routes: {
         '/auth/login': {
           'access_token': 'token-moja-kwa-moja',
           'user_id': 'u1',
           'full_name': 'Thea Shirima',
         },
       });
-      ApiService.dioForTest(ApiService()).httpClientAdapter = legacyServer;
+      ApiService.dioForTest(ApiService()).httpClientAdapter = directServer;
 
       final auth = AuthProvider();
       final ok = await auth.login('0757502446');
 
-      expect(ok, isFalse,
-          reason: 'Login ya hatua moja lazima ikataliwe (SMS OTP ni lazima)');
-      expect(auth.isLoggedIn, isFalse,
-          reason: 'Hakuna session iliyoanzishwa');
-      expect(auth.error, isNotNull);
+      expect(ok, isTrue,
+          reason: 'Users wanaingia kwa namba tu — hakuna code ya SMS');
+      expect(auth.isLoggedIn, isTrue);
     });
   });
 }
