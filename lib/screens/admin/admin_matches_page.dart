@@ -30,8 +30,11 @@ class _P {
 
   static const teal = Color(0xFF1C5F56);
   static const tealTint = Color(0xFFE7F1EE);
+  static const mint = Color(0xFFDAEEE3); // avatar ya picha — mint iliyoiva
   static const blue = Color(0xFF1C64D1);
   static const blueTint = Color(0xFFE6EFFF);
+  static const blueSoft = Color(0xFFD9E7FC); // pills za mikoa — kama picha
+  static const blueTile = Color(0xFFCFE2FA); // tile/chip iliyochaguliwa
   static const green = Color(0xFF1F7A4D);
   static const greenTint = Color(0xFFDDF3E6);
   static const red = Color(0xFFC2503E);
@@ -650,7 +653,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: active ? _P.blueTint : Colors.white,
+      color: active ? _P.blueTile : Colors.white,
       shape: StadiumBorder(
         side: BorderSide(color: active ? Colors.transparent : _P.line),
       ),
@@ -832,7 +835,7 @@ class _OptionTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: selected ? _P.blueTint : Colors.transparent,
+        color: selected ? _P.blueTile : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -849,7 +852,7 @@ class _OptionTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon,
-                      size: 22, color: selected ? _P.blue : _P.inkSoft),
+                      size: 22, color: selected ? _P.blue : _P.ink),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
@@ -923,7 +926,7 @@ class _WenzaoCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: _P.tealTint,
+                backgroundColor: _P.mint,
                 child: Text(
                   _initials(name),
                   style: const TextStyle(
@@ -1081,7 +1084,7 @@ class _WenzaoCard extends StatelessWidget {
           if (phone.isNotEmpty)
             Row(
               children: [
-                const Icon(Icons.phone_outlined, size: 22, color: _P.inkSoft),
+                const Icon(Icons.phone_outlined, size: 22, color: _P.ink),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -1161,7 +1164,7 @@ class _RegionPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
       decoration: BoxDecoration(
-        color: muted ? Colors.white : _P.blueTint,
+        color: muted ? Colors.white : _P.blueSoft,
         borderRadius: BorderRadius.circular(999),
         border: muted ? Border.all(color: _P.line) : null,
       ),
@@ -1170,7 +1173,7 @@ class _RegionPill extends StatelessWidget {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: muted ? _P.inkSoft : _P.blue,
+          color: muted ? _P.ink : _P.blue,
         ),
       ),
     );
