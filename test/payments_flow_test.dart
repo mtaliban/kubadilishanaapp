@@ -419,9 +419,9 @@ void main() {
       // Jina na kiasi vinaonekana
       expect(find.textContaining('Thea Shirima'), findsWidgets);
       expect(find.textContaining('2,500'), findsWidgets);
-      // Vitufe vya uthibitisho/kukataa vipo
-      expect(find.widgetWithText(FilledButton, 'Thibitisha'), findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Kataa'), findsOneWidget);
+      // Vitufe vya uthibitisho/kukataa vipo (design mpya: vitufe vya ikoni + Tooltip)
+      expect(find.byTooltip('Thibitisha'), findsOneWidget);
+      expect(find.byTooltip('Kataa'), findsOneWidget);
     });
 
     testWidgets('approve dialog inafunguka na kuthibitisha kunabadilisha status',
@@ -438,8 +438,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Bonyeza kitufe cha kuthibitisha ("Thibitisha" — FilledButton ya kadi)
-      final approveBtn = find.widgetWithText(FilledButton, 'Thibitisha').first;
+      // Bonyeza kitufe cha kuthibitisha ("Thibitisha" — ikoni ya kadi, Tooltip)
+      final approveBtn = find.byTooltip('Thibitisha').first;
       await tester.tap(approveBtn);
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
@@ -472,17 +472,17 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Bonyeza kitufe cha kukataa ("Kataa" — OutlinedButton ya kadi)
-      final rejectBtn = find.widgetWithText(OutlinedButton, 'Kataa').first;
+      // Bonyeza kitufe cha kukataa ("Kataa" — ikoni ya kadi, Tooltip)
+      final rejectBtn = find.byTooltip('Kataa').first;
       await tester.tap(rejectBtn);
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Dialog ya kukataa — chagua sababu
-      expect(find.text('Kataa malipo haya?'), findsOneWidget);
+      // Dialog ya kukataa (design mpya: radio tiles) — chagua sababu
+      expect(find.text('Kataa malipo?'), findsOneWidget);
       await tester.tap(find.text('Pesa haijaingia'));
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Kataa'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Kataa'));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
