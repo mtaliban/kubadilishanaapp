@@ -1,44 +1,46 @@
 // ============================================================================
 // WALIOPATA WENZAO — watumiaji waliounganishwa na wenzao (matches)
 // ----------------------------------------------------------------------------
-// Design (palette ya paper — kama kadi za malipo na chat):
-//  - Header: icon badge (blue tint) + jina + hesabu + Live badge (green)
-//  - Filter chips: Mkoa wa Lengo / Idara / Kada / Kutoka → sheets za "Chagua…"
-//    zenye search + highlight ya bluu (selected = check)
-//  - Idara na Kada ni DYNAMIC kutoka DB (getDepartments/getCadres) — idara
-//    mpya (mf. Kilimo na Ufugaji) inaonekana yenyewe
-//  - Kadi: avatar + jina (title case) + idara·kada + badge ya malipo,
-//    njia ya safari (Anatoka ⭘→● Anataka kuja + pills za mikoa), simu + kitufe
-//    cha kupiga (tel:)
-//  - Pagination yenye dirisha la kurasa 5 + scroll-to-top
-// Data halisi: GET /admin/users/with-matches
+// DESIGN (imefanana na reference images — rangi na vipimo halisi):
+//  - Background NYEUPE; kadi nyeupe radius 20 + border laini
+//  - Avatar mint (0xFFBFEBDD) + text ya kijani-kivu (0xFF0B5D4B)
+//  - Badge: Amelipa (CBEBC8/0B6B1F) · Hajalipa (FADADD/B3261E)
+//  - Panel ya cream (F7F6F1): ⭘ Anatoka → ● Anataka kuja + pills (D3E3FB/1A4E9E)
+//  - Kitufe cha simu: bluu 52px radius 16 + phone_in_talk
+//  - Sheets: chaguliwe tile bluu (BFD9F9) + container NYEUPE 44px; nyingine
+//    container 36px + icon ya giza; search ya cream; icons maalum kila item
+// Data halisi: GET /admin/users/with-matches (+ regions/departments/cadres)
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
 
-// ── Rangi (zinaendana na muundo wa kadi za malipo na chat) ──────────────────
+// ── Rangi (kama reference images) ───────────────────────────────────────────
 class _P {
   static const ink = Color(0xFF142033);
   static const inkSoft = Color(0xFF5B6779);
   static const inkFaint = Color(0xFF93A0B3);
   static const line = Color(0xFFE6E0D2);
   static const lineStrong = Color(0xFFCFC8B8);
-  static const paper = Color(0xFFF3F0E9);
   static const panelTint = Color(0xFFF6F5F1);
+  static const cream = Color(0xFFF7F6F1); // panel ya Anatoka/Anataka
 
-  static const teal = Color(0xFF1C5F56);
-  static const tealTint = Color(0xFFE7F1EE);
-  static const mint = Color(0xFFDAEEE3); // avatar ya picha — mint iliyoiva
+  // Avatar ya mint (kama picha)
+  static const avatarBg = Color(0xFFBFEBDD);
+  static const avatarText = Color(0xFF0B5D4B);
+
   static const blue = Color(0xFF1C64D1);
-  static const blueTint = Color(0xFFE6EFFF);
-  static const blueSoft = Color(0xFFD9E7FC); // pills za mikoa — kama picha
-  static const blueTile = Color(0xFFCFE2FA); // tile/chip iliyochaguliwa
-  static const green = Color(0xFF1F7A4D);
-  static const greenTint = Color(0xFFDDF3E6);
-  static const red = Color(0xFFC2503E);
-  static const redTint = Color(0xFFFBE6E2);
+  static const blueTile = Color(0xFFBFD9F9); // tile/chip iliyochaguliwa
+  static const pillBg = Color(0xFFD3E3FB); // pills za mikoa
+  static const pillText = Color(0xFF1A4E9E);
+
+  // Badges (kama picha)
+  static const greenBg = Color(0xFFCBEBC8);
+  static const greenText = Color(0xFF0B6B1F);
+  static const redBg = Color(0xFFFADADD);
+  static const redText = Color(0xFFB3261E);
+  static const green = Color(0xFF15803D); // Live dot
 }
 
 const _kPs = 10; // kadi kwa kurasa (kadi ni ndefu)
@@ -57,27 +59,35 @@ String _initials(String name) {
   return (parts.first[0] + (parts.length > 1 ? parts[1][0] : '')).toUpperCase();
 }
 
-/// Icon maalum kwa kila idara/kada (kama design ya picha) — default ni badge.
+/// Icon maalum kwa kila idara/kada (kama reference images).
 IconData _itemIcon(String label, {IconData fallback = Icons.badge_outlined}) {
   final l = label.toLowerCase();
-  if (l.contains('afya') && l.contains('mazingira')) return Icons.eco_outlined;
-  if (l.contains('ustawi') || l.contains('jamii')) return Icons.handshake_outlined;
-  if (l.contains('clinical')) return Icons.medical_services_outlined;
-  if (l.contains('medical officer')) return Icons.local_hospital_outlined;
-  if (l.contains('nursing') || l.contains('mwuguzi')) return Icons.health_and_safety_outlined;
+  if (l.contains('mazingira')) return Icons.eco_outlined; // leaf
+  if (l.contains('ustawi') || l.contains('jamii')) {
+    return Icons.volunteer_activism_outlined; // moyo mkononi
+  }
+  if (l.contains('nursing') || l.contains('mwuguzi')) {
+    return Icons.health_and_safety_outlined; // shield+cross (ANO)
+  }
+  if (l.contains('medical officer')) {
+    return Icons.medical_services_outlined; // briefcase+cross
+  }
+  if (l.contains('clinical')) return Icons.monitor_heart_outlined;
   if (l.contains('mwalimu') || l.contains('elimu') || l.contains('mwanafunzi')) {
-    return Icons.school_outlined;
+    return Icons.school_outlined; // graduation cap
   }
   if (l.contains('kilimo') || l.contains('ufugaji') || l.contains('mifugo')) {
     return Icons.eco_outlined;
   }
-  if (l.contains('watumishi')) return Icons.work_outline_rounded;
-  if (l.contains('ujenzi') || l.contains('uchukuzi')) return Icons.engineering_outlined;
+  if (l.contains('watumishi')) return Icons.business_center_outlined;
+  if (l.contains('ujenzi') || l.contains('uchukuzi')) {
+    return Icons.engineering_outlined;
+  }
   if (l.contains('afya')) return Icons.monitor_heart_outlined;
   return fallback;
 }
 
-// ═══ Models ─════════════════════════════════════════════════════════════════
+// ═══ Models ═════════════════════════════════════════════════════════════════
 class _FilterItem {
   final String value;
   final String label;
@@ -168,7 +178,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
         .toList();
   }
 
-  // ── Specs za filters (zina items dynamic) ──────────────────────────────────
+  // ── Specs za filters (items dynamic) ───────────────────────────────────────
   _FilterSpec _spec(_WenzaoFilter f) {
     switch (f) {
       case _WenzaoFilter.lengo:
@@ -232,7 +242,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
     }
   }
 
-  // ── Filtering (client-side, kama reference) ────────────────────────────────
+  // ── Filtering (client-side) ────────────────────────────────────────────────
   List<Map<String, dynamic>> get _filtered {
     final q = _query.trim().toLowerCase();
     final digits = q.replaceAll(RegExp(r'[^0-9+]'), '');
@@ -361,7 +371,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
     _searchCtrl.clear();
   }
 
-  // ── Sheet ya kuchagua (search + highlight ya bluu, kama reference) ─────────
+  // ── Sheet ya kuchagua ──────────────────────────────────────────────────────
   Future<void> _openFilter(_WenzaoFilter f) async {
     final spec = _spec(f);
     final pick = await showModalBottomSheet<_Pick>(
@@ -405,7 +415,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
             if (!_loading && _error == null)
               Text(
                 'Inaonyesha ${_pageItems.length} kati ya ${filtered.length}',
-                style: const TextStyle(fontSize: 12, color: _P.inkSoft),
+                style: const TextStyle(fontSize: 13, color: _P.inkSoft),
               ),
             const SizedBox(height: 10),
             // ── Body ──
@@ -421,7 +431,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
             else ...[
               for (final m in _pageItems) ...[
                 _WenzaoCard(user: m, deptLabel: _deptLabel, cadreLabel: _cadreLabel),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
               ],
               const SizedBox(height: 4),
               _Pagination(
@@ -440,15 +450,15 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
     return Row(
       children: [
         Container(
-          width: 46,
-          height: 46,
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
-            color: _P.blueTint,
-            borderRadius: BorderRadius.circular(13),
+            color: _P.greenBg,
+            borderRadius: BorderRadius.circular(15),
           ),
-          child: const Icon(Icons.swap_horiz_rounded, size: 24, color: _P.blue),
+          child: const Icon(Icons.swap_horiz_rounded, size: 27, color: _P.greenText),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 13),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,7 +466,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
               const Text(
                 'Waliopata Wenzao',
                 style: TextStyle(
-                  fontSize: 21,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: _P.ink,
                   height: 1.2,
@@ -473,22 +483,22 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
           decoration: BoxDecoration(
-            color: _P.greenTint,
+            color: _P.greenBg,
             borderRadius: BorderRadius.circular(999),
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircleAvatar(radius: 3, backgroundColor: _P.green),
+              Icon(Icons.auto_awesome_rounded, size: 14, color: _P.greenText),
               SizedBox(width: 5),
               Text(
                 'Live',
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: _P.green,
+                  color: _P.greenText,
                 ),
               ),
             ],
@@ -500,11 +510,11 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
 
   Widget _buildFilterChips() {
     return SizedBox(
-      height: 38,
+      height: 42,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _WenzaoFilter.values.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 7),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final f = _WenzaoFilter.values[i];
           final spec = _spec(f);
@@ -536,13 +546,13 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
               ),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(vertical: 14),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(26),
           borderSide: const BorderSide(color: _P.line),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(26),
           borderSide: const BorderSide(color: _P.blue, width: 1.2),
         ),
       ),
@@ -561,7 +571,7 @@ class _ErrorState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _P.line),
       ),
       child: Column(
@@ -599,7 +609,7 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _P.line),
       ),
       child: Column(
@@ -661,29 +671,29 @@ class _FilterChip extends StatelessWidget {
         customBorder: const StadiumBorder(),
         onTap: onTap,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 200),
+          constraints: const BoxConstraints(maxWidth: 220),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 16, color: _P.blue),
-                const SizedBox(width: 6),
+                Icon(icon, size: 18, color: _P.pillText),
+                const SizedBox(width: 7),
                 Flexible(
                   child: Text(
                     label,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: active ? _P.blue : _P.ink,
+                      color: active ? _P.pillText : _P.ink,
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 5),
                 const Icon(Icons.keyboard_arrow_down_rounded,
-                    size: 16, color: _P.inkFaint),
+                    size: 18, color: _P.inkFaint),
               ],
             ),
           ),
@@ -693,7 +703,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-// ═══ Karatasi ya kuchagua (bottom sheet) ════════════════════════════════════
+// ═══ Karatasi ya kuchagua (bottom sheet — kama reference) ═══════════════════
 class _Pick {
   final String? value; // null = "yote"
   const _Pick(this.value);
@@ -736,41 +746,37 @@ class _FilterSheetState extends State<_FilterSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: _P.line,
+                color: const Color(0xFFD9D9D4),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(22, 18, 16, 12),
+              padding: const EdgeInsets.fromLTRB(20, 16, 16, 10),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       spec.sheetTitle,
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 19,
                         fontWeight: FontWeight.w800,
                         color: _P.ink,
                       ),
                     ),
                   ),
-                  Material(
-                    color: _P.panelTint,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Padding(
-                        padding: EdgeInsets.all(10),
-                        child: Icon(Icons.close_rounded, size: 22, color: _P.inkSoft),
-                      ),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () => Navigator.of(context).pop(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(6),
+                      child: Icon(Icons.close_rounded, size: 24, color: _P.ink),
                     ),
                   ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: TextField(
                 onChanged: (v) => setState(() => _q = v),
                 style: const TextStyle(fontSize: 15.5, color: _P.ink),
@@ -778,10 +784,10 @@ class _FilterSheetState extends State<_FilterSheet> {
                   hintText: 'Tafuta…',
                   hintStyle: const TextStyle(fontSize: 15, color: _P.inkFaint),
                   prefixIcon:
-                      const Icon(Icons.search_rounded, size: 24, color: _P.inkFaint),
+                      const Icon(Icons.search_rounded, size: 22, color: _P.inkFaint),
                   filled: true,
-                  fillColor: _P.panelTint,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  fillColor: _P.cream,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
@@ -792,7 +798,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             Flexible(
               child: ListView(
                 shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(14, 2, 14, 28),
+                padding: const EdgeInsets.fromLTRB(14, 2, 14, 24),
                 children: [
                   _OptionTile(
                     label: spec.allLabel,
@@ -800,13 +806,16 @@ class _FilterSheetState extends State<_FilterSheet> {
                     selected: widget.current == null,
                     onTap: () => Navigator.of(context).pop(const _Pick(null)),
                   ),
-                  for (final it in items)
+                  const SizedBox(height: 10),
+                  for (final it in items) ...[
                     _OptionTile(
                       label: it.label,
                       icon: it.icon,
                       selected: widget.current == it.value,
                       onTap: () => Navigator.of(context).pop(_Pick(it.value)),
                     ),
+                    const SizedBox(height: 10),
+                  ],
                 ],
               ),
             ),
@@ -832,44 +841,44 @@ class _OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: selected ? _P.blueTile : Colors.transparent,
+    // Kama reference: tile iliyochaguliwa = bluu + container NYEUPE kubwa;
+    // zisizochaguliwa = container ndogo ya cream + icon ya giza.
+    return Material(
+      color: selected ? _P.blueTile : Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: selected ? Colors.white : _P.panelTint,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon,
-                      size: 22, color: selected ? _P.blue : _P.ink),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          child: Row(
+            children: [
+              Container(
+                width: selected ? 44 : 38,
+                height: selected ? 44 : 38,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white : _P.cream,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 17.5,
-                      height: 1.3,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-                      color: selected ? _P.blue : _P.ink,
-                    ),
+                child: Icon(icon,
+                    size: selected ? 22 : 19,
+                    color: selected ? _P.blue : const Color(0xFF3D4A5C)),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16.5,
+                    height: 1.3,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                    color: selected ? _P.blue : _P.ink,
                   ),
                 ),
-                if (selected)
-                  const Icon(Icons.check_rounded, size: 24, color: _P.blue),
-              ],
-            ),
+              ),
+              if (selected)
+                const Icon(Icons.check_rounded, size: 22, color: _P.blue),
+            ],
           ),
         ),
       ),
@@ -877,7 +886,7 @@ class _OptionTile extends StatelessWidget {
   }
 }
 
-// ═══ Kadi ya mtu ════════════════════════════════════════════════════════════
+// ═══ Kadi ya mtu (kama reference) ═══════════════════════════════════════════
 class _WenzaoCard extends StatelessWidget {
   final Map<String, dynamic> user;
   final String Function(String) deptLabel;
@@ -914,7 +923,7 @@ class _WenzaoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _P.line),
         boxShadow: const [
-          BoxShadow(color: Color(0x0F142033), blurRadius: 10, offset: Offset(0, 3)),
+          BoxShadow(color: Color(0x0A142033), blurRadius: 10, offset: Offset(0, 3)),
         ],
       ),
       child: Column(
@@ -925,14 +934,14 @@ class _WenzaoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                radius: 28,
-                backgroundColor: _P.mint,
+                radius: 26,
+                backgroundColor: _P.avatarBg,
                 child: Text(
                   _initials(name),
                   style: const TextStyle(
-                    color: _P.teal,
+                    color: _P.avatarText,
                     fontWeight: FontWeight.w700,
-                    fontSize: 18.5,
+                    fontSize: 17,
                   ),
                 ),
               ),
@@ -944,18 +953,18 @@ class _WenzaoCard extends StatelessWidget {
                     Text(
                       name.isEmpty ? '(bila jina)' : _titleCase(name),
                       style: const TextStyle(
-                        fontSize: 19.5,
+                        fontSize: 19,
                         fontWeight: FontWeight.w700,
                         color: _P.ink,
                         height: 1.25,
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Text(
                       [if (cat.isNotEmpty) deptLabel(cat), if (cadre.isNotEmpty) cadre]
                           .join(' · '),
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 14.5,
                         color: _P.inkSoft,
                         height: 1.4,
                       ),
@@ -967,16 +976,16 @@ class _WenzaoCard extends StatelessWidget {
               _PaidBadge(paid: paid),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // ---- Njia ya safari ----
+          // ---- Njia ya safari (panel ya cream) ----
           if (region.isNotEmpty || district.isNotEmpty || dests.isNotEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(15, 14, 15, 14),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _P.panelTint,
-                borderRadius: BorderRadius.circular(14),
+                color: _P.cream,
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -986,7 +995,7 @@ class _WenzaoCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         SizedBox(
-                          width: 12,
+                          width: 14,
                           child: Column(
                             children: [
                               const SizedBox(height: 3),
@@ -995,20 +1004,21 @@ class _WenzaoCard extends StatelessWidget {
                                 height: 11,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: _P.inkFaint, width: 2),
+                                  border: Border.all(
+                                      color: const Color(0xFF6B7280), width: 2),
                                 ),
                               ),
                               Expanded(
                                 child: Container(
-                                  width: 2,
+                                  width: 1.5,
                                   margin: const EdgeInsets.symmetric(vertical: 3),
-                                  color: _P.lineStrong,
+                                  color: const Color(0xFFC9CDD4),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 11),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(bottom: 14),
@@ -1018,11 +1028,13 @@ class _WenzaoCard extends StatelessWidget {
                                 const Text('Anatoka',
                                     style: TextStyle(
                                         fontSize: 13.5, color: _P.inkSoft)),
-                                const SizedBox(height: 3),
+                                const SizedBox(height: 2),
                                 Text(
-                                  [region, district].where((s) => s.isNotEmpty).join(' · '),
+                                  [region, district]
+                                      .where((s) => s.isNotEmpty)
+                                      .join(' · '),
                                   style: const TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 16.5,
                                     fontWeight: FontWeight.w700,
                                     color: _P.ink,
                                   ),
@@ -1037,22 +1049,24 @@ class _WenzaoCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 3),
-                        child: Container(
-                          width: 12,
-                          alignment: Alignment.center,
-                          child: Container(
-                            width: 11,
-                            height: 11,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _P.blue,
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              width: 11,
+                              height: 11,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _P.blue,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 11),
+                      const SizedBox(width: 15),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1060,14 +1074,16 @@ class _WenzaoCard extends StatelessWidget {
                             const Text('Anataka kuja',
                                 style: TextStyle(
                                     fontSize: 13.5, color: _P.inkSoft)),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 7),
                             Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
+                              spacing: 7,
+                              runSpacing: 7,
                               children: [
-                                for (final r in dests.take(4)) _RegionPill(text: r),
+                                for (final r in dests.take(4))
+                                  _RegionPill(text: r),
                                 if (dests.length > 4)
-                                  _RegionPill(text: '+${dests.length - 4}', muted: true),
+                                  _RegionPill(text: '+${dests.length - 4}',
+                                      muted: true),
                               ],
                             ),
                           ],
@@ -1078,29 +1094,29 @@ class _WenzaoCard extends StatelessWidget {
                 ],
               ),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // ---- Simu ----
           if (phone.isNotEmpty)
             Row(
               children: [
-                const Icon(Icons.phone_outlined, size: 22, color: _P.ink),
-                const SizedBox(width: 10),
+                const Icon(Icons.phone_outlined, size: 21, color: _P.ink),
+                const SizedBox(width: 11),
                 Expanded(
                   child: Text(
                     phone,
                     style: const TextStyle(
                       fontSize: 17.5,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       color: _P.ink,
                     ),
                   ),
                 ),
                 Material(
                   color: _P.blue,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     onTap: () async {
                       try {
                         await launchUrl(Uri.parse('tel:$phone'),
@@ -1108,10 +1124,10 @@ class _WenzaoCard extends StatelessWidget {
                       } catch (_) {}
                     },
                     child: const SizedBox(
-                      width: 50,
-                      height: 50,
+                      width: 52,
+                      height: 52,
                       child: Icon(Icons.phone_in_talk_rounded,
-                          size: 23, color: Colors.white),
+                          size: 25, color: Colors.white),
                     ),
                   ),
                 ),
@@ -1129,24 +1145,26 @@ class _PaidBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = paid ? _P.green : _P.red;
-    final bg = paid ? _P.greenTint : _P.redTint;
+    final fg = paid ? _P.greenText : _P.redText;
+    final bg = paid ? _P.greenBg : _P.redBg;
     return Container(
       margin: const EdgeInsets.only(top: 1),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+      decoration:
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            paid ? Icons.check_circle_outline_rounded : Icons.cancel_outlined,
-            size: 14,
+            paid ? Icons.check_circle_outline : Icons.cancel_outlined,
+            size: 16,
             color: fg,
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 6),
           Text(
             paid ? 'Amelipa' : 'Hajalipa',
-            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: fg),
+            style: TextStyle(
+                fontSize: 13.5, fontWeight: FontWeight.w600, color: fg),
           ),
         ],
       ),
@@ -1162,9 +1180,9 @@ class _RegionPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
       decoration: BoxDecoration(
-        color: muted ? Colors.white : _P.blueSoft,
+        color: muted ? Colors.white : _P.pillBg,
         borderRadius: BorderRadius.circular(999),
         border: muted ? Border.all(color: _P.line) : null,
       ),
@@ -1173,7 +1191,7 @@ class _RegionPill extends StatelessWidget {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: muted ? _P.ink : _P.blue,
+          color: muted ? _P.inkSoft : _P.pillText,
         ),
       ),
     );
