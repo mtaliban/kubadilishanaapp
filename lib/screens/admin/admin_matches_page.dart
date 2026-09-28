@@ -1,36 +1,46 @@
 // ============================================================================
 // WALIOPATA WENZAO — watumiaji waliounganishwa na wenzao (matches)
-// Design (kama reference pages zingine):
-//  - Header yenye icon badge + Live badge + hesabu
-//  - Filter chips (Mkoa wa Lengo / Idara / Kada / Kutoka) → picker sheets
-//    zenye search + blue highlight (kama reference)
-//  - Idara na Kada ni DYNAMIC kutoka DB (getDepartments/getCadres) — hakuna
-//    hardcoded Elimu/Afya tu; idara mpya (mf. Kilimo na Ufugaji) inaonekana
-//  - Kadi: avatar + dot ya online, jina (title case, linashuka mstari),
-//    badge ya malipo, Kutoka → Anataka Kuja, miaka ya kazi, masomo, simu
+// ----------------------------------------------------------------------------
+// Design (palette ya paper — kama kadi za malipo na chat):
+//  - Header: icon badge (blue tint) + jina + hesabu + Live badge (green)
+//  - Filter chips: Mkoa wa Lengo / Idara / Kada / Kutoka → sheets za "Chagua…"
+//    zenye search + highlight ya bluu (selected = check)
+//  - Idara na Kada ni DYNAMIC kutoka DB (getDepartments/getCadres) — idara
+//    mpya (mf. Kilimo na Ufugaji) inaonekana yenyewe
+//  - Kadi: avatar + jina (title case) + idara·kada + badge ya malipo,
+//    njia ya safari (Anatoka ⭘→● Anataka kuja + pills za mikoa), simu + kitufe
+//    cha kupiga (tel:)
 //  - Pagination yenye dirisha la kurasa 5 + scroll-to-top
 // Data halisi: GET /admin/users/with-matches
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
 
-const _kPrimary = Color(0xFF1E40AF);
-const _kBg      = Color(0xFFF8FAFC);
-const _kInk     = Color(0xFF0F172A);
-const _kMuted   = Color(0xFF64748B);
-const _kLine    = Color(0xFFE2E8F0);
-const _kSoft    = Color(0xFFF1F5F9);
-const _kBlueBg  = Color(0xFFEFF6FF);
-const _kBlue100 = Color(0xFFDBEAFE);
-const _kBlue700 = Color(0xFF1D4ED8);
-const _kGreen   = Color(0xFF15803D);
-const _kGreenBg = Color(0xFFDCFCE7);
-const _kRed     = Color(0xFFDC2626);
-const _kRedBg   = Color(0xFFFEE2E2);
+// ── Rangi (zinaendana na muundo wa kadi za malipo na chat) ──────────────────
+class _P {
+  static const ink = Color(0xFF142033);
+  static const inkSoft = Color(0xFF5B6779);
+  static const inkFaint = Color(0xFF93A0B3);
+  static const line = Color(0xFFE6E0D2);
+  static const lineStrong = Color(0xFFCFC8B8);
+  static const paper = Color(0xFFF3F0E9);
+  static const panelTint = Color(0xFFF6F5F1);
+
+  static const teal = Color(0xFF1C5F56);
+  static const tealTint = Color(0xFFE7F1EE);
+  static const blue = Color(0xFF1C64D1);
+  static const blueTint = Color(0xFFE6EFFF);
+  static const green = Color(0xFF1F7A4D);
+  static const greenTint = Color(0xFFDDF3E6);
+  static const red = Color(0xFFC2503E);
+  static const redTint = Color(0xFFFBE6E2);
+}
 
 const _kPs = 10; // kadi kwa kurasa (kadi ni ndefu)
 
+// ── Helpers ─────────────────────────────────────────────────────────────────
 String _titleCase(String s) => s
     .trim()
     .toLowerCase()
@@ -38,25 +48,42 @@ String _titleCase(String s) => s
     .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
     .join(' ');
 
-String _prettyRole(String r) {
-  if (r.isEmpty || !r.contains('_')) return r;
-  final s = r.replaceAll('_', ' ').toLowerCase();
-  return '${s[0].toUpperCase()}${s.substring(1)}';
-}
-
 String _initials(String name) {
   final parts = name.trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
   if (parts.isEmpty) return '?';
   return (parts.first[0] + (parts.length > 1 ? parts[1][0] : '')).toUpperCase();
 }
 
-String _yearsText(num? y) {
-  if (y == null) return '';
-  if (y >= 3) return '3+ miaka ya kazi';
-  return y == 1 ? 'Mwaka 1 wa kazi' : 'Miaka ${y.toInt()} ya kazi';
+// ═══ Models ─════════════════════════════════════════════════════════════════
+class _FilterItem {
+  final String value;
+  final String label;
+  final IconData icon;
+  const _FilterItem(this.value, this.label, this.icon);
 }
 
-// ───────────────────────── Page ─────────────────────────
+class _FilterSpec {
+  final String defaultLabel;
+  final String prefix;
+  final IconData icon;
+  final String sheetTitle;
+  final String allLabel;
+  final IconData allIcon;
+  final List<_FilterItem> items;
+  const _FilterSpec({
+    required this.defaultLabel,
+    required this.icon,
+    required this.sheetTitle,
+    required this.allLabel,
+    required this.allIcon,
+    required this.items,
+    this.prefix = '',
+  });
+}
+
+enum _WenzaoFilter { lengo, idara, kada, chanzo }
+
+// ═══ Page ═══════════════════════════════════════════════════════════════════
 class AdminMatchesPage extends StatefulWidget {
   const AdminMatchesPage({super.key});
 
@@ -77,26 +104,30 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   List<dynamic> _departments = [];
   List<Map<String, dynamic>> _cadres = [];
 
-  // Filters
-  String? _targetRegionName;
-  String? _sourceRegionName;
-  String _category = ''; // department code ('' = zote)
-  String _cadreCode = ''; // cadre code ('' = zote)
+  // Filters — per spec (null = "yote")
+  final Map<_WenzaoFilter, String?> _selected = {
+    for (final f in _WenzaoFilter.values) f: null,
+  };
   String _query = '';
 
   int _page = 1;
 
-  // ── Lookups ────────────────────────────────────────────────────────────────
+  // ── Lookups (dynamic kutoka DB) ────────────────────────────────────────────
   String _deptLabel(String code) {
     for (final d in _departments) {
       if ('${d['code']}' == code) return '${d['display_name'] ?? d['name'] ?? code}';
     }
     switch (code) {
-      case 'education':         return 'Elimu';
-      case 'health':            return 'Afya';
-      case 'kilimo':            return 'Kilimo na Ufugaji';
-      case 'watumishi_wa_umma': return 'Watumishi wa Umma';
-      default:                  return code.isEmpty ? '—' : _titleCase(code);
+      case 'education':
+        return 'Elimu';
+      case 'health':
+        return 'Afya';
+      case 'kilimo':
+        return 'Kilimo na Ufugaji';
+      case 'watumishi_wa_umma':
+        return 'Watumishi wa Umma';
+      default:
+        return code.isEmpty ? '—' : _titleCase(code);
     }
   }
 
@@ -104,30 +135,96 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
     for (final c in _cadres) {
       if ('${c['code']}' == code) return '${c['display_name'] ?? c['name'] ?? code}';
     }
-    return code.isEmpty ? '—' : _prettyRole(code);
+    return code.isEmpty ? '—' : code;
   }
 
   List<Map<String, dynamic>> get _cadreOptions {
-    if (_category.isEmpty) return _cadres;
-    return _cadres.where((c) => '${c['category'] ?? ''}' == _category).toList();
+    if ((_selected[_WenzaoFilter.idara] ?? '').isEmpty) return _cadres;
+    return _cadres
+        .where((c) => '${c['category'] ?? ''}' == _selected[_WenzaoFilter.idara])
+        .toList();
   }
 
-  // ── Filtering ──────────────────────────────────────────────────────────────
+  // ── Specs za filters (zina items dynamic) ──────────────────────────────────
+  _FilterSpec _spec(_WenzaoFilter f) {
+    switch (f) {
+      case _WenzaoFilter.lengo:
+        return _FilterSpec(
+          defaultLabel: 'Mkoa wa Lengo',
+          icon: Icons.map_outlined,
+          sheetTitle: 'Chagua Mkoa wa Lengo',
+          allLabel: 'Mikoa yote',
+          allIcon: Icons.map_outlined,
+          items: [
+            for (final r in _regions)
+              _FilterItem('${r['name'] ?? r['region_name'] ?? ''}',
+                  '${r['name'] ?? r['region_name'] ?? ''}', Icons.location_on_outlined),
+          ],
+        );
+      case _WenzaoFilter.idara:
+        return _FilterSpec(
+          defaultLabel: 'Idara zote',
+          icon: Icons.apartment_outlined,
+          sheetTitle: 'Chagua Idara',
+          allLabel: 'Idara zote',
+          allIcon: Icons.grid_view_rounded,
+          items: [
+            for (final d in _departments)
+              _FilterItem('${d['code']}', '${d['display_name'] ?? d['name'] ?? d['code']}',
+                  Icons.grid_view_rounded),
+          ],
+        );
+      case _WenzaoFilter.kada:
+        return _FilterSpec(
+          defaultLabel: 'Kada zote',
+          icon: Icons.badge_outlined,
+          sheetTitle: 'Chagua Kada',
+          allLabel: 'Kada zote',
+          allIcon: Icons.grid_view_rounded,
+          items: [
+            for (final c in _cadreOptions)
+              _FilterItem('${c['code']}', '${c['display_name'] ?? c['name'] ?? c['code']}',
+                  Icons.badge_outlined),
+          ],
+        );
+      case _WenzaoFilter.chanzo:
+        return _FilterSpec(
+          defaultLabel: 'Kutoka: yote',
+          prefix: 'Kutoka: ',
+          icon: Icons.exit_to_app_rounded,
+          sheetTitle: 'Chagua Mkoa wa Chanzo',
+          allLabel: 'Mikoa yote',
+          allIcon: Icons.map_outlined,
+          items: [
+            for (final r in _regions)
+              _FilterItem('${r['name'] ?? r['region_name'] ?? ''}',
+                  '${r['name'] ?? r['region_name'] ?? ''}', Icons.location_on_outlined),
+          ],
+        );
+    }
+  }
+
+  // ── Filtering (client-side, kama reference) ────────────────────────────────
   List<Map<String, dynamic>> get _filtered {
     final q = _query.trim().toLowerCase();
     final digits = q.replaceAll(RegExp(r'[^0-9+]'), '');
+    final lengo = _selected[_WenzaoFilter.lengo];
+    final idara = _selected[_WenzaoFilter.idara];
+    final kada = _selected[_WenzaoFilter.kada];
+    final chanzo = _selected[_WenzaoFilter.chanzo];
     return _all.where((m) {
-      if (_category.isNotEmpty && '${m['category'] ?? ''}' != _category) return false;
-      if (_cadreCode.isNotEmpty && '${m['cadre_code'] ?? ''}' != _cadreCode) return false;
-      if (_targetRegionName != null) {
+      if (idara != null && '${m['category'] ?? ''}' != idara) return false;
+      if (kada != null && '${m['cadre_code'] ?? ''}' != kada) return false;
+      if (lengo != null) {
         final dests = ((m['destinations'] as List?) ?? [])
-            .map((d) => d is Map ? '${d['region_name'] ?? d['name'] ?? d}' : '$d')
-            .map((s) => s.toLowerCase());
-        if (!dests.contains(_targetRegionName!.toLowerCase())) return false;
+            .map((d) =>
+                (d is Map ? '${d['region_name'] ?? d['name'] ?? d}' : '$d').toLowerCase())
+            .toList();
+        if (!dests.contains(lengo.toLowerCase())) return false;
       }
-      if (_sourceRegionName != null) {
+      if (chanzo != null) {
         final rn = '${m['region_name'] ?? m['current_region'] ?? ''}';
-        if (rn.toLowerCase() != _sourceRegionName!.toLowerCase()) return false;
+        if (rn.toLowerCase() != chanzo.toLowerCase()) return false;
       }
       if (q.isEmpty) return true;
       final name = '${m['full_name'] ?? ''}'.toLowerCase();
@@ -142,9 +239,9 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   }
 
   int get _totalPages => _filtered.isEmpty ? 1 : (_filtered.length / _kPs).ceil();
-  int get _safe => _page.clamp(1, _totalPages);
+  int get _safePage => _page.clamp(1, _totalPages);
   List<Map<String, dynamic>> get _pageItems {
-    final s = (_safe - 1) * _kPs;
+    final s = (_safePage - 1) * _kPs;
     return _filtered.sublist(s, (s + _kPs).clamp(0, _filtered.length));
   }
 
@@ -154,6 +251,12 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
     super.initState();
     _load();
     _loadRefs();
+    _searchCtrl.addListener(() {
+      setState(() {
+        _query = _searchCtrl.text;
+        _page = 1;
+      });
+    });
   }
 
   @override
@@ -164,7 +267,10 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final res = await ApiService().adminUsersWithMatches(limit: 200);
       if (!mounted) return;
@@ -177,7 +283,10 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
     }
   }
 
@@ -208,409 +317,214 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
 
   void _goToPage(int p) {
     setState(() => _page = p.clamp(1, _totalPages));
-    _scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    _scroll.animateTo(0,
+        duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
   }
 
-  // ── Pickers (sheets zenye search, kama reference) ──────────────────────────
-  void _openPicker(
-    String title,
-    List<(String, String)> options,
-    String current,
-    void Function(String) onPick,
-  ) {
-    showModalBottomSheet<void>(
+  bool get _hasFilter => _selected.values.any((v) => v != null) || _query.isNotEmpty;
+
+  void _resetFilters() {
+    setState(() {
+      for (final f in _WenzaoFilter.values) {
+        _selected[f] = null;
+      }
+      _page = 1;
+    });
+    _searchCtrl.clear();
+  }
+
+  // ── Sheet ya kuchagua (search + highlight ya bluu, kama reference) ─────────
+  Future<void> _openFilter(_WenzaoFilter f) async {
+    final spec = _spec(f);
+    final pick = await showModalBottomSheet<_Pick>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (sheetCtx) {
-        final ctrl = TextEditingController();
-        var filtered = List<(String, String)>.from(options);
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (ctx, scrollController) => StatefulBuilder(
-            builder: (ctx, ss) => Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w600, color: _kInk)),
-                  IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.pop(ctx)),
-                ]),
-                TextField(
-                  controller: ctrl,
-                  onChanged: (q) => ss(() {
-                    final ql = q.toLowerCase();
-                    filtered = options.where((o) => o.$2.toLowerCase().contains(ql)).toList();
-                  }),
-                  decoration: InputDecoration(
-                    hintText: 'Tafuta...',
-                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                    filled: true,
-                    fillColor: _kBg,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    children: [
-                      for (final o in filtered)
-                        _pickerTile(o.$2, current == o.$1, () {
-                          Navigator.pop(ctx);
-                          onPick(o.$1);
-                        }),
-                    ],
-                  ),
-                ),
-              ]),
-            ),
-          ),
-        );
-      },
+      backgroundColor: Colors.transparent,
+      builder: (_) => _FilterSheet(spec: spec, current: _selected[f]),
     );
-  }
-
-  Widget _pickerTile(String label, bool selected, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFE6F1FB) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: selected ? Border.all(color: const Color(0xFF378ADD)) : null,
-        ),
-        child: Row(children: [
-          Expanded(
-            child: Text(label,
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: selected ? _kPrimary : _kInk)),
-          ),
-          if (selected) const Icon(Icons.check_rounded, color: _kPrimary, size: 18),
-        ]),
-      ),
-    );
-  }
-
-  // ── Filter chips ───────────────────────────────────────────────────────────
-  Widget _filterChip(IconData icon, String label, bool active, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? _kPrimary : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? _kPrimary : _kLine),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 16, color: active ? Colors.white : _kMuted),
-          const SizedBox(width: 6),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: active ? Colors.white : _kInk)),
-          const SizedBox(width: 4),
-          Icon(Icons.keyboard_arrow_down_rounded,
-              size: 14, color: active ? Colors.white : _kMuted),
-        ]),
-      ),
-    );
+    // pick != null hata kwa "yote" (value ni null) — kufunga bila kuchaguwa
+    // (pick == null) halifuti uteuzi uliokuwepo.
+    if (pick != null) {
+      setState(() {
+        _selected[f] = pick.value;
+        if (f == _WenzaoFilter.idara) _selected[_WenzaoFilter.kada] = null;
+        _page = 1;
+      });
+    }
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final filtered = _filtered;
-
-    // Options za pickers
-    final deptOpts = <(String, String)>[
-      ('', 'Idara Zote'),
-      for (final d in _departments) ('${d['code']}', '${d['display_name'] ?? d['name'] ?? d['code']}'),
-    ];
-    final cadreOpts = <(String, String)>[
-      ('', 'Kada Zote'),
-      for (final c in _cadreOptions) ('${c['code']}', '${c['display_name'] ?? c['name'] ?? c['code']}'),
-    ];
-    final targetOpts = <(String, String)>[
-      ('', 'Mikoa yote'),
-      for (final r in _regions) ('${r['name'] ?? r['region_name'] ?? ''}', '${r['name'] ?? r['region_name'] ?? ''}'),
-    ];
-    final sourceOpts = <(String, String)>[
-      ('', 'Mikoa yote'),
-      for (final r in _regions) ('${r['name'] ?? r['region_name'] ?? ''}', '${r['name'] ?? r['region_name'] ?? ''}'),
-    ];
-
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: _P.paper,
       body: RefreshIndicator(
         onRefresh: _load,
-        color: _kPrimary,
+        color: _P.blue,
+        backgroundColor: Colors.white,
         child: ListView(
           controller: _scroll,
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            // ── Header ──
-            Row(children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                    color: const Color(0xFFDBEAFE), borderRadius: BorderRadius.circular(14)),
-                child: const Icon(Icons.compare_arrows_rounded, color: _kPrimary),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text('Waliopata Wenzao',
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: _kInk)),
-              ),
-              const _StatusChip(online: true),
-            ]),
-            const SizedBox(height: 8),
-            Text(
-              _loading
-                  ? 'Inapakia...'
-                  : '${filtered.length} ${filtered.length == 1 ? 'mtu' : 'watu'} waliounganishwa na wenzao',
-              style: const TextStyle(fontSize: 15, color: _kMuted, height: 1.4),
-            ),
-            const SizedBox(height: 16),
-
-            // ── Filter chips ──
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(children: [
-                _filterChip(
-                    Icons.map_rounded,
-                    _targetRegionName ?? 'Mkoa wa Lengo',
-                    _targetRegionName != null,
-                    () => _openPicker('Chagua Mkoa wa Lengo', targetOpts,
-                            _targetRegionName ?? '', (v) {
-                          setState(() => _targetRegionName = v.isEmpty ? null : v);
-                        })),
-                const SizedBox(width: 8),
-                _filterChip(
-                    Icons.apartment_rounded,
-                    _category.isEmpty ? 'Idara zote' : _deptLabel(_category),
-                    _category.isNotEmpty, () {
-                  if (_departments.isEmpty) return;
-                  _openPicker('Chagua Idara', deptOpts, _category, (v) {
-                    setState(() {
-                      _category = v;
-                      _cadreCode = '';
-                    });
-                  });
-                }),
-                const SizedBox(width: 8),
-                _filterChip(
-                    Icons.badge_rounded,
-                    _cadreCode.isEmpty ? 'Kada zote' : _cadreLabel(_cadreCode),
-                    _cadreCode.isNotEmpty, () {
-                  if (_cadres.isEmpty) return;
-                  _openPicker('Chagua Kada', cadreOpts, _cadreCode, (v) {
-                    setState(() => _cadreCode = v);
-                  });
-                }),
-                const SizedBox(width: 8),
-                _filterChip(
-                    Icons.logout_rounded,
-                    _sourceRegionName != null ? 'Kutoka: $_sourceRegionName' : 'Kutoka: yote',
-                    _sourceRegionName != null,
-                    () => _openPicker('Chagua Mkoa wa Chanzo', sourceOpts,
-                            _sourceRegionName ?? '', (v) {
-                          setState(() => _sourceRegionName = v.isEmpty ? null : v);
-                        })),
-              ]),
-            ),
-            const SizedBox(height: 12),
-
-            // ── Search ──
-            TextField(
-              controller: _searchCtrl,
-              textInputAction: TextInputAction.search,
-              onChanged: (v) => setState(() {
-                _query = v;
-                _page = 1;
-              }),
-              style: const TextStyle(fontSize: 16),
-              decoration: InputDecoration(
-                hintText: 'Tafuta kwa jina, namba, kada au wilaya',
-                prefixIcon: const Icon(Icons.search_rounded, color: _kMuted),
-                suffixIcon: _query.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Futa',
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () => setState(() {
-                          _searchCtrl.clear();
-                          _query = '';
-                          _page = 1;
-                        }),
-                      ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _kLine)),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _kLine)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _kPrimary, width: 1.6)),
-              ),
-            ),
+            _buildHeader(),
             const SizedBox(height: 14),
-
+            _buildFilterChips(),
+            const SizedBox(height: 12),
+            _buildSearch(),
+            const SizedBox(height: 12),
             if (!_loading && _error == null)
               Text(
                 'Inaonyesha ${_pageItems.length} kati ya ${filtered.length}',
-                style: const TextStyle(fontSize: 13, color: _kMuted),
+                style: const TextStyle(fontSize: 12, color: _P.inkSoft),
               ),
             const SizedBox(height: 10),
-
             // ── Body ──
             if (_loading)
               const Padding(
                 padding: EdgeInsets.all(48),
-                child: Center(child: CircularProgressIndicator(color: _kPrimary)),
+                child: Center(child: CircularProgressIndicator(color: _P.blue)),
               )
             else if (_error != null)
               _ErrorState(onRetry: _load)
             else if (filtered.isEmpty)
-              _EmptyState(onClear: () {
-                setState(() {
-                  _searchCtrl.clear();
-                  _query = '';
-                  _category = '';
-                  _cadreCode = '';
-                  _targetRegionName = null;
-                  _sourceRegionName = null;
-                  _page = 1;
-                });
-              })
+              _EmptyState(onClear: _hasFilter ? _resetFilters : null)
             else ...[
-              for (final u in _pageItems)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: _MatchCard(
-                    user: u,
-                    deptLabel: _deptLabel,
-                    cadreLabel: _cadreLabel,
-                  ),
-                ),
-              _Pager(page: _safe, total: _totalPages, onPage: _goToPage),
+              for (final m in _pageItems) ...[
+                _WenzaoCard(user: m, deptLabel: _deptLabel, cadreLabel: _cadreLabel),
+                const SizedBox(height: 12),
+              ],
+              const SizedBox(height: 4),
+              _Pagination(
+                current: _safePage,
+                total: _totalPages,
+                onChanged: _goToPage,
+              ),
             ],
           ],
         ),
       ),
     );
   }
-}
 
-// ───────────────────────── Widgets ─────────────────────────
-class _StatusChip extends StatelessWidget {
-  final bool online;
-  const _StatusChip({required this.online});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: online ? _kGreenBg : _kSoft,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
+  Widget _buildHeader() {
+    return Row(
+      children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: online ? const Color(0xFF16A34A) : const Color(0xFF94A3B8),
+            color: _P.blueTint,
+            borderRadius: BorderRadius.circular(12),
           ),
+          child: const Icon(Icons.swap_horiz_rounded, size: 22, color: _P.blue),
         ),
-        const SizedBox(width: 6),
-        Text(online ? 'Live' : 'Offline',
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: online ? const Color(0xFF166534) : _kMuted)),
-      ]),
-    );
-  }
-}
-
-class _Pager extends StatelessWidget {
-  final int page;
-  final int total;
-  final ValueChanged<int> onPage;
-  const _Pager({required this.page, required this.total, required this.onPage});
-
-  @override
-  Widget build(BuildContext context) {
-    if (total <= 1) return const SizedBox.shrink();
-    final start = (page - 2).clamp(0, (total - 5).clamp(0, 1 << 31));
-    final end = (start + 5).clamp(0, total);
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        IconButton.outlined(
-          onPressed: page > 1 ? () => onPage(page - 1) : null,
-          icon: const Icon(Icons.chevron_left),
-        ),
-        for (var i = start; i < end; i++)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: GestureDetector(
-              onTap: () => onPage(i + 1),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: i + 1 == page ? _kPrimary : Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: i + 1 == page ? _kPrimary : _kLine),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Waliopata Wenzao',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: _P.ink,
+                  height: 1.2,
                 ),
-                child: Text('${i + 1}',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: i + 1 == page ? Colors.white : _kInk)),
               ),
-            ),
+              const SizedBox(height: 2),
+              Text(
+                _loading
+                    ? 'Inapakia…'
+                    : '${_filtered.length} watu waliounganishwa na wenzao',
+                style: const TextStyle(fontSize: 12, color: _P.inkSoft),
+              ),
+            ],
           ),
-        IconButton.outlined(
-          onPressed: page < total ? () => onPage(page + 1) : null,
-          icon: const Icon(Icons.chevron_right),
         ),
-      ]),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: _P.greenTint,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(radius: 3, backgroundColor: _P.green),
+              SizedBox(width: 5),
+              Text(
+                'Live',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: _P.green,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _WenzaoFilter.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 7),
+        itemBuilder: (_, i) {
+          final f = _WenzaoFilter.values[i];
+          final spec = _spec(f);
+          final value = _selected[f];
+          return _FilterChip(
+            icon: spec.icon,
+            label: value == null ? spec.defaultLabel : '${spec.prefix}$value',
+            active: value != null,
+            onTap: () => _openFilter(f),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearch() {
+    return TextField(
+      controller: _searchCtrl,
+      style: const TextStyle(fontSize: 13.5, color: _P.ink),
+      decoration: InputDecoration(
+        hintText: 'Tafuta kwa jina, namba, kada au wilaya',
+        hintStyle: const TextStyle(fontSize: 12.5, color: _P.inkFaint),
+        prefixIcon: const Icon(Icons.search_rounded, size: 20, color: _P.inkFaint),
+        suffixIcon: _query.isEmpty
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.close_rounded, size: 18, color: _P.inkSoft),
+                onPressed: _searchCtrl.clear,
+              ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _P.line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _P.blue, width: 1.2),
+        ),
+      ),
     );
   }
 }
 
+// ═══ Error / Empty states ═══════════════════════════════════════════════════
 class _ErrorState extends StatelessWidget {
-  final VoidCallback onRetry;
+  final Future<void> Function() onRetry;
   const _ErrorState({required this.onRetry});
 
   @override
@@ -619,32 +533,37 @@ class _ErrorState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _kLine),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _P.line),
       ),
-      child: Column(children: [
-        const Icon(Icons.cloud_off_rounded, size: 40, color: Color(0xFFCBD5E1)),
-        const SizedBox(height: 12),
-        const Text('Imeshindikana kupakia',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 14),
-        FilledButton.icon(
-          onPressed: onRetry,
-          icon: const Icon(Icons.refresh_rounded, size: 18),
-          label: const Text('Jaribu tena', style: TextStyle(fontWeight: FontWeight.w700)),
-          style: FilledButton.styleFrom(
-            backgroundColor: _kPrimary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Column(
+        children: [
+          const Icon(Icons.cloud_off_rounded, size: 40, color: _P.inkFaint),
+          const SizedBox(height: 12),
+          const Text('Imeshindikana kupakia',
+              style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: _P.ink)),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text('Jaribu tena',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+            style: FilledButton.styleFrom(
+              backgroundColor: _P.blue,
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
 
 class _EmptyState extends StatelessWidget {
-  final VoidCallback onClear;
-  const _EmptyState({required this.onClear});
+  final VoidCallback? onClear;
+  const _EmptyState({this.onClear});
 
   @override
   Widget build(BuildContext context) {
@@ -652,259 +571,657 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _kLine),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _P.line),
       ),
-      child: Column(children: [
-        const Icon(Icons.compare_arrows_rounded, size: 40, color: Color(0xFFCBD5E1)),
-        const SizedBox(height: 12),
-        const Text('Hakuna waliounganishwa',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 4),
-        const Text('Badilisha vichujio au jaribu tena baadaye.',
-            style: TextStyle(color: _kMuted, fontSize: 15)),
-        const SizedBox(height: 14),
-        TextButton(onPressed: onClear, child: const Text('Futa vichujio')),
-      ]),
+      child: Column(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+                color: _P.panelTint, borderRadius: BorderRadius.circular(26)),
+            child: const Icon(Icons.search_off_rounded,
+                color: _P.inkFaint, size: 24),
+          ),
+          const SizedBox(height: 12),
+          const Text('Hakuna matokeo yanayolingana',
+              style: TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.w700, color: _P.ink)),
+          const SizedBox(height: 4),
+          const Text(
+            'Watumiaji wataonekana wanapojiunga na kuchagua destinations',
+            style: TextStyle(color: _P.inkSoft, fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
+          if (onClear != null) ...[
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: onClear,
+              child: const Text('Futa vichujio',
+                  style: TextStyle(color: _P.blue, fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
 
-class _MatchCard extends StatelessWidget {
-  final Map<String, dynamic> user;
-  final String Function(String) deptLabel;
-  final String Function(String) cadreLabel;
-  const _MatchCard({required this.user, required this.deptLabel, required this.cadreLabel});
+// ═══ Kichujio (chip) ════════════════════════════════════════════════════════
+class _FilterChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final name = '${user['full_name'] ?? ''}';
-    final phone = '${user['phone_primary'] ?? ''}';
-    final category = '${user['category'] ?? ''}';
-    final cadreCode = '${user['cadre_code'] ?? ''}';
-    final cadre = cadreCode.isEmpty
-        ? ''
-        : (user['cadre_display'] as String? ?? cadreLabel(cadreCode));
-    final currReg = '${user['region_name'] ?? user['current_region'] ?? ''}';
-    final currDist = '${user['district_name'] ?? user['current_district'] ?? ''}';
+    return Material(
+      color: active ? _P.blueTint : Colors.white,
+      shape: StadiumBorder(
+        side: BorderSide(color: active ? Colors.transparent : _P.line),
+      ),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 200),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: _P.blue),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: active ? _P.blue : _P.ink,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.keyboard_arrow_down_rounded,
+                    size: 16, color: _P.inkFaint),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══ Karatasi ya kuchagua (bottom sheet) ════════════════════════════════════
+class _Pick {
+  final String? value; // null = "yote"
+  const _Pick(this.value);
+}
+
+class _FilterSheet extends StatefulWidget {
+  final _FilterSpec spec;
+  final String? current;
+  const _FilterSheet({required this.spec, required this.current});
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  String _q = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final spec = widget.spec;
+    final items = spec.items
+        .where((e) => _q.isEmpty || e.label.toLowerCase().contains(_q.toLowerCase()))
+        .toList();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: _P.line,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 12, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      spec.sheetTitle,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: _P.ink,
+                      ),
+                    ),
+                  ),
+                  Material(
+                    color: _P.panelTint,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Padding(
+                        padding: EdgeInsets.all(7),
+                        child: Icon(Icons.close_rounded, size: 18, color: _P.inkSoft),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: TextField(
+                onChanged: (v) => setState(() => _q = v),
+                style: const TextStyle(fontSize: 13.5, color: _P.ink),
+                decoration: InputDecoration(
+                  hintText: 'Tafuta…',
+                  hintStyle: const TextStyle(fontSize: 13, color: _P.inkFaint),
+                  prefixIcon:
+                      const Icon(Icons.search_rounded, size: 20, color: _P.inkFaint),
+                  filled: true,
+                  fillColor: _P.panelTint,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(11),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
+                children: [
+                  _OptionTile(
+                    label: spec.allLabel,
+                    icon: spec.allIcon,
+                    selected: widget.current == null,
+                    onTap: () => Navigator.of(context).pop(const _Pick(null)),
+                  ),
+                  for (final it in items)
+                    _OptionTile(
+                      label: it.label,
+                      icon: it.icon,
+                      selected: widget.current == it.value,
+                      onTap: () => Navigator.of(context).pop(_Pick(it.value)),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OptionTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _OptionTile({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Material(
+        color: selected ? _P.blueTint : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: selected ? Colors.white : _P.panelTint,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(icon,
+                      size: 17, color: selected ? _P.blue : _P.inkSoft),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.3,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                      color: selected ? _P.blue : _P.ink,
+                    ),
+                  ),
+                ),
+                if (selected)
+                  const Icon(Icons.check_rounded, size: 19, color: _P.blue),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══ Kadi ya mtu ════════════════════════════════════════════════════════════
+class _WenzaoCard extends StatelessWidget {
+  final Map<String, dynamic> user;
+  final String Function(String) deptLabel;
+  final String Function(String) cadreLabel;
+  const _WenzaoCard({
+    required this.user,
+    required this.deptLabel,
+    required this.cadreLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final name = user['full_name'] as String? ?? '';
+    final phone = user['phone_primary'] as String? ?? user['phone'] as String? ?? '';
+    final cat = user['category'] as String? ?? '';
+    final cadreCode = user['cadre_code'] as String? ?? '';
+    final cadre = user['cadre_display'] as String? ??
+        (cadreCode.isEmpty ? '' : cadreLabel(cadreCode));
+    final paid = (user['is_verified'] as bool?) ?? false;
+    final region = user['region_name'] as String? ??
+        user['current_region'] as String? ??
+        (asMap(user['current_station'])['region_name'] as String? ?? '');
+    final district = user['district_name'] as String? ??
+        (asMap(user['current_station'])['district_name'] as String? ?? '');
     final dests = ((user['destinations'] as List?) ?? [])
         .map((d) => d is Map ? '${d['region_name'] ?? d['name'] ?? d}' : '$d')
         .where((s) => s.isNotEmpty)
         .toList();
-    final years = user['years_of_service'] as num?;
-    final subjects = ((user['subjects'] as List?) ?? [])
-        .map((s) => s is Map ? '${s['name'] ?? s['code'] ?? s}' : '$s')
-        .where((s) => s.isNotEmpty)
-        .toList();
-    final isPaid = user['is_verified'] == true;
-    final online = user['online'] == true;
 
-    final sub = [
-      if (category.isNotEmpty) deptLabel(category),
-      if (cadre.isNotEmpty) cadre,
-    ].join(' · ');
-
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: phone.isEmpty
-            ? null
-            : () async {
-                try {
-                  await launchUrl(Uri.parse('tel:$phone'),
-                      mode: LaunchMode.externalApplication);
-                } catch (_) {}
-              },
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: _kLine),
-          ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // ── Avatar + jina + badge ya malipo ──
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Stack(children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: _kBlueBg,
-                  child: Text(_initials(name),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w800, color: _kPrimary)),
-                ),
-                if (online)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF22C55E),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _P.line),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0F142033), blurRadius: 10, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ---- Header ----
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: _P.tealTint,
+                child: Text(
+                  _initials(name),
+                  style: const TextStyle(
+                    color: _P.teal,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
                   ),
-              ]),
-              const SizedBox(width: 12),
+                ),
+              ),
+              const SizedBox(width: 11),
               Expanded(
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 6, runSpacing: 4, children: [
-                    Text(name.isEmpty ? '(bila jina)' : _titleCase(name),
-                        style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: _kInk,
-                            height: 1.25)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isPaid ? _kGreenBg : _kRedBg,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        isPaid ? '✓ Amelipa' : '✗ Hajalipa',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: isPaid ? _kGreen : _kRed),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name.isEmpty ? '(bila jina)' : _titleCase(name),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _P.ink,
+                        height: 1.25,
                       ),
                     ),
-                  ]),
-                  if (sub.isNotEmpty) ...[
                     const SizedBox(height: 3),
-                    Text(sub,
-                        style: const TextStyle(
-                            fontSize: 13, color: _kMuted, height: 1.3)),
+                    Text(
+                      [if (cat.isNotEmpty) deptLabel(cat), if (cadre.isNotEmpty) cadre]
+                          .join(' · '),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: _P.inkSoft,
+                        height: 1.35,
+                      ),
+                    ),
                   ],
-                ]),
-              ),
-            ]),
-
-            // ── Kutoka / Anataka Kuja ──
-            if (currReg.isNotEmpty || currDist.isNotEmpty || dests.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _kBlueBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _kBlue100),
                 ),
-                child: Column(
+              ),
+              const SizedBox(width: 8),
+              _PaidBadge(paid: paid),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // ---- Njia ya safari ----
+          if (region.isNotEmpty || district.isNotEmpty || dests.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
+              decoration: BoxDecoration(
+                color: _P.panelTint,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          width: 12,
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 3),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: _P.inkFaint, width: 2),
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(
+                                  width: 1.5,
+                                  margin: const EdgeInsets.symmetric(vertical: 3),
+                                  color: _P.lineStrong,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 11),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Anatoka',
+                                    style: TextStyle(
+                                        fontSize: 11.5, color: _P.inkSoft)),
+                                const SizedBox(height: 1),
+                                Text(
+                                  [region, district].where((s) => s.isNotEmpty).join(' · '),
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: _P.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  if (currReg.isNotEmpty || currDist.isNotEmpty)
-                    Row(children: [
-                      const Icon(Icons.location_on_outlined, size: 15, color: _kMuted),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text.rich(
-                          TextSpan(children: [
-                            const TextSpan(
-                                text: 'Kutoka: ',
-                                style: TextStyle(
-                                    fontSize: 13, color: _kMuted)),
-                            TextSpan(
-                                text: [currReg, currDist]
-                                    .where((s) => s.isNotEmpty)
-                                    .join(', '),
-                                style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: _kInk)),
-                          ]),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Container(
+                          width: 12,
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _P.blue,
+                            ),
+                          ),
                         ),
                       ),
-                    ]),
-                  if (dests.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Row(children: [
-                      const Icon(Icons.compare_arrows_rounded, size: 15, color: _kPrimary),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 11),
                       Expanded(
-                        child: Text.rich(
-                          TextSpan(children: [
-                            const TextSpan(
-                                text: 'Anataka Kuja: ',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Anataka kuja',
                                 style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: _kPrimary)),
-                            TextSpan(
-                                text: dests.join(', '),
-                                style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: _kPrimary)),
-                          ]),
+                                    fontSize: 11.5, color: _P.inkSoft)),
+                            const SizedBox(height: 5),
+                            Wrap(
+                              spacing: 5,
+                              runSpacing: 5,
+                              children: [
+                                for (final r in dests.take(4)) _RegionPill(text: r),
+                                if (dests.length > 4)
+                                  _RegionPill(text: '+${dests.length - 4}', muted: true),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    ]),
-                  ],
-                ]),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
+          const SizedBox(height: 12),
 
-            // ── Miaka ya kazi ──
-            if (years != null) ...[
-              const SizedBox(height: 10),
-              Text(_yearsText(years),
-                  style: const TextStyle(
-                      fontSize: 13,
-                      color: _kMuted,
-                      fontWeight: FontWeight.w500)),
-            ],
-
-            // ── Masomo ──
-            if (subjects.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(spacing: 6, runSpacing: 6, children: [
-                ...subjects.take(5).map((s) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: _kBlueBg,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(s,
-                          style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _kBlue700)),
-                    )),
-                if (subjects.length > 5)
-                  Text('+${subjects.length - 5}',
-                      style: const TextStyle(fontSize: 12, color: _kMuted)),
-              ]),
-            ],
-
-            // ── Simu ──
-            if (phone.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: _kSoft,
-                  borderRadius: BorderRadius.circular(14),
+          // ---- Simu ----
+          if (phone.isNotEmpty)
+            Row(
+              children: [
+                const Icon(Icons.phone_outlined, size: 16, color: _P.inkSoft),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    phone,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: _P.ink,
+                    ),
+                  ),
                 ),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Icon(Icons.phone_rounded, size: 16, color: _kPrimary),
-                  const SizedBox(width: 8),
-                  Text(phone,
-                      style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: _kPrimary)),
-                ]),
+                Material(
+                  color: _P.blue,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () async {
+                      try {
+                        await launchUrl(Uri.parse('tel:$phone'),
+                            mode: LaunchMode.externalApplication);
+                      } catch (_) {}
+                    },
+                    child: const SizedBox(
+                      width: 34,
+                      height: 34,
+                      child: Icon(Icons.call_rounded, size: 17, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaidBadge extends StatelessWidget {
+  final bool paid;
+  const _PaidBadge({required this.paid});
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = paid ? _P.green : _P.red;
+    final bg = paid ? _P.greenTint : _P.redTint;
+    return Container(
+      margin: const EdgeInsets.only(top: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            paid ? Icons.check_circle_outline_rounded : Icons.cancel_outlined,
+            size: 13,
+            color: fg,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            paid ? 'Amelipa' : 'Hajalipa',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RegionPill extends StatelessWidget {
+  final String text;
+  final bool muted;
+  const _RegionPill({required this.text, this.muted = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: muted ? Colors.white : _P.blueTint,
+        borderRadius: BorderRadius.circular(999),
+        border: muted ? Border.all(color: _P.line) : null,
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: muted ? _P.inkSoft : _P.blue,
+        ),
+      ),
+    );
+  }
+}
+
+// ═══ Kurasa (pagination) ════════════════════════════════════════════════════
+class _Pagination extends StatelessWidget {
+  final int current;
+  final int total;
+  final ValueChanged<int> onChanged;
+
+  const _Pagination({
+    required this.current,
+    required this.total,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (total <= 1) return const SizedBox.shrink();
+    final start = (current - 2).clamp(1, (total - 4).clamp(1, total));
+    final end = (start + 4).clamp(1, total);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _circle(
+          child: const Icon(Icons.chevron_left_rounded, size: 20),
+          enabled: current > 1,
+          onTap: () => onChanged(current - 1),
+        ),
+        for (var i = start; i <= end; i++)
+          _circle(
+            active: i == current,
+            child: Text(
+              '$i',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: i == current ? Colors.white : _P.inkSoft,
               ),
-            ],
-          ]),
+            ),
+            onTap: () => onChanged(i),
+          ),
+        _circle(
+          child: const Icon(Icons.chevron_right_rounded, size: 20),
+          enabled: current < total,
+          onTap: () => onChanged(current + 1),
+        ),
+      ],
+    );
+  }
+
+  Widget _circle({
+    required Widget child,
+    required VoidCallback onTap,
+    bool active = false,
+    bool enabled = true,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Material(
+        color: active ? _P.blue : Colors.white,
+        shape: CircleBorder(
+          side: BorderSide(color: active ? Colors.transparent : _P.line),
+        ),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: enabled ? onTap : null,
+          child: SizedBox(
+            width: 34,
+            height: 34,
+            child: IconTheme(
+              data: IconThemeData(color: enabled ? _P.inkSoft : _P.inkFaint),
+              child: Center(child: child),
+            ),
+          ),
         ),
       ),
     );

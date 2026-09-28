@@ -1,14 +1,17 @@
-// MALIPO — uthibitisho wa michango (esstranfer.com style)
+// MALIPO — uthibitisho wa michango
 // ─────────────────────────────────────────────────────────────────────────────
-// DATA ILIKUWA HAITOKI KWA SABABU MBILI (zimerekebishwa):
-//   1. Backend GET /payments/admin/all inarudisha {"payments": [...],
-//      "counts": {...}, "total_approved_tzs": N} — app ilikuwa inasoma
-//      data['results'] isiyoipo → orodha ilibaki tupu kabisa.
-//   2. Status za backend ni "verifying"/"approved"/"rejected" — app ilikuwa
-//      inauliza "pending" isiyoipo → hata data ingekuwa, tab ya kwanza tupu.
-// Sasa: data moja inapakiwa mara moja (payments + counts + jumla), kichujio
-// cha hali kinafanyika upande wa app, na design ni ya esstranfer.com
-// (background nyeupe, kadi grey, namba bluu/chungwa).
+// DATA (habari halisi, hazijabadilika):
+//   GET /payments/admin/all → {"payments": [...], "counts": {...},
+//   "total_approved_tzs": N}. Status za backend ni "verifying"/"approved"/
+//   "rejected". Data moja inapakiwa mara moja, kichujio cha hali kinafanyika
+//   upande wa app, na WS 'notification' inaita _load() kwa malipo mapya.
+// DESIGN (mpya — palette ya paper):
+//   - RejectPaymentDialog: dialog ndogo "Kataa malipo?" + sababu (radio tiles)
+//   - PaymentConfirmationCard: jina + "Inasubiri", namba (teal), kiasi +
+//     nakili ya rejea, tarehe + kupiga simu, onyo la SMS, SMS expander,
+//     vitufe vitatu vya mraba (Kataa / Thibitisha / Ongea)
+//   - ChatWithContributorSheet: bubbles + quick replies + input bar
+//   - Header ya kadi inaonyesha ukaguzi wa SMS (kijani/njano/nyekundu)
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,19 +21,23 @@ import '../../services/websocket_service.dart';
 
 const _cBlue     = Color(0xFF1959D6);
 const _cBlueBg   = Color(0xFFEAF1FF);
-const _cBg       = Colors.white;
+const _cBg       = Color(0xFFF3F0E9); // paper
 const _cCardBg   = Color(0xFFF7F8FA);
-const _cBorder   = Color(0xFFECEEF1);
-const _cTextDark = Color(0xFF16181D);
-const _cTextGrey = Color(0xFF6B7280);
-const _cFaint    = Color(0xFF9CA3AF);
-const _cGreen    = Color(0xFF15803D);
-const _cGreenBg  = Color(0xFFDCFCE7);
-const _cRed      = Color(0xFFDC2626);
-const _cRedBg    = Color(0xFFFEE2E2);
-const _cAmber    = Color(0xFFB45309);
-const _cAmberBg  = Color(0xFFFEF3C7);
+const _cBorder   = Color(0xFFE6E0D2);
+const _cTextDark = Color(0xFF142033);
+const _cTextGrey = Color(0xFF5B6779);
+const _cFaint    = Color(0xFF93A0B3);
+const _cGreen    = Color(0xFF1F7A4D);
+const _cGreenBg  = Color(0xFFDDF3E6);
+const _cRed      = Color(0xFFC2503E);
+const _cRedBg    = Color(0xFFFBE6E2);
+const _cAmber    = Color(0xFFB6791F);
+const _cAmberBg  = Color(0xFFFBF0DD);
 const _cLiveGreen = Color(0xFF16A34A);
+const _cTeal     = Color(0xFF1C5F56);
+const _cTealTint = Color(0xFFE7F1EE);
+const _cPanelTint = Color(0xFFF6F5F1);
+const _cBlueTint = Color(0xFFE6EFFF);
 
 const _kPageSize = 10;
 
@@ -127,6 +134,182 @@ List<_SmsCheck> _smsChecks(String sms, int amount,
   return checks;
 }
 
+// ═══ REJECT DIALOG ══════════════════════════════════════════════════════════
+/// Dialog ndogo "Kataa malipo?" — inarudisha sababu iliyochaguliwa (String)
+/// kama admin alibonyeza "Kataa", au null kama alighairi.
+Future<String?> showRejectPaymentDialog(BuildContext context) {
+  return showDialog<String>(
+    context: context,
+    builder: (context) => const _RejectPaymentDialog(),
+  );
+}
+
+class _RejectPaymentDialog extends StatefulWidget {
+  const _RejectPaymentDialog();
+
+  @override
+  State<_RejectPaymentDialog> createState() => _RejectPaymentDialogState();
+}
+
+class _RejectPaymentDialogState extends State<_RejectPaymentDialog> {
+  static const accent = Color(0xFF2F3EC7);
+  static const danger = _cRed;
+
+  final List<String> _reasons = const [
+    'SMS si halisi',
+    'Kiasi hakilingani',
+    'Pesa haijaingia',
+    'Malipo yamerudiwa',
+  ];
+
+  String _selected = 'SMS si halisi';
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Warning icon badge.
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFCEBEB),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: const Icon(Icons.warning_amber_rounded,
+                  size: 16, color: danger),
+            ),
+            const SizedBox(height: 10),
+
+            const Text(
+              'Kataa malipo?',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Chagua sababu.',
+              style: TextStyle(fontSize: 11, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+
+            // Reason options.
+            ..._reasons.map((reason) {
+              final selected = reason == _selected;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: InkWell(
+                  onTap: () => setState(() => _selected = reason),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 9, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? const Color(0xFFEAF0FE)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: selected ? accent : const Color(0xFFE0E1E6),
+                        width: selected ? 1.2 : 0.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: selected ? accent : Colors.transparent,
+                            border: Border.all(
+                              color: selected
+                                  ? accent
+                                  : const Color(0xFFD0D2D8),
+                              width: 1.1,
+                            ),
+                          ),
+                          child: selected
+                              ? const Icon(Icons.check,
+                                  size: 8, color: Colors.white)
+                              : null,
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          reason,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight:
+                                selected ? FontWeight.w600 : FontWeight.normal,
+                            color: const Color(0xFF1A1A2E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 7),
+
+            // Actions.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(null),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.black54,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 11, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Ghairi',
+                      style: TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w600)),
+                ),
+                const SizedBox(width: 6),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(_selected),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: danger,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 13, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                  ),
+                  icon: const Icon(Icons.close, size: 10, color: Colors.white),
+                  label: const Text(
+                    'Kataa',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══ PAGE ═══════════════════════════════════════════════════════════════════
 class AdminPaymentsPage extends StatefulWidget {
   const AdminPaymentsPage({super.key});
   @override
@@ -144,12 +327,9 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
 
   String _status = 'all'; // all | verifying | approved | rejected
   int _page = 0;
-  final Set<String> _smsOpen = {};
   final _searchCtrl = TextEditingController();
 
   // ── LIVE halisi: WS inaita _load() malipo mapya yanapofika ──
-  // (Bila hii "Live" ilikuwa ni maandishi tu — malipo mapya yangeonekana
-  //  baada ya refresh mwenyewe tu. Badge pekee ndiyo iliongezekwa.)
   void _onWs(Map<String, dynamic> payload) {
     final type = (payload['type'] ?? payload['event'])?.toString() ?? '';
     if (type == 'payment.submitted' || type == 'payment.message') {
@@ -176,8 +356,6 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   // ── DATA: /payments/admin/all → {payments, counts, total_approved_tzs} ────
   Future<void> _load() async {
     // SILENT REFRESH: spinner TU wakati hAKUNA data bado (kwanza kabisa).
-    // Refresh baada ya approve/reject au WS event inabadilisha list HAPO
-    // HAPO — hakuna spinner ya kukatiza, page/scroll zinadumu.
     final first = _payments.isEmpty && _loading;
     setState(() {
       if (first) _loading = true;
@@ -226,7 +404,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
     _scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
   }
 
-  // ── Vitendo (dialog ya uthibitisho kwa pesa) ───────────────────────────────
+  // ── Vitendo ────────────────────────────────────────────────────────────────
 
   Future<void> _approve(Map<String, dynamic> p) async {
     final checks = _smsChecks('${p['sms_text'] ?? ''}',
@@ -299,56 +477,9 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 
   Future<void> _reject(Map<String, dynamic> p) async {
-    final reasons = [
-      'SMS si halisi',
-      'Kiasi hakilingani',
-      'Pesa haijaingia',
-      'Malipo yamerudiwa',
-    ];
-    String? selected;
-    final reason = await showDialog<String>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Kataa malipo haya?',
-              style: TextStyle(fontWeight: FontWeight.w800)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Chagua sababu ya kukataa.'),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final r in reasons)
-                    ChoiceChip(
-                      label: Text(r),
-                      selected: selected == r,
-                      onSelected: (_) => setLocal(() => selected = r),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Ghairi'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: _cRed),
-              onPressed: selected == null ? null : () => Navigator.pop(ctx, selected),
-              child: const Text('Kataa',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
-            ),
-          ],
-        ),
-      ),
-    );
+    final reason = await showRejectPaymentDialog(context);
     if (reason == null) return;
+    // reason ina sababu iliyochaguliwa, mfano "SMS si halisi"
     try {
       await ApiService().adminRejectDonation('${p['order_id']}', note: reason);
       if (!mounted) return;
@@ -430,6 +561,56 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       ));
   }
 
+  void _call(String phone) async {
+    // Kupiga simu kunafanyika kwenye kadi (onCall) — hii ni placeholder
+    // ya siku mbadala; kwa sasa tunanakili namba tu kama fallback.
+    if (phone.isEmpty) return;
+    _copy(phone, 'Namba ya simu');
+  }
+
+  // ── Chat na mchangiaji (bottom sheet mpya) ─────────────────────────────────
+  void _openChat(Map<String, dynamic> p) {
+    final orderId = '${p['order_id']}';
+    final msgs = ((p['messages'] as List?) ?? [])
+        .whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => ChatWithContributorSheet(
+        name: _titleCase('${p['user_name'] ?? 'Mchangiaji'}'),
+        online: false,
+        messages: [
+          for (final m in msgs)
+            ChatMessage(
+              text: '${m['text'] ?? m['message'] ?? ''}',
+              isMe:
+                  '${m['from'] ?? m['sender'] ?? m['role'] ?? ''}'.contains('admin') ||
+                      m['is_admin'] == true ||
+                      '${m['from'] ?? m['sender'] ?? m['role'] ?? ''}' == 'staff',
+              time: _fmtTime(m['at'] ?? m['created_at']),
+            ),
+        ],
+        quickReplies: const ['Nimepokea malipo lako', 'Namba si sahihi', 'Asante'],
+        onSend: (text) => _sendReply(orderId, text),
+      ),
+    );
+  }
+
+  String _fmtTime(dynamic iso) {
+    if (iso == null) return '';
+    try {
+      final d = DateTime.parse('$iso').toLocal();
+      final t = TimeOfDay.fromDateTime(d);
+      final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+      final m = t.minute.toString().padLeft(2, '0');
+      final period = t.period == DayPeriod.am ? 'AM' : 'PM';
+      return '$h:$m $period';
+    } catch (_) {
+      return '';
+    }
+  }
+
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -441,6 +622,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       body: RefreshIndicator(
         onRefresh: _load,
         color: _cBlue,
+        backgroundColor: Colors.white,
         child: ListView(
           controller: _scroll,
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
@@ -455,7 +637,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: _cGreenBg,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Row(mainAxisSize: MainAxisSize.min, children: [
@@ -472,18 +654,19 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                 style: TextStyle(fontSize: 14, color: _cTextGrey)),
             const SizedBox(height: 16),
 
-            // ── Jumla iliyothibitishwa (kadi kuu ya grey) ──
+            // ── Jumla iliyothibitishwa ──
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: _cCardBg,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _cBorder),
               ),
               child: Row(children: [
                 Container(
                   width: 44, height: 44,
                   decoration: BoxDecoration(
-                      color: _cBlueBg, borderRadius: BorderRadius.circular(12)),
+                      color: _cBlueTint, borderRadius: BorderRadius.circular(12)),
                   child: const Icon(Icons.trending_up_rounded, color: _cBlue),
                 ),
                 const SizedBox(width: 14),
@@ -500,7 +683,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
             ),
             const SizedBox(height: 14),
 
-            // ── Hali (dropdown yenye counts) + Tafuta — kama ukurasa wa Maoni ──
+            // ── Hali (dropdown yenye counts) + Tafuta ──
             Row(children: [
               Expanded(
                 child: _StatusDropdown(
@@ -563,20 +746,24 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
               for (final p in pageItems)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _PaymentCard(
-                    p: p,
+                  child: PaymentConfirmationCard(
+                    name: _titleCase('${p['user_name'] ?? '(bila jina)'}'),
+                    phone: '${p['phone'] ?? ''}',
+                    amount: _fmt((p['amount'] as num?)?.toInt() ?? 0),
+                    reference: '${p['order_id'] ?? ''}',
+                    dateTime:
+                        '${_fmtDate(p['created_at'])}${_ago(p['created_at']).isEmpty ? '' : ' · ${_ago(p['created_at'])}'}',
+                    smsPreview: '${p['sms_text'] ?? ''}',
                     checks: _smsChecks('${p['sms_text'] ?? ''}',
                         (p['amount'] as num?)?.toInt() ?? 0, _payments,
                         '${p['order_id'] ?? ''}'),
-                    smsOpen: _smsOpen.contains('${p['order_id']}'),
-                    onToggleSms: () => setState(() {
-                      final id = '${p['order_id']}';
-                      _smsOpen.contains(id) ? _smsOpen.remove(id) : _smsOpen.add(id);
-                    }),
-                    onCopy: _copy,
-                    onApprove: () => _approve(p),
+                    status: '${p['status'] ?? 'verifying'}',
+                    rejectedNote: '${p['note'] ?? ''}',
+                    onConfirm: () => _approve(p),
                     onReject: () => _reject(p),
                     onChat: () => _openChat(p),
+                    onCall: () => _call('${p['phone'] ?? ''}'),
+                    onCopy: (text) => _copy(text, 'Rejea'),
                   ),
                 ),
               _pager(),
@@ -611,7 +798,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: i == p ? _cBlue : _cBg,
+                  color: i == p ? _cBlue : Colors.white,
                   shape: BoxShape.circle,
                   border: Border.all(color: i == p ? _cBlue : _cBorder),
                 ),
@@ -634,7 +821,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
-        color: _cBg,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _cBorder),
       ),
@@ -658,7 +845,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 44, horizontal: 20),
       decoration: BoxDecoration(
-        color: _cBg,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _cBorder),
       ),
@@ -675,437 +862,950 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       ]),
     );
   }
+}
 
-  // ── Chat na mchangiaji (bottom sheet) ──────────────────────────────────────
-  void _openChat(Map<String, dynamic> p) {
-    final orderId = '${p['order_id']}';
-    final msgs = ((p['messages'] as List?) ?? [])
-        .whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
-    final ctrl = TextEditingController();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: _cBg,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: SizedBox(
-          height: MediaQuery.of(ctx).size.height * 0.7,
-          child: Column(children: [
+// ═══ PAYMENT CONFIRMATION CARD (design mpya) ════════════════════════════════
+/// Kadi ya uthibitisho wa malipo — jina + lebo ya hali sambamba, namba ya
+/// simu chini yake, kiasi + kitufe cha kunakili rejea, tarehe + kitufe cha
+/// kupiga simu, onyo la SMS (au ukaguzi), sehemu inayofunguka ya SMS, na
+/// vitufe vitatu vya mraba (Kataa / Thibitisha / Ongea) mstari mmoja.
+class PaymentConfirmationCard extends StatefulWidget {
+  final String name;
+  final String phone;
+  final String amount;
+  final String currency;
+  final String reference;
+  final String dateTime;
+  final String smsPreview;
+  final List<_SmsCheck> checks;
+  final String status; // verifying | approved | rejected
+  final String rejectedNote;
+  final VoidCallback? onConfirm;
+  final VoidCallback? onReject;
+  final VoidCallback? onChat;
+  final VoidCallback? onCall;
+  final ValueChanged<String>? onCopy;
+
+  const PaymentConfirmationCard({
+    super.key,
+    required this.name,
+    required this.phone,
+    required this.amount,
+    this.currency = 'TZS',
+    required this.reference,
+    required this.dateTime,
+    this.smsPreview = '',
+    this.checks = const [],
+    this.status = 'verifying',
+    this.rejectedNote = '',
+    this.onConfirm,
+    this.onReject,
+    this.onChat,
+    this.onCall,
+    this.onCopy,
+  });
+
+  @override
+  State<PaymentConfirmationCard> createState() =>
+      _PaymentConfirmationCardState();
+}
+
+class _PaymentConfirmationCardState extends State<PaymentConfirmationCard> {
+  bool _copied = false;
+  bool _smsExpanded = false;
+
+  // Rangi za muundo — zinaendana na design language iliyotumika awali.
+  static const _ink = _cTextDark;
+  static const _inkSoft = _cTextGrey;
+  static const _inkFaint = _cFaint;
+  static const _line = _cBorder;
+  static const _panelTint = _cPanelTint;
+
+  static const _teal = _cTeal;
+  static const _tealTint = _cTealTint;
+  static const _blue = _cBlue;
+  static const _blueTint = _cBlueTint;
+  static const _amber = _cAmber;
+  static const _amberTint = _cAmberBg;
+  static const _green = _cGreen;
+  static const _red = _cRed;
+  static const _redTint = _cRedBg;
+
+  Future<void> _copyReference() async {
+    await Clipboard.setData(ClipboardData(text: widget.reference));
+    widget.onCopy?.call(widget.reference);
+    setState(() => _copied = true);
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '';
+    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
+    return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
+  }
+
+  bool get _pending => widget.status == 'verifying';
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _line),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0F142033), blurRadius: 10, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 14),
+          _buildAmountPanel(),
+          const SizedBox(height: 12),
+          _buildMetaRow(),
+          const SizedBox(height: 10),
+          // Onyo la SMS au ukaguzi wa SMS (checks)
+          if (widget.checks.isNotEmpty)
+            _buildChecks()
+          else if (_pending)
+            _buildWarning(),
+          if (widget.checks.isNotEmpty || _pending)
+            const SizedBox(height: 10),
+          if (widget.smsPreview.trim().isNotEmpty) ...[
+            _buildSmsExpander(),
+            const SizedBox(height: 14),
+          ],
+          _buildActions(),
+          // Sababu ya kukataliwa
+          if (widget.status == 'rejected' && widget.rejectedNote.isNotEmpty) ...[
             const SizedBox(height: 10),
             Row(children: [
-              const SizedBox(width: 16),
+              const Icon(Icons.flag_rounded, size: 15, color: _red),
+              const SizedBox(width: 6),
               Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Ongea na mchangiaji',
-                      style: TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w700,
-                          color: _cTextGrey, letterSpacing: .4)),
-                  Text('${p['user_name'] ?? '—'}',
-                      style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w800, color: _cTextDark)),
-                ]),
+                child: Text('Sababu: ${widget.rejectedNote}',
+                    style: const TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w600, color: _red)),
               ),
-              IconButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  icon: const Icon(Icons.close_rounded)),
             ]),
-            const Divider(height: 1, color: _cBorder),
-            Expanded(
-              child: msgs.isEmpty
-                  ? const Center(
-                      child: Text('Hakuna ujumbe bado. Andika ujumbe wa kwanza.',
-                          style: TextStyle(color: _cTextGrey)),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: msgs.length,
-                      itemBuilder: (_, i) {
-                        final m = msgs[i];
-                        // Backend inarudisha from/sender/role/admin —
-                        // tunaihakiki zote ili jibu la admin liwe upande sahihi.
-                        final sender = '${m['from'] ?? m['sender'] ?? m['role'] ?? ''}';
-                        final fromAdmin = sender.contains('admin') ||
-                            m['is_admin'] == true ||
-                            sender == 'staff';
-                        return Align(
-                          alignment: fromAdmin
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
-                            constraints: BoxConstraints(
-                                maxWidth: MediaQuery.of(ctx).size.width * .75),
-                            decoration: BoxDecoration(
-                              color: fromAdmin ? _cBlue : _cCardBg,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Text('${m['text'] ?? m['message'] ?? ''}',
-                                style: TextStyle(
-                                    color: fromAdmin ? Colors.white : _cTextDark,
-                                    height: 1.4)),
-                          ),
-                        );
-                      },
-                    ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 21,
+          backgroundColor: _tealTint,
+          child: Text(
+            _initials(widget.name),
+            style: const TextStyle(
+              color: _teal,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Row(children: [
-                Expanded(
-                  child: TextField(
-                    controller: ctrl,
-                    minLines: 1,
-                    maxLines: 4,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) async {
-                      final text = ctrl.text.trim();
-                      if (text.isEmpty) return;
-                      Navigator.pop(ctx);
-                      await _sendReply(orderId, text);
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Andika jibu kwa mchangiaji...',
-                      filled: true,
-                      fillColor: _cCardBg,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(color: _cBorder)),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(color: _cBorder)),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16.5,
+                        color: _ink,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  _buildStatusBadge(),
+                ],
+              ),
+              const SizedBox(height: 3),
+              if (widget.phone.isNotEmpty)
+                GestureDetector(
+                  onTap: widget.onCall,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.phone, size: 13, color: _teal),
+                      const SizedBox(width: 5),
+                      Text(
+                        widget.phone,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _teal,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  onPressed: () async {
-                    final text = ctrl.text.trim();
-                    if (text.isEmpty) return;
-                    Navigator.pop(ctx);
-                    await _sendReply(orderId, text);
-                  },
-                  style: IconButton.styleFrom(backgroundColor: _cBlue),
-                  icon: const Icon(Icons.send_rounded, size: 20),
-                ),
-              ]),
-            ),
-          ]),
+            ],
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildStatusBadge() {
+    final (label, color, bg, icon) = switch (widget.status) {
+      'approved' => ('Imeidhinishwa', _green, _cGreenBg, Icons.check_circle_outline_rounded),
+      'rejected' => ('Imekataliwa', _red, _redTint, Icons.cancel_outlined),
+      _          => ('Inasubiri', _amber, _amberTint, Icons.access_time_rounded),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
       ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmountPanel() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+      decoration: BoxDecoration(
+        color: _panelTint,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: '${widget.currency} ',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _inkSoft,
+                  ),
+                ),
+                TextSpan(
+                  text: widget.amount,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: _ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: _copyReference,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(
+                  color: _copied ? _green : _line,
+                ),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.copy_rounded,
+                    size: 13,
+                    color: _copied ? _green : _teal,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _copied ? 'Imenakiliwa' : widget.reference,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _copied ? _green : _inkSoft,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetaRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              const Icon(Icons.access_time, size: 14, color: _inkFaint),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  widget.dateTime,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12.5, color: _inkSoft),
+                ),
+              ),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: widget.onCall,
+          child: Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: _blueTint,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.call, size: 14, color: _blue),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWarning() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: _redTint,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, size: 18, color: _red),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Haionekani kama SMS ya muamala',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _red,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChecks() {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final c in widget.checks)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            decoration: BoxDecoration(
+                color: switch (c.verdict) {
+                  _Verdict.ok      => _cGreenBg,
+                  _Verdict.warning => _amberTint,
+                  _Verdict.danger  => _redTint,
+                },
+                borderRadius: BorderRadius.circular(10)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                    switch (c.verdict) {
+                      _Verdict.ok      => Icons.check_circle_outline_rounded,
+                      _Verdict.warning => Icons.warning_amber_rounded,
+                      _Verdict.danger  => Icons.error_outline_rounded,
+                    },
+                    size: 13,
+                    color: switch (c.verdict) {
+                      _Verdict.ok      => _green,
+                      _Verdict.warning => _amber,
+                      _Verdict.danger  => _red,
+                    }),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: Text(c.text,
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: switch (c.verdict) {
+                            _Verdict.ok      => _green,
+                            _Verdict.warning => _amber,
+                            _Verdict.danger  => _red,
+                          })),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSmsExpander() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _panelTint,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(11),
+            onTap: () => setState(() => _smsExpanded = !_smsExpanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.sms_outlined, size: 16, color: _inkSoft),
+                      SizedBox(width: 8),
+                      Text(
+                        'Ona SMS ya mchangiaji',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: _ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                  AnimatedRotation(
+                    turns: _smsExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: _inkFaint,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _smsExpanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: Padding(
+              padding: const EdgeInsets.fromLTRB(13, 0, 13, 13),
+              child: Container(
+                padding: const EdgeInsets.only(top: 10),
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: _line)),
+                ),
+                child: SelectableText(
+                  widget.smsPreview,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: _inkSoft,
+                    fontFamily: 'monospace',
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
+            secondChild: const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions() {
+    // Kwa zilizoidhinishwa/zilizokataliwa: vitufe vya kitendo vimekwisha —
+    // tunaonyesha tu "Ongea" (chat) badala ya Kataa/Thibitisha.
+    if (!_pending) {
+      return Row(
+        children: [
+          Expanded(
+            child: _SquareIconButton(
+              icon: Icons.chat_bubble_outline_rounded,
+              iconColor: _blue,
+              background: _blueTint,
+              tooltip: 'Ongea na mchangiaji',
+              onTap: widget.onChat,
+            ),
+          ),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(
+          child: _SquareIconButton(
+            icon: Icons.close_rounded,
+            iconColor: _red,
+            background: Colors.white,
+            borderColor: const Color(0xFFECC3BA),
+            tooltip: 'Kataa',
+            onTap: widget.onReject,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: _SquareIconButton(
+            icon: Icons.check_rounded,
+            iconColor: Colors.white,
+            background: _green,
+            tooltip: 'Thibitisha',
+            onTap: widget.onConfirm,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: _SquareIconButton(
+            icon: Icons.chat_bubble_outline_rounded,
+            iconColor: _blue,
+            background: _blueTint,
+            tooltip: 'Ongea na mchangiaji',
+            onTap: widget.onChat,
+          ),
+        ),
+      ],
     );
   }
 }
 
-// ═══ PAYMENT CARD ════════════════════════════════════════════════════════════
-class _PaymentCard extends StatelessWidget {
-  final Map<String, dynamic> p;
-  final List<_SmsCheck> checks;
-  final bool smsOpen;
-  final VoidCallback onToggleSms;
-  final void Function(String text, String what) onCopy;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
-  final VoidCallback onChat;
+class _SquareIconButton extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color background;
+  final Color? borderColor;
+  final String tooltip;
+  final VoidCallback? onTap;
 
-  const _PaymentCard({
-    required this.p,
-    required this.checks,
-    required this.smsOpen,
-    required this.onToggleSms,
-    required this.onCopy,
-    required this.onApprove,
-    required this.onReject,
-    required this.onChat,
+  const _SquareIconButton({
+    required this.icon,
+    required this.iconColor,
+    required this.background,
+    required this.tooltip,
+    this.borderColor,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final name = '${p['user_name'] ?? ''}';
-    final phone = '${p['phone'] ?? ''}';
-    final amount = (p['amount'] as num?)?.toInt() ?? 0;
-    final status = '${p['status'] ?? ''}';
-    final sms = '${p['sms_text'] ?? ''}';
-    final note = '${p['note'] ?? ''}';
-    final expired = p['expired'] == true;
-    final orderId = '${p['order_id'] ?? ''}';
-
-    final (stLabel, stFg, stBg) = switch (status) {
-      'approved'  => ('Imeidhinishwa', _cGreen, _cGreenBg),
-      'rejected'  => ('Imekataliwa', _cRed, _cRedBg),
-      _           => (expired ? 'Muda umeisha' : 'Inasubiri', _cAmber, _cAmberBg),
-    };
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _cBorder),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0A16181D), blurRadius: 8, offset: Offset(0, 3)),
-        ],
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // ── Avatar + jina + status ──
-        Row(children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: _cBlueBg,
-            child: Text(_initials(name),
-                style: const TextStyle(
-                    fontWeight: FontWeight.w800, color: _cBlue, fontSize: 13)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name.isEmpty ? '(bila jina)' : _titleCase(name),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700, color: _cTextDark)),
-              const SizedBox(height: 2),
-              if (phone.isNotEmpty)
-                Text(phone,
-                    style: const TextStyle(
-                        fontSize: 12.5, color: _cBlue, fontWeight: FontWeight.w600)),
-            ]),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onTap,
+          child: Container(
+            height: 34,
             decoration: BoxDecoration(
-                color: stBg, borderRadius: BorderRadius.circular(999)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(status == 'approved'
-                      ? Icons.check_circle_outline_rounded
-                      : status == 'rejected'
-                          ? Icons.cancel_outlined
-                          : Icons.hourglass_top_rounded,
-                  size: 12, color: stFg),
-              const SizedBox(width: 4),
-              Text(stLabel,
-                  style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w700, color: stFg)),
-            ]),
-          ),
-        ]),
-        const SizedBox(height: 12),
-
-        // ── Kiasi + order id ──
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: _cCardBg,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(children: [
-            Text('TZS ${_fmt(amount)}',
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w800, color: _cTextDark)),
-            const Spacer(),
-            GestureDetector(
-              onTap: () => onCopy(orderId, 'Order ID'),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(orderId.length > 10 ? '${orderId.substring(0, 10)}…' : orderId,
-                    style: const TextStyle(
-                        fontSize: 11.5, color: _cTextGrey, fontFamily: 'monospace')),
-                const SizedBox(width: 5),
-                const Icon(Icons.copy_rounded, size: 13, color: _cTextGrey),
-              ]),
+              borderRadius: BorderRadius.circular(8),
+              border: borderColor != null
+                  ? Border.all(color: borderColor!, width: 1.3)
+                  : null,
             ),
-          ]),
-        ),
-        const SizedBox(height: 10),
-
-        // ── Tarehe + simu ──
-        Row(children: [
-          const Icon(Icons.schedule_rounded, size: 15, color: _cTextGrey),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-                '${_fmtDate(p['created_at'])}${_ago(p['created_at']).isEmpty ? '' : ' · ${_ago(p['created_at'])}'}',
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12.5, color: _cTextGrey)),
-          ),
-          if (phone.isNotEmpty) ...[
-            const SizedBox(width: 14),
-            const Icon(Icons.phone_outlined, size: 14, color: _cTextGrey),
-            const SizedBox(width: 4),
-            GestureDetector(
-              onTap: () => onCopy(phone, 'Namba'),
-              child: Text(phone,
-                  style: const TextStyle(
-                      fontSize: 12.5, fontWeight: FontWeight.w600, color: _cTextDark)),
-            ),
-          ],
-        ]),
-
-        // ── Ukaguzi wa SMS (inasubiri) — kama reference ya Michango ──
-        if (status == 'verifying' && checks.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [for (final c in checks) _CheckChip(c)]),
-        ],
-
-        // ── Sababu ya kukataliwa ──
-        if (status == 'rejected' && note.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Row(children: [
-            const Icon(Icons.flag_rounded, size: 15, color: _cRed),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text('Sababu: $note',
-                  style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: _cRed)),
-            ),
-          ]),
-        ],
-
-        // ── SMS ya mchangiaji (expandable) ──
-        if (sms.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: onToggleSms,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              decoration: BoxDecoration(
-                color: _cCardBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(children: [
-                Icon(smsOpen ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                    size: 15, color: _cTextGrey),
-                const SizedBox(width: 7),
-                Text(smsOpen ? 'Ficha SMS' : 'Ona SMS ya mchangiaji',
-                    style: const TextStyle(
-                        fontSize: 12.5, fontWeight: FontWeight.w700, color: _cTextDark)),
-                const Spacer(),
-                Icon(smsOpen ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                    size: 17, color: _cTextGrey),
-              ]),
-            ),
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOut,
-            alignment: Alignment.topCenter,
-            child: smsOpen
-                ? Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _cCardBg,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: _cBorder),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SelectableText(sms,
-                              style: const TextStyle(
-                                  fontSize: 12.5, height: 1.55,
-                                  color: _cTextDark, fontFamily: 'monospace')),
-                          if (checks.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: [
-                                  for (final c in checks) _CheckChip(c)
-                                ]),
-                          ],
-                        ],
-                      ),
-                    ),
-                  )
-                : const SizedBox(width: double.infinity),
-          ),
-        ],
-
-        // ── Note ya mfumo (si kwa zilizokataliwa — zina 'Sababu' juu) ──
-        if (note.isNotEmpty && status != 'rejected') ...[
-          const SizedBox(height: 8),
-          Row(children: [
-            const Icon(Icons.info_outline_rounded, size: 15, color: _cAmber),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(note,
-                  style: const TextStyle(fontSize: 12.5, color: _cAmber)),
-            ),
-          ]),
-        ],
-
-        // ── Vitendo ──
-        const SizedBox(height: 12),
-        if (status == 'verifying') ...[
-          Row(children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: onApprove,
-                icon: const Icon(Icons.check_rounded, size: 18),
-                label: const Text('Thibitisha',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
-                style: FilledButton.styleFrom(
-                  backgroundColor: _cGreen,
-                  minimumSize: const Size(0, 44),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onReject,
-                icon: const Icon(Icons.close_rounded, size: 18),
-                label: const Text('Kataa',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _cRed,
-                  side: const BorderSide(color: Color(0xFFFECACA)),
-                  minimumSize: const Size(0, 44),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 8),
-        ],
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: onChat,
-            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16, color: _cBlue),
-            label: const Text('Ongea na mchangiaji',
-                style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w700, color: _cBlue)),
-            style: OutlinedButton.styleFrom(
-              backgroundColor: _cBlueBg,
-              side: BorderSide.none,
-              minimumSize: const Size(0, 42),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 16, color: iconColor),
           ),
         ),
-      ]),
+      ),
     );
   }
 }
 
-// ─── Dropdown ya hali yenye counts (kama ukurasa wa Maoni) ────────────────────
+// ═══ CHAT SHEET (design mpya) ═══════════════════════════════════════════════
+class ChatMessage {
+  final String text;
+  final bool isMe;
+  final String time;
+  const ChatMessage({required this.text, required this.isMe, required this.time});
+}
+
+/// Fungua kama modal bottom sheet:
+/// showModalBottomSheet(
+///   context: context,
+///   isScrollControlled: true,
+///   backgroundColor: Colors.transparent,
+///   builder: (_) => ChatWithContributorSheet(name: 'Hassan Hussein'),
+/// );
+class ChatWithContributorSheet extends StatefulWidget {
+  final String name;
+  final bool online;
+  final List<ChatMessage> messages;
+  final List<String> quickReplies;
+  final void Function(String text)? onSend;
+
+  const ChatWithContributorSheet({
+    super.key,
+    required this.name,
+    this.online = false,
+    this.messages = const [],
+    this.quickReplies = const ['Sio sahihi'],
+    this.onSend,
+  });
+
+  @override
+  State<ChatWithContributorSheet> createState() =>
+      _ChatWithContributorSheetState();
+}
+
+class _ChatWithContributorSheetState extends State<ChatWithContributorSheet> {
+  final _controller = TextEditingController();
+  late List<ChatMessage> _messages;
+
+  @override
+  void initState() {
+    super.initState();
+    _messages = List.of(widget.messages);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '';
+    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
+    return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
+  }
+
+  String _now() {
+    final t = TimeOfDay.now();
+    final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+    final m = t.minute.toString().padLeft(2, '0');
+    final period = t.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$h:$m $period';
+  }
+
+  void _send(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    setState(() {
+      _messages.add(ChatMessage(text: trimmed, isMe: true, time: _now()));
+      _controller.clear();
+    });
+    widget.onSend?.call(trimmed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: viewInsets),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.82,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: _cBorder,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            _buildHeader(context),
+            const Divider(height: 1, color: _cBorder),
+            Flexible(child: _buildBody()),
+            if (widget.quickReplies.isNotEmpty) _buildQuickReplies(),
+            _buildInputBar(),
+            SizedBox(
+              height: MediaQuery.of(context).padding.bottom > 0
+                  ? MediaQuery.of(context).padding.bottom
+                  : 12,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 13, 10, 13),
+      child: Row(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: _cTealTint,
+                child: Text(
+                  _initials(widget.name),
+                  style: const TextStyle(
+                    color: _cTeal,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
+              if (widget.online)
+                Positioned(
+                  right: -1,
+                  bottom: -1,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: _cLiveGreen,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ongea na mchangiaji',
+                  style: TextStyle(fontSize: 11, color: _cTextGrey),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  widget.name,
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    color: _cTextDark,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(Icons.close_rounded, color: _cTextGrey, size: 20),
+            splashRadius: 18,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_messages.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: const BoxDecoration(
+                  color: _cPanelTint,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 19,
+                  color: _cFaint,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Hakuna ujumbe bado',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: _cTextGrey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      itemCount: _messages.length,
+      itemBuilder: (context, i) {
+        final msg = _messages[i];
+        return Align(
+          alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            constraints: const BoxConstraints(maxWidth: 240),
+            child: Column(
+              crossAxisAlignment:
+                  msg.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: msg.isMe ? _cBlue : _cPanelTint,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(13),
+                      topRight: const Radius.circular(13),
+                      bottomLeft: Radius.circular(msg.isMe ? 13 : 3),
+                      bottomRight: Radius.circular(msg.isMe ? 3 : 13),
+                    ),
+                  ),
+                  child: Text(
+                    msg.text,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: msg.isMe ? Colors.white : _cTextDark,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Text(
+                    msg.time,
+                    style: const TextStyle(fontSize: 10, color: _cFaint),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickReplies() {
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: widget.quickReplies.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final label = widget.quickReplies[i];
+          return Material(
+            color: _cBlueTint,
+            borderRadius: BorderRadius.circular(999),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: () => _send(label),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Center(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _cBlue,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildInputBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 38, maxHeight: 100),
+              decoration: BoxDecoration(
+                color: _cPanelTint,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: TextField(
+                controller: _controller,
+                minLines: 1,
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+                style: const TextStyle(fontSize: 13, color: _cTextDark),
+                decoration: const InputDecoration(
+                  hintText: 'Andika jibu kwa mchangiaji…',
+                  hintStyle: TextStyle(fontSize: 12.5, color: _cFaint),
+                  border: InputBorder.none,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                onSubmitted: _send,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Material(
+            color: _cBlue,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => _send(_controller.text),
+              child: const Padding(
+                padding: EdgeInsets.all(9),
+                child: Icon(Icons.send_rounded, size: 16, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══ Dropdown ya hali yenye counts ══════════════════════════════════════════
 
 class _StatusDropdown extends StatelessWidget {
   final String value;
@@ -1175,40 +1875,6 @@ class _StatusDropdown extends StatelessWidget {
   }
 }
 
-// ─── Chip ya matokeo ya ukaguzi wa SMS (kijani/njano/nyekundu) ────────────
-
-class _CheckChip extends StatelessWidget {
-  final _SmsCheck check;
-  const _CheckChip(this.check);
-
-  @override
-  Widget build(BuildContext context) {
-    final (fg, bg, icon) = switch (check.verdict) {
-      _Verdict.ok      => (_cGreen, _cGreenBg, Icons.check_circle_outline_rounded),
-      _Verdict.warning => (_cAmber, _cAmberBg, Icons.warning_amber_rounded),
-      _Verdict.danger  => (_cRed, _cRedBg, Icons.error_outline_rounded),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-          color: bg, borderRadius: BorderRadius.circular(10)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 13, color: fg),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(check.text,
-                style: TextStyle(
-                    fontSize: 11.5, fontWeight: FontWeight.w600, color: fg)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ─── Skeleton loading (inang'aa badala ya spinner) ────────────────────
 
 class _SkeletonCard extends StatefulWidget {
@@ -1235,14 +1901,14 @@ class _SkeletonCardState extends State<_SkeletonCard>
           width: w,
           height: h,
           decoration: BoxDecoration(
-              color: _cCardBg, borderRadius: BorderRadius.circular(8)),
+              color: _cPanelTint, borderRadius: BorderRadius.circular(8)),
         );
     return FadeTransition(
       opacity: Tween<double>(begin: .45, end: 1).animate(_a),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _cBg,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: _cBorder),
         ),
@@ -1254,7 +1920,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
                     width: 40,
                     height: 40,
                     decoration: const BoxDecoration(
-                        color: _cCardBg, shape: BoxShape.circle)),
+                        color: _cPanelTint, shape: BoxShape.circle)),
                 const SizedBox(width: 10),
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   bar(140, 13),
