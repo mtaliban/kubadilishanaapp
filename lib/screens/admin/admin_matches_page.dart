@@ -738,14 +738,14 @@ class _FilterSheetState extends State<_FilterSheet> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 14, 12),
+              padding: const EdgeInsets.fromLTRB(22, 18, 16, 12),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       spec.sheetTitle,
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: _P.ink,
                       ),
@@ -758,8 +758,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                       customBorder: const CircleBorder(),
                       onTap: () => Navigator.of(context).pop(),
                       child: const Padding(
-                        padding: EdgeInsets.all(9),
-                        child: Icon(Icons.close_rounded, size: 21, color: _P.inkSoft),
+                        padding: EdgeInsets.all(10),
+                        child: Icon(Icons.close_rounded, size: 22, color: _P.inkSoft),
                       ),
                     ),
                   ),
@@ -767,20 +767,20 @@ class _FilterSheetState extends State<_FilterSheet> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
               child: TextField(
                 onChanged: (v) => setState(() => _q = v),
-                style: const TextStyle(fontSize: 15, color: _P.ink),
+                style: const TextStyle(fontSize: 15.5, color: _P.ink),
                 decoration: InputDecoration(
                   hintText: 'Tafuta…',
-                  hintStyle: const TextStyle(fontSize: 14.5, color: _P.inkFaint),
+                  hintStyle: const TextStyle(fontSize: 15, color: _P.inkFaint),
                   prefixIcon:
-                      const Icon(Icons.search_rounded, size: 22, color: _P.inkFaint),
+                      const Icon(Icons.search_rounded, size: 24, color: _P.inkFaint),
                   filled: true,
                   fillColor: _P.panelTint,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(13),
+                    borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
                   ),
                 ),
@@ -789,7 +789,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             Flexible(
               child: ListView(
                 shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(12, 2, 12, 24),
+                padding: const EdgeInsets.fromLTRB(14, 2, 14, 28),
                 children: [
                   _OptionTile(
                     label: spec.allLabel,
@@ -830,33 +830,33 @@ class _OptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: selected ? _P.blueTint : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: selected ? Colors.white : _P.panelTint,
-                    borderRadius: BorderRadius.circular(11),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon,
-                      size: 20, color: selected ? _P.blue : _P.inkSoft),
+                      size: 22, color: selected ? _P.blue : _P.inkSoft),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 15),
                 Expanded(
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 16.5,
+                      fontSize: 17.5,
                       height: 1.3,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                       color: selected ? _P.blue : _P.ink,
@@ -864,7 +864,7 @@ class _OptionTile extends StatelessWidget {
                   ),
                 ),
                 if (selected)
-                  const Icon(Icons.check_rounded, size: 22, color: _P.blue),
+                  const Icon(Icons.check_rounded, size: 24, color: _P.blue),
               ],
             ),
           ),
@@ -905,10 +905,10 @@ class _WenzaoCard extends StatelessWidget {
         .toList();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _P.line),
         boxShadow: const [
           BoxShadow(color: Color(0x0F142033), blurRadius: 10, offset: Offset(0, 3)),
@@ -922,18 +922,18 @@ class _WenzaoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                radius: 24,
+                radius: 28,
                 backgroundColor: _P.tealTint,
                 child: Text(
                   _initials(name),
                   style: const TextStyle(
                     color: _P.teal,
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: 18.5,
                   ),
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 13),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -941,20 +941,20 @@ class _WenzaoCard extends StatelessWidget {
                     Text(
                       name.isEmpty ? '(bila jina)' : _titleCase(name),
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: 19.5,
                         fontWeight: FontWeight.w700,
                         color: _P.ink,
                         height: 1.25,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     Text(
                       [if (cat.isNotEmpty) deptLabel(cat), if (cadre.isNotEmpty) cadre]
                           .join(' · '),
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         color: _P.inkSoft,
-                        height: 1.35,
+                        height: 1.4,
                       ),
                     ),
                   ],
@@ -964,16 +964,16 @@ class _WenzaoCard extends StatelessWidget {
               _PaidBadge(paid: paid),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // ---- Njia ya safari ----
           if (region.isNotEmpty || district.isNotEmpty || dests.isNotEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
+              padding: const EdgeInsets.fromLTRB(15, 14, 15, 14),
               decoration: BoxDecoration(
                 color: _P.panelTint,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -988,8 +988,8 @@ class _WenzaoCard extends StatelessWidget {
                             children: [
                               const SizedBox(height: 3),
                               Container(
-                                width: 10,
-                                height: 10,
+                                width: 11,
+                                height: 11,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(color: _P.inkFaint, width: 2),
@@ -997,7 +997,7 @@ class _WenzaoCard extends StatelessWidget {
                               ),
                               Expanded(
                                 child: Container(
-                                  width: 1.5,
+                                  width: 2,
                                   margin: const EdgeInsets.symmetric(vertical: 3),
                                   color: _P.lineStrong,
                                 ),
@@ -1008,18 +1008,18 @@ class _WenzaoCard extends StatelessWidget {
                         const SizedBox(width: 11),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.only(bottom: 14),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text('Anatoka',
                                     style: TextStyle(
-                                        fontSize: 12.5, color: _P.inkSoft)),
-                                const SizedBox(height: 2),
+                                        fontSize: 13.5, color: _P.inkSoft)),
+                                const SizedBox(height: 3),
                                 Text(
                                   [region, district].where((s) => s.isNotEmpty).join(' · '),
                                   style: const TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                     color: _P.ink,
                                   ),
@@ -1040,8 +1040,8 @@ class _WenzaoCard extends StatelessWidget {
                           width: 12,
                           alignment: Alignment.center,
                           child: Container(
-                            width: 10,
-                            height: 10,
+                            width: 11,
+                            height: 11,
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               color: _P.blue,
@@ -1056,11 +1056,11 @@ class _WenzaoCard extends StatelessWidget {
                           children: [
                             const Text('Anataka kuja',
                                 style: TextStyle(
-                                    fontSize: 12.5, color: _P.inkSoft)),
-                            const SizedBox(height: 6),
+                                    fontSize: 13.5, color: _P.inkSoft)),
+                            const SizedBox(height: 8),
                             Wrap(
-                              spacing: 5,
-                              runSpacing: 5,
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
                                 for (final r in dests.take(4)) _RegionPill(text: r),
                                 if (dests.length > 4)
@@ -1075,29 +1075,29 @@ class _WenzaoCard extends StatelessWidget {
                 ],
               ),
             ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // ---- Simu ----
           if (phone.isNotEmpty)
             Row(
               children: [
-                const Icon(Icons.phone_outlined, size: 20, color: _P.inkSoft),
-                const SizedBox(width: 9),
+                const Icon(Icons.phone_outlined, size: 22, color: _P.inkSoft),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     phone,
                     style: const TextStyle(
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 17.5,
+                      fontWeight: FontWeight.w700,
                       color: _P.ink,
                     ),
                   ),
                 ),
                 Material(
                   color: _P.blue,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     onTap: () async {
                       try {
                         await launchUrl(Uri.parse('tel:$phone'),
@@ -1105,9 +1105,10 @@ class _WenzaoCard extends StatelessWidget {
                       } catch (_) {}
                     },
                     child: const SizedBox(
-                      width: 46,
-                      height: 46,
-                      child: Icon(Icons.call_rounded, size: 21, color: Colors.white),
+                      width: 50,
+                      height: 50,
+                      child: Icon(Icons.phone_in_talk_rounded,
+                          size: 23, color: Colors.white),
                     ),
                   ),
                 ),
@@ -1129,20 +1130,20 @@ class _PaidBadge extends StatelessWidget {
     final bg = paid ? _P.greenTint : _P.redTint;
     return Container(
       margin: const EdgeInsets.only(top: 1),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             paid ? Icons.check_circle_outline_rounded : Icons.cancel_outlined,
-            size: 13,
+            size: 14,
             color: fg,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 5),
           Text(
             paid ? 'Amelipa' : 'Hajalipa',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg),
+            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: fg),
           ),
         ],
       ),
@@ -1158,7 +1159,7 @@ class _RegionPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
       decoration: BoxDecoration(
         color: muted ? Colors.white : _P.blueTint,
         borderRadius: BorderRadius.circular(999),
@@ -1167,7 +1168,7 @@ class _RegionPill extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: muted ? _P.inkSoft : _P.blue,
         ),
