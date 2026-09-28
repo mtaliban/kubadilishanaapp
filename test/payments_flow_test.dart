@@ -438,8 +438,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Bonyeza kitufe cha kuthibitisha ("Thibitisha" — ikoni ya kadi, Tooltip)
+      // Bonyeza kitufe cha kuthibitisha ("Thibitisha" — ikoni ya kadi, Tooltip).
+      // Kadi ni ndefu — vitufe viko chini; vilete kwenye screen kwanza.
       final approveBtn = find.byTooltip('Thibitisha').first;
+      await tester.ensureVisible(approveBtn);
+      await tester.pump(const Duration(milliseconds: 200));
       await tester.tap(approveBtn);
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
@@ -474,6 +477,8 @@ void main() {
 
       // Bonyeza kitufe cha kukataa ("Kataa" — ikoni ya kadi, Tooltip)
       final rejectBtn = find.byTooltip('Kataa').first;
+      await tester.ensureVisible(rejectBtn);
+      await tester.pump(const Duration(milliseconds: 200));
       await tester.tap(rejectBtn);
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
