@@ -21,8 +21,7 @@ import '../../services/websocket_service.dart';
 
 const _cBlue     = Color(0xFF1959D6);
 const _cBlueBg   = Color(0xFFEAF1FF);
-const _cBg       = Color(0xFFF3F0E9); // paper
-const _cCardBg   = Color(0xFFF7F8FA);
+const _cBg       = Colors.white;
 const _cBorder   = Color(0xFFE6E0D2);
 const _cTextDark = Color(0xFF142033);
 const _cTextGrey = Color(0xFF5B6779);
