@@ -206,15 +206,6 @@ class _ErrorApp extends StatelessWidget {
                   const SizedBox(height: 20),
                   const Text('Hakuna mtandao',
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      'App imeshindwa kufikia server.\nTafadhali angalia muunganisho wako wa intaneti kisha ujaribu tena.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                    ),
-                  ),
                   const SizedBox(height: 24),
                   FilledButton.icon(
                     onPressed: () => main(),
@@ -321,12 +312,6 @@ class _ErrorWidget extends StatelessWidget {
             const SizedBox(height: 16),
             const Text('Hakuna mtandao',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            Text(
-              'App imeshindwa kufikia server.\nTafadhali angalia muunganisho wako wa intaneti.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-            ),
           ],
         ),
       );
