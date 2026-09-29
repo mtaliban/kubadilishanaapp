@@ -312,7 +312,7 @@ class _MaoniViewState extends State<MaoniView> {
                           strokeWidth: 2, color: Colors.white),
                     )
                   : Icon(TablerIcons.send, size: 15),
-              label: Text(sending ? 'Inatuma…' : 'Tuma'),
+              label: Text(sending ? 'Inatuma…' : 'TUMA MAONI'),
             ),
           ),
           const SizedBox(height: 6),
