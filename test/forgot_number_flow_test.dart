@@ -83,6 +83,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Matokeo'), findsOneWidget);
 
+    // 'Tafuta tena' iko chini ya kadi — vilete kwenye screen kwanza
+    // (viewport ya test ni 800x600, kitufe kinaweza kuwa nje ya screen).
+    await tester.ensureVisible(find.text('Tafuta tena'));
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('Tafuta tena'));
     await tester.pumpAndSettle();
 
