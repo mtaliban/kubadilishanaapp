@@ -115,14 +115,12 @@ class AdminShell extends StatefulWidget {
 
 class _AdminShellState extends State<AdminShell> {
   int _idx = 9;
-  int _userCount = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final AdminBadgeService _badges = AdminBadgeService();
 
   @override
   void initState() {
     super.initState();
-    _loadCount();
     _badges.start();
     LanguageProvider().addListener(_onLangChange);
     adminPageNotifier.addListener(_onFcmTap);
@@ -158,16 +156,6 @@ class _AdminShellState extends State<AdminShell> {
   /// Hesabu upya badges baada ya admin kufanya kitendo (approve/reject/reply).
   void refreshBadges() => _badges.refresh();
 
-  Future<void> _loadCount() async {
-    try {
-      final r = await ApiService().adminStats();
-      if (!mounted) return;
-      final d = asMap(r.data);
-      final totals = asMap(d['totals']);
-      setState(() => _userCount = (totals['users'] as num?)?.toInt() ?? 0);
-    } catch (_) {}
-  }
-
   Widget _pageFor(int i) {
     switch (i) {
       case 0:  return AdminDashboardPage(onNavigate: _go);
@@ -191,7 +179,6 @@ class _AdminShellState extends State<AdminShell> {
     final drawerOpen = _scaffoldKey.currentState?.isDrawerOpen ?? false;
     setState(() => _idx = i);
     if (drawerOpen && nav.canPop()) nav.pop();
-    if (i == 1) _loadCount();
   }
 
   Future<void> _logout() async {
@@ -248,14 +235,23 @@ class _AdminShellState extends State<AdminShell> {
         onLangChanged: (l) => LanguageProvider().setLang(l),
         onAvatarTap: null,
       ),
-      drawer: AdminDrawer(
-        activeKey: _indexToKey[_idx] ?? 'takwimu',
-        usersCount: _userCount > 0 ? _userCount : null,
-        adminName: name,
-        initials: initial,
-        onSelect: (key) => _go(_keyToIndex[key] ?? 9),
-        onProfile: _openProfile,
-        onLogout: _logout,
+      drawer: ListenableBuilder(
+        listenable: _badges,
+        builder: (context, _) => AdminDrawer(
+          activeKey: _indexToKey[_idx] ?? 'takwimu',
+          badges: {
+            'watumiaji': _badges.users,
+            'wenzao':    _badges.matches,
+            'maoni':     _badges.feedback,
+            'malipo':    _badges.payments,
+            'matangazo': _badges.announcements,
+          },
+          adminName: name,
+          initials: initial,
+          onSelect: (key) => _go(_keyToIndex[key] ?? 9),
+          onProfile: _openProfile,
+          onLogout: _logout,
+        ),
       ),
       body: Builder(builder: (ctx) {
         // Kila ukurasa unaofunguliwa: futa badge yake + hesabu upya counts

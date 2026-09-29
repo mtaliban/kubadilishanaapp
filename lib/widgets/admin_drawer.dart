@@ -47,8 +47,9 @@ class AdminDrawer extends StatelessWidget {
   /// Ukurasa ulio wazi sasa, mf. 'wenzao'
   final String activeKey;
 
-  /// Idadi ya watumiaji (badge ya bluu). null = haionekani
-  final int? usersCount;
+  /// Ramani ya menu key -> idadi ya vipande vipya (badge nyekundu).
+  /// Mfano: {'watumiaji': 5, 'maoni': 2}
+  final Map<String, int> badges;
 
   final String adminName;
   final String initials;
@@ -63,19 +64,46 @@ class AdminDrawer extends StatelessWidget {
     required this.adminName,
     required this.initials,
     required this.onSelect,
-    this.usersCount,
+    this.badges = const {},
     this.onProfile,
     this.onLogout,
   });
 
-  static String _num(int n) {
-    final s = n.toString();
-    final b = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
-      b.write(s[i]);
-    }
-    return b.toString();
+  static String? _badgeSubtitle(String key, int n) {
+    if (n == 0) return null;
+    return switch (key) {
+      'watumiaji' => '$n wamejisajili wapya',
+      'wenzao'    => '$n wapya',
+      'match'     => '$n mechi mpya',
+      'simu'      => '$n mawasiliano mapya',
+      'maoni'     => '$n yanasubiri jibu',
+      'malipo'    => '$n yanasubiri uamuzi',
+      'matangazo' => '$n matangazo mapya',
+      _           => null,
+    };
+  }
+
+  Widget _buildItemRow(_MenuItem it, _DrawerColors c, BuildContext context) {
+    final count = badges[it.key] ?? 0;
+    final isTypeB = it.key == 'maoni' || it.key == 'malipo';
+    final subtitle = _badgeSubtitle(it.key, count);
+
+    return _Row(
+      c: c,
+      leading: _BadgedIcon(
+        count: count,
+        child: _IconTile(icon: it.icon, tone: it.tone, c: c),
+      ),
+      label: it.label,
+      active: it.key == activeKey,
+      subtitle: subtitle,
+      subtitleColor: isTypeB && count > 0 ? const Color(0xFFDC2626) : null,
+      subtitleLeadingIcon: isTypeB && count > 0 ? Icons.touch_app_rounded : null,
+      onTap: () {
+        Navigator.pop(context);
+        onSelect(it.key);
+      },
+    );
   }
 
   @override
@@ -100,19 +128,7 @@ class AdminDrawer extends StatelessWidget {
                   for (final s in _sections) ...[
                     _SectionTitle(s.title, c: c),
                     for (final it in s.items)
-                      _Row(
-                        c: c,
-                        leading: _IconTile(icon: it.icon, tone: it.tone, c: c),
-                        label: it.label,
-                        active: it.key == activeKey,
-                        badge: it.key == 'watumiaji' && usersCount != null
-                            ? _num(usersCount!)
-                            : null,
-                        onTap: () {
-                          Navigator.pop(context);
-                          onSelect(it.key);
-                        },
-                      ),
+                      _buildItemRow(it, c, context),
                   ],
                 ],
               ),
@@ -271,12 +287,56 @@ class _IconTile extends StatelessWidget {
   }
 }
 
+class _BadgedIcon extends StatelessWidget {
+  final Widget child;
+  final int count;
+  const _BadgedIcon({required this.child, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    if (count == 0) return child;
+    return Stack(clipBehavior: Clip.none, children: [
+      child,
+      Positioned(
+        top: -7,
+        right: -7,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFDC2626),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white, width: 1.5),
+            boxShadow: const [
+              BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 2,
+                  offset: Offset(0, 1))
+            ],
+          ),
+          constraints: const BoxConstraints(minWidth: 20, minHeight: 18),
+          child: Center(
+            child: Text(
+              count > 99 ? '99+' : '$count',
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  height: 1.0),
+            ),
+          ),
+        ),
+      ),
+    ]);
+  }
+}
+
 class _Row extends StatelessWidget {
   final _DrawerColors c;
   final Widget leading;
   final String label;
   final String? subtitle;
-  final String? badge;
+  final Color? subtitleColor;
+  final IconData? subtitleLeadingIcon;
   final Widget? trailing;
   final bool active;
   final bool labelBold;
@@ -289,7 +349,8 @@ class _Row extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.subtitle,
-    this.badge,
+    this.subtitleColor,
+    this.subtitleLeadingIcon,
     this.trailing,
     this.active = false,
     this.labelBold = false,
@@ -329,29 +390,30 @@ class _Row extends StatelessWidget {
                         ),
                       ),
                       if (subtitle != null)
-                        Text(
-                          subtitle!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: c.muted, fontSize: 13),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (subtitleLeadingIcon != null) ...[
+                              Icon(subtitleLeadingIcon,
+                                  size: 12,
+                                  color: subtitleColor ?? c.muted),
+                              const SizedBox(width: 4),
+                            ],
+                            Flexible(
+                              child: Text(
+                                subtitle!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    color: subtitleColor ?? c.muted,
+                                    fontSize: 13),
+                              ),
+                            ),
+                          ],
                         ),
                     ],
                   ),
                 ),
-                if (badge != null)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: c.blue,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(badge!,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600)),
-                  ),
                 if (trailing != null) trailing!,
               ],
             ),

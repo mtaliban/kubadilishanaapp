@@ -139,6 +139,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(unread),
+          _summaryStrip(),
           const Divider(height: 1, color: _kGrey200),
           Expanded(
             child: _loading
@@ -154,6 +155,63 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
     );
   }
+
+  Widget _summaryStrip() {
+    final Map<String, int> groups = {};
+    for (final n in _notifications) {
+      if (n['read'] == true) continue;
+      final type = (n['type'] as String?) ?? '';
+      final g = _typeGroup(type);
+      if (g != null) groups[g] = (groups[g] ?? 0) + 1;
+    }
+    if (groups.isEmpty) return const SizedBox.shrink();
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+      child: Row(
+        children: groups.entries.map((e) {
+          final (icon, bg, fg) = _groupStyle(e.key);
+          return Container(
+            margin: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 15, color: fg),
+              const SizedBox(width: 6),
+              Text('${e.value}', style: TextStyle(color: fg, fontSize: 15, fontWeight: FontWeight.w800)),
+              const SizedBox(width: 5),
+              Text(_groupName(e.key), style: TextStyle(color: fg.withValues(alpha: 0.75), fontSize: 12, fontWeight: FontWeight.w500)),
+            ]),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  static String? _typeGroup(String type) => switch (type) {
+    'user.registered' || 'match.found' || 'match.new' => 'wenzao',
+    'payment.approved' || 'payment.rejected' ||
+    'payment.submitted' || 'payment.message' || 'payment.reply' => 'malipo',
+    'announcement' || 'announcement.new' => 'matangazo',
+    'admin.reply' || 'feedback.replied' || 'feedback.new' => 'maoni',
+    _ => null,
+  };
+
+  static (IconData, Color, Color) _groupStyle(String group) => switch (group) {
+    'wenzao'    => (Icons.compare_arrows_rounded, const Color(0xFFD1FAE5), const Color(0xFF047857)),
+    'malipo'    => (Icons.receipt_long_outlined, const Color(0xFFD1FAE5), const Color(0xFF047857)),
+    'matangazo' => (Icons.campaign_rounded, const Color(0xFFFEF3C7), const Color(0xFFB45309)),
+    'maoni'     => (Icons.chat_bubble_outline_rounded, _kBrand100, _kBrand),
+    _           => (Icons.notifications_none_rounded, _kGrey100, _kGrey500),
+  };
+
+  static String _groupName(String group) => switch (group) {
+    'wenzao'    => 'Wenzao wapya',
+    'malipo'    => 'Malipo',
+    'matangazo' => 'Matangazo',
+    'maoni'     => 'Maoni',
+    _           => group,
+  };
 
   Widget _header(int unread) {
     return Container(

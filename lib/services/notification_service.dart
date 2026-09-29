@@ -194,7 +194,9 @@ class NotificationService {
       await android?.createNotificationChannel(const AndroidNotificationChannel(
         'kubadilishana_general', 'Matangazo',
         description: 'Matangazo na taarifa za jumla',
-        importance: Importance.defaultImportance,
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
       ));
     } catch (_) {}
 
