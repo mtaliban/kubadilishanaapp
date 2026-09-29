@@ -20,3 +20,10 @@
 
 # Dart / platform channels
 -keep class * extends io.flutter.plugin.common.MethodChannel$MethodCallHandler { *; }
+
+# Play Core split-install stubs — zinatumika na Flutter engine internally
+# lakini hatuzihitaji kwenye APK yetu (tunatoa APK moja tu, sio bundle).
+# R8 inalalamika zinapokosekana — tunasimamisha makosa hayo.
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
+-dontwarn com.google.android.play.core.**
