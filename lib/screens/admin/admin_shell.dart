@@ -302,55 +302,60 @@ class _AdminShellState extends State<AdminShell> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Tile ya drawer-style
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        width: 40,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: bg,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          active ? item.iconFill() : item.icon(),
-                          size: 20,
-                          color: fg,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
+                      // Icon tile na badge juu-kulia
                       Stack(clipBehavior: Clip.none, children: [
-                        Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 9,
-                            height: 1.0,
-                            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                            color: labelColor,
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          width: 40,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          textAlign: TextAlign.center,
+                          child: Icon(
+                            active ? item.iconFill() : item.icon(),
+                            size: 20,
+                            color: fg,
+                          ),
                         ),
                         if (badgeCount > 0)
                           Positioned(
-                            top: -6, right: -14,
+                            top: -5, right: -7,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFDC2626),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.white, width: 1.5),
                               ),
-                              constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
+                              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
                               child: Center(
-                                child: Text(badgeCount > 9 ? '9+' : '$badgeCount',
-                                    style: const TextStyle(
-                                        fontSize: 8.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white)),
+                                child: Text(
+                                  badgeCount > 99 ? '99+' : '$badgeCount',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    height: 1.0,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                       ]),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9,
+                          height: 1.0,
+                          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                          color: labelColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ],
                   ),
                 ),
@@ -365,6 +370,8 @@ class _AdminShellState extends State<AdminShell> {
 
   int _badgeForIndex(int index) {
     switch (index) {
+      case 1: return _badges.users;         // Watumiaji wapya
+      case 2: return _badges.matches;       // Mechi mpya
       case 6: return _badges.payments;      // Malipo
       case 8: return _badges.feedback;      // Maoni
       case 9: return _badges.announcements; // Matangazo
@@ -374,6 +381,8 @@ class _AdminShellState extends State<AdminShell> {
 
   void _clearBadgeForPage(int index) {
     switch (index) {
+      case 1: _badges.clearUsers();
+      case 2: _badges.clearMatches();
       case 6: _badges.clearPayments();
       case 8: _badges.clearFeedback();
       case 9: _badges.clearAnnouncements();

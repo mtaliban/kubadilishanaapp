@@ -15,9 +15,11 @@ class AdminBadgeService extends ChangeNotifier {
   factory AdminBadgeService() => _i;
   AdminBadgeService._();
 
-  int payments = 0; // zinasubiri uidhinishaji (verifying)
-  int feedback = 0; // zisizojibiwa
+  int payments = 0;      // zinasubiri uidhinishaji (verifying)
+  int feedback = 0;      // zisizojibiwa
   int announcements = 0; // matangazo mapya (bump ya WS tu)
+  int users = 0;         // watumiaji wapya waliojisajili
+  int matches = 0;       // mechi mpya zilizopatikana
 
   Timer? _pollTimer;
   bool _wsBound = false;
@@ -50,10 +52,13 @@ class AdminBadgeService extends ChangeNotifier {
         bumpPayments();
       case 'feedback.new':
         bumpFeedback();
+      case 'user.registered':
+        bumpUsers();
+      case 'match.found':
+      case 'match.new':
+        bumpMatches();
       case 'announcement.new':
       case 'announcement':
-        // Tangazo jipya limetumwa — admin mwenyewe hahitaji badge (yeye ndiyo mtumaji);
-        // hii inatumika kama user-side. Ili admin aone, tunabump tu kama si yeye.
         break;
     }
   }
@@ -70,6 +75,28 @@ class AdminBadgeService extends ChangeNotifier {
 
   void bumpAnnouncements() {
     announcements++;
+    notifyListeners();
+  }
+
+  void bumpUsers() {
+    users++;
+    notifyListeners();
+  }
+
+  void bumpMatches() {
+    matches++;
+    notifyListeners();
+  }
+
+  void clearUsers() {
+    if (users == 0) return;
+    users = 0;
+    notifyListeners();
+  }
+
+  void clearMatches() {
+    if (matches == 0) return;
+    matches = 0;
     notifyListeners();
   }
 
@@ -98,6 +125,8 @@ class AdminBadgeService extends ChangeNotifier {
     payments = 0;
     feedback = 0;
     announcements = 0;
+    users = 0;
+    matches = 0;
     notifyListeners();
   }
 

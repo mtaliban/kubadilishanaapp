@@ -1,6 +1,6 @@
 // AppShell — translation kamili ya AppShell.tsx + MobileTopBar + MobileBottomNav
 // Inashirikishwa na Dashboard, Donate, Feedback, Profile
-// Ina: top bar (hamburger + avatar + lang toggle) + bottom nav (4 tabs) + global WS toast
+// Ina: top bar (UserTopBar) + bottom nav (4 tabs) + global WS toast
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -106,6 +106,7 @@ class BadgeService extends ChangeNotifier {
       case 'payment.reply':
         return '/donate';
       case 'feedback.replied':
+      case 'admin.reply':
         return '/feedback';
       case 'match.found':
       case 'user.registered':
@@ -289,14 +290,26 @@ class _AppShellState extends State<AppShell> {
                 colorFilter: ColorFilter.mode(color, BlendMode.srcIn)),
             if (badge > 0)
               Positioned(
-                top: -4, right: -6,
+                top: -6, right: -8,
                 child: Container(
-                  width: 16, height: 16,
-                  decoration: const BoxDecoration(
-                      shape: BoxShape.circle, color: Color(0xFFDC2626)),
-                  child: Center(child: Text(badge > 9 ? '9+' : '$badge',
-                      style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold,
-                          color: Colors.white))),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDC2626),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                  child: Center(
+                    child: Text(
+                      badge > 99 ? '99+' : '$badge',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.0,
+                      ),
+                    ),
+                  ),
                 ),
               ),
           ]),

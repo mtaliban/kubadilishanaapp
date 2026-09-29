@@ -44,6 +44,19 @@
             </intent-filter>
         </service>
 
+        <!-- FCM: channel inayotumika wakati app imefungwa kabisa -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="kubadilishana_general" />
+        <!-- FCM: icon ndogo nyeupe inayoonekana kwenye status bar -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <!-- FCM: rangi ya mwanga wa LED / accent -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
