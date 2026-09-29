@@ -810,12 +810,16 @@ class _MalipoViewState extends State<MalipoView> {
         Row(children: [
           Icon(TablerIcons.chartBar, size: 16, color: c.inkSoft),
           const SizedBox(width: 6),
-          Text('Muhtasari wa Miamala',
-              style: TextStyle(
-                  color: c.inkSoft,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: .4)),
+          Flexible(
+            child: Text('Muhtasari wa Miamala',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    color: c.inkSoft,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: .4)),
+          ),
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),

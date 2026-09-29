@@ -97,17 +97,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   // ── Muonekano wa icon kwa kila aina ───────────────────────────────────────
   static (IconData, Color, Color) _look(String type) {
     return switch (type) {
-      'payment.approved'  => (Icons.verified_outlined,       const Color(0xFFD1FAE5), const Color(0xFF047857)),
-      'payment.rejected'  => (Icons.cancel_outlined,          const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
+      'payment.approved'  => (Icons.check_circle_outline_rounded, const Color(0xFFD1FAE5), const Color(0xFF047857)),
+      'payment.rejected'  => (Icons.cancel_outlined,              const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
       'payment.submitted' ||
       'payment.message'   ||
-      'payment.reply'     => (Icons.receipt_long_outlined,   const Color(0xFFD1FAE5), const Color(0xFF047857)),
+      'payment.reply'     => (Icons.receipt_long_outlined,       const Color(0xFFD1FAE5), const Color(0xFF047857)),
       'match.found'       ||
-      'match.new'         => (Icons.compare_arrows_rounded,  const Color(0xFFFCE7F3), const Color(0xFFBE185D)),
-      'user.registered'   => (Icons.person_add_outlined,     const Color(0xFFEDE9FE), const Color(0xFF6D28D9)),
+      'match.new'         => (Icons.compare_arrows_rounded,      const Color(0xFFFCE7F3), const Color(0xFFBE185D)),
+      'user.registered'   => (Icons.person_add_outlined,         const Color(0xFFEDE9FE), const Color(0xFF6D28D9)),
       'announcement'      ||
-      'announcement.new'  => (Icons.campaign_outlined,       const Color(0xFFFEF3C7), const Color(0xFFB45309)),
-      _                   => (Icons.chat_bubble_outline_rounded, _kBrand100, _kBrand),
+      'announcement.new'  => (Icons.campaign_rounded,            const Color(0xFFFEF3C7), const Color(0xFFB45309)),
+      _                   => (Icons.chat_bubble_outline_rounded,  _kBrand100, _kBrand),
     };
   }
 
@@ -122,7 +122,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final hh = d.hour.toString().padLeft(2, '0');
       final mm = d.minute.toString().padLeft(2, '0');
       const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ago','Sep','Okt','Nov','Des'];
-      if (diff == 0) return '$hh:$mm';
+      if (diff == 0) return '${d.day} ${months[d.month - 1]} · $hh:$mm';
       if (diff == 1) return 'Jana';
       return '${d.day} ${months[d.month - 1]}';
     } catch (_) { return ''; }
@@ -266,8 +266,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Stack(clipBehavior: Clip.none, children: [
             Container(
               width: 54, height: 54,
-              decoration: BoxDecoration(
-                color: read ? _kGrey100 : iconBg,
+              decoration: const BoxDecoration(
+                color: _kGrey100,
                 shape: BoxShape.circle,
               ),
               child: Center(
