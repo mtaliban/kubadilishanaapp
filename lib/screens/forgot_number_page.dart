@@ -222,20 +222,27 @@ class _ForgotNumberPageState extends State<ForgotNumberPage> {
 
   Widget _buildLogo() {
     return Center(
-      child: Image.asset(
-        'assets/images/app_icon.png',
-        height: 96,
-        fit: BoxFit.contain,
-        errorBuilder: (context2, err, stack) => Container(
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            color: AppColors.primarySoft,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.primaryBorder),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x1A000000),
+                blurRadius: 6,
+                offset: Offset(0, 4)),
+            BoxShadow(
+                color: Color(0x0D000000),
+                blurRadius: 4,
+                offset: Offset(0, 2)),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.asset(
+            'assets/images/logo.jpeg',
+            height: 80,
+            fit: BoxFit.contain,
           ),
-          child: const Icon(Icons.apps_rounded,
-              size: 44, color: AppColors.primary),
         ),
       ),
     );
