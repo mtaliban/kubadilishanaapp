@@ -375,12 +375,17 @@ class _SahauNambaScreenState extends State<SahauNambaScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                TextButton.icon(
-                  onPressed: widget.onBackToLogin ??
-                      () => Navigator.maybePop(context),
-                  style: _linkStyle,
-                  icon: const Icon(Icons.undo_rounded, size: 16),
-                  label: const Text('Rudi kwenye kuingia'),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: widget.onBackToLogin ??
+                          () => Navigator.maybePop(context),
+                      style: _linkStyle,
+                      icon: const Icon(Icons.undo_rounded, size: 16),
+                      label: const Text('Rudi kwenye kuingia'),
+                    ),
+                  ),
                 ),
                 FilledButton(
                   onPressed: _loading ? null : _onSearch,
@@ -590,11 +595,13 @@ class _SahauNambaScreenState extends State<SahauNambaScreen> {
           color: copied ? SahauNambaColors.success : SahauNambaColors.muted,
         ),
         const SizedBox(width: 5),
-        Text(
-          copied ? 'Namba imenakiliwa.' : 'Bonyeza kitufe kunakili namba.',
-          style: TextStyle(
-            fontSize: 12,
-            color: copied ? SahauNambaColors.success : SahauNambaColors.muted,
+        Expanded(
+          child: Text(
+            copied ? 'Namba imenakiliwa.' : 'Bonyeza kitufe kunakili namba.',
+            style: TextStyle(
+              fontSize: 12,
+              color: copied ? SahauNambaColors.success : SahauNambaColors.muted,
+            ),
           ),
         ),
       ],

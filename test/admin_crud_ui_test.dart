@@ -586,7 +586,9 @@ void main() {
 
       final sent = routes.bodies['approve:ORD1'];
       expect(sent, isNotNull, reason: 'POST /payments/admin/ORD1/approve');
-      expect(find.textContaining('yamethibitishwa'), findsOneWidget,
+      // Exact match — kadi ina hatua 'Malipo yamethibitishwa' (bila ✓),
+      // snackbar ina 'Malipo yamethibitishwa ✓'.
+      expect(find.text('Malipo yamethibitishwa ✓'), findsOneWidget,
           reason: 'Snackbar ya mafanikio imeonekana');
       // Page inaonyesha status zote — kadi ya Juma Ali ibaki,
       // LAKINI vitufe vya 'Thibitisha' vimepotea (status siyo verifying tena).
