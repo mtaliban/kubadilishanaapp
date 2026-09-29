@@ -287,33 +287,32 @@ class _MaoniViewState extends State<MaoniView> {
             ),
           ),
           const SizedBox(height: 10),
-          // Button KUBWA ya TUMA — full-width, haiwezi kupuuzwa (regression:
-          // button ndogo ya kulia + opacity hafifu ilifanya mtumiaji aisione).
-          SizedBox(
-            width: double.infinity,
-            height: 46,
+          Align(
+            alignment: Alignment.centerRight,
             child: FilledButton.icon(
-              onPressed: sending ? null : _send,
+              onPressed: (_canSend) ? _send : null,
               style: FilledButton.styleFrom(
                 backgroundColor: c.blue,
-                disabledBackgroundColor: c.blue.withValues(alpha: .55),
+                disabledBackgroundColor: c.blue.withValues(alpha: .4),
                 foregroundColor: Colors.white,
-                disabledForegroundColor: Colors.white,
+                disabledForegroundColor: Colors.white70,
+                minimumSize: const Size(0, 36),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(10)),
                 textStyle: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3),
+                    fontSize: 13, fontWeight: FontWeight.w600),
               ),
               icon: sending
                   ? const SizedBox(
-                      width: 16,
-                      height: 16,
+                      width: 14,
+                      height: 14,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white),
                     )
-                  : Icon(TablerIcons.send, size: 18),
-              label: Text(sending ? 'Inatuma...' : 'TUMA MAONI'),
+                  : Icon(TablerIcons.send, size: 15),
+              label: Text(sending ? 'Inatuma…' : 'Tuma'),
             ),
           ),
           const SizedBox(height: 6),

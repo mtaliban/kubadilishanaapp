@@ -748,74 +748,156 @@ class _MalipoViewState extends State<MalipoView> {
   /* ---------- Takwimu za pesa ---------- */
 
   Widget _stats(_MC c) {
-    Widget card({
+    final total = widget.payments.length;
+    final approved = _count(PaymentStatus.approved);
+    final pending = _count(PaymentStatus.pending);
+    final rejected = _count(PaymentStatus.rejected);
+    final approvedTzs = _approvedTzs;
+    final pendingTzs = _sumTzs(PaymentStatus.pending);
+
+    Widget statTile({
       required IconData icon,
       required Color fg,
       required Color bg,
-      required int tzs,
+      required String value,
       required String label,
     }) =>
         Expanded(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: bg,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
-                child: Icon(icon, size: 15, color: fg),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text('TZS ${_money(tzs)}',
-                            maxLines: 1,
-                            style: TextStyle(
-                                color: fg,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                      Text(label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: c.inkSoft, fontSize: 11)),
-                    ]),
-              ),
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
+                  child: Icon(icon, size: 14, color: fg),
+                ),
+                const SizedBox(height: 8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(value,
+                      style: TextStyle(
+                          color: fg,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -.3)),
+                ),
+                const SizedBox(height: 2),
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: c.inkSoft, fontSize: 11)),
+              ],
+            ),
           ),
         );
 
-    return Row(children: [
-      card(
-          icon: TablerIcons.check,
-          fg: c.green,
-          bg: c.greenBg,
-          tzs: _approvedTzs,
-          label: 'Zimekamilika'),
-      const SizedBox(width: 8),
-      card(
-          icon: TablerIcons.clock,
-          fg: c.amber,
-          bg: c.amberBg,
-          tzs: _sumTzs(PaymentStatus.pending),
-          label: 'Zinasubiri'),
-      const SizedBox(width: 8),
-      card(
-          icon: TablerIcons.x,
-          fg: c.red,
-          bg: c.redBg,
-          tzs: _sumTzs(PaymentStatus.rejected),
-          label: 'Zimekataliwa'),
-    ]);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.border),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Kichwa cha takwimu
+        Row(children: [
+          Icon(TablerIcons.chartBar, size: 16, color: c.inkSoft),
+          const SizedBox(width: 6),
+          Text('Muhtasari wa Miamala',
+              style: TextStyle(
+                  color: c.inkSoft,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: .4)),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+            decoration: BoxDecoration(
+                color: c.panel, borderRadius: BorderRadius.circular(999)),
+            child: Text('$total jumla',
+                style: TextStyle(
+                    color: c.inkSoft,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600)),
+          ),
+        ]),
+        const SizedBox(height: 12),
+
+        // Kiasi kikubwa - Zimekamilika
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: c.greenBg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                  color: c.card,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: c.green.withValues(alpha: .12), blurRadius: 8)]),
+              child: Icon(TablerIcons.circleCheck, size: 18, color: c.green),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Zimekamilika',
+                    style: TextStyle(color: c.green, fontSize: 11, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('TZS ${_money(approvedTzs)}',
+                      style: TextStyle(
+                          color: c.green,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -.5)),
+                ),
+              ]),
+            ),
+            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text('$approved',
+                  style: TextStyle(
+                      color: c.green,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      height: 1)),
+              Text('malipo',
+                  style: TextStyle(color: c.green.withValues(alpha: .7), fontSize: 11)),
+            ]),
+          ]),
+        ),
+        const SizedBox(height: 8),
+
+        // Vipande vidogo — Zinasubiri + Zimekataliwa
+        Row(children: [
+          statTile(
+            icon: TablerIcons.clock,
+            fg: c.amber,
+            bg: c.amberBg,
+            value: 'TZS ${_money(pendingTzs)}',
+            label: '$pending zinasubiri',
+          ),
+          const SizedBox(width: 8),
+          statTile(
+            icon: TablerIcons.x,
+            fg: c.red,
+            bg: c.redBg,
+            value: '$rejected',
+            label: 'Zimekataliwa',
+          ),
+        ]),
+      ]),
+    );
   }
 
   /* ---------- Kichwa ---------- */
@@ -870,7 +952,7 @@ class _MalipoViewState extends State<MalipoView> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: opts.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        separatorBuilder: (_, _) => const SizedBox(width: 6),
         itemBuilder: (_, i) {
           final (s, t, n) = opts[i];
           final on = s == _filter;
@@ -1128,7 +1210,7 @@ class _PulseDotState extends State<_PulseDot>
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: _ctrl,
-        builder: (_, __) => Container(
+        builder: (_, _) => Container(
           width: 16,
           height: 16,
           decoration: BoxDecoration(

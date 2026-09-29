@@ -16,7 +16,7 @@ import 'package:url_launcher/url_launcher.dart';
    ============================================================ */
 class MatchDestination {
   final String mkoa;
-  final String? wilaya; // null = wilaya yoyote
+  final String? wilaya;
   const MatchDestination({required this.mkoa, this.wilaya});
 }
 
@@ -26,7 +26,7 @@ class MatchPerson {
   final String fromMkoa;
   final String fromWilaya;
   final List<MatchDestination> destinations;
-  final List<String> subjects; // misimbo au majina (Elimu tu)
+  final List<String> subjects;
   final String phone;
   final String? whatsapp;
 
@@ -44,10 +44,10 @@ class MatchPerson {
 
 class MatchPair {
   final String id;
-  final int score; // 0..100
-  final String idara; // afya / elimu / kilimo / umma (au health / education)
+  final int score;
+  final String idara;
   final String kada;
-  final List<String> matchedSubjects; // masomo yanayofanana
+  final List<String> matchedSubjects;
   final MatchPerson a;
   final MatchPerson b;
 
@@ -92,8 +92,8 @@ class _MatchViewState extends State<MatchView> {
   final _qCtrl = TextEditingController();
   final _sCtrl = TextEditingController();
 
-  String? idara; // null = zote
-  String? kada; // null = zote
+  String? idara;
+  String? kada;
   int page = 0;
   late Set<String> starred = {...widget.starredIds};
 
@@ -344,8 +344,7 @@ class _MatchViewState extends State<MatchView> {
       );
 
   Widget _empty(_XC c) => Container(
-        padding:
-            const EdgeInsets.symmetric(vertical: 26, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 14),
         decoration: BoxDecoration(
           color: c.card,
           borderRadius: BorderRadius.circular(16),
@@ -355,10 +354,8 @@ class _MatchViewState extends State<MatchView> {
           Container(
             width: 52,
             height: 52,
-            decoration:
-                BoxDecoration(color: c.blueBg, shape: BoxShape.circle),
-            child:
-                Icon(TablerIcons.searchOff, size: 26, color: c.blue),
+            decoration: BoxDecoration(color: c.blueBg, shape: BoxShape.circle),
+            child: Icon(TablerIcons.searchOff, size: 26, color: c.blue),
           ),
           const SizedBox(height: 10),
           Text('Hakuna match',
@@ -385,8 +382,7 @@ class _MatchViewState extends State<MatchView> {
           child: Material(
             color: on ? c.blue : c.card,
             shape: CircleBorder(
-                side: BorderSide(
-                    color: on ? c.blue : c.borderStrong)),
+                side: BorderSide(color: on ? c.blue : c.borderStrong)),
             child: InkWell(
               onTap: onTap,
               customBorder: const CircleBorder(),
@@ -407,8 +403,7 @@ class _MatchViewState extends State<MatchView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           circle(
-            child: Icon(TablerIcons.chevronLeft,
-                size: 16, color: c.text),
+            child: Icon(TablerIcons.chevronLeft, size: 16, color: c.text),
             onTap: p > 0 ? () => _setPage(p - 1) : null,
           ),
           for (var i = start; i < start + shown; i++)
@@ -419,13 +414,11 @@ class _MatchViewState extends State<MatchView> {
                   style: TextStyle(
                       color: i == p ? Colors.white : c.text,
                       fontSize: 13,
-                      fontWeight: i == p
-                          ? FontWeight.w600
-                          : FontWeight.w400)),
+                      fontWeight:
+                          i == p ? FontWeight.w600 : FontWeight.w400)),
             ),
           circle(
-            child: Icon(TablerIcons.chevronRight,
-                size: 16, color: c.text),
+            child: Icon(TablerIcons.chevronRight, size: 16, color: c.text),
             onTap: p < pages - 1 ? () => _setPage(p + 1) : null,
           ),
         ],
@@ -478,10 +471,7 @@ class _PairCard extends StatelessWidget {
           // a. kiduara + daraja + nyota
           Row(children: [
             _ScoreRing(
-                score: m.score,
-                color: gFg,
-                track: c.border,
-                text: c.text),
+                score: m.score, color: gFg, track: c.border, text: c.text),
             const SizedBox(width: 10),
             _Pill(
                 label: gradeLabel,
@@ -519,18 +509,18 @@ class _PairCard extends StatelessWidget {
                 size: 12),
             const SizedBox(width: 8),
             Expanded(
-                child:
-                    Text(m.kada, style: TextStyle(color: c.text, fontSize: 13))),
+                child: Text(m.kada,
+                    style: TextStyle(color: c.text, fontSize: 13))),
           ]),
 
-          // c. masomo yanayofanana
+          // c. masomo yanayofanana (bila tick, bluu)
           if (teacher && m.matchedSubjects.isNotEmpty) ...[
             const SizedBox(height: 8),
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                  color: c.greenBg,
+                  color: c.blueBg,
                   borderRadius: BorderRadius.circular(12)),
               child: Wrap(
                 spacing: 6,
@@ -539,16 +529,15 @@ class _PairCard extends StatelessWidget {
                 children: [
                   Text('Masomo yanayofanana:',
                       style: TextStyle(
-                          color: c.green,
+                          color: c.blue,
                           fontSize: 12,
                           fontWeight: FontWeight.w600)),
                   for (final s in m.matchedSubjects)
                     _Pill(
                         label: subjectLabel(s),
-                        icon: TablerIcons.check,
-                        trailingIcon: true,
                         fg: Colors.white,
-                        bg: c.greenStrong),
+                        bg: c.blue,
+                        size: 11),
                 ],
               ),
             ),
@@ -582,197 +571,278 @@ class _PairCard extends StatelessWidget {
   }
 }
 
+/* ============================================================
+   KIZUIZI CHA MTU — tiketi-style na _MXRail
+   ============================================================ */
 class _PersonBlock extends StatelessWidget {
   final _XC c;
   final MatchPerson p;
   final bool teacher;
   final Set<String> hit;
+
   const _PersonBlock(
       {required this.c,
       required this.p,
       required this.teacher,
       required this.hit});
 
-  String get _dest {
-    if (p.destinations.isEmpty) return '-';
-    return p.destinations
-        .map((d) => d.wilaya == null
-            ? '${_place(d.mkoa)} (wilaya yoyote)'
-            : '${_place(d.mkoa)} · ${_place(d.wilaya!)}')
-        .join(', ');
+  void _openDests(BuildContext ctx) {
+    showModalBottomSheet<void>(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: c.card,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      builder: (_) => _MXDestSheet(c: c, p: p),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final dests = p.destinations;
+    final first = dests.isEmpty ? null : dests.first;
+    final more = dests.length - 1;
+    final tap = more > 0;
+
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: c.soft, borderRadius: BorderRadius.circular(14)),
+        color: c.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(children: [
-            Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                  color: c.blueBg, shape: BoxShape.circle),
-              child: Text(_initials(p.name),
-                  style: TextStyle(
-                      color: c.blue,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600)),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(_titleName(p.name),
-                  style: TextStyle(
-                      color: c.text,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      height: 1.25)),
-            ),
-            const SizedBox(width: 6),
-            p.paid
-                ? _Pill(
-                    label: 'Amelipa',
-                    icon: TablerIcons.circleCheck,
-                    fg: c.green,
-                    bg: c.greenBg)
-                : _Pill(
-                    label: 'Hajalipa',
-                    icon: TablerIcons.circleX,
-                    fg: c.red,
-                    bg: c.redBg),
-          ]),
-          const SizedBox(height: 10),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Jina + avatar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+            child: Row(children: [
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration:
+                    BoxDecoration(color: c.blueBg, shape: BoxShape.circle),
+                child: Text(_initials(p.name),
+                    style: TextStyle(
+                        color: c.blue,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(_titleName(p.name),
+                    style: TextStyle(
+                        color: c.text,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        height: 1.25)),
+              ),
+              const SizedBox(width: 6),
+              p.paid
+                  ? _Pill(
+                      label: 'Amelipa',
+                      icon: TablerIcons.circleCheck,
+                      fg: c.green,
+                      bg: c.greenBg)
+                  : _Pill(
+                      label: 'Hajalipa',
+                      icon: TablerIcons.circleX,
+                      fg: c.red,
+                      bg: c.redBg),
+            ]),
+          ),
+
+          // Mstari wa tiketi wenye notch
+          _MXCut(c: c),
+
+          // Safari: ANATOKA → ANATAKA KUJA
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(children: [
+              IntrinsicHeight(
+                child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _MXRail(c: c, hollow: true, line: true),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('ANATOKA', style: _lbl(c)),
+                              const SizedBox(height: 2),
+                              Text(_place(p.fromMkoa),
+                                  style: TextStyle(
+                                      color: c.text,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600)),
+                              Text(_place(p.fromWilaya),
+                                  style:
+                                      TextStyle(color: c.muted, fontSize: 12)),
+                            ]),
+                      ),
+                    ]),
+              ),
+              const SizedBox(height: 14),
+              InkWell(
+                onTap: tap ? () => _openDests(context) : null,
+                borderRadius: BorderRadius.circular(10),
+                child: IntrinsicHeight(
+                  child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _MXRail(c: c, hollow: false, line: false),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Row(children: [
+                            Expanded(
+                              child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text('ANATAKA KUJA', style: _lbl(c)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                        first == null
+                                            ? '-'
+                                            : _place(first.mkoa),
+                                        style: TextStyle(
+                                            color: c.text,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600)),
+                                    Text(
+                                        first?.wilaya == null
+                                            ? 'Wilaya yoyote'
+                                            : _place(first!.wilaya!),
+                                        style: TextStyle(
+                                            color: c.muted, fontSize: 12)),
+                                  ]),
+                            ),
+                            if (tap) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding:
+                                    const EdgeInsets.fromLTRB(11, 4, 8, 4),
+                                decoration: BoxDecoration(
+                                    color: c.blueBg,
+                                    borderRadius:
+                                        BorderRadius.circular(999)),
+                                child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text('+$more zaidi',
+                                          style: TextStyle(
+                                              color: c.blue,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600)),
+                                      const SizedBox(width: 2),
+                                      Icon(TablerIcons.chevronRight,
+                                          size: 12, color: c.blue),
+                                    ]),
+                              ),
+                            ],
+                          ]),
+                        ),
+                      ]),
+                ),
+              ),
+            ]),
+          ),
+
+          // Masomo (Elimu tu)
+          if (teacher && p.subjects.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 1),
-              child: Icon(TablerIcons.mapPin, size: 16, color: c.muted),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+              child: Wrap(
+                spacing: 5,
+                runSpacing: 5,
+                children: [
+                  for (final s in p.subjects)
+                    hit.contains(s.toUpperCase())
+                        ? _Pill(
+                            label: subjectLabel(s),
+                            fg: c.blue,
+                            bg: c.blueBg,
+                            size: 11)
+                        : _Pill(
+                            label: subjectLabel(s),
+                            fg: c.muted,
+                            bg: c.soft,
+                            border: c.borderStrong,
+                            size: 11),
+                ],
+              ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text.rich(TextSpan(
-                  style: const TextStyle(fontSize: 13),
-                  children: [
-                    TextSpan(
-                        text: 'Kutoka ',
-                        style:
-                            TextStyle(color: c.muted, fontSize: 12)),
-                    TextSpan(
-                        text: _place(p.fromMkoa),
-                        style: TextStyle(
-                            color: c.text,
-                            fontWeight: FontWeight.w600)),
-                    TextSpan(
-                        text: ' · ${_place(p.fromWilaya)}',
-                        style:
-                            TextStyle(color: c.muted, fontSize: 12)),
-                  ])),
-            ),
-          ]),
-          const SizedBox(height: 5),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 1),
-              child: Icon(TablerIcons.arrowRight, size: 16, color: c.blue),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text.rich(TextSpan(
-                  style: TextStyle(color: c.blue, fontSize: 13),
-                  children: [
-                    TextSpan(
-                        text: 'Anataka ',
-                        style: TextStyle(
-                            color: c.blue.withValues(alpha: .75),
-                            fontSize: 12)),
-                    TextSpan(
-                        text: _dest,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600)),
-                  ])),
-            ),
-          ]),
-          if (teacher && p.subjects.isNotEmpty) ...[
-            const SizedBox(height: 9),
-            Wrap(
-              spacing: 5,
-              runSpacing: 5,
-              children: [
-                for (final s in p.subjects)
-                  hit.contains(s.toUpperCase())
-                      ? _Pill(
-                          label: subjectLabel(s),
-                          icon: TablerIcons.check,
-                          fg: c.blue,
-                          bg: c.blueBg)
-                      : _Pill(
-                          label: subjectLabel(s),
-                          fg: c.muted,
-                          bg: c.card,
-                          border: c.borderStrong),
-              ],
-            ),
-          ],
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(
-              child: SizedBox(
+
+          // Vitufe vya mawasiliano
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: c.border))),
+            child: Row(children: [
+              Expanded(
+                child: SizedBox(
+                  height: 34,
+                  child: TextButton(
+                    onPressed: () => launchUrl(
+                        Uri(scheme: 'tel', path: '+${_intl(p.phone)}')),
+                    style: TextButton.styleFrom(
+                      backgroundColor: c.blueBg,
+                      foregroundColor: c.blue,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: const Size(0, 34),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9)),
+                      textStyle: const TextStyle(fontSize: 13),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const Icon(TablerIcons.phone, size: 16),
+                        const SizedBox(width: 6),
+                        Text(_prettyPhone(p.phone)),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 34,
                 height: 34,
                 child: TextButton(
-                  onPressed: () =>
-                      launchUrl(Uri(scheme: 'tel', path: '+${_intl(p.phone)}')),
+                  onPressed: () => launchUrl(
+                    Uri.parse(
+                        'https://wa.me/${_intl(p.whatsapp ?? p.phone)}'),
+                    mode: LaunchMode.externalApplication,
+                  ),
                   style: TextButton.styleFrom(
-                    backgroundColor: c.blueBg,
-                    foregroundColor: c.blue,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    minimumSize: const Size(0, 34),
+                    backgroundColor: c.greenBg,
+                    foregroundColor: c.green,
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(34, 34),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(9)),
-                    textStyle: const TextStyle(fontSize: 13),
                   ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(TablerIcons.phone, size: 16),
-                      const SizedBox(width: 6),
-                      Text(_prettyPhone(p.phone)),
-                    ]),
-                  ),
+                  child: const Icon(TablerIcons.brandWhatsapp, size: 18),
                 ),
               ),
-            ),
-            const SizedBox(width: 6),
-            SizedBox(
-              width: 34,
-              height: 34,
-              child: TextButton(
-                onPressed: () => launchUrl(
-                  Uri.parse(
-                      'https://wa.me/${_intl(p.whatsapp ?? p.phone)}'),
-                  mode: LaunchMode.externalApplication,
-                ),
-                style: TextButton.styleFrom(
-                  backgroundColor: c.greenBg,
-                  foregroundColor: c.green,
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(34, 34),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9)),
-                ),
-                child: const Icon(TablerIcons.brandWhatsapp, size: 18),
-              ),
-            ),
-          ]),
+            ]),
+          ),
         ],
       ),
     );
   }
+
+  static TextStyle _lbl(_XC c) => TextStyle(
+      color: c.muted,
+      fontSize: 10,
+      fontWeight: FontWeight.w600,
+      letterSpacing: .8);
 }
 
 /* ============================================================
@@ -815,7 +885,6 @@ class _ScoreRing extends StatelessWidget {
 class _Pill extends StatelessWidget {
   final String label;
   final IconData? icon;
-  final bool trailingIcon;
   final Color fg, bg;
   final Color? border;
   final double size, vpad, hpad, spacing;
@@ -825,7 +894,6 @@ class _Pill extends StatelessWidget {
     required this.fg,
     required this.bg,
     this.icon,
-    this.trailingIcon = false,
     this.border,
     this.size = 11,
     this.vpad = 3,
@@ -844,14 +912,13 @@ class _Pill extends StatelessWidget {
         border: border != null ? Border.all(color: border!) : null,
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (ic != null && !trailingIcon) ...[ic, const SizedBox(width: 4)],
+        if (ic != null) ...[ic, const SizedBox(width: 4)],
         Text(label,
             style: TextStyle(
                 color: fg,
                 fontSize: size,
                 fontWeight: FontWeight.w600,
                 letterSpacing: spacing)),
-        if (ic != null && trailingIcon) ...[const SizedBox(width: 4), ic],
       ]),
     );
   }
@@ -941,6 +1008,7 @@ class _SearchBox extends StatelessWidget {
   }
 }
 
+// Mstari wa vitone wa usawa (unaotumika kwenye KUBADILISHANA separator)
 class _Dashed extends StatelessWidget {
   final Color color;
   const _Dashed({required this.color});
@@ -973,14 +1041,279 @@ class _DashPainter extends CustomPainter {
   bool shouldRepaint(covariant _DashPainter old) => old.color != color;
 }
 
+// Vitone vya usawa — katikati ya urefu (unaotumika kwenye _MXCut)
+class _DashHPainter extends CustomPainter {
+  final Color color;
+  _DashHPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5;
+    const dash = 5.0, gap = 4.0;
+    var x = 0.0;
+    final y = size.height / 2;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, y),
+          Offset((x + dash).clamp(0, size.width), y), paint);
+      x += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashHPainter old) => old.color != color;
+}
+
+// Vitone vya wima (unaotumika kwenye _MXRail)
+class _DashVPainter extends CustomPainter {
+  final Color color;
+  _DashVPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5;
+    const dash = 4.0, gap = 3.5;
+    var y = 0.0;
+    while (y < size.height) {
+      canvas.drawLine(
+          Offset(size.width / 2, y),
+          Offset(size.width / 2, (y + dash).clamp(0, size.height)),
+          paint);
+      y += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashVPainter old) => old.color != color;
+}
+
+/// Mstari wa vitone wenye mashimo pembeni (tiketi-style) — kwa _PersonBlock.
+class _MXCut extends StatelessWidget {
+  final _XC c;
+  const _MXCut({required this.c});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget notch() => Container(
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(color: c.card, shape: BoxShape.circle));
+    return SizedBox(
+      height: 18,
+      child: Stack(clipBehavior: Clip.none, children: [
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: CustomPaint(painter: _DashHPainter(c.borderStrong)),
+          ),
+        ),
+        Positioned(left: -10, top: 0, child: notch()),
+        Positioned(right: -10, top: 0, child: notch()),
+      ]),
+    );
+  }
+}
+
+/// Reli ya safari: duara tupu (anatoka) au duara la bluu (anataka kuja).
+class _MXRail extends StatelessWidget {
+  final _XC c;
+  final bool hollow;
+  final bool line;
+  const _MXRail(
+      {required this.c, required this.hollow, required this.line});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 12,
+      child: Stack(clipBehavior: Clip.none, children: [
+        Positioned(
+          top: 3,
+          left: 0,
+          child: hollow
+              ? Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: c.muted, width: 2.5),
+                  ),
+                )
+              : Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: c.blue,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: c.blueBg, spreadRadius: 3),
+                    ],
+                  ),
+                ),
+        ),
+        if (line)
+          Positioned(
+            left: 5,
+            top: 19,
+            bottom: -17,
+            child: SizedBox(
+              width: 2,
+              child: CustomPaint(painter: _DashVPainter(c.borderStrong)),
+            ),
+          ),
+      ]),
+    );
+  }
+}
+
 /* ============================================================
-   BOTTOM SHEET YA KUCHAGUA
+   BOTTOM SHEET: MAENEO YOTE ANAYOTAKA KUJA
+   ============================================================ */
+class _MXDestSheet extends StatelessWidget {
+  final _XC c;
+  final MatchPerson p;
+  const _MXDestSheet({required this.c, required this.p});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * .75),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 10, 6),
+              child: Row(children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration:
+                      BoxDecoration(color: c.blueBg, shape: BoxShape.circle),
+                  child: Text(_initials(p.name),
+                      style: TextStyle(
+                          color: c.blue,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_titleName(p.name),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                color: c.text,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600)),
+                        Text(
+                            'Anatoka ${_place(p.fromMkoa)} · ${_place(p.fromWilaya)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                TextStyle(color: c.muted, fontSize: 12)),
+                      ]),
+                ),
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  customBorder: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                        color: c.soft,
+                        borderRadius: BorderRadius.circular(10)),
+                    child: Icon(TablerIcons.x, size: 18, color: c.muted),
+                  ),
+                ),
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 2),
+              child: Text(
+                  'ANATAKA KUJA · ${p.destinations.length}',
+                  style: TextStyle(
+                      color: c.muted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: .8)),
+            ),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                itemCount: p.destinations.length,
+                separatorBuilder: (_, _) =>
+                    Divider(height: 1, color: c.border),
+                itemBuilder: (_, i) {
+                  final d = p.destinations[i];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(children: [
+                      Container(
+                        width: 26,
+                        height: 26,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                            color: c.blue, shape: BoxShape.circle),
+                        child: Text('${i + 1}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_place(d.mkoa),
+                                  style: TextStyle(
+                                      color: c.text,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600)),
+                              Text(
+                                  d.wilaya == null
+                                      ? 'Wilaya yoyote'
+                                      : _place(d.wilaya!),
+                                  style: TextStyle(
+                                      color: c.muted, fontSize: 12)),
+                            ]),
+                      ),
+                      if (i == 0)
+                        _Pill(
+                            label: 'Chaguo la kwanza',
+                            fg: c.blue,
+                            bg: c.blueBg),
+                    ]),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/* ============================================================
+   BOTTOM SHEET YA KUCHAGUA (idara / kada)
    ============================================================ */
 class _PickerSheet extends StatefulWidget {
   final _XC c;
   final String title;
   final IconData icon;
-  final List<(String, String)> options; // (thamani, jina)
+  final List<(String, String)> options;
   final String current;
 
   const _PickerSheet({
@@ -1001,11 +1334,12 @@ class _PickerSheetState extends State<_PickerSheet> {
   @override
   Widget build(BuildContext context) {
     final c = widget.c;
-    final list =
-        widget.options.where((o) => o.$2.toLowerCase().contains(q.toLowerCase())).toList();
+    final list = widget.options
+        .where((o) => o.$2.toLowerCase().contains(q.toLowerCase()))
+        .toList();
     return Padding(
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: ConstrainedBox(
         constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * .75),
@@ -1046,8 +1380,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                 cursorColor: c.blue,
                 decoration: InputDecoration(
                   hintText: 'Tafuta…',
-                  hintStyle:
-                      TextStyle(color: c.muted, fontSize: 14),
+                  hintStyle: TextStyle(color: c.muted, fontSize: 14),
                   prefixIcon:
                       Icon(TablerIcons.search, size: 17, color: c.muted),
                   isDense: true,
@@ -1080,8 +1413,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(children: [
-                            Icon(widget.icon,
-                                size: 17, color: c.blue),
+                            Icon(widget.icon, size: 17, color: c.blue),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(label,
@@ -1163,31 +1495,31 @@ String _idaraKey(String raw) {
 }
 
 const _subjectNames = <String, String>{
-  'MATH': 'Hisabati',
-  'GEO': 'Jiografia',
-  'CHEM': 'Kemia',
-  'BIO': 'Baiolojia',
-  'PHY': 'Fizikia',
-  'PHYS': 'Fizikia',
+  'MATH': 'Mathematics',
+  'GEO': 'Geography',
+  'CHEM': 'Chemistry',
+  'BIO': 'Biology',
+  'PHY': 'Physics',
+  'PHYS': 'Physics',
   'KISW': 'Kiswahili',
   'KISWAH': 'Kiswahili',
   'KISWAHILI': 'Kiswahili',
-  'ENG': 'Kiingereza',
-  'KING': 'Kiingereza',
-  'ENGLISH': 'Kiingereza',
-  'HIST': 'Historia',
-  'HISTORIA': 'Historia',
-  'HISTMAADILI': 'Historia ya Maadili',
-  'CIV': 'Uraia',
-  'URAIA': 'Uraia',
-  'COMP': 'Kompyuta',
-  'ICT': 'TEHAMA',
-  'COMM': 'Biashara',
-  'BOOK': 'Uhasibu',
-  'ACC': 'Uhasibu',
-  'AGRI': 'Kilimo',
-  'FRE': 'Kifaransa',
-  'ARB': 'Kiarabu',
+  'ENG': 'English',
+  'KING': 'English',
+  'ENGLISH': 'English',
+  'HIST': 'History',
+  'HISTORIA': 'History',
+  'HISTMAADILI': 'History & Ethics',
+  'CIV': 'Civics',
+  'URAIA': 'Civics',
+  'COMP': 'Computer Studies',
+  'ICT': 'ICT',
+  'COMM': 'Commerce',
+  'BOOK': 'Book-Keeping',
+  'ACC': 'Accounting',
+  'AGRI': 'Agriculture',
+  'FRE': 'French',
+  'ARB': 'Arabic',
 };
 
 String subjectLabel(String raw) {
@@ -1203,8 +1535,7 @@ String _place(String s) {
   const upper = {'DC', 'TC', 'MC', 'CC', 'HC'};
   const lower = {'es', 'na', 'ya', 'wa'};
   return s.trim().split(RegExp(r'\s+')).map((w) {
-    final bare =
-        w.replaceAll(RegExp(r'[^A-Za-z]'), '').toUpperCase();
+    final bare = w.replaceAll(RegExp(r'[^A-Za-z]'), '').toUpperCase();
     if (upper.contains(bare)) return w.toUpperCase();
     if (lower.contains(w.toLowerCase())) return w.toLowerCase();
     final i = w.indexOf(RegExp(r'[A-Za-z]'));
