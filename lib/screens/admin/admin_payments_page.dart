@@ -22,6 +22,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   bool _loading = true;
   String? _error;
   List<Payment> _payments = [];
+  int? _totalApprovedTzs;
 
   void _onWs(Map<String, dynamic> payload) {
     final type =
@@ -60,6 +61,8 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
             .whereType<Map<String, dynamic>>()
             .map(_mapPayment)
             .toList();
+        _totalApprovedTzs =
+            (map['total_approved_tzs'] as num?)?.toInt();
         _loading = false;
       });
     } catch (e) {
@@ -228,6 +231,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
         color: const Color(0xFF1959D6),
         child: MalipoView(
           payments: _payments,
+          totalApprovedTzs: _totalApprovedTzs,
           onApprove: _approve,
           onReject: _reject,
         ),

@@ -615,6 +615,10 @@ const _kPageSize = 10;
 
 class MalipoView extends StatefulWidget {
   final List<Payment> payments;
+
+  /// Jumla halisi ya TZS zilizothibitishwa (kutoka API: total_approved_tzs).
+  /// Kama haipati, inahesabiwa kutoka kwenye orodha.
+  final int? totalApprovedTzs;
   final Future<void> Function(Payment p)? onApprove;
   final Future<void> Function(Payment p, String reason)? onReject;
   final List<String> rejectReasons;
@@ -622,6 +626,7 @@ class MalipoView extends StatefulWidget {
   const MalipoView({
     super.key,
     required this.payments,
+    this.totalApprovedTzs,
     this.onApprove,
     this.onReject,
     this.rejectReasons = const [
@@ -657,6 +662,13 @@ class _MalipoViewState extends State<MalipoView> {
 
   int _count(PaymentStatus s) =>
       widget.payments.where((p) => p.status == s).length;
+
+  int _sumTzs(PaymentStatus s) => widget.payments
+      .where((p) => p.status == s)
+      .fold<int>(0, (sum, p) => sum + p.amount);
+
+  int get _approvedTzs =>
+      widget.totalApprovedTzs ?? _sumTzs(PaymentStatus.approved);
 
   List<Payment> get _filtered {
     final q = _search.text.toLowerCase().trim();
@@ -705,6 +717,8 @@ class _MalipoViewState extends State<MalipoView> {
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
       children: [
         _header(c),
+        const SizedBox(height: 10),
+        _stats(c),
         const SizedBox(height: 12),
         _chips(c),
         const SizedBox(height: 10),
@@ -729,6 +743,79 @@ class _MalipoViewState extends State<MalipoView> {
         ],
       ],
     );
+  }
+
+  /* ---------- Takwimu za pesa ---------- */
+
+  Widget _stats(_MC c) {
+    Widget card({
+      required IconData icon,
+      required Color fg,
+      required Color bg,
+      required int tzs,
+      required String label,
+    }) =>
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(color: c.card, shape: BoxShape.circle),
+                child: Icon(icon, size: 15, color: fg),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('TZS ${_money(tzs)}',
+                            maxLines: 1,
+                            style: TextStyle(
+                                color: fg,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700)),
+                      ),
+                      Text(label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: c.inkSoft, fontSize: 11)),
+                    ]),
+              ),
+            ]),
+          ),
+        );
+
+    return Row(children: [
+      card(
+          icon: TablerIcons.check,
+          fg: c.green,
+          bg: c.greenBg,
+          tzs: _approvedTzs,
+          label: 'Zimekamilika'),
+      const SizedBox(width: 8),
+      card(
+          icon: TablerIcons.clock,
+          fg: c.amber,
+          bg: c.amberBg,
+          tzs: _sumTzs(PaymentStatus.pending),
+          label: 'Zinasubiri'),
+      const SizedBox(width: 8),
+      card(
+          icon: TablerIcons.x,
+          fg: c.red,
+          bg: c.redBg,
+          tzs: _sumTzs(PaymentStatus.rejected),
+          label: 'Zimekataliwa'),
+    ]);
   }
 
   /* ---------- Kichwa ---------- */
