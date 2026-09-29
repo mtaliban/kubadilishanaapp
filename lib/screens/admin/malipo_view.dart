@@ -1,10 +1,30 @@
 // =============================================================================
 // malipo_view.dart — standalone "Malipo" view widget
 // admin_payments_page.dart inapakia data na kuipitisha hapa.
+//
+// MUUNDO (SPEC):
+// 1. Kichwa: kisanduku cha bluu (wallet) + "Malipo" + "{n} malipo · {k} yanasubiri"
+//    + kidonge cha "Live".
+// 2. Vichujio vya hali: Yote | Inasubiri | Imekamilika | Imekataliwa (+ idadi).
+// 3. Kutafuta "Tafuta kwa jina, namba au kodi" + "Inaonyesha x kati ya y".
+// 4. Kadi ya malipo (wima): avatar ya initials + beji ndogo ya hali, jina,
+//    simu (phoneCall → tel:), beji ya hali; mstari wa vitone (notch za risiti);
+//    KIASI (TZS + namba kubwa; imekataliwa → lineThrough); KODI (mono + nakili);
+//    hatua 3 za wima (Imetumwa/Inakaguliwa/Imekamilika au Imekataliwa);
+//    kitufe cha "Ona" (eye) — kubonyeza kunaonyesha SMS ya mchangiaji INLINE
+//    kwenye kadi (bonyeza tena kinafunga); kwa pending TU: vitufe vidogo 30x30
+//    vya Kataa (X nyekundu) na Thibitisha (tiki kijani) — vina Tooltip.
+//    HAKUNA button ya "Ongea" (mazungumzo yameondolewa kwa design hii).
+// 5. KUKATAA: bottom sheet "Kataa malipo" — chips za sababu + sababu yako.
+//    THIBITISHA hufanya kazi mara moja bila dialog.
+// 6. Kurasa: vitufe vya duara (dirisha la 5) na mishale. Hali tupu:
+//    "Hakuna malipo" / "Jaribu kichujio kingine".
 // =============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ── Models ────────────────────────────────────────────────────────────────────
 
@@ -84,21 +104,23 @@ class _MC {
   Color get inkSoft  => _d ? const Color(0xFF8B949E) : const Color(0xFF475569);
   Color get inkFaint => _d ? const Color(0xFF484F58) : const Color(0xFFCBD5E1);
   Color get border   => _d ? const Color(0xFF30363D) : const Color(0xFFE2E8F0);
-  Color get panel    => _d ? const Color(0xFF1C2128) : const Color(0xFFF1F5F9);
+  Color get borderStrong => _d ? const Color(0xFF465164) : const Color(0xFFC3CAD6);
+  Color get panel    => _d ? const Color(0xFF1C2128) : const Color(0xFFF1F3F7);
+  Color get soft     => panel;
 
-  Color get blue    => const Color(0xFF1959D6);
-  Color get blueBg  => _d ? const Color(0xFF1A2744) : const Color(0xFFEFF4FF);
+  Color get blue    => const Color(0xFF1E66E0);
+  Color get blueBg  => _d ? const Color(0xFF1C2A44) : const Color(0xFFE8F0FD);
 
-  Color get green    => const Color(0xFF16A34A);
-  Color get greenBg  => _d ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7);
+  Color get green    => const Color(0xFF0F7A52);
+  Color get greenBg  => _d ? const Color(0xFF15302A) : const Color(0xFFE3F5EC);
   Color get greenFill => const Color(0xFF16A34A);
 
-  Color get amber    => const Color(0xFFD97706);
-  Color get amberBg  => _d ? const Color(0xFF2D1F00) : const Color(0xFFFEF3C7);
-  Color get amberFill => const Color(0xFFD97706);
+  Color get amber    => const Color(0xFF9A5B00);
+  Color get amberBg  => _d ? const Color(0xFF3A2C14) : const Color(0xFFFFF1D6);
+  Color get amberFill => const Color(0xFFF59E0B);
 
-  Color get red    => const Color(0xFFDC2626);
-  Color get redBg  => _d ? const Color(0xFF2D0A0A) : const Color(0xFFFEE2E2);
+  Color get red    => const Color(0xFFC62828);
+  Color get redBg  => _d ? const Color(0xFF3A1D1F) : const Color(0xFFFDECEC);
   Color get redFill => const Color(0xFFDC2626);
 }
 
@@ -111,36 +133,481 @@ String _initials(String name) {
   return (parts[0][0] + (parts.length > 1 ? parts[1][0] : '')).toUpperCase();
 }
 
-String _fmtAmount(int n) {
-  final s = n.toString();
-  final buf = StringBuffer();
+String _titleName(String s) => s
+    .trim()
+    .split(RegExp(r'\s+'))
+    .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1).toLowerCase())
+    .join(' ');
+
+String _money(int v) {
+  final s = v.toString();
+  final b = StringBuffer();
   for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
-    buf.write(s[i]);
+    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
+    b.write(s[i]);
   }
-  return buf.toString();
+  return b.toString();
 }
 
-String _fmtDate(DateTime? d) {
+const _months = [
+  'Jan','Feb','Mac','Apr','Mei','Jun',
+  'Jul','Ago','Sep','Okt','Nov','Des'
+];
+
+String _two(int v) => v.toString().padLeft(2, '0');
+
+/// 29 Sep 2026 · 07:34
+String _fullDate(DateTime? d) {
   if (d == null) return '';
-  const m = [
-    'Jan','Feb','Mar','Apr','May','Jun',
-    'Jul','Aug','Sep','Oct','Nov','Dec'
-  ];
-  final hh = d.hour.toString().padLeft(2, '0');
-  final mm = d.minute.toString().padLeft(2, '0');
-  return '${d.day} ${m[d.month - 1]} ${d.year} · $hh:$mm';
+  return '${d.day} ${_months[d.month - 1]} ${d.year} · ${_two(d.hour)}:${_two(d.minute)}';
 }
 
-String _fmtTime(DateTime d) {
-  const m = [
-    'Jan','Feb','Mar','Apr','May','Jun',
-    'Jul','Aug','Sep','Oct','Nov','Dec'
-  ];
-  final hh = d.hour.toString().padLeft(2, '0');
-  final mm = d.minute.toString().padLeft(2, '0');
-  return '${d.day} ${m[d.month - 1]} · $hh:$mm';
+String _digits(String s) => s.replaceAll(RegExp(r'\D'), '');
+
+String _local9(String p) {
+  var d = _digits(p);
+  if (d.startsWith('255') && d.length > 9) d = d.substring(3);
+  if (d.startsWith('0') && d.length > 9) d = d.substring(1);
+  return d;
 }
+
+String _intl(String p) => '255${_local9(p)}';
+
+String _prettyPhone(String p) {
+  final l = _local9(p);
+  if (l.length != 9) return p;
+  return '+255 ${l.substring(0, 3)} ${l.substring(3, 6)} ${l.substring(6)}';
+}
+
+// ═══ KADI YA MALIPO (wima) ════════════════════════════════════════════════
+
+class _PaymentCard extends StatefulWidget {
+  final _MC c;
+  final Payment p;
+  final VoidCallback onApprove;
+  final VoidCallback onReject;
+
+  const _PaymentCard({
+    required this.c,
+    required this.p,
+    required this.onApprove,
+    required this.onReject,
+  });
+
+  @override
+  State<_PaymentCard> createState() => _PaymentCardState();
+}
+
+class _PaymentCardState extends State<_PaymentCard> {
+  bool smsOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.c;
+    final p = widget.p;
+    final st = _st(c, p.status);
+    final pending = p.status == PaymentStatus.pending;
+    final rejected = p.status == PaymentStatus.rejected;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: c.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // a. juu: avatar + jina + simu + beji ya hali
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(children: [
+              _StatusAvatar(
+                  c: c, name: p.name, size: 44, fill: st.fill, icon: st.icon),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_titleName(p.name),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              color: c.ink,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
+                      InkWell(
+                        onTap: () => launchUrl(
+                            Uri(scheme: 'tel', path: '+${_intl(p.phone)}')),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(TablerIcons.phoneCall, size: 14, color: c.inkSoft),
+                          const SizedBox(width: 5),
+                          Text(_prettyPhone(p.phone),
+                              style:
+                                  TextStyle(color: c.inkSoft, fontSize: 12)),
+                        ]),
+                      ),
+                    ]),
+              ),
+              const SizedBox(width: 8),
+              _Pill(label: st.label, fg: st.fg, bg: st.bg),
+            ]),
+          ),
+
+          // b. mstari wa vitone (notch za risiti)
+          _Cut(c: c),
+
+          // c. kiasi + kodi, d. hatua
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              _AmountBox(c: c, p: p, struck: rejected, big: 28),
+              const SizedBox(height: 14),
+              _Steps(c: c, p: p),
+            ]),
+          ),
+
+          // SMS inline (bonyeza "Ona" kufungua/kufunga)
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 180),
+            crossFadeState: smsOpen
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              child: _SmsBox(c: c, p: p),
+            ),
+          ),
+
+          // e. vitufe: "Ona" (+ Kataa/Thibitisha kwa pending TU)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: Row(children: [
+              _ChipBtn(
+                  c: c,
+                  icon: smsOpen ? TablerIcons.eyeOff : TablerIcons.eye,
+                  label: 'Ona',
+                  onTap: () => setState(() => smsOpen = !smsOpen)),
+              const Spacer(),
+              if (pending) ...[
+                _SquareBtn(
+                    c: c,
+                    icon: TablerIcons.x,
+                    kind: _SqKind.reject,
+                    tooltip: 'Kataa',
+                    onTap: widget.onReject),
+                const SizedBox(width: 8),
+                _SquareBtn(
+                    c: c,
+                    icon: TablerIcons.check,
+                    kind: _SqKind.approve,
+                    tooltip: 'Thibitisha',
+                    onTap: widget.onApprove),
+              ],
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── SMS ya mchangiaji (inline) ───────────────────────────────────────────
+
+class _SmsBox extends StatelessWidget {
+  final _MC c;
+  final Payment p;
+  const _SmsBox({required this.c, required this.p});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSms = p.sms.trim().isNotEmpty;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: c.panel,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: c.border),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(TablerIcons.message2, size: 15, color: c.inkSoft),
+          const SizedBox(width: 6),
+          Text('SMS YA MCHANGIAJI',
+              style: TextStyle(
+                  color: c.inkSoft,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: .9)),
+        ]),
+        const SizedBox(height: 6),
+        SelectableText(
+          hasSms ? p.sms : 'Hakuna SMS',
+          style: TextStyle(
+              color: hasSms ? c.ink : c.inkSoft, fontSize: 14, height: 1.5),
+        ),
+      ]),
+    );
+  }
+}
+
+// ─── Kisanduku cha kiasi + kodi ───────────────────────────────────────────
+
+class _AmountBox extends StatelessWidget {
+  final _MC c;
+  final Payment p;
+  final bool struck;
+  final double big;
+  const _AmountBox(
+      {required this.c, required this.p, required this.struck, required this.big});
+
+  @override
+  Widget build(BuildContext context) {
+    final amountColor = struck ? c.inkSoft : c.ink;
+    final deco = struck ? TextDecoration.lineThrough : TextDecoration.none;
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration:
+          BoxDecoration(color: c.panel, borderRadius: BorderRadius.circular(14)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('KIASI', style: _label(c)),
+        const SizedBox(height: 6),
+        Text.rich(TextSpan(children: [
+          TextSpan(
+            text: 'TZS ',
+            style: TextStyle(
+                color: c.inkSoft,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                decoration: deco),
+          ),
+          TextSpan(
+            text: _money(p.amount),
+            style: TextStyle(
+              color: amountColor,
+              fontSize: big,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -.5,
+              height: 1,
+              decoration: deco,
+              decorationThickness: 2,
+            ),
+          ),
+        ])),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.only(top: 10),
+          decoration: BoxDecoration(
+              border: Border(
+                  top: BorderSide(
+                      color: c.borderStrong.withValues(alpha: .7)))),
+          child: Row(children: [
+            Text('KODI', style: _label(c)),
+            const Spacer(),
+            _CopyText(c: c, text: p.reference),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Kodi yenye kunakili
+class _CopyText extends StatefulWidget {
+  final _MC c;
+  final String text;
+  const _CopyText({required this.c, required this.text});
+
+  @override
+  State<_CopyText> createState() => _CopyTextState();
+}
+
+class _CopyTextState extends State<_CopyText> {
+  bool done = false;
+
+  Future<void> _copy() async {
+    await Clipboard.setData(ClipboardData(text: widget.text));
+    setState(() => done = true);
+    await Future.delayed(const Duration(milliseconds: 1300));
+    if (mounted) setState(() => done = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.c;
+    return InkWell(
+      onTap: _copy,
+      borderRadius: BorderRadius.circular(6),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Text(done ? 'Imenakiliwa ✓' : widget.text,
+            style: TextStyle(
+                color: done ? c.green : c.ink,
+                fontSize: 13,
+                fontFamily: done ? null : 'monospace',
+                fontFamilyFallback: const ['RobotoMono', 'Courier'])),
+        const SizedBox(width: 6),
+        Icon(done ? TablerIcons.check : TablerIcons.copy,
+            size: 14, color: done ? c.green : c.inkSoft),
+      ]),
+    );
+  }
+}
+
+// ═══ DIRISHA LA KUKATAA ═══════════════════════════════════════════════════
+
+class _RejectSheet extends StatefulWidget {
+  final _MC c;
+  final Payment p;
+  final List<String> reasons;
+  const _RejectSheet(
+      {required this.c, required this.p, required this.reasons});
+
+  static Future<String?> show(
+      BuildContext ctx, _MC c, Payment p, List<String> reasons) {
+    return showModalBottomSheet<String>(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: c.card,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _RejectSheet(c: c, p: p, reasons: reasons),
+    );
+  }
+
+  @override
+  State<_RejectSheet> createState() => _RejectSheetState();
+}
+
+class _RejectSheetState extends State<_RejectSheet> {
+  String? picked;
+  final _ctrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl.addListener(() {
+      if (_ctrl.text.isNotEmpty && picked != null) picked = null;
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  String get _reason => (picked ?? _ctrl.text).trim();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.c;
+    final mq = MediaQuery.of(context);
+    OutlineInputBorder b(Color col, [double w = 1]) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: col, width: w));
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + mq.padding.bottom),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Center(
+            child: Container(
+              width: 38,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                  color: c.borderStrong,
+                  borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+          Row(children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                  color: c.redBg,
+                  borderRadius: BorderRadius.circular(11)),
+              child: Icon(TablerIcons.x, size: 19, color: c.red),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Kataa malipo',
+                        style: TextStyle(
+                            color: c.ink,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600)),
+                    Text(
+                        '${_titleName(widget.p.name)} · TZS ${_money(widget.p.amount)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: c.inkSoft, fontSize: 12)),
+                  ]),
+            ),
+          ]),
+          const SizedBox(height: 16),
+          Text('CHAGUA SABABU', style: _label(c)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final r in widget.reasons)
+              GestureDetector(
+                onTap: () => setState(() {
+                  picked = picked == r ? null : r;
+                  if (picked != null) _ctrl.clear();
+                }),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: picked == r ? c.redBg : c.card,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                        color: picked == r ? c.red : c.borderStrong),
+                  ),
+                  child: Text(r,
+                      style: TextStyle(
+                          color: picked == r ? c.red : c.ink, fontSize: 13)),
+                ),
+              ),
+          ]),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _ctrl,
+            style: TextStyle(color: c.ink, fontSize: 14),
+            cursorColor: c.blue,
+            decoration: InputDecoration(
+              hintText: 'Au andika sababu nyingine…',
+              hintStyle: TextStyle(
+                  color: c.inkSoft.withValues(alpha: .8), fontSize: 14),
+              isDense: true,
+              filled: true,
+              fillColor: c.card,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              border: b(c.borderStrong),
+              enabledBorder: b(c.borderStrong),
+              focusedBorder: b(c.blue, 1.5),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(children: [Expanded(child: SizedBox(height: 38, child: OutlinedButton(onPressed: () => Navigator.pop(context), style: OutlinedButton.styleFrom(foregroundColor: c.ink, side: BorderSide(color: c.borderStrong), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontSize: 13)), child: const Text('Ghairi')))), const SizedBox(width: 8), Expanded(child: SizedBox(height: 38, child: FilledButton(onPressed: _reason.isEmpty ? null : () => Navigator.pop(context, _reason), style: FilledButton.styleFrom(backgroundColor: c.redFill, foregroundColor: Colors.white, disabledBackgroundColor: c.redFill.withValues(alpha: .35), disabledForegroundColor: Colors.white70, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), child: const Text('Kataa'))))]),
+        ]),
+      ),
+    );
+  }
+}
+
 
 // ═══ MalipoView ══════════════════════════════════════════════════════════════
 
@@ -150,25 +617,18 @@ class MalipoView extends StatefulWidget {
   final List<Payment> payments;
   final Future<void> Function(Payment p)? onApprove;
   final Future<void> Function(Payment p, String reason)? onReject;
-  final Future<PaymentMessage?> Function(Payment p, String text)? onSendMessage;
   final List<String> rejectReasons;
-  final List<String> quickReplies;
 
   const MalipoView({
     super.key,
     required this.payments,
     this.onApprove,
     this.onReject,
-    this.onSendMessage,
     this.rejectReasons = const [
-      'SMS si halisi',
       'Kiasi hakilingani',
       'Pesa haijaingia',
-      'Malipo yamerudiwa',
-    ],
-    this.quickReplies = const [
-      'Tuma SMS sahihi',
-      'Kiasi hakilingani',
+      'SMS si sahihi',
+      'Namba haifanani',
     ],
   });
 
@@ -179,7 +639,7 @@ class MalipoView extends StatefulWidget {
 class _MalipoViewState extends State<MalipoView> {
   final _scroll = ScrollController();
   final _search = TextEditingController();
-  String _filter = 'all';
+  PaymentStatus? _filter; // null = yote
   int _page = 0;
 
   @override
@@ -195,16 +655,18 @@ class _MalipoViewState extends State<MalipoView> {
     super.dispose();
   }
 
+  int _count(PaymentStatus s) =>
+      widget.payments.where((p) => p.status == s).length;
+
   List<Payment> get _filtered {
     final q = _search.text.toLowerCase().trim();
     return widget.payments.where((p) {
-      if (_filter == 'pending' && p.status != PaymentStatus.pending) return false;
-      if (_filter == 'approved' && p.status != PaymentStatus.approved) return false;
-      if (_filter == 'rejected' && p.status != PaymentStatus.rejected) return false;
+      if (_filter != null && p.status != _filter) return false;
       if (q.isEmpty) return true;
-      return p.name.toLowerCase().contains(q) ||
-          p.phone.contains(q) ||
-          p.reference.toLowerCase().contains(q);
+      final hay =
+          '${p.name} ${p.phone} ${_digits(p.phone)} ${p.reference}'.toLowerCase();
+      return hay.contains(q) ||
+          (q.startsWith('0') && q.length > 1 && hay.contains(q.substring(1)));
     }).toList();
   }
 
@@ -214,1599 +676,658 @@ class _MalipoViewState extends State<MalipoView> {
 
   void _goPage(int p) {
     setState(() => _page = p.clamp(0, _totalPages - 1));
-    _scroll.animateTo(0,
-        duration: const Duration(milliseconds: 220), curve: Curves.easeOut);
-  }
-
-  void _openDetail(BuildContext ctx, Payment p, {bool startChat = false}) {
-    showModalBottomSheet<void>(
-      context: ctx,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _DetailSheet(
-        payment: p,
-        startTab: startChat ? 1 : 0,
-        quickReplies: widget.quickReplies,
-        onSendMessage: widget.onSendMessage == null
-            ? null
-            : (text) => widget.onSendMessage!(p, text),
-      ),
-    );
+    if (_scroll.hasClients) {
+      _scroll.animateTo(0,
+          duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    }
   }
 
   Future<void> _approve(Payment p) async => widget.onApprove?.call(p);
 
   Future<void> _reject(Payment p) async {
-    final mc = _MC(Theme.of(context).brightness == Brightness.dark);
+    final c = _MC(Theme.of(context).brightness == Brightness.dark);
     final reason =
-        await _RejectSheet.show(context, widget.rejectReasons, mc);
-    if (reason == null) return;
-    await widget.onReject?.call(p, reason);
+        await _RejectSheet.show(context, c, p, widget.rejectReasons);
+    if (reason == null || reason.trim().isEmpty) return;
+    await widget.onReject?.call(p, reason.trim());
   }
 
   @override
   Widget build(BuildContext context) {
-    final mc = _MC(Theme.of(context).brightness == Brightness.dark);
+    final c = _MC(Theme.of(context).brightness == Brightness.dark);
     final filtered = _filtered;
     final pg = _safePage;
-    final pageItems =
+    final slice =
         filtered.skip(pg * _kPageSize).take(_kPageSize).toList();
-
-    final counts = {
-      'all': widget.payments.length,
-      'pending':
-          widget.payments.where((p) => p.status == PaymentStatus.pending).length,
-      'approved':
-          widget.payments.where((p) => p.status == PaymentStatus.approved).length,
-      'rejected':
-          widget.payments.where((p) => p.status == PaymentStatus.rejected).length,
-    };
 
     return ListView(
       controller: _scroll,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
       children: [
-        // Title + Live badge
-        Row(children: [
-          Expanded(
-            child: Text('Malipo',
-                style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: mc.ink)),
-          ),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-                color: mc.greenBg,
-                borderRadius: BorderRadius.circular(20)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                      color: mc.green, shape: BoxShape.circle)),
-              const SizedBox(width: 5),
-              Text('Live',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: mc.green)),
-            ]),
-          ),
-        ]),
-        const SizedBox(height: 4),
-        Text('Thibitisha michango ya watumiaji',
-            style: TextStyle(fontSize: 14, color: mc.inkSoft)),
-        const SizedBox(height: 14),
-
-        // Filter chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final entry in [
-                ('all', 'Zote'),
-                ('pending', 'Zinasubiri'),
-                ('approved', 'Zimekamilika'),
-                ('rejected', 'Zimekataliwa'),
-              ])
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _FilterChip(
-                    label: '${entry.$2} (${counts[entry.$1]})',
-                    active: _filter == entry.$1,
-                    mc: mc,
-                    onTap: () =>
-                        setState(() {
-                          _filter = entry.$1;
-                          _page = 0;
-                        }),
-                  ),
-                ),
-            ],
-          ),
-        ),
+        _header(c),
         const SizedBox(height: 12),
-
-        // Search
-        TextField(
-          controller: _search,
-          style: TextStyle(fontSize: 14, color: mc.ink),
-          decoration: InputDecoration(
-            hintText: 'Tafuta kwa jina, namba, au kodi...',
-            hintStyle: TextStyle(fontSize: 14, color: mc.inkFaint),
-            prefixIcon:
-                Icon(Icons.search_rounded, size: 20, color: mc.inkSoft),
-            suffixIcon: _search.text.isEmpty
-                ? null
-                : IconButton(
-                    icon: Icon(Icons.close_rounded,
-                        size: 18, color: mc.inkSoft),
-                    onPressed: _search.clear,
-                  ),
-            filled: true,
-            fillColor: mc.card,
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 13),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: mc.border)),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: mc.border)),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: mc.blue, width: 1.4)),
-          ),
+        _chips(c),
+        const SizedBox(height: 10),
+        _searchField(c),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(2, 12, 2, 10),
+          child: Text('Inaonyesha ${slice.length} kati ya ${filtered.length}',
+              style: TextStyle(color: c.inkSoft, fontSize: 12)),
         ),
-        const SizedBox(height: 10),
-
-        Text('Inaonyesha ${pageItems.length} kati ya ${filtered.length}',
-            style: TextStyle(fontSize: 13, color: mc.inkSoft)),
-        const SizedBox(height: 10),
-
-        if (filtered.isEmpty)
-          _EmptyState(mc: mc)
+        if (slice.isEmpty)
+          _empty(c)
         else ...[
-          for (final p in pageItems)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _PaymentCard(
-                payment: p,
-                mc: mc,
-                onOna: () => _openDetail(context, p, startChat: false),
-                onOngea: () => _openDetail(context, p, startChat: true),
-                onApprove: () => _approve(p),
-                onReject: () => _reject(p),
-              ),
+          for (final p in slice)
+            _PaymentCard(
+              c: c,
+              p: p,
+              onApprove: () => _approve(p),
+              onReject: () => _reject(p),
             ),
-          _Pager(
-              page: pg, total: _totalPages, mc: mc, onTap: _goPage),
+          if (_totalPages > 1)
+            _Pager(page: pg, total: _totalPages, c: c, onTap: _goPage),
         ],
       ],
     );
   }
-}
 
-// ─── Filter chip ──────────────────────────────────────────────────────────────
+  /* ---------- Kichwa ---------- */
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool active;
-  final _MC mc;
-  final VoidCallback onTap;
-  const _FilterChip(
-      {required this.label,
-      required this.active,
-      required this.mc,
-      required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+  Widget _header(_MC c) => Container(
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: active ? mc.blue : mc.card,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? mc.blue : mc.border),
+          color: c.blueBg,
+          borderRadius: BorderRadius.circular(14),
         ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: active ? Colors.white : mc.inkSoft)),
-      ),
-    );
-  }
-}
-
-// ─── Payment Card ─────────────────────────────────────────────────────────────
-
-class _PaymentCard extends StatelessWidget {
-  final Payment payment;
-  final _MC mc;
-  final VoidCallback onOna;
-  final VoidCallback onOngea;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
-
-  const _PaymentCard({
-    required this.payment,
-    required this.mc,
-    required this.onOna,
-    required this.onOngea,
-    required this.onApprove,
-    required this.onReject,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final p = payment;
-    final pending = p.status == PaymentStatus.pending;
-    final msgCount = p.messages.length;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: mc.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: mc.border),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                _StatusAvatar(
-                    name: p.name, status: p.status, mc: mc),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(p.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w700,
-                                color: mc.ink)),
-                        const SizedBox(height: 2),
-                        Row(children: [
-                          Icon(Icons.phone_outlined,
-                              size: 13, color: mc.inkSoft),
-                          const SizedBox(width: 4),
-                          Text(p.phone,
-                              style: TextStyle(
-                                  fontSize: 13, color: mc.inkSoft)),
-                        ]),
-                      ]),
-                ),
-                const SizedBox(width: 8),
-                _StatusBadge(status: p.status, mc: mc),
-              ]),
-
-              const SizedBox(height: 12),
-              _Cut(mc: mc),
-              const SizedBox(height: 12),
-
-              // KIASI
-              Text('KIASI',
-                  style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: mc.inkFaint,
-                      letterSpacing: 0.8)),
-              const SizedBox(height: 4),
-              Text(
-                'TZS ${_fmtAmount(p.amount)}',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: mc.ink,
-                  decoration: p.status == PaymentStatus.rejected
-                      ? TextDecoration.lineThrough
-                      : null,
-                  decorationColor: mc.red,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-              _Cut(mc: mc),
-              const SizedBox(height: 12),
-
-              // KODI
-              Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('KODI',
-                        style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                            color: mc.inkFaint,
-                            letterSpacing: 0.8)),
-                    _CopyText(text: p.reference, mc: mc),
-                  ]),
-
-              const SizedBox(height: 16),
-
-              // Steps
-              _Steps(
-                  status: p.status,
-                  createdAt: p.createdAt,
-                  mc: mc),
-
-              const SizedBox(height: 16),
-
-              // Bottom buttons
-              Row(children: [
-                _ChipBtn(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: 'Ongea',
-                  count: msgCount,
-                  filled: true,
-                  mc: mc,
-                  onTap: onOngea,
-                ),
-                const SizedBox(width: 8),
-                _ChipBtn(
-                  icon: Icons.remove_red_eye_outlined,
-                  label: 'Ona',
-                  mc: mc,
-                  onTap: onOna,
-                ),
-                if (pending) ...[
-                  const Spacer(),
-                  _SquareBtn(
-                    icon: Icons.close_rounded,
-                    color: mc.red,
-                    fill: false,
-                    mc: mc,
-                    onTap: onReject,
-                  ),
-                  const SizedBox(width: 8),
-                  _SquareBtn(
-                    icon: Icons.check_rounded,
-                    color: mc.green,
-                    fill: true,
-                    mc: mc,
-                    onTap: onApprove,
-                  ),
-                ],
-              ]),
-            ]),
-      ),
-    );
-  }
-}
-
-// ─── Status Avatar ────────────────────────────────────────────────────────────
-
-class _StatusAvatar extends StatelessWidget {
-  final String name;
-  final PaymentStatus status;
-  final _MC mc;
-  const _StatusAvatar(
-      {required this.name, required this.status, required this.mc});
-
-  @override
-  Widget build(BuildContext context) {
-    final (badgeColor, badgeIcon) = switch (status) {
-      PaymentStatus.approved => (mc.green, Icons.check_rounded),
-      PaymentStatus.rejected => (mc.red, Icons.close_rounded),
-      PaymentStatus.pending => (mc.amber, Icons.access_time_rounded),
-    };
-    return Stack(clipBehavior: Clip.none, children: [
-      CircleAvatar(
-        radius: 22,
-        backgroundColor: mc.blueBg,
-        child: Text(_initials(name),
-            style: TextStyle(
-                color: mc.blue,
-                fontWeight: FontWeight.w700,
-                fontSize: 14)),
-      ),
-      Positioned(
-        bottom: -2,
-        left: -2,
-        child: Container(
-          width: 18,
-          height: 18,
-          decoration: BoxDecoration(
-            color: badgeColor,
-            shape: BoxShape.circle,
-            border: Border.all(color: mc.card, width: 2),
+        child: Row(children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+                color: c.card, borderRadius: BorderRadius.circular(12)),
+            child: Icon(TablerIcons.wallet, size: 21, color: c.blue),
           ),
-          child: Icon(badgeIcon, size: 10, color: Colors.white),
-        ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Malipo',
+                  style: TextStyle(
+                      color: c.ink, fontSize: 17, fontWeight: FontWeight.w600)),
+              Text(
+                  '${widget.payments.length} malipo · ${_count(PaymentStatus.pending)} yanasubiri',
+                  style: TextStyle(color: c.inkSoft, fontSize: 12)),
+            ]),
+          ),
+          _Pill(
+              label: 'Live',
+              icon: TablerIcons.sparkles,
+              fg: c.green,
+              bg: c.greenBg,
+              size: 12,
+              vpad: 4,
+              hpad: 10),
+        ]),
+      );
+
+  /* ---------- Vichujio ---------- */
+
+  Widget _chips(_MC c) {
+    final opts = <(PaymentStatus?, String, int)>[
+      (null, 'Yote', widget.payments.length),
+      (PaymentStatus.pending, 'Inasubiri', _count(PaymentStatus.pending)),
+      (PaymentStatus.approved, 'Imekamilika', _count(PaymentStatus.approved)),
+      (PaymentStatus.rejected, 'Imekataliwa', _count(PaymentStatus.rejected)),
+    ];
+    return SizedBox(
+      height: 34,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: opts.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        itemBuilder: (_, i) {
+          final (s, t, n) = opts[i];
+          final on = s == _filter;
+          return GestureDetector(
+            onTap: () => setState(() {
+              _filter = s;
+              _page = 0;
+            }),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: on ? c.blue : c.card,
+                borderRadius: BorderRadius.circular(999),
+                border:
+                    Border.all(color: on ? c.blue : c.borderStrong),
+              ),
+              child: Row(children: [
+                Text(t,
+                    style: TextStyle(
+                        color: on ? Colors.white : c.ink, fontSize: 13)),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: on ? Colors.white24 : c.panel,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text('$n',
+                      style: TextStyle(
+                          color: on ? Colors.white : c.inkSoft,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ]),
+            ),
+          );
+        },
       ),
+    );
+  }
+
+  /* ---------- Kutafuta ---------- */
+
+  Widget _searchField(_MC c) {
+    OutlineInputBorder b(Color col, [double w = 1]) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: col, width: w));
+    return TextField(
+      controller: _search,
+      style: TextStyle(color: c.ink, fontSize: 14),
+      cursorColor: c.blue,
+      decoration: InputDecoration(
+        hintText: 'Tafuta kwa jina, namba au kodi',
+        hintStyle: TextStyle(
+            color: c.inkSoft.withValues(alpha: .8), fontSize: 14),
+        isDense: true,
+        filled: true,
+        fillColor: c.card,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        prefixIcon: Icon(TablerIcons.search, size: 17, color: c.inkSoft),
+        prefixIconConstraints: const BoxConstraints(minWidth: 40),
+        border: b(c.borderStrong),
+        enabledBorder: b(c.borderStrong),
+        focusedBorder: b(c.blue, 1.5),
+      ),
+    );
+  }
+
+  /* ---------- Hali tupu ---------- */
+
+  Widget _empty(_MC c) => Container(
+        padding:
+            const EdgeInsets.symmetric(vertical: 26, horizontal: 14),
+        decoration: BoxDecoration(
+          color: c.card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: c.border),
+        ),
+        child: Column(children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration:
+                BoxDecoration(color: c.blueBg, shape: BoxShape.circle),
+            child: Icon(TablerIcons.receiptOff, size: 26, color: c.blue),
+          ),
+          const SizedBox(height: 10),
+          Text('Hakuna malipo',
+              style: TextStyle(
+                  color: c.ink,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 2),
+          Text('Jaribu kichujio kingine',
+              style: TextStyle(color: c.inkSoft, fontSize: 12)),
+        ]),
+      );
+}
+
+// ─── Hatua za malipo (wima) ───────────────────────────────────────────────
+
+enum _StepState { done, active, todo }
+
+class _StepData {
+  final String title;
+  final String sub;
+  final _StepState state;
+  final Color fill;
+  final Color text;
+  final IconData icon;
+  const _StepData(
+      this.title, this.sub, this.state, this.fill, this.text, this.icon);
+}
+
+class _Steps extends StatelessWidget {
+  final _MC c;
+  final Payment p;
+  const _Steps({required this.c, required this.p});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = p.status;
+    final first = _StepData('Imetumwa', _fullDate(p.createdAt),
+        _StepState.done, c.blue, c.ink, TablerIcons.check);
+    final mid = s == PaymentStatus.pending
+        ? _StepData('Inakaguliwa', 'Inasubiri uthibitisho wako',
+            _StepState.active, c.amberFill, c.amber, TablerIcons.clock)
+        : _StepData('Imekaguliwa', 'Admin ameangalia SMS', _StepState.done,
+            c.blue, c.ink, TablerIcons.check);
+    final fin = switch (s) {
+      PaymentStatus.approved => _StepData('Imekamilika',
+          'Malipo yamethibitishwa', _StepState.done, c.greenFill, c.green,
+          TablerIcons.check),
+      PaymentStatus.rejected => _StepData('Imekataliwa',
+          'Malipo hayakukubaliwa', _StepState.done, c.redFill, c.red,
+          TablerIcons.x),
+      PaymentStatus.pending => _StepData('Matokeo', 'Bado', _StepState.todo,
+          c.borderStrong, c.inkSoft, TablerIcons.check),
+    };
+    final list = [first, mid, fin];
+
+    return Column(children: [
+      for (var i = 0; i < list.length; i++)
+        _StepRow(
+          c: c,
+          step: list[i],
+          last: i == list.length - 1,
+          lineColor: i == list.length - 1
+              ? null
+              : (list[i + 1].state == _StepState.todo
+                  ? c.borderStrong
+                  : list[i + 1].fill),
+        ),
     ]);
   }
 }
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
-
-class _StatusBadge extends StatelessWidget {
-  final PaymentStatus status;
-  final _MC mc;
-  const _StatusBadge({required this.status, required this.mc});
+class _StepRow extends StatelessWidget {
+  final _MC c;
+  final _StepData step;
+  final bool last;
+  final Color? lineColor;
+  const _StepRow(
+      {required this.c, required this.step, required this.last, this.lineColor});
 
   @override
   Widget build(BuildContext context) {
-    final (label, color, bg) = switch (status) {
-      PaymentStatus.approved => ('Imekamilika', mc.green, mc.greenBg),
-      PaymentStatus.rejected => ('Imekataliwa', mc.red, mc.redBg),
-      PaymentStatus.pending => ('Inasubiri', mc.amber, mc.amberBg),
+    final Widget dot = switch (step.state) {
+      _StepState.todo => Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: c.card,
+            border: Border.all(color: c.borderStrong, width: 2),
+          ),
+        ),
+      _StepState.active =>
+        _PulseDot(color: step.fill, halo: c.amberBg, icon: step.icon),
+      _StepState.done => Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(color: step.fill, shape: BoxShape.circle),
+          child: Icon(step.icon, size: 10, color: Colors.white),
+        ),
     };
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-          color: bg, borderRadius: BorderRadius.circular(999)),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: color)),
+
+    return IntrinsicHeight(
+      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        SizedBox(
+          width: 16,
+          child: Column(children: [
+            dot,
+            if (!last)
+              Expanded(
+                child: Container(
+                  width: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 3),
+                  decoration: BoxDecoration(
+                      color: lineColor,
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+          ]),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: last ? 0 : 12),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(step.title,
+                  style: TextStyle(
+                      color: step.text,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2)),
+              const SizedBox(height: 1),
+              Text(step.sub,
+                  style: TextStyle(color: c.inkSoft, fontSize: 11.5)),
+            ]),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-// ─── Cut (dashed separator) ───────────────────────────────────────────────────
+/// Duara linalopepesa (hatua inayoendelea — "Inakaguliwa")
+class _PulseDot extends StatefulWidget {
+  final Color color;
+  final Color halo;
+  final IconData icon;
+  const _PulseDot(
+      {required this.color, required this.halo, required this.icon});
 
-class _Cut extends StatelessWidget {
-  final _MC mc;
-  const _Cut({required this.mc});
+  @override
+  State<_PulseDot> createState() => _PulseDotState();
+}
+
+class _PulseDotState extends State<_PulseDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1600))
+    ..repeat();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _ctrl,
+        builder: (_, __) => Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: widget.color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: widget.halo.withValues(alpha: (1 - _ctrl.value) * .9),
+                spreadRadius: _ctrl.value * 6,
+              ),
+            ],
+          ),
+          child: Icon(widget.icon, size: 10, color: Colors.white),
+        ),
+      );
+}
+
+// ─── VIPANDE VIDOGO ───────────────────────────────────────────────────────
+
+class _StatusAvatar extends StatelessWidget {
+  final _MC c;
+  final String name;
+  final double size;
+  final Color fill;
+  final IconData icon;
+  const _StatusAvatar(
+      {required this.c,
+      required this.name,
+      required this.size,
+      required this.fill,
+      required this.icon});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: size,
+        height: size,
+        child: Stack(clipBehavior: Clip.none, children: [
+          Container(
+            width: size,
+            height: size,
+            alignment: Alignment.center,
+            decoration:
+                BoxDecoration(color: c.blueBg, shape: BoxShape.circle),
+            child: Text(_initials(name),
+                style: TextStyle(
+                    color: c.blue,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600)),
+          ),
+          Positioned(
+            right: -3,
+            bottom: -3,
+            child: Container(
+              width: 19,
+              height: 19,
+              decoration: BoxDecoration(
+                color: fill,
+                shape: BoxShape.circle,
+                border: Border.all(color: c.card, width: 2),
+              ),
+              child: Icon(icon, size: 11, color: Colors.white),
+            ),
+          ),
+        ]),
+      );
+}
+
+class _Pill extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final Color fg, bg;
+  final double size, vpad, hpad;
+  const _Pill(
+      {required this.label,
+      required this.fg,
+      required this.bg,
+      this.icon,
+      this.size = 11,
+      this.vpad = 3,
+      this.hpad = 9});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: EdgeInsets.symmetric(horizontal: hpad, vertical: vpad),
+        decoration:
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (icon != null) ...[
+            Icon(icon, size: size, color: fg),
+            const SizedBox(width: 4)
+          ],
+          Text(label,
+              style: TextStyle(
+                  color: fg, fontSize: size, fontWeight: FontWeight.w600)),
+        ]),
+      );
+}
+
+/// "Ona": kidonge kidogo chenye icon na neno (urefu 30)
+class _ChipBtn extends StatelessWidget {
+  final _MC c;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ChipBtn(
+      {required this.c,
+      required this.icon,
+      required this.label,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-        height: 1,
-        child: CustomPaint(painter: _DashPainter(mc.border)));
+    return Material(
+      color: c.panel,
+      borderRadius: BorderRadius.circular(9),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(9),
+        child: Container(
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 11),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: c.borderStrong, width: .5),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 15, color: c.ink),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(color: c.ink, fontSize: 12.5)),
+          ]),
+        ),
+      ),
+    );
   }
 }
 
-class _DashPainter extends CustomPainter {
+enum _SqKind { approve, reject }
+
+/// Kitufe kidogo cha mraba cha icon tu (30x30): Thibitisha au Kataa
+class _SquareBtn extends StatelessWidget {
+  final _MC c;
+  final IconData icon;
+  final _SqKind kind;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _SquareBtn(
+      {required this.c,
+      required this.icon,
+      required this.kind,
+      required this.tooltip,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final approve = kind == _SqKind.approve;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: approve ? c.greenFill : c.card,
+        borderRadius: BorderRadius.circular(9),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(9),
+          child: Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(9),
+              border: approve
+                  ? null
+                  : Border.all(color: c.red.withValues(alpha: .55)),
+            ),
+            child: Icon(icon,
+                size: 16, color: approve ? Colors.white : c.red),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Mstari wa vitone wenye mashimo pembeni (mashimo yanachukua rangi ya nyuma
+/// ya ukurasa wako).
+class _Cut extends StatelessWidget {
+  final _MC c;
+  const _Cut({required this.c});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = Theme.of(context).scaffoldBackgroundColor;
+    Widget notch() => Container(
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(color: bg, shape: BoxShape.circle));
+    return SizedBox(
+      height: 18,
+      child: Stack(clipBehavior: Clip.none, children: [
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: CustomPaint(painter: _DashH(c.borderStrong)),
+          ),
+        ),
+        Positioned(left: -10, top: 0, child: notch()),
+        Positioned(right: -10, top: 0, child: notch()),
+      ]),
+    );
+  }
+}
+
+class _DashH extends CustomPainter {
   final Color color;
-  const _DashPainter(this.color);
+  _DashH(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 1;
-    const w = 5.0;
-    const gap = 4.0;
+      ..strokeWidth = 1.5;
+    const dash = 5.0, gap = 4.0;
     var x = 0.0;
+    final y = size.height / 2;
     while (x < size.width) {
-      canvas.drawLine(Offset(x, 0), Offset(x + w, 0), paint);
-      x += w + gap;
+      canvas.drawLine(
+          Offset(x, y), Offset((x + dash).clamp(0, size.width), y), paint);
+      x += dash + gap;
     }
   }
 
   @override
-  bool shouldRepaint(_DashPainter old) => old.color != color;
+  bool shouldRepaint(covariant _DashH old) => old.color != color;
 }
 
-// ─── CopyText ─────────────────────────────────────────────────────────────────
+TextStyle _label(_MC c) => TextStyle(
+    color: c.inkSoft,
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    letterSpacing: .9);
 
-class _CopyText extends StatefulWidget {
-  final String text;
-  final _MC mc;
-  const _CopyText({required this.text, required this.mc});
-
-  @override
-  State<_CopyText> createState() => _CopyTextState();
-}
-
-class _CopyTextState extends State<_CopyText> {
-  bool _copied = false;
-
-  Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: widget.text));
-    setState(() => _copied = true);
-    Future.delayed(const Duration(milliseconds: 1300),
-        () { if (mounted) setState(() => _copied = false); });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mc = widget.mc;
-    return GestureDetector(
-      onTap: _copy,
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: mc.card,
-          border:
-              Border.all(color: _copied ? mc.green : mc.border),
-          borderRadius: BorderRadius.circular(10),
+({String label, Color fg, Color bg, Color fill, IconData icon}) _st(
+        _MC c, PaymentStatus s) =>
+    switch (s) {
+      PaymentStatus.pending => (
+          label: 'Inasubiri',
+          fg: c.amber,
+          bg: c.amberBg,
+          fill: c.amberFill,
+          icon: TablerIcons.clock
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(
-            _copied ? 'Imenakiliwa ✓' : widget.text,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: _copied ? mc.green : mc.ink,
-              fontFamily: 'monospace',
-            ),
-          ),
-          if (!_copied) ...[
-            const SizedBox(width: 8),
-            Icon(Icons.copy_outlined, size: 14, color: mc.inkSoft),
-          ],
-        ]),
-      ),
-    );
-  }
-}
-
-// ─── Steps ────────────────────────────────────────────────────────────────────
-
-class _Steps extends StatelessWidget {
-  final PaymentStatus status;
-  final DateTime? createdAt;
-  final _MC mc;
-  const _Steps(
-      {required this.status,
-      required this.createdAt,
-      required this.mc});
-
-  @override
-  Widget build(BuildContext context) {
-    final pending = status == PaymentStatus.pending;
-    final approved = status == PaymentStatus.approved;
-    final rejected = status == PaymentStatus.rejected;
-
-    final step2Color =
-        pending ? mc.amber : mc.blue;
-    final step2Icon =
-        pending ? Icons.access_time_rounded : Icons.check_rounded;
-    final step2Label = pending ? 'Inakaguliwa' : 'Imekaguliwa';
-    final step2Sub = pending
-        ? 'Inasubiri uthibitisho wako'
-        : 'Admin ameangalia SMS';
-    final step2LabelColor = pending ? mc.amber : mc.ink;
-
-    final line1Color = pending ? mc.amber : mc.blue;
-
-    final step3Color = approved
-        ? mc.green
-        : (rejected ? mc.red : mc.inkFaint);
-    final step3Icon = approved
-        ? Icons.check_rounded
-        : (rejected ? Icons.close_rounded : null);
-    final step3Label = approved
-        ? 'Imekamilika'
-        : (rejected ? 'Imekataliwa' : 'Matokeo');
-    final step3Sub = approved
-        ? 'Malipo yamethibitishwa'
-        : (rejected ? 'Malipo hayakukubaliwa' : 'Bado');
-    final step3LabelColor = approved
-        ? mc.green
-        : (rejected ? mc.red : mc.inkSoft);
-    final line2Color = approved
-        ? mc.green
-        : (rejected ? mc.red : mc.inkFaint);
-
-    return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _StepRow(
-            color: mc.blue,
-            icon: Icons.check_rounded,
-            label: 'Imetumwa',
-            labelColor: mc.ink,
-            sub: _fmtDate(createdAt),
-            mc: mc,
-          ),
-          _StepLine(color: line1Color),
-          _StepRow(
-            color: step2Color,
-            icon: step2Icon,
-            label: step2Label,
-            labelColor: step2LabelColor,
-            sub: step2Sub,
-            mc: mc,
-            hollow: pending,
-          ),
-          _StepLine(color: line2Color),
-          _StepRow(
-            color: step3Color,
-            icon: step3Icon,
-            label: step3Label,
-            labelColor: step3LabelColor,
-            sub: step3Sub,
-            mc: mc,
-            hollow: pending,
-          ),
-        ]);
-  }
-}
-
-class _StepRow extends StatelessWidget {
-  final Color color;
-  final IconData? icon;
-  final String label;
-  final Color labelColor;
-  final String sub;
-  final _MC mc;
-  final bool hollow;
-  const _StepRow({
-    required this.color,
-    required this.icon,
-    required this.label,
-    required this.labelColor,
-    required this.sub,
-    required this.mc,
-    this.hollow = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-      Container(
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: hollow ? Colors.transparent : color,
-          border: hollow
-              ? Border.all(color: color, width: 1.5)
-              : null,
+      PaymentStatus.approved => (
+          label: 'Imekamilika',
+          fg: c.green,
+          bg: c.greenBg,
+          fill: c.greenFill,
+          icon: TablerIcons.check
         ),
-        child: (icon != null && !hollow)
-            ? Icon(icon, size: 13, color: Colors.white)
-            : null,
-      ),
-      const SizedBox(width: 10),
-      Expanded(
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: labelColor)),
-              if (sub.isNotEmpty)
-                Text(sub,
-                    style: TextStyle(
-                        fontSize: 12, color: mc.inkSoft)),
-            ]),
-      ),
-    ]);
-  }
-}
-
-class _StepLine extends StatelessWidget {
-  final Color color;
-  const _StepLine({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 11),
-      child: Container(width: 2, height: 26, color: color),
-    );
-  }
-}
-
-// ─── ChipBtn ──────────────────────────────────────────────────────────────────
-
-class _ChipBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int count;
-  final bool filled;
-  final _MC mc;
-  final VoidCallback? onTap;
-  const _ChipBtn({
-    required this.icon,
-    required this.label,
-    this.count = 0,
-    this.filled = false,
-    required this.mc,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = filled ? mc.blueBg : mc.card;
-    final fg = filled ? mc.blue : mc.inkSoft;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color:
-                  filled ? mc.blue.withValues(alpha: 0.3) : mc.border),
+      PaymentStatus.rejected => (
+          label: 'Imekataliwa',
+          fg: c.red,
+          bg: c.redBg,
+          fill: c.redFill,
+          icon: TablerIcons.x
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 15, color: fg),
-          const SizedBox(width: 6),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: fg)),
-          if (count > 0) ...[
-            const SizedBox(width: 6),
-            Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                  color: mc.blue, shape: BoxShape.circle),
-              alignment: Alignment.center,
-              child: Text('$count',
-                  style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white)),
-            ),
-          ],
-        ]),
-      ),
-    );
-  }
-}
+    };
 
-// ─── SquareBtn ────────────────────────────────────────────────────────────────
-
-class _SquareBtn extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final bool fill;
-  final _MC mc;
-  final VoidCallback? onTap;
-  const _SquareBtn({
-    required this.icon,
-    required this.color,
-    required this.fill,
-    required this.mc,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: fill ? color : mc.card,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-              color: fill ? color : color.withValues(alpha: 0.4),
-              width: 1.4),
-        ),
-        child: Icon(icon,
-            size: 18, color: fill ? Colors.white : color),
-      ),
-    );
-  }
-}
-
-// ─── Detail Sheet ─────────────────────────────────────────────────────────────
-
-class _DetailSheet extends StatefulWidget {
-  final Payment payment;
-  final int startTab;
-  final List<String> quickReplies;
-  final Future<PaymentMessage?> Function(String text)? onSendMessage;
-
-  const _DetailSheet({
-    required this.payment,
-    this.startTab = 0,
-    required this.quickReplies,
-    this.onSendMessage,
-  });
-
-  @override
-  State<_DetailSheet> createState() => _DetailSheetState();
-}
-
-class _DetailSheetState extends State<_DetailSheet> {
-  late int _tab;
-  late List<PaymentMessage> _msgs;
-  final _msgCtrl = TextEditingController();
-  bool _sending = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _tab = widget.startTab;
-    _msgs = List.of(widget.payment.messages);
-  }
-
-  @override
-  void dispose() {
-    _msgCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _send(String text) async {
-    final t = text.trim();
-    if (t.isEmpty || _sending) return;
-    final now = DateTime.now();
-    setState(() {
-      _msgs.add(PaymentMessage(fromAdmin: true, text: t, at: now));
-      _msgCtrl.clear();
-      _sending = true;
-    });
-    try {
-      await widget.onSendMessage?.call(t);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _msgs.removeLast());
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mc = _MC(Theme.of(context).brightness == Brightness.dark);
-    final p = widget.payment;
-    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: viewInsets),
-      child: Container(
-        constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.88),
-        decoration: BoxDecoration(
-          color: mc.card,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(22)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: mc.border,
-                    borderRadius: BorderRadius.circular(999)),
-              ),
-            ),
-            const SizedBox(height: 14),
-            // Sheet header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(children: [
-                _StatusAvatar(
-                    name: p.name, status: p.status, mc: mc),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(p.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: mc.ink)),
-                        Row(children: [
-                          Icon(Icons.phone_outlined,
-                              size: 12, color: mc.inkSoft),
-                          const SizedBox(width: 4),
-                          Text(p.phone,
-                              style: TextStyle(
-                                  fontSize: 12, color: mc.inkSoft)),
-                        ]),
-                      ]),
-                ),
-                const SizedBox(width: 8),
-                _StatusBadge(status: p.status, mc: mc),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).maybePop(),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                        color: mc.panel,
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Icon(Icons.close_rounded,
-                        size: 16, color: mc.inkSoft),
-                  ),
-                ),
-              ]),
-            ),
-            const SizedBox(height: 14),
-            // Tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(children: [
-                Expanded(
-                    child: _TabBtn(
-                  icon: Icons.receipt_long_outlined,
-                  label: 'Maelezo',
-                  active: _tab == 0,
-                  mc: mc,
-                  onTap: () => setState(() => _tab = 0),
-                )),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _TabBtn(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: 'Mazungumzo',
-                  badge: _msgs.length,
-                  active: _tab == 1,
-                  mc: mc,
-                  onTap: () => setState(() => _tab = 1),
-                )),
-              ]),
-            ),
-            const SizedBox(height: 14),
-            Flexible(
-              child: _tab == 0
-                  ? _buildMaelezo(mc, p)
-                  : _buildMazungumzo(mc, p),
-            ),
-            if (_tab == 1) ...[
-              if (widget.quickReplies.isNotEmpty)
-                SizedBox(
-                  height: 40,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: widget.quickReplies.length,
-                    separatorBuilder: (context2, idx) =>
-                        const SizedBox(width: 8),
-                    itemBuilder: (context2, i) {
-                      final q = widget.quickReplies[i];
-                      return GestureDetector(
-                        onTap: () => _send(q),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: mc.border),
-                            borderRadius: BorderRadius.circular(20),
-                            color: mc.card,
-                          ),
-                          child: Center(
-                              child: Text(q,
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: mc.inkSoft))),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: Row(children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: mc.panel,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: TextField(
-                        controller: _msgCtrl,
-                        minLines: 1,
-                        maxLines: 4,
-                        style:
-                            TextStyle(fontSize: 13, color: mc.ink),
-                        decoration: InputDecoration(
-                          hintText: 'Andika jibu kwa mchangiaji',
-                          hintStyle: TextStyle(
-                              fontSize: 13, color: mc.inkFaint),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
-                        ),
-                        onSubmitted: _send,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () => _send(_msgCtrl.text),
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                          color: mc.blue, shape: BoxShape.circle),
-                      child: const Icon(Icons.send_rounded,
-                          size: 16, color: Colors.white),
-                    ),
-                  ),
-                ]),
-              ),
-            ],
-            SizedBox(
-                height: MediaQuery.of(context).padding.bottom > 0
-                    ? MediaQuery.of(context).padding.bottom
-                    : 8),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMaelezo(_MC mc, Payment p) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-              Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('KIASI',
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: mc.inkFaint,
-                              letterSpacing: 0.8)),
-                      const SizedBox(height: 4),
-                      Text('TZS ${_fmtAmount(p.amount)}',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: mc.ink,
-                            decoration:
-                                p.status == PaymentStatus.rejected
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                            decorationColor: mc.red,
-                          )),
-                    ]),
-              ),
-              Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('KODI',
-                        style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: mc.inkFaint,
-                            letterSpacing: 0.8)),
-                    const SizedBox(height: 4),
-                    _CopyText(text: p.reference, mc: mc),
-                  ]),
-            ]),
-            const SizedBox(height: 14),
-            _Cut(mc: mc),
-            const SizedBox(height: 12),
-            if (p.createdAt != null)
-              Row(children: [
-                Icon(Icons.calendar_today_outlined,
-                    size: 14, color: mc.inkSoft),
-                const SizedBox(width: 8),
-                Text(_fmtDate(p.createdAt),
-                    style:
-                        TextStyle(fontSize: 13, color: mc.inkSoft)),
-              ]),
-            if (p.sms.trim().isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Text('SMS YA MCHANGIAJI',
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: mc.inkFaint,
-                      letterSpacing: 0.8)),
-              const SizedBox(height: 8),
-              Row(crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Expanded(
-                  child: SelectableText(p.sms,
-                      style: TextStyle(
-                          fontSize: 13,
-                          color: mc.inkSoft,
-                          height: 1.5)),
-                ),
-                const SizedBox(width: 8),
-                _CopyIconBtn(text: p.sms, mc: mc),
-              ]),
-            ],
-            if (p.status == PaymentStatus.rejected &&
-                p.note.trim().isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                    color: mc.redBg,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        Icon(Icons.warning_amber_rounded,
-                            size: 14, color: mc.red),
-                        const SizedBox(width: 6),
-                        Text('SABABU YA KUKATAA',
-                            style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: mc.red,
-                                letterSpacing: 0.6)),
-                      ]),
-                      const SizedBox(height: 4),
-                      Text(p.note,
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: mc.red)),
-                    ]),
-              ),
-            ],
-          ]),
-    );
-  }
-
-  Widget _buildMazungumzo(_MC mc, Payment p) {
-    if (_msgs.isEmpty) {
-      return Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-                color: mc.blueBg, shape: BoxShape.circle),
-            child: Icon(Icons.chat_bubble_outline_rounded,
-                size: 22, color: mc.blue),
-          ),
-          const SizedBox(height: 12),
-          Text('Hakuna ujumbe bado',
-              style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: mc.ink)),
-          const SizedBox(height: 4),
-          Text('Andika ujumbe wa kwanza kwa mchangiaji.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: mc.inkSoft)),
-          const SizedBox(height: 16),
-        ]),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      itemCount: _msgs.length,
-      itemBuilder: (context2, i) {
-        final m = _msgs[i];
-        final isMe = m.fromAdmin;
-        return Align(
-          alignment:
-              isMe ? Alignment.centerRight : Alignment.centerLeft,
-          child: Column(
-            crossAxisAlignment: isMe
-                ? CrossAxisAlignment.end
-                : CrossAxisAlignment.start,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(bottom: 2),
-                constraints:
-                    const BoxConstraints(maxWidth: 260),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 13, vertical: 9),
-                decoration: BoxDecoration(
-                  color: isMe ? mc.blue : mc.panel,
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(14),
-                    topRight: const Radius.circular(14),
-                    bottomLeft:
-                        Radius.circular(isMe ? 14 : 3),
-                    bottomRight:
-                        Radius.circular(isMe ? 3 : 14),
-                  ),
-                ),
-                child: Text(m.text,
-                    style: TextStyle(
-                        fontSize: 14,
-                        color:
-                            isMe ? Colors.white : mc.ink)),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text(
-                  '${isMe ? 'Wewe' : p.name.split(' ').first} · ${_fmtTime(m.at)}',
-                  style: TextStyle(
-                      fontSize: 10.5, color: mc.inkFaint),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ─── Tab button ───────────────────────────────────────────────────────────────
-
-class _TabBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int badge;
-  final bool active;
-  final _MC mc;
-  final VoidCallback onTap;
-  const _TabBtn({
-    required this.icon,
-    required this.label,
-    this.badge = 0,
-    required this.active,
-    required this.mc,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: active ? mc.panel : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: mc.border),
-        ),
-        child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon,
-                  size: 15,
-                  color: active ? mc.ink : mc.inkSoft),
-              const SizedBox(width: 6),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: active ? mc.ink : mc.inkSoft)),
-              if (badge > 0) ...[
-                const SizedBox(width: 6),
-                Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                      color: mc.blue, shape: BoxShape.circle),
-                  alignment: Alignment.center,
-                  child: Text('$badge',
-                      style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white)),
-                ),
-              ],
-            ]),
-      ),
-    );
-  }
-}
-
-// ─── Copy icon button ─────────────────────────────────────────────────────────
-
-class _CopyIconBtn extends StatefulWidget {
-  final String text;
-  final _MC mc;
-  const _CopyIconBtn({required this.text, required this.mc});
-
-  @override
-  State<_CopyIconBtn> createState() => _CopyIconBtnState();
-}
-
-class _CopyIconBtnState extends State<_CopyIconBtn> {
-  bool _copied = false;
-
-  Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: widget.text));
-    setState(() => _copied = true);
-    Future.delayed(const Duration(milliseconds: 1300),
-        () { if (mounted) setState(() => _copied = false); });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _copy,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-            color: widget.mc.panel,
-            borderRadius: BorderRadius.circular(8)),
-        child: Icon(
-            _copied
-                ? Icons.check_rounded
-                : Icons.copy_outlined,
-            size: 16,
-            color:
-                _copied ? widget.mc.green : widget.mc.inkSoft),
-      ),
-    );
-  }
-}
-
-// ─── Reject Sheet ─────────────────────────────────────────────────────────────
-
-class _RejectSheet extends StatefulWidget {
-  final List<String> reasons;
-  final _MC mc;
-  const _RejectSheet({required this.reasons, required this.mc});
-
-  static Future<String?> show(
-      BuildContext ctx, List<String> reasons, _MC mc) {
-    return showModalBottomSheet<String>(
-      context: ctx,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _RejectSheet(reasons: reasons, mc: mc),
-    );
-  }
-
-  @override
-  State<_RejectSheet> createState() => _RejectSheetState();
-}
-
-class _RejectSheetState extends State<_RejectSheet> {
-  late String _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = widget.reasons.first;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mc = widget.mc;
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).padding.bottom +
-            16,
-      ),
-      decoration: BoxDecoration(
-        color: mc.card,
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const SizedBox(height: 10),
-        Center(
-            child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: mc.border,
-                    borderRadius: BorderRadius.circular(999)))),
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                  color: mc.redBg,
-                  borderRadius: BorderRadius.circular(9)),
-              child: Icon(Icons.warning_amber_rounded,
-                  size: 16, color: mc.red),
-            ),
-            const SizedBox(width: 10),
-            Text('Kataa malipo?',
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: mc.ink)),
-          ]),
-        ),
-        const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('Chagua sababu ya kukataa.',
-              style: TextStyle(fontSize: 12, color: mc.inkSoft)),
-        ),
-        const SizedBox(height: 14),
-        for (final r in widget.reasons)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-            child: GestureDetector(
-              onTap: () => setState(() => _selected = r),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: _selected == r ? mc.blueBg : mc.card,
-                  border: Border.all(
-                      color: _selected == r
-                          ? mc.blue
-                          : mc.border,
-                      width: _selected == r ? 1.3 : 0.8),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(children: [
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _selected == r
-                          ? mc.blue
-                          : Colors.transparent,
-                      border: Border.all(
-                          color: _selected == r
-                              ? mc.blue
-                              : mc.border,
-                          width: 1.2),
-                    ),
-                    child: _selected == r
-                        ? const Icon(Icons.check,
-                            size: 9, color: Colors.white)
-                        : null,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(r,
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: _selected == r
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                          color: mc.ink)),
-                ]),
-              ),
-            ),
-          ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-          child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(null),
-                  style: TextButton.styleFrom(
-                      foregroundColor: mc.inkSoft),
-                  child: const Text('Ghairi',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600)),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context).pop(_selected),
-                  style: FilledButton.styleFrom(
-                      backgroundColor: mc.red,
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(10))),
-                  icon: const Icon(Icons.close,
-                      size: 14, color: Colors.white),
-                  label: const Text('Kataa',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700)),
-                ),
-              ]),
-        ),
-      ]),
-    );
-  }
-}
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
-
-class _EmptyState extends StatelessWidget {
-  final _MC mc;
-  const _EmptyState({required this.mc});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.payments_outlined, size: 40, color: mc.inkFaint),
-        const SizedBox(height: 12),
-        Text('Hakuna malipo kwa sasa',
-            style: TextStyle(color: mc.inkSoft, fontSize: 14.5)),
-      ]),
-    );
-  }
-}
-
-// ─── Pagination ───────────────────────────────────────────────────────────────
+// ═══ KURASA (PAGINATION) ═══════════════════════════════════════════════════
 
 class _Pager extends StatelessWidget {
   final int page, total;
-  final _MC mc;
+  final _MC c;
   final ValueChanged<int> onTap;
-  const _Pager(
-      {required this.page,
-      required this.total,
-      required this.mc,
-      required this.onTap});
+  const _Pager({required this.page, required this.total, required this.c, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     if (total <= 1) return const SizedBox.shrink();
-    final start =
-        (page - 2).clamp(0, (total - 5).clamp(0, 1 << 30));
-    final end = (start + 5).clamp(0, total);
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton.outlined(
-              onPressed: page > 0 ? () => onTap(page - 1) : null,
-              icon: Icon(Icons.chevron_left, color: mc.inkSoft),
-            ),
-            for (var i = start; i < end; i++)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 3),
-                child: GestureDetector(
-                  onTap: () => onTap(i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    width: 38,
-                    height: 38,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: i == page ? mc.blue : mc.card,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color:
-                              i == page ? mc.blue : mc.border),
-                    ),
-                    child: Text('${i + 1}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: i == page
-                              ? Colors.white
-                              : mc.ink,
-                        )),
-                  ),
-                ),
-              ),
-            IconButton.outlined(
-              onPressed: page < total - 1
-                  ? () => onTap(page + 1)
-                  : null,
-              icon: Icon(Icons.chevron_right, color: mc.inkSoft),
-            ),
-          ]),
-    );
+    final shown = total < 5 ? total : 5;
+    final start = (page - 2).clamp(0, total - shown);
+
+    Widget circle({required Widget child, VoidCallback? onTap, bool on = false}) => Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child: Material(color: on ? c.blue : c.card, shape: CircleBorder(side: BorderSide(color: on ? c.blue : c.borderStrong)), child: InkWell(onTap: onTap, customBorder: const CircleBorder(), child: Opacity(opacity: onTap == null && !on ? .4 : 1, child: SizedBox(width: 34, height: 34, child: Center(child: child))))));
+
+    return Padding(padding: const EdgeInsets.only(top: 6), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      circle(child: Icon(TablerIcons.chevronLeft, size: 16, color: c.ink), onTap: page > 0 ? () => onTap(page - 1) : null),
+      for (var i = start; i < start + shown; i++)
+        circle(on: i == page, onTap: i == page ? null : () => onTap(i), child: Text('${i + 1}', style: TextStyle(color: i == page ? Colors.white : c.ink, fontSize: 13, fontWeight: i == page ? FontWeight.w600 : FontWeight.w400))),
+      circle(child: Icon(TablerIcons.chevronRight, size: 16, color: c.ink), onTap: page < total - 1 ? () => onTap(page + 1) : null),
+    ]));
   }
 }

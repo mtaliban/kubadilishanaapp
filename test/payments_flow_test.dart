@@ -424,7 +424,7 @@ void main() {
       expect(find.byTooltip('Kataa'), findsOneWidget);
     });
 
-    testWidgets('approve dialog inafunguka na kuthibitisha kunabadilisha status',
+    testWidgets('thibitisha inatumia POST mara moja (bila dialog) na status inabadilika',
         (tester) async {
       final p = backend.donate(
           userId: 'u1',
@@ -438,7 +438,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Bonyeza kitufe cha kuthibitisha ("Thibitisha" — ikoni ya kadi, Tooltip).
+      // Bonyeza kitufe cha kuthibitisha (Tooltip 'Thibitisha').
       // Kadi ni ndefu — vitufe viko chini; vilete kwenye screen kwanza.
       final approveBtn = find.byTooltip('Thibitisha').first;
       await tester.ensureVisible(approveBtn);
@@ -446,15 +446,11 @@ void main() {
       await tester.tap(approveBtn);
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
-
-      // Dialog ya uthibitisho imefunguka
-      expect(find.text('Thibitisha malipo haya?'), findsOneWidget);
-      // .last — dialog button (card button bado ipo nyuma)
-      await tester.tap(find.widgetWithText(FilledButton, 'Thibitisha').last);
-      await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // POST approve ilifika + status imebadilika
+      // POST approve ilifika MARA MOJA (hakuna dialog tena) + status imebadilika
+      expect(find.text('Thibitisha malipo haya?'), findsNothing,
+          reason: 'Design mpya: hakuna dialog ya uthibitisho');
       expect(routes.bodies['approve:$orderId'], isNotNull);
       expect(p['status'], 'approved');
 
@@ -483,11 +479,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Dialog ya kukataa (design mpya: radio tiles) — chagua sababu
-      expect(find.text('Kataa malipo?'), findsOneWidget);
+      // Sheet ya kukataa (bottom sheet) — chagua sababu (chip)
+      expect(find.text('Kataa malipo'), findsOneWidget);
       await tester.tap(find.text('Pesa haijaingia'));
       await tester.pump();
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Kataa'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Kataa'));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 

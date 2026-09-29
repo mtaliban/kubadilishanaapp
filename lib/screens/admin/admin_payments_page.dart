@@ -137,6 +137,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       await ApiService().adminApproveDonation(p.id);
       if (!mounted) return;
       AdminBadgeService().refresh();
+      _snack('Malipo yamethibitishwa ✓', const Color(0xFF16A34A));
       await _load();
     } catch (e) {
       if (!mounted) return;
@@ -149,21 +150,11 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       await ApiService().adminRejectDonation(p.id, note: reason);
       if (!mounted) return;
       AdminBadgeService().refresh();
+      _snack('Malipo yamekataliwa', const Color(0xFFF59E0B));
       await _load();
     } catch (e) {
       if (!mounted) return;
       _snack('Kosa: $e', const Color(0xFFDC2626));
-    }
-  }
-
-  Future<PaymentMessage?> _sendMessage(Payment p, String text) async {
-    try {
-      await ApiService().adminPaymentReply(p.id, text);
-      return null;
-    } catch (e) {
-      if (!mounted) return null;
-      _snack('Ujumbe haukutumwa — jaribu tena', const Color(0xFFDC2626));
-      rethrow;
     }
   }
 
@@ -239,7 +230,6 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
           payments: _payments,
           onApprove: _approve,
           onReject: _reject,
-          onSendMessage: _sendMessage,
         ),
       ),
     );

@@ -569,27 +569,26 @@ void main() {
   });
 
   group('4. MALIPO — Thibitisha + Kataa (UI halisi)', () {
-    testWidgets('Thibitisha: dialog → approve → POST + inaondoka verifying',
+    testWidgets('Thibitisha: POST mara moja (bila dialog) → approve + inaondoka verifying',
         (tester) async {
       bigScreen(tester);
       await tester.pumpWidget(harness(const AdminPaymentsPage()));
       await settle(tester);
       expect(find.textContaining('Juma Ali'), findsOneWidget);
 
-      // Kitufe cha kadi (cha kwanza, Tooltip 'Thibitisha') → dialog →
-      // 'Thibitisha' NDANI ya dialog (AlertDialog bado ina FilledButton)
-      await tester.tap(find.byTooltip('Thibitisha').first);
+      // Kitufe cha kadi (Tooltip 'Thibitisha') → POST inatumwa MARA MOJA
+      // (design mpya haina dialog ya uthibitisho). Kadi ni ndefu — ensureVisible.
+      final approveBtn = find.byTooltip('Thibitisha').first;
+      await tester.ensureVisible(approveBtn);
       await settle(tester);
-      await tester.tap(find.descendant(
-          of: find.byType(Dialog),
-          matching: find.widgetWithText(FilledButton, 'Thibitisha')));
+      await tester.tap(approveBtn);
       await settle(tester);
 
       final sent = routes.bodies['approve:ORD1'];
       expect(sent, isNotNull, reason: 'POST /payments/admin/ORD1/approve');
       expect(find.textContaining('yamethibitishwa'), findsOneWidget,
           reason: 'Snackbar ya mafanikio imeonekana');
-      // Page inaonyesha status zote (_status='all') — kadi ya Juma Ali ibaki,
+      // Page inaonyesha status zote — kadi ya Juma Ali ibaki,
       // LAKINI vitufe vya 'Thibitisha' vimepotea (status siyo verifying tena).
       expect(find.byTooltip('Thibitisha'), findsNothing,
           reason: 'Kitufe cha Thibitisha kimeondoka (malipo yameidhinishwa)');
@@ -603,20 +602,21 @@ void main() {
       await tester.pumpWidget(harness(const AdminPaymentsPage()));
       await settle(tester);
 
-      await tester.tap(find.byTooltip('Kataa'));
+      final rejectBtn = find.byTooltip('Kataa').first;
+      await tester.ensureVisible(rejectBtn);
       await settle(tester);
-      // Dialog mpya: radio tiles (design mpya) — chagua sababu kwa kubonyeza
-      // tile yenyewe (Container + InkWell), kisha kitufe chekundu 'Kataa'
-      await tester.tap(find.text('SMS si halisi'));
+      await tester.tap(rejectBtn);
       await settle(tester);
-      await tester.tap(find.descendant(
-          of: find.byType(Dialog),
-          matching: find.widgetWithText(ElevatedButton, 'Kataa')));
+      // Bottom sheet mpya: chips za sababu — chagua 'SMS si sahihi',
+      // kisha kitufe chekundu 'Kataa' (FilledButton ndani ya sheet).
+      await tester.tap(find.text('SMS si sahihi'));
+      await settle(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Kataa'));
       await settle(tester);
 
       final sent = routes.bodies['reject:ORD1'];
       expect(sent, isNotNull, reason: 'POST /payments/admin/ORD1/reject');
-      expect(sent!['note'], 'SMS si halisi',
+      expect(sent!['note'], 'SMS si sahihi',
           reason: 'Sababu iliyochaguliwa imetumwa kama note');
       expect(find.text('Malipo yamekataliwa'), findsOneWidget);
       expectNoError();
