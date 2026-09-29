@@ -59,7 +59,7 @@ class AdminBadgeService extends ChangeNotifier {
         bumpMatches();
       case 'announcement.new':
       case 'announcement':
-        break;
+        bumpAnnouncements();
     }
   }
 

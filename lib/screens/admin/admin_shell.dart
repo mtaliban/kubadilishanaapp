@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_shell.dart' show LanguageProvider;
+import '../../services/app_navigator.dart' show adminPageNotifier;
 import '../../widgets/admin_top_bar.dart';
 import '../../widgets/admin_drawer.dart';
 import 'admin_dashboard_page.dart';
@@ -124,6 +125,7 @@ class _AdminShellState extends State<AdminShell> {
     _loadCount();
     _badges.start();
     LanguageProvider().addListener(_onLangChange);
+    adminPageNotifier.addListener(_onFcmTap);
     // SECURITY (defense-in-depth): server inazuiya admin APIs kwa user wa
     // kawaida, lakini UI pia inalinda — user asiye admin aliyeanguka hapa
     // (deep link/navigesheni ya mkono) anarudishwa /login mara moja.
@@ -138,10 +140,18 @@ class _AdminShellState extends State<AdminShell> {
 
   void _onLangChange() => setState(() {});
 
+  void _onFcmTap() {
+    final page = adminPageNotifier.value;
+    if (page == null) return;
+    adminPageNotifier.value = null; // consume
+    _go(page);
+  }
+
   @override
   void dispose() {
     _badges.stop();
     LanguageProvider().removeListener(_onLangChange);
+    adminPageNotifier.removeListener(_onFcmTap);
     super.dispose();
   }
 
@@ -320,21 +330,25 @@ class _AdminShellState extends State<AdminShell> {
                         ),
                         if (badgeCount > 0)
                           Positioned(
-                            top: -5, right: -7,
+                            top: -7, right: -9,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFDC2626),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.white, width: 1.5),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: [
+                                  BoxShadow(color: Colors.black.withValues(alpha: 0.18),
+                                    blurRadius: 3, offset: const Offset(0, 1)),
+                                ],
                               ),
-                              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
                               child: Center(
                                 child: Text(
                                   badgeCount > 99 ? '99+' : '$badgeCount',
                                   style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
                                     color: Colors.white,
                                     height: 1.0,
                                   ),
@@ -381,10 +395,13 @@ class _AdminShellState extends State<AdminShell> {
 
   void _clearBadgeForPage(int index) {
     switch (index) {
+      // Watumiaji: badge inaisha ukiingia ukurasa (umeona)
       case 1: _badges.clearUsers();
+      // Mechi: badge inaisha ukiingia ukurasa
       case 2: _badges.clearMatches();
-      case 6: _badges.clearPayments();
-      case 8: _badges.clearFeedback();
+      // Malipo (case 6): badge HAIISHI kwenye view — inaisha baada ya action (approve/reject)
+      // Maoni (case 8): badge HAIISHI kwenye view — inaisha baada ya refresh (admin kujibu)
+      // Matangazo: badge inaisha ukiingia ukurasa
       case 9: _badges.clearAnnouncements();
     }
   }

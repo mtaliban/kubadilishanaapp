@@ -14,6 +14,10 @@ void setAdminStatus(bool isAdmin) => _currentUserIsAdmin = isAdmin;
 bool adminPageNotifierAdminStatus() => _currentUserIsAdmin;
 
 /// Admin: page index to open when notification is tapped.
+/// Indices hizi zinalingana na _pageFor(i) katika admin_shell.dart:
+///   0=Dashboard 1=Watumiaji 2=Wenzao 3=RealMatches 4=Data
+///   5=Matangazo  6=Malipo   7=Contacts 8=Maoni 9=Reports
+///   10=Monitoring 11=PasswordResets
 int _adminPageFromType(String type) {
   switch (type) {
     case 'payment.submitted':
@@ -21,16 +25,20 @@ int _adminPageFromType(String type) {
     case 'payment.rejected':
     case 'payment.message':
     case 'payment.reply':
-      return 3; // AdminPaymentsPage
+      return 6; // AdminPaymentsPage
     case 'feedback.new':
     case 'feedback.replied':
-      return 5; // AdminFeedbackPage
+      return 8; // AdminFeedbackPage
     case 'user.registered':
+      return 1; // AdminUsersV2Page
     case 'match.found':
     case 'user.profile_updated':
-      return 11; // AdminRealMatchesPage
+      return 2; // AdminMatchesPage
+    case 'announcement':
+    case 'announcement.new':
+      return 5; // AdminAnnouncementsPage
     case 'password_reset.new':
-      return 9; // AdminEventsPage
+      return 11; // AdminPasswordResetsPage
     default:
       return 0; // AdminDashboardPage
   }
