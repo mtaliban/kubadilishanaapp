@@ -35,31 +35,53 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build Release APK
+      # ── Build 1: Admin APK (user + admin screens) ─────────────────────────
+      - name: Build Admin APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        run: flutter build apk --release
+        run: flutter build apk --release -t lib/main.dart
 
-      - name: Prepare APK name
-        id: apk
+      - name: Rename Admin APK
+        id: admin_apk
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr '+' '-')
           DATE=$(date +'%Y%m%d-%H%M')
-          TAG="build-${DATE}"
-          APK_NAME="kubadilishana-v${VERSION}-${DATE}.apk"
+          ADMIN_NAME="kubadilishana-admin-v${VERSION}-${DATE}.apk"
           cp build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/${APK_NAME}
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
+             build/app/outputs/flutter-apk/${ADMIN_NAME}
+          echo "name=${ADMIN_NAME}" >> $GITHUB_OUTPUT
+          echo "date=${DATE}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Upload APK artifact
+      # ── Build 2: User APK (user screens tu — Play Store) ──────────────────
+      - name: Build User APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: flutter build apk --release -t lib/main_user.dart
+
+      - name: Rename User APK
+        id: user_apk
+        run: |
+          VERSION=${{ steps.admin_apk.outputs.version }}
+          DATE=${{ steps.admin_apk.outputs.date }}
+          USER_NAME="kubadilishana-user-v${VERSION}-${DATE}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/${USER_NAME}
+          echo "name=${USER_NAME}" >> $GITHUB_OUTPUT
+
+      # ── Upload artifacts ───────────────────────────────────────────────────
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kubadilishana-apk
-          path: build/app/outputs/flutter-apk/kubadilishana-*.apk
+          name: kubadilishana-apks
+          path: |
+            build/app/outputs/flutter-apk/kubadilishana-admin-*.apk
+            build/app/outputs/flutter-apk/kubadilishana-user-*.apk
           retention-days: 30
 
+      # ── GitHub Release ─────────────────────────────────────────────────────
       - name: Delete old latest release (if exists)
         run: |
           gh release delete latest --yes --repo ${{ github.repository }} 2>/dev/null || true
@@ -75,14 +97,19 @@ jobs:
           body: |
             ## 📱 Pakua APK hapa chini
 
-            Bonyeza faili `.apk` hapo chini → pakua → sakinisha kwenye simu.
+            | APK | Kwa Nani | Maelezo |
+            |-----|----------|---------|
+            | `kubadilishana-user-*.apk` | **Watumiaji** | Play Store build — user screens tu |
+            | `kubadilishana-admin-*.apk` | **Admins** | Admin build — user + admin screens |
 
             > Kama inakataa sakinishwa: Settings → Security → "Install unknown apps" → wezesha
 
             ---
-            🕐 Ilitengenezwa: ${{ steps.apk.outputs.tag }}
+            🕐 Ilitengenezwa: ${{ steps.admin_apk.outputs.date }}
             📦 Commit: `${{ github.sha }}`
-          files: build/app/outputs/flutter-apk/kubadilishana-*.apk
+          files: |
+            build/app/outputs/flutter-apk/kubadilishana-admin-*.apk
+            build/app/outputs/flutter-apk/kubadilishana-user-*.apk
           draft: false
           prerelease: false
           make_latest: true

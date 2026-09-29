@@ -1,4 +1,6 @@
-/// Kubadilishana — main entry point with all routes.
+/// Kubadilishana — USER entry point (Play Store / App Store).
+/// Admin screens, AdminShell, na AdminLoginScreen HAZIPO kwenye build hii —
+/// Dart tree-shaker itaziondoa kabisa kwenye APK/AAB.
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'app_config.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'services/api_service.dart';
@@ -22,22 +25,17 @@ import 'screens/notifications_screen.dart';
 import 'screens/announcements_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/forgot_number_screen.dart';
-import 'screens/admin_login_screen.dart';
 import 'screens/reset_password_screen.dart';
-import 'screens/admin/admin_shell.dart';
 import 'screens/my_matches_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/call_history_screen.dart';
 import 'screens/settings_screen.dart';
-import 'app_config.dart';
 import 'widgets/app_shell.dart' show LanguageProvider;
 
-// Global error log — displayed in _ErrorApp if crash happens
+// NOTE: admin screens HAZIJAIMPORTWA hapa — hazitaingia kwenye APK ya user.
+
 final List<String> _crashLog = [];
 
-// Version ya APK — inaonyeshwa kwenye screens za makosa ili screenshot
-// ionyeshe APK iliyotumika (husaidia kubaini kama mtumiaji bado anatumia
-// APK ya zamani isiyopata fixes).
 Future<PackageInfo?> _loadPackageInfo() async {
   try {
     return await PackageInfo.fromPlatform();
@@ -46,7 +44,6 @@ Future<PackageInfo?> _loadPackageInfo() async {
   }
 }
 
-/// Mstari "Toleo 1.0.9+9" — huru kwenye screens za makosa.
 class _VersionLine extends StatelessWidget {
   const _VersionLine({this.light = false});
   final bool light;
@@ -70,25 +67,22 @@ class _VersionLine extends StatelessWidget {
 }
 
 void main() {
-  AppConfig.isAdminBuild = true; // Admin APK — user + admin pages
+  AppConfig.isAdminBuild = false; // User APK — user pages tu, hakuna admin
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Catch widget build errors — show on screen instead of crashing
     FlutterError.onError = (details) {
       _crashLog.add('[Flutter] ${details.exceptionAsString()}');
       FlutterError.presentError(details);
     };
 
-    // Catch platform errors
     WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
       _crashLog.add('[Platform] $error');
-      return true; // handled — don't crash
+      return true;
     };
 
     try {
       await Firebase.initializeApp();
-      // Background handler — arifa zinapoingia app ikiwa IMEFUNGWA (kama WhatsApp).
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     } catch (e) {
       _crashLog.add('[Firebase] $e');
@@ -100,23 +94,22 @@ void main() {
       _crashLog.add('[ApiService] $e');
     }
 
-    runApp(const KubadilishanaApp());
+    runApp(const _UserApp());
   }, (error, stack) {
     _crashLog.add('[Zone] $error\n$stack');
-    // Try to show error app if runApp already ran
     try {
       runApp(_ErrorApp(error.toString()));
     } catch (_) {}
   });
 }
 
-class KubadilishanaApp extends StatefulWidget {
-  const KubadilishanaApp({super.key});
+class _UserApp extends StatefulWidget {
+  const _UserApp();
   @override
-  State<KubadilishanaApp> createState() => _KubadilishanaAppState();
+  State<_UserApp> createState() => _UserAppState();
 }
 
-class _KubadilishanaAppState extends State<KubadilishanaApp> {
+class _UserAppState extends State<_UserApp> {
   @override
   void initState() {
     super.initState();
@@ -133,9 +126,7 @@ class _KubadilishanaAppState extends State<KubadilishanaApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Override error widget to show message instead of red screen
     ErrorWidget.builder = (details) => _ErrorWidget(details.exceptionAsString());
-
     final locale = Locale(LanguageProvider().lang);
 
     return ChangeNotifierProvider(
@@ -162,25 +153,23 @@ class _KubadilishanaAppState extends State<KubadilishanaApp> {
           return null;
         },
         routes: {
-          '/': (_) => const SplashScreen(),
-          '/login': (_) => const LoginScreen(),
-          '/register': (_) => const RegisterScreen(),
-          '/dashboard': (_) => const DashboardScreen(),
-          '/profile': (_) => const ProfileScreen(),
-          '/donate': (_) => const DonateScreen(),
-          '/feedback': (_) => const FeedbackScreen(),
-          '/notifications': (_) => const NotificationsScreen(),
-          '/announcements': (_) => const AnnouncementsScreen(),
+          '/':                (_) => const SplashScreen(),
+          '/login':           (_) => const LoginScreen(),
+          '/register':        (_) => const RegisterScreen(),
+          '/dashboard':       (_) => const DashboardScreen(),
+          '/profile':         (_) => const ProfileScreen(),
+          '/donate':          (_) => const DonateScreen(),
+          '/feedback':        (_) => const FeedbackScreen(),
+          '/notifications':   (_) => const NotificationsScreen(),
+          '/announcements':   (_) => const AnnouncementsScreen(),
           '/forgot-password': (_) => const ForgotPasswordScreen(),
-          '/forgot-number': (_) => const SahauNambaScreen(),
-          '/reset-password': (_) => const ResetPasswordScreen(phone: ''),
-          '/admin-login': (_) => const AdminLoginScreen(),
-          '/admin': (_) => const AdminShell(),
-          '/my-matches': (_) => const MyMatchesScreen(),
-          '/call-history': (_) => const CallHistoryScreen(),
-          '/settings': (_) => const SettingsScreen(),
-          '/about': (_) => const _ComingSoon('Kuhusu Sisi'),
-          '/crash-log': (_) => const _CrashLogScreen(),
+          '/forgot-number':   (_) => const SahauNambaScreen(),
+          '/reset-password':  (_) => const ResetPasswordScreen(phone: ''),
+          '/my-matches':      (_) => const MyMatchesScreen(),
+          '/call-history':    (_) => const CallHistoryScreen(),
+          '/settings':        (_) => const SettingsScreen(),
+          '/about':           (_) => const _ComingSoon('Kuhusu Sisi'),
+          // /admin na /admin-login HAZIPO — admin APK pekee ina routes hizo
         },
       ),
     );
@@ -194,7 +183,6 @@ class _ErrorApp extends StatelessWidget {
   const _ErrorApp(this.message);
   @override
   Widget build(BuildContext context) {
-    // Kosa la mtandao (DNS/SocketException) — ujumbe wa kirafiki + Jaribu tena.
     if (_ErrorWidget._isNetworkError(message)) {
       return MaterialApp(
         home: Scaffold(
@@ -222,8 +210,6 @@ class _ErrorApp extends StatelessWidget {
         ),
       );
     }
-    // Kosa lingine — ujumbe wa kirafiki + Jaribu tena; maelezo ya kiufundi
-    // yamebaki chini (bado yanapatikana kwa screenshot kwa msanidi).
     return MaterialApp(
       home: Scaffold(
         backgroundColor: Colors.white,
@@ -233,8 +219,7 @@ class _ErrorApp extends StatelessWidget {
             child: Column(
               children: [
                 const Spacer(),
-                Icon(Icons.error_outline_rounded,
-                    size: 64, color: Colors.red.shade300),
+                Icon(Icons.error_outline_rounded, size: 64, color: Colors.red.shade300),
                 const SizedBox(height: 20),
                 const Text('Samahani, kosa lilitokea',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
@@ -252,7 +237,6 @@ class _ErrorApp extends StatelessWidget {
                 ),
                 const _VersionLine(),
                 const Spacer(),
-                // Maelezo ya kiufundi — piga picha na itume kwa msanidi.
                 Container(
                   width: double.infinity,
                   constraints: const BoxConstraints(maxHeight: 170),
@@ -262,11 +246,9 @@ class _ErrorApp extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: SingleChildScrollView(
-                    child: SelectableText(
-                      message,
-                      style: const TextStyle(
-                          fontSize: 10, fontFamily: 'monospace', color: Colors.red),
-                    ),
+                    child: SelectableText(message,
+                        style: const TextStyle(
+                            fontSize: 10, fontFamily: 'monospace', color: Colors.red)),
                   ),
                 ),
               ],
@@ -282,8 +264,6 @@ class _ErrorWidget extends StatelessWidget {
   final String message;
   const _ErrorWidget(this.message);
 
-  /// Kama kosa ni la mtandao (SocketException/DNS/timeout) tushirikishe
-  /// mtumiaji kwa lugha rahisi badala ya exception ghafi.
   static bool _isNetworkError(String m) {
     return m.contains('SocketException') ||
         m.contains('Failed host lookup') ||
@@ -301,7 +281,6 @@ class _ErrorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNet = _isNetworkError(message);
     if (isNet) {
-      // Kosa la mtandao — ujumbe wa kirafiki, si screen nyekundu ya exception
       return Container(
         color: Colors.white,
         padding: const EdgeInsets.all(24),
@@ -309,8 +288,7 @@ class _ErrorWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.wifi_off_rounded,
-                size: 56, color: Colors.grey.shade500),
+            Icon(Icons.wifi_off_rounded, size: 56, color: Colors.grey.shade500),
             const SizedBox(height: 16),
             const Text('Hakuna mtandao',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
@@ -324,29 +302,6 @@ class _ErrorWidget extends StatelessWidget {
       child: SingleChildScrollView(
         child: SelectableText('KOSA: $message',
             style: const TextStyle(fontSize: 10, color: Colors.red)),
-      ),
-    );
-  }
-}
-
-class _CrashLogScreen extends StatelessWidget {
-  const _CrashLogScreen();
-  @override
-  Widget build(BuildContext context) {
-    final logs = _crashLog.isEmpty ? ['Hakuna makosa yaliyorekodiwa'] : _crashLog;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Kumbukumbu ya Makosa'), backgroundColor: Colors.red),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: logs.length,
-        itemBuilder: (_, i) => Card(
-          color: Colors.red.shade50,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: SelectableText(logs[i],
-                style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
-          ),
-        ),
       ),
     );
   }

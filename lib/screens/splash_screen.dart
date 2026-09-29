@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../app_config.dart';
 import '../providers/auth_provider.dart';
 import '../config/theme.dart';
 
@@ -29,7 +30,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final isLoggedIn = await auth.restoreSession();
     if (!mounted) return;
     if (isLoggedIn) {
-      if (auth.isAdmin) {
+      // User APK (isAdminBuild=false) haipeleki /admin hata kama user ni admin
+      if (AppConfig.isAdminBuild && auth.isAdmin) {
         Navigator.pushReplacementNamed(context, '/admin');
       } else {
         Navigator.pushReplacementNamed(context, '/dashboard');
