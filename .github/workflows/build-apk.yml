@@ -1,4 +1,4 @@
-name: Build Release APK
+name: Build Release APK + AAB
 
 on:
   push:
@@ -35,56 +35,77 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      # ── Build 1: Admin APK — split per ABI (arm64 + arm32) ───────────────
-      - name: Build Admin APKs
+      # ── Metadata ─────────────────────────────────────────────────────────
+      - name: Get version & date
+        id: meta
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr '+' '-')
+          DATE=$(date +'%Y%m%d-%H%M')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "date=${DATE}" >> $GITHUB_OUTPUT
+
+      # ══════════════════════════════════════════════════════════════════════
+      # ADMIN builds (main.dart — user + admin pages)
+      # ══════════════════════════════════════════════════════════════════════
+
+      - name: Build Admin APKs (split-per-abi)
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: flutter build apk --release --split-per-abi -t lib/main.dart
 
       - name: Rename Admin APKs
-        id: admin_apk
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr '+' '-')
-          DATE=$(date +'%Y%m%d-%H%M')
-          # arm64-v8a — simu za kisasa (90%+ ya simu za sasa)
+          V=${{ steps.meta.outputs.version }}
+          D=${{ steps.meta.outputs.date }}
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
-             build/app/outputs/flutter-apk/kubadilishana-admin-arm64-v${VERSION}-${DATE}.apk
-          # armeabi-v7a — simu za zamani (32-bit)
+             build/app/outputs/flutter-apk/kubadilishana-admin-arm64-v${V}-${D}.apk
           cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
-             build/app/outputs/flutter-apk/kubadilishana-admin-arm32-v${VERSION}-${DATE}.apk
-          echo "date=${DATE}" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "admin64=kubadilishana-admin-arm64-v${VERSION}-${DATE}.apk" >> $GITHUB_OUTPUT
-          echo "admin32=kubadilishana-admin-arm32-v${VERSION}-${DATE}.apk" >> $GITHUB_OUTPUT
+             build/app/outputs/flutter-apk/kubadilishana-admin-arm32-v${V}-${D}.apk
 
-      # ── Build 2: User APK — split per ABI ────────────────────────────────
-      - name: Build User APKs
+      # ══════════════════════════════════════════════════════════════════════
+      # USER builds (main_user.dart — user pages tu)
+      # ══════════════════════════════════════════════════════════════════════
+
+      - name: Build User APKs (split-per-abi)
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: flutter build apk --release --split-per-abi -t lib/main_user.dart
 
       - name: Rename User APKs
-        id: user_apk
         run: |
-          VERSION=${{ steps.admin_apk.outputs.version }}
-          DATE=${{ steps.admin_apk.outputs.date }}
+          V=${{ steps.meta.outputs.version }}
+          D=${{ steps.meta.outputs.date }}
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
-             build/app/outputs/flutter-apk/kubadilishana-user-arm64-v${VERSION}-${DATE}.apk
+             build/app/outputs/flutter-apk/kubadilishana-user-arm64-v${V}-${D}.apk
           cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
-             build/app/outputs/flutter-apk/kubadilishana-user-arm32-v${VERSION}-${DATE}.apk
-          echo "user64=kubadilishana-user-arm64-v${VERSION}-${DATE}.apk" >> $GITHUB_OUTPUT
-          echo "user32=kubadilishana-user-arm32-v${VERSION}-${DATE}.apk" >> $GITHUB_OUTPUT
+             build/app/outputs/flutter-apk/kubadilishana-user-arm32-v${V}-${D}.apk
+
+      # ── Build User AAB (Play Store) ───────────────────────────────────────
+      # AAB = Android App Bundle. Play Store inaigawanya yenyewe kwa kila simu.
+      # Mtumiaji wa Play Store anapakua ~15 MB tu (si 20 MB).
+      - name: Build User AAB (Play Store)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: flutter build appbundle --release -t lib/main_user.dart
+
+      - name: Rename User AAB
+        run: |
+          V=${{ steps.meta.outputs.version }}
+          D=${{ steps.meta.outputs.date }}
+          cp build/app/outputs/bundle/release/app-release.aab \
+             build/app/outputs/bundle/release/kubadilishana-user-playstore-v${V}-${D}.aab
 
       # ── Upload artifacts ──────────────────────────────────────────────────
-      - name: Upload APK artifacts
+      - name: Upload all artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kubadilishana-apks
+          name: kubadilishana-builds
           path: |
-            build/app/outputs/flutter-apk/kubadilishana-admin-*.apk
-            build/app/outputs/flutter-apk/kubadilishana-user-*.apk
+            build/app/outputs/flutter-apk/kubadilishana-*.apk
+            build/app/outputs/bundle/release/kubadilishana-*.aab
           retention-days: 30
 
       # ── GitHub Release ────────────────────────────────────────────────────
@@ -101,32 +122,37 @@ jobs:
           tag_name: latest
           name: "Kubadilishana App — Toleo Jipya"
           body: |
-            ## 📱 Pakua APK hapa chini
+            ## 📱 Pakua hapa chini
 
-            ### Kwa Watumiaji (User APK)
-            | APK | Simu | Maelezo |
-            |-----|------|---------|
-            | `kubadilishana-user-arm64-*` | Simu za kisasa (2018+) | **Chaguo la kwanza** — karibu simu zote za Android za sasa |
-            | `kubadilishana-user-arm32-*` | Simu za zamani (32-bit) | Kama arm64 haifanyi kazi |
+            ### Kwa Watumiaji — APK ya moja kwa moja
+            | Faili | Ukubwa | Simu |
+            |-------|--------|------|
+            | `kubadilishana-user-arm64-*` | ~20 MB | **Simu za kisasa** (Samsung/Tecno/Itel 2018+) — **chaguo la kwanza** |
+            | `kubadilishana-user-arm32-*` | ~18 MB | Simu za zamani (32-bit) — kama arm64 haifanyi kazi |
 
-            ### Kwa Admins (Admin APK)
-            | APK | Simu | Maelezo |
-            |-----|------|---------|
-            | `kubadilishana-admin-arm64-*` | Simu za kisasa (2018+) | **Chaguo la kwanza** |
-            | `kubadilishana-admin-arm32-*` | Simu za zamani (32-bit) | Kama arm64 haifanyi kazi |
+            ### Kwa Watumiaji — Play Store (AAB)
+            | Faili | Maelezo |
+            |-------|---------|
+            | `kubadilishana-user-playstore-*` | Upload kwenye Google Play Console — Play Store itaweka ~15 MB kwa kila mtumiaji automatically |
 
-            > **Kama inakataa sakinishwa:** Settings → Security → "Install unknown apps" → wezesha
-            >
-            > **Sijui APK ipi?** Chagua arm64 kwanza. Kama haitaki, jaribu arm32.
+            ### Kwa Admins
+            | Faili | Simu |
+            |-------|------|
+            | `kubadilishana-admin-arm64-*` | Simu za kisasa (2018+) |
+            | `kubadilishana-admin-arm32-*` | Simu za zamani |
+
+            > **Sijui APK ipi?** Chagua **arm64** kwanza. Kama haitaki, jaribu arm32.
+            > **Inakataa install?** Settings → Security → "Install unknown apps" → wezesha
 
             ---
-            🕐 Ilitengenezwa: ${{ steps.admin_apk.outputs.date }}
+            🕐 Ilitengenezwa: ${{ steps.meta.outputs.date }}
             📦 Commit: `${{ github.sha }}`
           files: |
             build/app/outputs/flutter-apk/kubadilishana-admin-arm64-*.apk
             build/app/outputs/flutter-apk/kubadilishana-admin-arm32-*.apk
             build/app/outputs/flutter-apk/kubadilishana-user-arm64-*.apk
             build/app/outputs/flutter-apk/kubadilishana-user-arm32-*.apk
+            build/app/outputs/bundle/release/kubadilishana-user-playstore-*.aab
           draft: false
           prerelease: false
           make_latest: true
