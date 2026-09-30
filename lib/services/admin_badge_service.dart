@@ -1,10 +1,9 @@
-/// Admin badge service — counts za kazi zinazosubiri admin (kama WhatsApp):
-///   • Malipo: payments zilizo "verifying" (zinasubiri uidhinishaji)
-///   • Maoni:  feedback zisizojibiwa (hakuna reply)
-///   • Matangazo: hakuna count ya API — tangazo jipya linapoad mina bump ya WS
+/// Admin badge service — namba za icons kwenye drawer na bottom nav.
 ///
-/// Inapoll count APIs kila sekunde 45 + inasikiliza WS events za papo hapo.
-/// Namba inaonekana kwenye bottom nav ya admin kwenye kila menyu husika.
+/// Inapoll /admin/badges kila sekunde 45 + WS events kwa haraka ya papo hapo.
+/// Ukurasa wa "angalia tu" (Watumiaji/Wenzao/Simu): badge inaisha ukifungua
+/// ukurasa (server inakumbuka muda huo, namba zinahesabiwa upya tena).
+/// Ukurasa wa "hatua" (Malipo/Maoni): badge inaisha tu baada ya kuchukua hatua.
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
@@ -15,11 +14,12 @@ class AdminBadgeService extends ChangeNotifier {
   factory AdminBadgeService() => _i;
   AdminBadgeService._();
 
-  int payments = 0;      // zinasubiri uidhinishaji (verifying)
-  int feedback = 0;      // zisizojibiwa
-  int announcements = 0; // matangazo mapya (bump ya WS tu)
-  int users = 0;         // watumiaji wapya waliojisajili
-  int matches = 0;       // mechi mpya zilizopatikana
+  int payments     = 0; // malipo yanasubiri uidhinishaji
+  int feedback     = 0; // maoni yasiyojibiwa
+  int users        = 0; // watumiaji wapya tangu admin aliona
+  int matches      = 0; // mechi mpya tangu admin aliona
+  int contacts     = 0; // simu/mawasiliano mapya tangu admin aliona
+  int announcements = 0; // matangazo (WS bump tu — hayana API count)
 
   Timer? _pollTimer;
   bool _wsBound = false;
@@ -43,61 +43,64 @@ class AdminBadgeService extends ChangeNotifier {
   }
 
   void _onWs(Map<String, dynamic> event) {
-    // Type halisi — envelope ya backend: {"event":"notification",
-    // "type":"feedback.new"} (bila hii badge ya Maoni haiongezeki).
     final type = resolveNotificationEventType(event);
     switch (type) {
       case 'payment.submitted':
       case 'payment.message':
-        bumpPayments();
+        // Refresh kutoka server — tunahakikisha count sahihi
+        refresh();
       case 'feedback.new':
-        bumpFeedback();
+        refresh();
       case 'user.registered':
         bumpUsers();
       case 'match.found':
       case 'match.new':
         bumpMatches();
+      case 'contact.activity':
+        bumpContacts();
       case 'announcement.new':
       case 'announcement':
         bumpAnnouncements();
     }
   }
 
-  void bumpPayments() {
-    payments++;
-    notifyListeners();
-  }
+  // ── Bump (haraka ya papo hapo kabla ya refresh) ──────────────────────────
 
-  void bumpFeedback() {
-    feedback++;
-    notifyListeners();
-  }
+  void bumpUsers()         { users++;         notifyListeners(); }
+  void bumpMatches()       { matches++;        notifyListeners(); }
+  void bumpContacts()      { contacts++;       notifyListeners(); }
+  void bumpAnnouncements() { announcements++;  notifyListeners(); }
+  void bumpPayments()      { payments++;       notifyListeners(); }
+  void bumpFeedback()      { feedback++;       notifyListeners(); }
 
-  void bumpAnnouncements() {
-    announcements++;
-    notifyListeners();
-  }
-
-  void bumpUsers() {
-    users++;
-    notifyListeners();
-  }
-
-  void bumpMatches() {
-    matches++;
-    notifyListeners();
-  }
+  // ── Clear (admin amefungua ukurasa) ──────────────────────────────────────
 
   void clearUsers() {
     if (users == 0) return;
     users = 0;
     notifyListeners();
+    _markSeen('users');
   }
 
   void clearMatches() {
     if (matches == 0) return;
     matches = 0;
     notifyListeners();
+    _markSeen('matches');
+  }
+
+  void clearContacts() {
+    if (contacts == 0) return;
+    contacts = 0;
+    notifyListeners();
+    _markSeen('contacts');
+  }
+
+  void clearAnnouncements() {
+    if (announcements == 0) return;
+    announcements = 0;
+    notifyListeners();
+    _markSeen('matangazo');
   }
 
   void clearPayments() {
@@ -112,56 +115,41 @@ class AdminBadgeService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clearAnnouncements() {
-    if (announcements == 0) return;
-    announcements = 0;
+  // ── Reset (logout) ────────────────────────────────────────────────────────
+
+  void reset() {
+    stop();
+    payments = feedback = users = matches = contacts = announcements = 0;
     notifyListeners();
   }
 
-  /// Weka counts ZOTE sifuri + simamisha polling — logout/session mpya:
-  /// badges za mtumiaji wa zamani zisiwekee kwenye session mpya.
-  void reset() {
-    stop();
-    payments = 0;
-    feedback = 0;
-    announcements = 0;
-    users = 0;
-    matches = 0;
-    notifyListeners();
-  }
+  // ── Refresh kutoka server ─────────────────────────────────────────────────
 
   Future<void> refresh() async {
     try {
-      final results = await Future.wait([
-        ApiService().adminAllDonations(status: 'verifying'),
-        ApiService().adminListFeedback(status: '', q: ''),
-      ]);
+      final res = await ApiService().adminBadges();
+      final d   = res.data as Map<String, dynamic>? ?? {};
+      final int p  = (d['payments']  as num? ?? 0).toInt();
+      final int f  = (d['feedback']  as num? ?? 0).toInt();
+      final int u  = (d['users']     as num? ?? 0).toInt();
+      final int m  = (d['matches']   as num? ?? 0).toInt();
+      final int c  = (d['contacts']  as num? ?? 0).toInt();
 
-      // Malipo zinasubiri
-      final pay = results[0].data;
-      final payList = pay is List
-          ? pay
-          : (pay['payments'] ?? pay['results'] ?? []) as List;
-      final newPayments = payList.length;
-
-      // Maoni yasiyojibiwa
-      final fb = results[1].data;
-      final fbList = fb is List
-          ? fb
-          : (fb['feedback'] ?? fb['items'] ?? fb['results'] ?? []) as List;
-      var newFeedback = 0;
-      for (final m in fbList) {
-        if (m is! Map) continue;
-        final reply =
-            m['reply'] ?? m['admin_reply'] ?? m['response'] ?? '';
-        if (reply.toString().trim().isEmpty) newFeedback++;
-      }
-
-      if (newPayments != payments || newFeedback != feedback) {
-        payments = newPayments;
-        feedback = newFeedback;
+      if (p != payments || f != feedback || u != users ||
+          m != matches  || c != contacts) {
+        payments = p;
+        feedback = f;
+        users    = u;
+        matches  = m;
+        contacts = c;
         notifyListeners();
       }
     } catch (_) {}
+  }
+
+  // ── Private helpers ───────────────────────────────────────────────────────
+
+  void _markSeen(String page) {
+    ApiService().adminMarkPageSeen(page).catchError((_) {});
   }
 }

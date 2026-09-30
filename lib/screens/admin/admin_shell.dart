@@ -242,6 +242,7 @@ class _AdminShellState extends State<AdminShell> {
           badges: {
             'watumiaji': _badges.users,
             'wenzao':    _badges.matches,
+            'simu':      _badges.contacts,
             'maoni':     _badges.feedback,
             'malipo':    _badges.payments,
             'matangazo': _badges.announcements,
@@ -381,9 +382,10 @@ class _AdminShellState extends State<AdminShell> {
   int _badgeForIndex(int index) {
     switch (index) {
       case 1: return _badges.users;         // Watumiaji wapya
-      case 2: return _badges.matches;       // Mechi mpya
-      case 6: return _badges.payments;      // Malipo
-      case 8: return _badges.feedback;      // Maoni
+      case 2: return _badges.matches;       // Waliopata wenzao wapya
+      case 6: return _badges.payments;      // Malipo yanasubiri
+      case 7: return _badges.contacts;      // Waliopigiana wapya
+      case 8: return _badges.feedback;      // Maoni yasiyojibiwa
       case 9: return _badges.announcements; // Matangazo
       default: return 0;
     }
@@ -391,14 +393,12 @@ class _AdminShellState extends State<AdminShell> {
 
   void _clearBadgeForPage(int index) {
     switch (index) {
-      // Watumiaji: badge inaisha ukiingia ukurasa (umeona)
-      case 1: _badges.clearUsers();
-      // Mechi: badge inaisha ukiingia ukurasa
-      case 2: _badges.clearMatches();
-      // Malipo (case 6): badge HAIISHI kwenye view — inaisha baada ya action (approve/reject)
-      // Maoni (case 8): badge HAIISHI kwenye view — inaisha baada ya refresh (admin kujibu)
-      // Matangazo: badge inaisha ukiingia ukurasa
-      case 9: _badges.clearAnnouncements();
+      case 1: _badges.clearUsers();         // Watumiaji — angalia tu
+      case 2: _badges.clearMatches();       // Wenzao — angalia tu
+      case 7: _badges.clearContacts();      // Waliopigiana — angalia tu
+      case 9: _badges.clearAnnouncements(); // Matangazo — angalia tu
+      // Malipo (6): HAIISHI ukiangalia — inaisha baada ya approve/reject
+      // Maoni (8): HAIISHI ukiangalia — inaisha baada ya kujibu
     }
   }
 }

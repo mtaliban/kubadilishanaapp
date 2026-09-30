@@ -351,6 +351,10 @@ class ApiService {
     AppCache().invalidatePrefix('/admin/users');
     return post('/admin/users/$userId/revoke-admin');
   }
+  Future<Response> adminBadges() =>
+      get('/admin/badges', useCache: false);
+  Future<Response> adminMarkPageSeen(String page) =>
+      post('/admin/pages/seen', data: {'page': page});
   Future<Response> adminAllDonations({String? status}) =>
       get('/payments/admin/all',
           queryParameters: status != null ? {'status': status} : null,

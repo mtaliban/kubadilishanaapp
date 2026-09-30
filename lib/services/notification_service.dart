@@ -377,27 +377,8 @@ class NotificationService {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   static List<AndroidNotificationAction> _actionsFor(String type) {
-    return switch (type) {
-      'feedback.new' || 'feedback.replied' || 'admin.reply' => const [
-        AndroidNotificationAction('reply', 'Jibu',
-            inputs: [AndroidNotificationActionInput(label: 'Andika jibu…')]),
-        AndroidNotificationAction('mark_read', 'Nimesoma'),
-      ],
-      'payment.submitted' => const [
-        AndroidNotificationAction('open', 'Thibitisha', showsUserInterface: true),
-        AndroidNotificationAction('open_reject', 'Fungua', showsUserInterface: true),
-      ],
-      'payment.approved' || 'payment.rejected' => const [
-        AndroidNotificationAction('open', 'Tazama', showsUserInterface: true),
-      ],
-      'announcement' || 'announcement.new' => const [
-        AndroidNotificationAction('open', 'Soma tangazo', showsUserInterface: true),
-      ],
-      'match.found' || 'match.new' => const [
-        AndroidNotificationAction('open', 'Tazama mechi', showsUserInterface: true),
-      ],
-      _ => const [],
-    };
+    // Hakuna vitufe — gusa notification uingie app, fanya ndani.
+    return const [];
   }
 
   static String _categoryLabel(String type) {
