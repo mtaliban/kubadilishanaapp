@@ -78,29 +78,29 @@ List<_NavItem> _allNavItems() => [
 // Bottom nav shows 5 key items (subset of drawer)
 const _bottomNavIndices = [9, 1, 2, 6, 8];
 
-// Mapping kati ya string key (AdminDrawer) na int index (pages)
-const _keyToIndex = {
-  'takwimu': 9,
-  'watumiaji': 1,
-  'wenzao': 2,
-  'match': 3,
-  'matangazo': 5,
-  'simu': 7,
-  'maoni': 8,
-  'malipo': 6,
-  'data': 4,
+// Mapping kati ya AdminPage enum (AdminDrawer) na int index (pages)
+const _pageToIndex = {
+  AdminPage.takwimu:      9,
+  AdminPage.watumiaji:    1,
+  AdminPage.wenzao:       2,
+  AdminPage.match:        3,
+  AdminPage.matangazo:    5,
+  AdminPage.waliopigiana: 7,
+  AdminPage.maoni:        8,
+  AdminPage.malipo:       6,
+  AdminPage.data:         4,
 };
 
-const _indexToKey = {
-  9: 'takwimu',
-  1: 'watumiaji',
-  2: 'wenzao',
-  3: 'match',
-  5: 'matangazo',
-  7: 'simu',
-  8: 'maoni',
-  6: 'malipo',
-  4: 'data',
+const _indexToPage = {
+  9: AdminPage.takwimu,
+  1: AdminPage.watumiaji,
+  2: AdminPage.wenzao,
+  3: AdminPage.match,
+  5: AdminPage.matangazo,
+  7: AdminPage.waliopigiana,
+  8: AdminPage.maoni,
+  6: AdminPage.malipo,
+  4: AdminPage.data,
 };
 
 // ─── AdminShell ───────────────────────────────────────────────────────────────
@@ -240,19 +240,18 @@ class _AdminShellState extends State<AdminShell> {
       drawer: ListenableBuilder(
         listenable: _badges,
         builder: (context, _) => AdminDrawer(
-          activeKey: _indexToKey[_idx] ?? 'takwimu',
-          badges: {
-            'watumiaji': _badges.users,
-            'wenzao':    _badges.matches,
-            'match':     _badges.matches,
-            'simu':      _badges.contacts,
-            'maoni':     _badges.feedback,
-            'malipo':    _badges.payments,
-            'matangazo': _badges.announcements,
+          selected: _indexToPage[_idx] ?? AdminPage.takwimu,
+          counts: {
+            AdminPage.watumiaji:    _badges.users,
+            AdminPage.wenzao:       _badges.matches,
+            AdminPage.match:        _badges.matches,
+            AdminPage.waliopigiana: _badges.contacts,
+            AdminPage.maoni:        _badges.feedback,
+            AdminPage.malipo:       _badges.payments,
+            AdminPage.matangazo:    _badges.announcements,
           },
           adminName: name,
-          initials: initial,
-          onSelect: (key) => _go(_keyToIndex[key] ?? 9),
+          onSelect: (page) => _go(_pageToIndex[page] ?? 9),
           onProfile: _openProfile,
           onLogout: _logout,
         ),

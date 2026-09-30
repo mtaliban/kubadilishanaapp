@@ -1,509 +1,362 @@
+// =====================================================================
+//  MENYU YA PEMBENI YA ADMIN (Drawer) — Kubadilishana
+//  Icon iliyochaguliwa inakuwa BLUU tu — hakuna mandhari/mstari nyuma.
+//  Kichwa kinakaa JUU kila wakati; orodha inapita chini yake.
+// =====================================================================
+
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
-/* ============================================================
-   VIPENGELE VYA MENYU
-   key -> tumia kwenye onSelect kujua ukurasa gani ufunguliwe
-   ============================================================ */
-enum _Tone { blue, green, red, amber, neutral }
-
-class _MenuItem {
-  final String key;
-  final String label;
-  final IconData icon;
-  final _Tone tone;
-  const _MenuItem(this.key, this.label, this.icon, this.tone);
+// ---- Rangi -------------------------------------------------------
+class _D {
+  static const blue       = Color(0xFF2878D6);
+  static const text       = Color(0xFF111111);
+  static const item       = Color(0xFF3D4150);
+  static const icon       = Color(0xFF5A6072);
+  static const section    = Color(0xFF8A8A8A);
+  static const line       = Color(0xFFEFEFEF);
+  static const border     = Color(0xFFE6E6E6);
+  static const danger     = Color(0xFFB91C1C);
+  static const badge      = Color(0xFFDC2626);
 }
 
-class _MenuSection {
-  final String title;
-  final List<_MenuItem> items;
-  const _MenuSection(this.title, this.items);
+const String kDrawerLogoAsset = 'assets/images/app_icon.png';
+const double kDrawerLogoSize  = 48;
+
+// ---- Enum ya kurasa -----------------------------------------------
+enum AdminPage {
+  takwimu,
+  watumiaji,
+  wenzao,
+  match,
+  matangazo,
+  waliopigiana,
+  maoni,
+  malipo,
+  data,
 }
 
-final _sections = [
-  _MenuSection('KUU', [
-    _MenuItem('takwimu', 'Takwimu', PhosphorIcons.chartBar(), _Tone.blue),
-    _MenuItem('watumiaji', 'Watumiaji', PhosphorIcons.usersThree(), _Tone.blue),
-    _MenuItem('wenzao', 'Waliopata wenzao', PhosphorIcons.arrowsLeftRight(), _Tone.green),
-    _MenuItem('match', 'Match za kweli', PhosphorIcons.handshake(), _Tone.red),
+// ---- Muundo wa orodha --------------------------------------------
+class _Item {
+  final AdminPage page;
+  final IconData  icon;
+  final String    label;
+  const _Item(this.page, this.icon, this.label);
+}
+
+class _Section {
+  final String       title;
+  final List<_Item>  items;
+  const _Section(this.title, this.items);
+}
+
+const _sections = <_Section>[
+  _Section('KUU', [
+    _Item(AdminPage.takwimu,     TablerIcons.layoutDashboard, 'Takwimu'),
+    _Item(AdminPage.watumiaji,   TablerIcons.usersGroup,      'Watumiaji'),
+    _Item(AdminPage.wenzao,      TablerIcons.replace,         'Waliopata wenzao'),
+    _Item(AdminPage.match,       TablerIcons.circleCheck,     'Match za kweli'),
   ]),
-  _MenuSection('MAWASILIANO', [
-    _MenuItem('matangazo', 'Matangazo', PhosphorIcons.megaphone(), _Tone.amber),
-    _MenuItem('simu', 'Waliopigiana', PhosphorIcons.phoneCall(), _Tone.green),
-    _MenuItem('maoni', 'Maoni na malalamiko', PhosphorIcons.chatCenteredText(), _Tone.amber),
+  _Section('MAWASILIANO', [
+    _Item(AdminPage.matangazo,   TablerIcons.speakerphone,    'Matangazo'),
+    _Item(AdminPage.waliopigiana,TablerIcons.phoneCall,       'Waliopigiana'),
+    _Item(AdminPage.maoni,       TablerIcons.message2,        'Maoni na malalamiko'),
   ]),
-  _MenuSection('FEDHA NA DATA', [
-    _MenuItem('malipo', 'Malipo', PhosphorIcons.wallet(), _Tone.green),
-    _MenuItem('data', 'Data', PhosphorIcons.database(), _Tone.neutral),
+  _Section('FEDHA NA DATA', [
+    _Item(AdminPage.malipo,      TablerIcons.wallet,          'Malipo'),
+    _Item(AdminPage.data,        TablerIcons.database,        'Data'),
   ]),
 ];
 
-/* ============================================================
-   MENYU YA PEMBENI
-   Tumia kama:  Scaffold(drawer: AdminDrawer(...), ...)
-   ============================================================ */
+// =====================================================================
+// AdminDrawer — widget kuu
+// =====================================================================
 class AdminDrawer extends StatelessWidget {
-  /// Ukurasa ulio wazi sasa, mf. 'wenzao'
-  final String activeKey;
-
-  /// Ramani ya menu key -> idadi ya vipande vipya (badge nyekundu).
-  /// Mfano: {'watumiaji': 5, 'maoni': 2}
-  final Map<String, int> badges;
-
+  final AdminPage selected;
+  final void Function(AdminPage page) onSelect;
+  final VoidCallback onProfile;
+  final VoidCallback onLogout;
   final String adminName;
-  final String initials;
-
-  final ValueChanged<String> onSelect;
-  final VoidCallback? onProfile;
-  final VoidCallback? onLogout;
+  final Map<AdminPage, int> counts;
 
   const AdminDrawer({
     super.key,
-    required this.activeKey,
-    required this.adminName,
-    required this.initials,
+    required this.selected,
     required this.onSelect,
-    this.badges = const {},
-    this.onProfile,
-    this.onLogout,
+    required this.onProfile,
+    required this.onLogout,
+    required this.adminName,
+    this.counts = const {},
   });
-
-  static String? _badgeSubtitle(String key, int n) {
-    if (n == 0) return null;
-    return switch (key) {
-      'watumiaji' => '$n wamejisajili wapya',
-      'wenzao'    => '$n wapya',
-      'match'     => '$n mechi mpya',
-      'simu'      => '$n mawasiliano mapya',
-      'maoni'     => '$n yanasubiri jibu',
-      'malipo'    => '$n yanasubiri uamuzi',
-      'matangazo' => '$n matangazo mapya',
-      _           => null,
-    };
-  }
-
-  Widget _buildItemRow(_MenuItem it, _DrawerColors c, BuildContext context) {
-    final count = badges[it.key] ?? 0;
-    final isTypeB = it.key == 'maoni' || it.key == 'malipo';
-    final subtitle = _badgeSubtitle(it.key, count);
-
-    return _Row(
-      c: c,
-      leading: _BadgedIcon(
-        count: count,
-        child: _IconTile(icon: it.icon, tone: it.tone, c: c),
-      ),
-      label: it.label,
-      active: it.key == activeKey,
-      subtitle: subtitle,
-      subtitleColor: isTypeB && count > 0 ? const Color(0xFFDC2626) : null,
-      subtitleLeadingIcon: isTypeB && count > 0 ? Icons.touch_app_rounded : null,
-      onTap: () {
-        Navigator.pop(context);
-        onSelect(it.key);
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    final c = _DrawerColors.of(context);
-    final width = (MediaQuery.of(context).size.width * 0.82).clamp(260.0, 340.0);
-
     return Drawer(
-      width: width,
-      backgroundColor: c.card,
+      width: 300,
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(22)),
       ),
       child: SafeArea(
         child: Column(
           children: [
-            _header(context, c),
+            // Kichwa — kinakaa juu, hakifunikwi
+            _Header(onClose: () => Navigator.of(context).pop()),
+
+            // Orodha — inasogea chini ya kichwa
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.only(bottom: 8),
-                children: [
-                  for (final s in _sections) ...[
-                    _SectionTitle(s.title, c: c),
-                    for (final it in s.items)
-                      _buildItemRow(it, c, context),
+              child: ClipRect(
+                child: ListView(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  children: [
+                    for (final s in _sections) ...[
+                      _SectionTitle(s.title),
+                      for (final it in s.items)
+                        _Tile(
+                          icon:     it.icon,
+                          label:    it.label,
+                          selected: it.page == selected,
+                          count:    counts[it.page] ?? 0,
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            onSelect(it.page);
+                          },
+                        ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-            _footer(context, c),
+
+            // Chini — Wasifu + Toka
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: _D.line)),
+              ),
+              padding: const EdgeInsets.only(top: 8, bottom: 12),
+              child: Column(children: [
+                _ProfileTile(
+                  name: adminName,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    onProfile();
+                  },
+                ),
+                _Tile(
+                  icon:     TablerIcons.logout,
+                  label:    'Toka',
+                  selected: false,
+                  color:    _D.danger,
+                  onTap:    onLogout,
+                ),
+              ]),
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _header(BuildContext context, _DrawerColors c) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 14, 4),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
+// ---- Kichwa -------------------------------------------------------
+class _Header extends StatelessWidget {
+  final VoidCallback onClose;
+  const _Header({required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 18, 14, 14),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: _D.line)),
+      ),
+      child: Row(children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width:  kDrawerLogoSize,
+            height: kDrawerLogoSize,
             decoration: BoxDecoration(
-              color: c.blue,
+              color:        Colors.white,
+              border:       Border.all(color: _D.border),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(PhosphorIcons.arrowsLeftRight(PhosphorIconsStyle.fill),
-                size: 22, color: Colors.white),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Kubadilishana',
+            padding: const EdgeInsets.all(3),
+            child: Image.asset(
+              kDrawerLogoAsset,
+              fit:           BoxFit.contain,
+              filterQuality: FilterQuality.high,
+              errorBuilder:  (_, __, ___) => const Center(
+                child: Text('Logo',
                     style: TextStyle(
-                        color: c.text,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600)),
-                Text('Admin panel',
-                    style: TextStyle(color: c.muted, fontSize: 13)),
-              ],
-            ),
-          ),
-          Material(
-            color: c.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: c.border),
-            ),
-            child: InkWell(
-              onTap: () => Navigator.pop(context),
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                width: 38,
-                height: 38,
-                child: Icon(PhosphorIcons.x(), size: 19, color: c.text),
+                        fontSize: 11, fontWeight: FontWeight.w700,
+                        color: Color(0xFF6B8AB8))),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _footer(BuildContext context, _DrawerColors c) {
-    return Container(
-      padding: const EdgeInsets.only(top: 8, bottom: 10),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: c.border)),
-      ),
-      child: Column(
-        children: [
-          // Wasifu wangu
-          _Row(
-            c: c,
-            leading: Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: c.blueBg,
-                shape: BoxShape.circle,
-              ),
-              child: Text(initials,
-                  style: TextStyle(
-                      color: c.blue,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600)),
-            ),
-            label: 'Wasifu wangu',
-            labelBold: true,
-            subtitle: adminName,
-            trailing: Icon(PhosphorIcons.caretRight(), size: 18, color: c.faint),
-            onTap: () {
-              Navigator.pop(context);
-              onProfile?.call();
-            },
-          ),
-          // Toka
-          _Row(
-            c: c,
-            leading: _IconTile(
-                icon: PhosphorIcons.signOut(), tone: _Tone.red, c: c),
-            label: 'Toka',
-            labelColor: c.red,
-            onTap: () {
-              Navigator.pop(context);
-              onLogout?.call();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/* ============================================================
-   VIPANDE VIDOGO
-   ============================================================ */
-class _SectionTitle extends StatelessWidget {
-  final String text;
-  final _DrawerColors c;
-  const _SectionTitle(this.text, {required this.c});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 16, 22, 6),
-      child: Text(text,
-          style: TextStyle(
-              color: c.muted,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1)),
-    );
-  }
-}
-
-class _IconTile extends StatelessWidget {
-  final IconData icon;
-  final _Tone tone;
-  final _DrawerColors c;
-
-  const _IconTile({required this.icon, required this.tone, required this.c});
-
-  @override
-  Widget build(BuildContext context) {
-    final (fg, bg) = c.tone(tone);
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(icon, size: 20, color: fg),
-    );
-  }
-}
-
-class _BadgedIcon extends StatelessWidget {
-  final Widget child;
-  final int count;
-  const _BadgedIcon({required this.child, required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    if (count == 0) return child;
-    return Stack(clipBehavior: Clip.none, children: [
-      child,
-      Positioned(
-        top: -7,
-        right: -7,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          decoration: BoxDecoration(
-            color: const Color(0xFFDC2626),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white, width: 1.5),
-            boxShadow: const [
-              BoxShadow(
-                  color: Color(0x33000000),
-                  blurRadius: 2,
-                  offset: Offset(0, 1))
-            ],
-          ),
-          constraints: const BoxConstraints(minWidth: 20, minHeight: 18),
-          child: Center(
-            child: Text(
-              count > 99 ? '99+' : '$count',
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  height: 1.0),
             ),
           ),
         ),
-      ),
-    ]);
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Kubadilishana',
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w900,
+                      color: _D.text)),
+              SizedBox(height: 2),
+              Text('Admin panel',
+                  style: TextStyle(fontSize: 13, color: _D.section)),
+            ],
+          ),
+        ),
+        Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: _D.border),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: onClose,
+            child: const SizedBox(
+              width: 36, height: 36,
+              child: Icon(TablerIcons.x, size: 20,
+                  color: Color(0xFF444444)),
+            ),
+          ),
+        ),
+      ]),
+    );
   }
 }
 
-class _Row extends StatelessWidget {
-  final _DrawerColors c;
-  final Widget leading;
-  final String label;
-  final String? subtitle;
-  final Color? subtitleColor;
-  final IconData? subtitleLeadingIcon;
-  final Widget? trailing;
-  final bool active;
-  final bool labelBold;
-  final Color? labelColor;
+// ---- Vipande ------------------------------------------------------
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  const _SectionTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(22, 16, 20, 6),
+        child: Text(text,
+            style: const TextStyle(
+                fontSize:     11,
+                fontWeight:   FontWeight.w700,
+                letterSpacing: 1.4,
+                color:        _D.section)),
+      );
+}
+
+class _Tile extends StatelessWidget {
+  final IconData   icon;
+  final String     label;
+  final bool       selected;
+  final int        count;
+  final Color?     color;
   final VoidCallback onTap;
 
-  const _Row({
-    required this.c,
-    required this.leading,
+  const _Tile({
+    required this.icon,
     required this.label,
+    required this.selected,
     required this.onTap,
-    this.subtitle,
-    this.subtitleColor,
-    this.subtitleLeadingIcon,
-    this.trailing,
-    this.active = false,
-    this.labelBold = false,
-    this.labelColor,
+    this.count = 0,
+    this.color,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = color ?? (selected ? _D.blue  : _D.icon);
+    final textColor = color ?? (selected ? _D.text  : _D.item);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          height: 44,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(children: [
+              Icon(icon, size: 22, color: iconColor),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize:   15,
+                        color:      textColor,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w400)),
+              ),
+              if (count > 0)
+                Container(
+                  constraints: const BoxConstraints(minWidth: 22),
+                  height: 20,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      color:        _D.badge,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    style: const TextStyle(
+                        fontSize:   11.5,
+                        fontWeight: FontWeight.w700,
+                        color:      Colors.white),
+                  ),
+                ),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileTile extends StatelessWidget {
+  final String name;
+  final VoidCallback onTap;
+  const _ProfileTile({required this.name, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
-      child: Material(
-        color: active ? c.activeBg : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                leading,
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: labelColor ?? c.text,
-                          fontSize: 15,
-                          fontWeight: active || labelBold
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                        ),
-                      ),
-                      if (subtitle != null)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (subtitleLeadingIcon != null) ...[
-                              Icon(subtitleLeadingIcon,
-                                  size: 12,
-                                  color: subtitleColor ?? c.muted),
-                              const SizedBox(width: 4),
-                            ],
-                            Flexible(
-                              child: Text(
-                                subtitle!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    color: subtitleColor ?? c.muted,
-                                    fontSize: 13),
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-                if (trailing != null) trailing!,
-              ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(children: [
+            const Icon(TablerIcons.userCircle, size: 22, color: _D.icon),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Wasifu wangu',
+                      style: TextStyle(
+                          fontSize: 14.5, fontWeight: FontWeight.w600,
+                          color: _D.text)),
+                  Text(name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11.5, color: _D.section)),
+                ],
+              ),
             ),
-          ),
+            const Icon(TablerIcons.chevronRight, size: 18, color: _D.icon),
+          ]),
         ),
       ),
     );
-  }
-}
-
-/* ============================================================
-   RANGI (light + dark)
-   ============================================================ */
-class _DrawerColors {
-  final Color card, border, text, muted, faint, activeBg;
-  final Color blue, blueBg, green, greenBg, red, redBg, amber, amberBg;
-  final Color neutral, neutralBg;
-
-  const _DrawerColors({
-    required this.card,
-    required this.border,
-    required this.text,
-    required this.muted,
-    required this.faint,
-    required this.activeBg,
-    required this.blue,
-    required this.blueBg,
-    required this.green,
-    required this.greenBg,
-    required this.red,
-    required this.redBg,
-    required this.amber,
-    required this.amberBg,
-    required this.neutral,
-    required this.neutralBg,
-  });
-
-  static const light = _DrawerColors(
-    card: Color(0xFFFFFFFF),
-    border: Color(0xFFE6E6E3),
-    text: Color(0xFF141414),
-    muted: Color(0xFF6E6E6A),
-    faint: Color(0xFF9A9A96),
-    activeBg: Color(0xFFF6F6F4),
-    blue: Color(0xFF2A78D6),
-    blueBg: Color(0xFFD3E5FA),
-    green: Color(0xFF1E6B1E),
-    greenBg: Color(0xFFCDEBCB),
-    red: Color(0xFF8E2A2A),
-    redBg: Color(0xFFF8D7D7),
-    amber: Color(0xFF7A4A00),
-    amberBg: Color(0xFFF9DDA4),
-    neutral: Color(0xFF3C3C3A),
-    neutralBg: Color(0xFFEFEFEC),
-  );
-
-  static const dark = _DrawerColors(
-    card: Color(0xFF1C1C1B),
-    border: Color(0xFF2E2E2C),
-    text: Color(0xFFF1F1EE),
-    muted: Color(0xFFA3A39E),
-    faint: Color(0xFF75756F),
-    activeBg: Color(0xFF262625),
-    blue: Color(0xFF7AB0F0),
-    blueBg: Color(0xFF1D3350),
-    green: Color(0xFF8ED48A),
-    greenBg: Color(0xFF1E3A1F),
-    red: Color(0xFFF2A0A0),
-    redBg: Color(0xFF4A2222),
-    amber: Color(0xFFF2C46B),
-    amberBg: Color(0xFF4A3614),
-    neutral: Color(0xFFD6D6D2),
-    neutralBg: Color(0xFF2E2E2C),
-  );
-
-  static _DrawerColors of(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? dark : light;
-
-  (Color, Color) tone(_Tone t) {
-    switch (t) {
-      case _Tone.blue:
-        return (blue, blueBg);
-      case _Tone.green:
-        return (green, greenBg);
-      case _Tone.red:
-        return (red, redBg);
-      case _Tone.amber:
-        return (amber, amberBg);
-      case _Tone.neutral:
-        return (neutral, neutralBg);
-    }
   }
 }
