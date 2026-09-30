@@ -1,11 +1,11 @@
 // ============================================================================
 // test/forgot_number_flow_test.dart
-// Mtiririko wa "Sahau namba?" (ukurasa mmoja):
+// Mtiririko wa "Sahau namba?" (kadi moja inabadilika):
 //   - validation ya jina (lazima maneno 2+)
-//   - tafuta kwa jina kupitia /auth/lookup-by-name (FakeApiAdapter)
-//   - matokeo yanatokea CHINI ya fomu (bila kuhamia ukurasa mwingine)
-//   - hakuna matokeo → kadi ya matokeo tupu
-//   - "Tafuta tena" inafuta matokeo na kufuta field
+//   - tafuta kwa jina → kadi inabadilika "Namba imepatikana" (AnimatedSwitcher)
+//   - namba + jina + kada zinaonyeshwa kwenye kadi ile ile
+//   - hakuna matokeo → kadi inabadilika "Hatukupata"
+//   - "Tafuta tena" inafuta matokeo na kufuta field (kadi inarudi search)
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,29 +46,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Weka jina la kwanza na la mwisho.'), findsOneWidget);
-    // Matokeo hayajaonekana bado.
-    expect(find.text('Matokeo'), findsNothing);
+    // Kadi ya matokeo haijabadilika — bado iko kwenye hali ya search.
+    expect(find.text('Namba imepatikana'), findsNothing);
   });
 
-  testWidgets('tafuta kwa jina — matokeo yanatokea chini ya fomu',
+  testWidgets('tafuta kwa jina — kadi inabadilika na kuonyesha namba',
       (tester) async {
     await pumpPage(tester);
 
     await tester.enterText(find.byType(TextField), 'Amani Selemani');
     await tester.tap(find.text('Tafuta'));
     await tester.pump(); // frame ya loading
-    await tester.pump(const Duration(milliseconds: 400)); // API + AnimatedSize
-    await tester.pump(const Duration(
-        milliseconds: 400)); // Scrollable.ensureVisible frame
+    await tester.pump(const Duration(milliseconds: 400)); // API + AnimatedSwitcher
+    await tester.pump(const Duration(milliseconds: 400)); // AnimatedSize
 
     // Ukurasa UNAENDELIA hapa hapa — hakuna screen mpya iliyopushwa.
     expect(find.byType(SahauNambaScreen), findsOneWidget);
-    expect(find.text('Matokeo'), findsOneWidget);
-    expect(find.text('1 imepatikana'), findsOneWidget);
-    expect(find.text('Nakili namba yako.'), findsOneWidget);
+    // Kadi ile ile inabadilika kuwa "Namba imepatikana"
+    expect(find.text('Namba imepatikana'), findsOneWidget);
+    expect(find.text('Hii ndiyo namba uliyojisajili nayo.'), findsOneWidget);
     // Namba imeformatiwa: +255 763 795 805
     expect(find.text('+255 763 795 805'), findsOneWidget);
-    // Idara kutoka cadre_display
+    // Kada kutoka cadre_display
     expect(find.text('Mwalimu'), findsOneWidget);
     expect(find.text('Tafuta tena'), findsOneWidget);
   });
@@ -81,25 +80,24 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('Matokeo'), findsOneWidget);
+    expect(find.text('Namba imepatikana'), findsOneWidget);
 
-    // 'Tafuta tena' iko chini ya kadi — vilete kwenye screen kwanza
-    // (viewport ya test ni 800x600, kitufe kinaweza kuwa nje ya screen).
+    // 'Tafuta tena' iko ndani ya kadi — vilete kwenye screen kwanza
     await tester.ensureVisible(find.text('Tafuta tena'));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('Tafuta tena'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Matokeo'), findsNothing);
+    // Kadi inarudi hali ya search — "Namba imepatikana" haipo tena
+    expect(find.text('Namba imepatikana'), findsNothing);
     final ctrl =
         tester.widget<TextField>(find.byType(TextField)).controller!.text;
     expect(ctrl, isEmpty);
   });
 
-  testWidgets('hakuna matokeo — kadi ya matokeo tupu inaonyeshwa',
+  testWidgets('hakuna matokeo — kadi inabadilika "Hatukupata"',
       (tester) async {
-    // Badilisha adapter kuwa na majibu yasiyo na users (mwisho wa faili —
-    // mabadiliko ya singleton adapter yanaathiri tests zilizofuata).
+    // Badilisha adapter kuwa na majibu yasiyo na users
     final api = ApiService();
     ApiService.dioForTest(api).httpClientAdapter =
         FakeApiAdapter(routes: {'/auth/lookup-by-name': {'users': []}});
@@ -112,8 +110,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('Matokeo'), findsOneWidget);
-    expect(find.text('0 imepatikana'), findsOneWidget);
+    // Kadi inabadilika kuwa "Hatukupata" (si "Namba imepatikana")
+    expect(find.text('Hatukupata'), findsOneWidget);
     expect(find.text('Hatukupata namba kwa jina hilo.'), findsOneWidget);
   });
 }
