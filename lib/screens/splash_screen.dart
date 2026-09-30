@@ -72,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F5FB),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _fadeCtrl,
@@ -80,16 +80,18 @@ class _SplashScreenState extends State<SplashScreen>
             opacity: _fadeAnim.value,
             child: Transform.scale(scale: _scaleAnim.value, child: child),
           ),
-          child: Center(
-            child: Padding(
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+              Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // ── Logo kwenye rounded square kubwa ────────────────────
                   Container(
-                    width: 210,
-                    height: 210,
+                    width: 185,
+                    height: 185,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(40),
@@ -161,6 +163,8 @@ class _SplashScreenState extends State<SplashScreen>
                 ],
               ),
             ),
+              const Spacer(flex: 3),
+            ],
           ),
         ),
       ),
