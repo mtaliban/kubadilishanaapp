@@ -10,50 +10,99 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  static const Color _navy     = Color(0xFF1A2B8F);
-  static const Color _subtitle = Color(0xFF6B7590);
-  static const Color _track    = Color(0xFFE3E7F3);
-  static const Duration _dur   = Duration(milliseconds: 3000);
+    with TickerProviderStateMixin {
 
-  late final AnimationController _ctrl;
-  late final Animation<double> _progress;
-  late final Animation<double> _fade;
+  // Logo: fade-in + scale-up laini (0–900 ms)
+  late final AnimationController _logoCtrl;
+  late final Animation<double>   _logoFade;
+  late final Animation<double>   _logoScale;
+
+  // Tagline: inaonekana baada ya logo (350–1100 ms)
+  late final AnimationController _tagCtrl;
+  late final Animation<double>   _tagFade;
+  late final Animation<Offset>   _tagSlide;
+
+  // Dots za kupiga bounce chini
+  late final List<AnimationController> _dotCtrls;
+  late final List<Animation<double>>   _dotAnims;
 
   bool? _isLoggedIn;
+  static const Duration _minDur = Duration(milliseconds: 3400);
 
   @override
   void initState() {
     super.initState();
 
-    _ctrl = AnimationController(vsync: this, duration: _dur);
-
-    _progress = CurvedAnimation(
-      parent: _ctrl,
-      curve: Curves.easeInOut,
+    // ── Logo ──────────────────────────────────────────────────────────
+    _logoCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
     );
-    _fade = CurvedAnimation(
-      parent: _ctrl,
-      curve: const Interval(0.0, 0.2, curve: Curves.easeOut),
+    _logoFade = CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOut);
+    _logoScale = Tween(begin: 0.82, end: 1.0).animate(
+      CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOutBack),
     );
+    _logoCtrl.forward();
 
-    _ctrl.forward().whenComplete(_maybeNavigate);
+    // ── Tagline inaonekana baada ya logo ──────────────────────────────
+    _tagCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _tagFade = CurvedAnimation(parent: _tagCtrl, curve: Curves.easeOut);
+    _tagSlide = Tween(
+      begin: const Offset(0, 0.35),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _tagCtrl, curve: Curves.easeOut));
+
+    Future.delayed(const Duration(milliseconds: 450), () {
+      if (mounted) _tagCtrl.forward();
+    });
+
+    // ── Dots zinanza kupiga baada ya sekunde moja ─────────────────────
+    _dotCtrls = List.generate(
+      3,
+      (_) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 580),
+      ),
+    );
+    _dotAnims = _dotCtrls
+        .map((c) => Tween(begin: 0.0, end: 1.0).animate(
+              CurvedAnimation(parent: c, curve: Curves.easeInOut),
+            ))
+        .toList();
+
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      for (int i = 0; i < 3; i++) {
+        Future.delayed(Duration(milliseconds: i * 190), () {
+          if (mounted) _dotCtrls[i].repeat(reverse: true);
+        });
+      }
+    });
+
     _checkAuth();
   }
 
   Future<void> _checkAuth() async {
     final auth = context.read<AuthProvider>();
+    final sw = Stopwatch()..start();
+
     final loggedIn = await auth.restoreSession();
     if (!mounted) return;
+
+    final remaining = _minDur.inMilliseconds - sw.elapsedMilliseconds;
+    if (remaining > 0) {
+      await Future.delayed(Duration(milliseconds: remaining));
+    }
+    if (!mounted) return;
+
     setState(() => _isLoggedIn = loggedIn);
-    _maybeNavigate();
+    _navigate();
   }
 
-  void _maybeNavigate() {
-    if (!mounted) return;
-    if (_ctrl.status != AnimationStatus.completed) return;
-    if (_isLoggedIn == null) return;
-
+  void _navigate() {
+    if (!mounted || _isLoggedIn == null) return;
     final auth = context.read<AuthProvider>();
     if (AppConfig.isAdminBuild && auth.isAdmin) {
       Navigator.pushReplacementNamed(context, '/admin');
@@ -66,7 +115,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _logoCtrl.dispose();
+    _tagCtrl.dispose();
+    for (final c in _dotCtrls) c.dispose();
     super.dispose();
   }
 
@@ -75,83 +126,89 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: FadeTransition(
-          opacity: _fade,
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Logo
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Image.asset(
-                    'assets/images/logo.jpeg',
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                // App name
-                const Text(
-                  'KUBADILISHANA PORTAL',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: _navy,
-                    letterSpacing: 2.4,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Subtitle
-                const Text(
-                  'Jukwaa la Watumishi wa Umma',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: _subtitle,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-
-                const SizedBox(height: 36),
-
-                // Progress bar
-                SizedBox(
-                  width: 120,
-                  height: 5,
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: 120,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: _track,
-                          borderRadius: BorderRadius.circular(3),
+        child: Column(
+          children: [
+            // ── Logo + tagline — katikati kamili ──────────────────────
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Logo kubwa yenye animation
+                    AnimatedBuilder(
+                      animation: _logoCtrl,
+                      builder: (_, child) => Opacity(
+                        opacity: _logoFade.value,
+                        child: Transform.scale(
+                          scale: _logoScale.value,
+                          child: child,
                         ),
                       ),
-                      AnimatedBuilder(
-                        animation: _progress,
-                        builder: (_, __) => FractionallySizedBox(
-                          widthFactor: _progress.value,
-                          child: Container(
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: _navy,
-                              borderRadius: BorderRadius.circular(3),
-                            ),
+                      child: Image.asset(
+                        'assets/images/logo.jpeg',
+                        width: 260,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // Tagline inaonekana kwa slide-up laini
+                    SlideTransition(
+                      position: _tagSlide,
+                      child: FadeTransition(
+                        opacity: _tagFade,
+                        child: const Text(
+                          'Jukwaa la Watumishi wa Umma',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF6B7590),
+                            letterSpacing: 0.2,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+
+            // ── Dots za kupiga bounce chini ───────────────────────────
+            Padding(
+              padding: const EdgeInsets.only(bottom: 52),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (i) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: AnimatedBuilder(
+                    animation: _dotAnims[i],
+                    builder: (_, __) {
+                      final v = _dotAnims[i].value;
+                      return Transform.translate(
+                        offset: Offset(0, -9 * v),
+                        child: Container(
+                          width: 9,
+                          height: 9,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color.lerp(
+                              const Color(0xFFB8D4F5),
+                              const Color(0xFF1A52A8),
+                              v,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                )),
+              ),
+            ),
+          ],
         ),
       ),
     );
