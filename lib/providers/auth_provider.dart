@@ -1,4 +1,5 @@
 // Auth state — login, register, logout, session persistence, admin 2FA.
+import 'package:dio/dio.dart' show DioException;
 import 'package:flutter/material.dart';
 import '../services/admin_badge_service.dart';
 import '../services/api_service.dart';
@@ -116,15 +117,59 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> restoreSession() async {
     final token = await _api.loadToken();
     if (token == null) return false;
+    _api.setToken(token);
+
+    // --- Instant restore from persisted user data (kama WhatsApp) ---
+    // Soma data ya mtumiaji iliyohifadhiwa kwenye hifadhi ya simu.
+    // Kama ipo, ingia MARA MOJA bila kusubiri mtandao, kisha fanya refresh
+    // nyuma ya pazia — ikiwa token imeisha (401) tu ndipo logout.
+    final cachedData = await _api.loadUserData();
+    if (cachedData != null) {
+      try {
+        _user = AuthUser.fromJson(asMap(cachedData));
+        _setupRealtime();
+        notifyListeners();
+      } catch (_) {
+        _user = null;
+      }
+      if (_user != null) {
+        // Refresh nyuma ya pazia — haisimamishi mtumiaji
+        _api.getMe().then((res) async {
+          final data = asMap(res.data);
+          await _api.saveUserData(data);
+          _user = AuthUser.fromJson(data);
+          notifyListeners();
+        }).catchError((Object e) async {
+          // Kosa la 401 peke yake linatoa logout — kosa la mtandao linaachiwa
+          if (e is DioException && e.response?.statusCode == 401) {
+            await _api.removeToken();
+            await _api.clearUserData();
+            _user = null;
+            AppCache().clear();
+            AdminBadgeService().reset();
+            notifyListeners();
+            appNavigatorKey.currentState
+                ?.pushNamedAndRemoveUntil('/login', (_) => false);
+          }
+        });
+        return true;
+      }
+    }
+
+    // --- Hakuna cache — inahitaji mtandao ---
     try {
-      _api.setToken(token);
       final res = await _api.getMe();
-      _user = AuthUser.fromJson(asMap(res.data));
+      final data = asMap(res.data);
+      _user = AuthUser.fromJson(data);
+      await _api.saveUserData(data);
       _setupRealtime();
       notifyListeners();
       return true;
+    } on DioException catch (e) {
+      // 401: token imeisha → ondoa; kosa lingine → bakia kwenye login screen
+      if (e.response?.statusCode == 401) await _api.removeToken();
+      return false;
     } catch (_) {
-      await _api.removeToken();
       return false;
     }
   }
@@ -313,6 +358,7 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     pendingAdminEmail = null;
     await _api.removeToken();
+    await _api.clearUserData(); // futa data ya mtumiaji iliyohifadhiwa
     // ── ISOLATION YA SESSION ──
     // Cache yote ya GET (profiles, matches, admin lists, regions...) inafutwa
     // ili mtumiaji mpya asiweze kuona data za aliyekuwa hapo awali (TTL ya
@@ -332,7 +378,9 @@ class AuthProvider extends ChangeNotifier {
   Future<void> refreshUser() async {
     try {
       final res = await _api.getMe();
-      _user = AuthUser.fromJson(asMap(res.data));
+      final data = asMap(res.data);
+      await _api.saveUserData(data);
+      _user = AuthUser.fromJson(data);
       notifyListeners();
     } catch (_) {}
   }

@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'services/api_service.dart';
+import 'services/app_cache.dart';
 import 'services/app_navigator.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
@@ -98,6 +99,14 @@ void main() {
       ApiService().init();
     } catch (e) {
       _crashLog.add('[ApiService] $e');
+    }
+
+    // Pakia cache iliyohifadhiwa — pages zinaona data za mwisho MARA MOJA
+    // bila kusubiri mtandao (stale-while-revalidate).
+    try {
+      await AppCache().warmUp();
+    } catch (e) {
+      _crashLog.add('[Cache] $e');
     }
 
     runApp(const KubadilishanaApp());

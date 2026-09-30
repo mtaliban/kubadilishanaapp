@@ -1,6 +1,7 @@
 /// HTTP API client — Dio with auth interceptors, caching, retries.
 library;
 
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api.dart';
@@ -68,6 +69,35 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('kv_token');
   }
+
+  // ── User data persistence (for offline auto-login) ──
+
+  Future<void> saveUserData(Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('kv_user', _jsonEncode(data));
+    } catch (_) {}
+  }
+
+  Future<Map<String, dynamic>?> loadUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('kv_user');
+      if (raw == null || raw.isEmpty) return null;
+      final decoded = _jsonDecode(raw);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) { return null; }
+  }
+
+  Future<void> clearUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('kv_user');
+    } catch (_) {}
+  }
+
+  static String _jsonEncode(dynamic v) => jsonEncode(v);
+  static dynamic _jsonDecode(String s) => jsonDecode(s);
 
   // ── Helpers ──
   static String _cacheKey(String path, Map<String, dynamic>? q) {
