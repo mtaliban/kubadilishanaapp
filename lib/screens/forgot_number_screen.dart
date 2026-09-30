@@ -164,6 +164,7 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
   bool _loading = false;
   String? _error;
   FoundUser? _found;
+  bool _copied = false;
 
   @override
   void dispose() {
@@ -206,18 +207,17 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
 
   void _searchAgain() => setState(() {
         _found = null;
+        _copied = false;
         _error = null;
         _name.clear();
       });
 
-  void _copy() {
-    Clipboard.setData(ClipboardData(text: _found!.phone.replaceAll(' ', '')));
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(
-        content: Text('Namba imenakiliwa'),
-        behavior: SnackBarBehavior.floating,
-      ));
+  Future<void> _copy() async {
+    await Clipboard.setData(ClipboardData(text: _found!.phone.replaceAll(' ', '')));
+    if (!mounted) return;
+    setState(() => _copied = true);
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) setState(() => _copied = false);
   }
 
   @override
@@ -265,30 +265,23 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
         const SizedBox(height: 20),
         _fieldLabel(TablerIcons.userSquareRounded, 'Jina kamili'),
         const SizedBox(height: 7),
-        SizedBox(
-          height: 44,
-          child: TextField(
-            controller: _name,
-            textCapitalization: TextCapitalization.characters,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => _search(),
-            onChanged: (_) {
-              if (_error != null) setState(() => _error = null);
-            },
-            style: const TextStyle(fontSize: 15, color: _C.text),
-            decoration: InputDecoration(
-              hintText: 'Mfano: Amani Selemani',
-              hintStyle: const TextStyle(fontSize: 15, color: _C.hint),
-              prefixIcon: const Padding(
-                padding: EdgeInsets.only(left: 12, right: 10),
-                child: Icon(TablerIcons.userCircle, size: 20, color: _C.primaryDark),
-              ),
-              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              isDense: true,
-              enabledBorder: _border(hasError ? _C.error : _C.inputBorder),
-              focusedBorder: _border(hasError ? _C.error : _C.primary),
-            ),
+        TextField(
+          controller: _name,
+          textCapitalization: TextCapitalization.characters,
+          textInputAction: TextInputAction.search,
+          onSubmitted: (_) => _search(),
+          onChanged: (_) {
+            if (_error != null) setState(() => _error = null);
+          },
+          style: const TextStyle(fontSize: 15, color: _C.text, height: 1.2),
+          decoration: InputDecoration(
+            hintText: 'Mfano: Amani Selemani',
+            hintStyle: const TextStyle(fontSize: 15, color: _C.hint, height: 1.2),
+            prefixIcon: const Icon(TablerIcons.userCircle, size: 20, color: _C.primaryDark),
+            prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            contentPadding: const EdgeInsets.fromLTRB(0, 14, 12, 14),
+            enabledBorder: _border(hasError ? _C.error : _C.inputBorder),
+            focusedBorder: _border(hasError ? _C.error : _C.primary),
           ),
         ),
         if (hasError) ...[
@@ -417,30 +410,41 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
         ],
       );
 
-  Widget _copyButton() => Material(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: _C.copyBorder),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: _copy,
-          child: const SizedBox(
-            height: 32,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(TablerIcons.copy, size: 15, color: _C.primaryDark),
-                SizedBox(width: 5),
-                Text('Nakili',
-                    style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700, color: _C.primaryDark)),
-              ]),
+  Widget _copyButton() {
+    final c = _copied ? _C.ok : _C.primaryDark;
+    return Material(
+      color: _copied ? _C.okBg : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: _copied ? _C.okBg : _C.copyBorder),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: _copied ? null : _copy,
+        child: SizedBox(
+          height: 32,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Row(
+                key: ValueKey(_copied),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_copied ? TablerIcons.check : TablerIcons.copy,
+                      size: 15, color: c),
+                  const SizedBox(width: 5),
+                  Text(_copied ? 'Imenakiliwa' : 'Nakili',
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w700, color: c)),
+                ],
+              ),
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
 
   Widget _footer({required Widget left, required Widget right}) => Container(
         margin: const EdgeInsets.only(top: 20),
@@ -506,15 +510,7 @@ class _AppLogo extends StatelessWidget {
   const _AppLogo();
 
   @override
-  Widget build(BuildContext context) {
-    return Image.asset(
-      kLogoAsset,
-      height: kLogoHeight,
-      fit: BoxFit.contain,
-      filterQuality: FilterQuality.high,
-      errorBuilder: (_, __, ___) => const _LogoPlaceholder(),
-    );
-  }
+  Widget build(BuildContext context) => const _LogoPlaceholder();
 }
 
 class _LogoPlaceholder extends StatelessWidget {
