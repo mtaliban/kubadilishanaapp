@@ -1,11 +1,11 @@
 // ============================================================================
 // test/forgot_number_flow_test.dart
-// Mtiririko wa "Umesahau namba?" (skrini mbili: fomu → matokeo):
-//   - validation ya jina (lazima maneno 2+)
-//   - tafuta → push NambaImepatikanaScreen yenye namba + jina + kada
-//   - "Tafuta tena" → inarudisha SahauNambaScreen, field inafutwa
-//   - "Ingia →" → inarudisha namba kwa login (Navigator.pop(context, phone))
-//   - hakuna matokeo → "Hatukupata" inaonyeshwa kwenye SahauNambaScreen
+// Mtiririko wa "Umesahau namba?" (kadi moja, hatua 2 — AnimatedSwitcher):
+//   - validation ya jina moja tu → kosa chini ya field
+//   - tafuta → card inabadilika kuwa "Namba yako" + namba + jina + kada
+//   - "Tafuta tena" → rudi hatua 1, field inafutwa
+//   - "Ingia" → inarudisha namba kwa login (Navigator.pop(context, phone))
+//   - hakuna matokeo → ujumbe mwekundu chini ya field
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,11 +46,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Weka jina la kwanza na la mwisho.'), findsOneWidget);
-    // Haijapeleka kwenye skrini ya matokeo
-    expect(find.text('Namba imepatikana'), findsNothing);
+    // Haijabadilika kwenda hatua 2
+    expect(find.text('Namba yako'), findsNothing);
   });
 
-  testWidgets('tafuta kwa jina — NambaImepatikanaScreen inaonyeshwa',
+  testWidgets('tafuta kwa jina — hatua 2 "Namba yako" inaonyeshwa',
       (tester) async {
     await pumpPage(tester);
 
@@ -58,18 +58,17 @@ void main() {
     await tester.tap(find.text('Tafuta'));
     await tester.pump(); // loading frame
     await tester.pump(const Duration(milliseconds: 400)); // API response
-    await tester.pumpAndSettle(); // navigation animation
+    await tester.pumpAndSettle(); // animation
 
-    // Skrini mpya imepushwa — "Namba imepatikana" inaonekana
-    expect(find.text('Namba imepatikana'), findsOneWidget);
+    // Kadi imebadilika kwenda hatua 2
+    expect(find.text('Namba yako'), findsOneWidget);
     expect(find.text('Hii ndiyo namba uliyojisajili nayo.'), findsOneWidget);
     // Namba imeformatiwa
     expect(find.text('+255 763 795 805'), findsOneWidget);
     // Kada kutoka cadre_display
     expect(find.text('Mwalimu'), findsOneWidget);
-    // Kitufe cha Tafuta tena kipo
+    // Vitufe vya hatua 2
     expect(find.text('Tafuta tena'), findsOneWidget);
-    // Kitufe cha Ingia kipo
     expect(find.text('Ingia'), findsOneWidget);
   });
 
@@ -81,14 +80,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
-    expect(find.text('Namba imepatikana'), findsOneWidget);
+    expect(find.text('Namba yako'), findsOneWidget);
 
     // Rudi nyuma kwa "Tafuta tena"
     await tester.tap(find.text('Tafuta tena'));
     await tester.pumpAndSettle();
 
-    // Skrini ya fomu inarudi — "Namba imepatikana" haitakiwi tena
-    expect(find.text('Namba imepatikana'), findsNothing);
+    // Hatua 1 inarudi — "Namba yako" haitakiwi tena
+    expect(find.text('Namba yako'), findsNothing);
     // Field imefutwa
     final field = tester.widget<TextField>(find.byType(TextField));
     expect(field.controller!.text, isEmpty);
@@ -121,17 +120,17 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
 
-    expect(find.text('Namba imepatikana'), findsOneWidget);
+    expect(find.text('Namba yako'), findsOneWidget);
 
     await tester.tap(find.text('Ingia'));
     await tester.pumpAndSettle();
 
-    // Namba ilirudi kwa caller bila kuongezwa nafasi
+    // Namba ilirudi kwa caller
     expect(poppedPhone, isNotNull);
     expect(poppedPhone, startsWith('+255'));
   });
 
-  testWidgets('hakuna matokeo — "Hatukupata" inaonyeshwa kwenye fomu',
+  testWidgets('hakuna matokeo — ujumbe mwekundu unaonyeshwa kwenye fomu',
       (tester) async {
     final api = ApiService();
     ApiService.dioForTest(api).httpClientAdapter =
@@ -145,9 +144,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
 
-    // Hakuna navigation — kadi ya "Hatukupata" inaonyeshwa ndani ya fomu
-    expect(find.text('Hatukupata'), findsOneWidget);
-    expect(find.text('Hatukupata namba kwa jina hilo.'), findsOneWidget);
-    expect(find.text('Namba imepatikana'), findsNothing);
+    // Hakuna navigation kwa hatua 2 — ujumbe wa kosa unaonyeshwa
+    expect(find.text('Jina halijapatikana. Liandike kama lilivyosajiliwa'),
+        findsOneWidget);
+    expect(find.text('Namba yako'), findsNothing);
   });
 }

@@ -1,35 +1,20 @@
-/// "Umesahau namba?" — skrini mbili:
-///   1. SahauNambaScreen  — fomu ya jina (hatua 1/2)
-///   2. NambaImepatikanaScreen — matokeo (hatua 2/2)
-///
-/// Login screen inangoja matokeo: Navigator.pushNamed('/forgot-number')
-/// "Ingia →" inarudisha namba kwa Navigator.pop(context, phone)
-/// "Tafuta tena" inarudisha null → field inafutwa kwa utafutaji mpya
-library;
+// =====================================================================
+//  UKURASA WA "UMESAHAU NAMBA?"  —  ESSTRANSFER
+//  Kadi MOJA yenye hatua 2 (AnimatedSwitcher ndani ya kadi ile ile):
+//    Hatua 1: fomu ya jina
+//    Hatua 2: namba imepatikana
+//
+//  SahauNambaScreen — inaunganisha ForgotNumberPage na API + Navigator.
+//  Login screen inapata namba kwa Navigator.pop(context, phone).
+// =====================================================================
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import 'package:dio/dio.dart';
 import '../services/api_service.dart';
 
-// ── Rangi ──────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const accent       = Color(0xFF2952E3);
-  static const accentBg     = Color(0xFFEAEFFF);
-  static const success      = Color(0xFF12B76A);
-  static const successBg    = Color(0xFFE9F9F0);
-  static const errorColor   = Color(0xFFD92D20);
-  static const errorBg      = Color(0xFFFFF1F0);
-  static const errorBorder  = Color(0xFFFFCCC7);
-  static const border       = Color(0xFFE4E7EC);
-  static const textPrimary  = Color(0xFF101828);
-  static const textSecondary = Color(0xFF667085);
-  static const textMuted    = Color(0xFF98A2B3);
-  static const bg           = Color(0xFFF5F7FA);
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ---- helpers -------------------------------------------------------
 
 String _fmtPhone(String phone) {
   final d = phone.replaceAll(' ', '');
@@ -48,665 +33,554 @@ String _cadreOf(Map<dynamic, dynamic> u) {
   return cat ?? '';
 }
 
-// ── BrandHeader ────────────────────────────────────────────────────────────────
+Future<FoundUser?> _doSearch(String name) async {
+  try {
+    final res = await ApiService().lookupByName(name);
+    final raw = res.data;
+    final users = raw is List
+        ? raw
+        : (raw is Map
+            ? ((raw as Map<dynamic, dynamic>)['users'] ??
+                    raw['data'] ??
+                    []) as List
+            : <dynamic>[]);
+    if (users.isEmpty) return null;
+    final u = users.first as Map;
+    final phone = (u['phone_primary'] ?? u['phone'] ?? '').toString().trim();
+    if (phone.isEmpty) return null;
+    return FoundUser(
+      phone: _fmtPhone(phone),
+      fullName: (u['full_name'] ?? '').toString().trim().toUpperCase(),
+      cadre: _cadreOf(u),
+    );
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 404) return null;
+    rethrow;
+  }
+}
 
-class _BrandHeader extends StatelessWidget {
-  const _BrandHeader();
+// ---- SahauNambaScreen (public API inayotumika na routes + tests) ---
+
+class SahauNambaScreen extends StatelessWidget {
+  const SahauNambaScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: _C.accent,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Image.asset(
-              'assets/images/app_icon.png',
-              fit: BoxFit.cover,
-              errorBuilder: (ctx, err, st) => const Icon(
-                Icons.sync_alt_rounded,
-                color: Colors.white,
-                size: 36,
+    return ForgotNumberPage(
+      onSearch: _doSearch,
+      onBackToLogin: () => Navigator.of(context).maybePop(),
+      onLogin: (phone) => Navigator.of(context).pop(phone),
+    );
+  }
+}
+
+// =====================================================================
+
+// ------------------------- RANGI -------------------------
+class _C {
+  static const pageBg      = Color(0xFFF7F7F5);
+  static const cardBorder  = Color(0xFFEDEDED);
+  static const primary     = Color(0xFF2878D6);
+  static const primaryDark = Color(0xFF1B4F9C);
+  static const text        = Color(0xFF111111);
+  static const body        = Color(0xFF555555);
+  static const hint        = Color(0xFF8A8A8A);
+  static const line        = Color(0xFFE6E6E6);
+  static const inputBorder = Color(0xFF8AB6EC);
+  static const copyBorder  = Color(0xFFDADADA);
+  static const okBg        = Color(0xFFE3F4E1);
+  static const ok          = Color(0xFF1B6B1B);
+  static const error       = Color(0xFFB91C1C);
+  static const logoDash    = Color(0xFFB5C9E6);
+  static const logoText    = Color(0xFF6B8AB8);
+}
+
+// ------------------------- LOGO -------------------------
+const String kLogoAsset  = 'assets/images/app_icon.png';
+const double kLogoHeight = 120;
+
+class FoundUser {
+  final String phone;
+  final String fullName;
+  final String cadre;
+  const FoundUser({required this.phone, required this.fullName, required this.cadre});
+}
+
+// ================= UKURASA MZIMA =================
+class ForgotNumberPage extends StatelessWidget {
+  final Future<FoundUser?> Function(String name) onSearch;
+  final VoidCallback onBackToLogin;
+  final void Function(String phone) onLogin;
+
+  const ForgotNumberPage({
+    super.key,
+    required this.onSearch,
+    required this.onBackToLogin,
+    required this.onLogin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _C.pageBg,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: ForgotNumberCard(
+                onSearch: onSearch,
+                onBackToLogin: onBackToLogin,
+                onLogin: onLogin,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 7),
-        RichText(
-          text: const TextSpan(
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
-              color: _C.textPrimary,
+      ),
+    );
+  }
+}
+
+// ================= KADI =================
+class ForgotNumberCard extends StatefulWidget {
+  final Future<FoundUser?> Function(String name) onSearch;
+  final VoidCallback onBackToLogin;
+  final void Function(String phone) onLogin;
+
+  const ForgotNumberCard({
+    super.key,
+    required this.onSearch,
+    required this.onBackToLogin,
+    required this.onLogin,
+  });
+
+  @override
+  State<ForgotNumberCard> createState() => _ForgotNumberCardState();
+}
+
+class _ForgotNumberCardState extends State<ForgotNumberCard> {
+  final _name = TextEditingController();
+  bool _loading = false;
+  String? _error;
+  FoundUser? _found;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  Future<void> _search() async {
+    final name = _name.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Weka jina lako kamili kwanza');
+      return;
+    }
+    final words = name.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+    if (words.length < 2) {
+      setState(() => _error = 'Weka jina la kwanza na la mwisho.');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() { _loading = true; _error = null; });
+    try {
+      final user = await widget.onSearch(name);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        if (user == null) {
+          _error = 'Jina halijapatikana. Liandike kama lilivyosajiliwa';
+        } else {
+          _found = user;
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Imeshindikana kutafuta. Angalia mtandao ujaribu tena';
+      });
+    }
+  }
+
+  void _searchAgain() => setState(() {
+        _found = null;
+        _error = null;
+        _name.clear();
+      });
+
+  void _copy() {
+    Clipboard.setData(ClipboardData(text: _found!.phone.replaceAll(' ', '')));
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(
+        content: Text('Namba imenakiliwa'),
+        behavior: SnackBarBehavior.floating,
+      ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final step2 = _found != null;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _C.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(child: _AppLogo()),
+          const SizedBox(height: 20),
+          _StepBar(step2: step2),
+          const SizedBox(height: 22),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: step2 ? _resultView(_found!) : _formView(),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- HATUA 1: FOMU ----------------
+  Widget _formView() {
+    final hasError = _error != null;
+    return Column(
+      key: const ValueKey('form'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _title('Umesahau namba?'),
+        const SizedBox(height: 6),
+        _subtitle('Andika jina lako kamili tukutafutie namba uliyosajili nayo.'),
+        const SizedBox(height: 20),
+        _fieldLabel(TablerIcons.userSquareRounded, 'Jina kamili'),
+        const SizedBox(height: 7),
+        SizedBox(
+          height: 44,
+          child: TextField(
+            controller: _name,
+            textCapitalization: TextCapitalization.characters,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => _search(),
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
+            style: const TextStyle(fontSize: 15, color: _C.text),
+            decoration: InputDecoration(
+              hintText: 'Mfano: Amani Selemani',
+              hintStyle: const TextStyle(fontSize: 15, color: _C.hint),
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(left: 12, right: 10),
+                child: Icon(TablerIcons.userCircle, size: 20, color: _C.primaryDark),
+              ),
+              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              isDense: true,
+              enabledBorder: _border(hasError ? _C.error : _C.inputBorder),
+              focusedBorder: _border(hasError ? _C.error : _C.primary),
+            ),
+          ),
+        ),
+        if (hasError) ...[
+          const SizedBox(height: 7),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextSpan(text: 'ESS'),
-              TextSpan(
-                text: 'TRANSFER',
-                style: TextStyle(color: _C.accent),
+              const Icon(TablerIcons.alertCircle, size: 15, color: _C.error),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(_error!,
+                    style: const TextStyle(fontSize: 12.5, color: _C.error, height: 1.3)),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 2),
-        const Text(
-          'CONNECT · MATCH · TRANSFER',
-          style: TextStyle(
-            fontSize: 9,
-            letterSpacing: 1.5,
-            color: _C.textMuted,
-          ),
+        ],
+        _footer(
+          left: _textLink(TablerIcons.arrowLeft, 'Rudi kuingia', widget.onBackToLogin),
+          right: _primaryButton('Tafuta', _loading ? null : _search, loading: _loading),
         ),
       ],
     );
   }
-}
 
-// ── StepProgress ───────────────────────────────────────────────────────────────
+  // ---------------- HATUA 2: MATOKEO ----------------
+  Widget _resultView(FoundUser u) {
+    return Column(
+      key: const ValueKey('result'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(color: _C.okBg, borderRadius: BorderRadius.circular(6)),
+          child: const Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(TablerIcons.circleCheck, size: 15, color: _C.ok),
+            SizedBox(width: 5),
+            Text('Imepatikana',
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _C.ok)),
+          ]),
+        ),
+        const SizedBox(height: 10),
+        _title('Namba yako'),
+        const SizedBox(height: 6),
+        _subtitle('Hii ndiyo namba uliyojisajili nayo.'),
+        const SizedBox(height: 20),
 
-class _StepProgress extends StatelessWidget {
-  final int activeSteps;
-  const _StepProgress(this.activeSteps);
-
-  @override
-  Widget build(BuildContext context) {
-    Widget seg(bool on) => Expanded(
-          child: Container(
-            height: 4,
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            decoration: BoxDecoration(
-              color: on ? _C.accent : _C.border,
-              borderRadius: BorderRadius.circular(2),
-            ),
+        _fieldLabel(TablerIcons.deviceMobile, 'Namba ya simu'),
+        Container(
+          padding: const EdgeInsets.only(top: 4, bottom: 12),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: _C.line, width: 1.5)),
           ),
-        );
-    return Row(children: [seg(activeSteps >= 1), seg(activeSteps >= 2)]);
-  }
-}
-
-// ── FormCard ───────────────────────────────────────────────────────────────────
-
-class _FormCard extends StatelessWidget {
-  final Widget child;
-  const _FormCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 340),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _C.border, width: 0.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+          child: Row(
+            children: [
+              const SizedBox(width: 23),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(u.phone,
+                      maxLines: 1,
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.3,
+                          color: _C.text)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              _copyButton(),
+            ],
           ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-      child: child,
+        ),
+        const SizedBox(height: 14),
+
+        _infoBlock(TablerIcons.user, 'Jina', u.fullName),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: Divider(height: 1, thickness: 1, color: _C.line),
+        ),
+        _infoBlock(TablerIcons.briefcase2, 'Kada', u.cadre),
+
+        _footer(
+          left: _textLink(TablerIcons.refresh, 'Tafuta tena', _searchAgain),
+          right: _primaryButton('Ingia', () => widget.onLogin(u.phone)),
+        ),
+      ],
     );
   }
-}
 
-// ── InfoRow (inayotumiwa kwenye NambaImepatikanaScreen) ────────────────────────
+  // ---------------- VIPANDE ----------------
+  Widget _title(String t) => Text(t,
+      style: const TextStyle(
+          fontSize: 22, fontWeight: FontWeight.w900, color: _C.text, height: 1.2));
 
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final bool topBorder;
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.topBorder,
-  });
+  Widget _subtitle(String t) =>
+      Text(t, style: const TextStyle(fontSize: 14.5, color: _C.body, height: 1.45));
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: topBorder
-          ? const BoxDecoration(
-              border: Border(
-                  top: BorderSide(color: _C.border, width: 0.5)),
-            )
-          : null,
-      child: Row(
+  Widget _fieldLabel(IconData icon, String t) => Padding(
+        padding: const EdgeInsets.only(bottom: 0),
+        child: Row(children: [
+          Icon(icon, size: 17, color: _C.primaryDark),
+          const SizedBox(width: 6),
+          Text(t,
+              style: const TextStyle(
+                  fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
+        ]),
+      );
+
+  Widget _infoBlock(IconData icon, String label, String value) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(children: [
-            Icon(icon, size: 14, color: _C.textMuted),
-            const SizedBox(width: 5),
-            Text(label,
-                style: const TextStyle(fontSize: 12, color: _C.textMuted)),
+            Icon(icon, size: 16, color: _C.primaryDark),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(fontSize: 12.5, color: _C.hint)),
           ]),
-          Expanded(
-            child: Text(
-              value.isEmpty ? '—' : value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: _C.textPrimary,
-              ),
-            ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 22),
+            child: Text(value,
+                softWrap: true,
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w700, color: _C.text, height: 1.35)),
           ),
         ],
-      ),
-    );
-  }
-}
+      );
 
-// =============================================================================
-// SKRINI 1 — Fomu ya jina (hatua 1/2)
-// =============================================================================
-
-class SahauNambaScreen extends StatefulWidget {
-  const SahauNambaScreen({super.key});
-
-  @override
-  State<SahauNambaScreen> createState() => _SahauNambaScreenState();
-}
-
-class _SahauNambaScreenState extends State<SahauNambaScreen> {
-  final _ctrl  = TextEditingController();
-  final _focus = FocusNode();
-  bool    _loading  = false;
-  String? _error;
-  bool    _notFound = false;
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    _focus.dispose();
-    super.dispose();
-  }
-
-  Future<void> _tafuta() async {
-    final name  = _ctrl.text.trim();
-    final words = name.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
-
-    if (words.length < 2) {
-      setState(() {
-        _error    = 'Weka jina la kwanza na la mwisho.';
-        _notFound = false;
-      });
-      return;
-    }
-
-    setState(() { _loading = true; _error = null; _notFound = false; });
-    FocusScope.of(context).unfocus();
-
-    try {
-      final res = await ApiService().lookupByName(name);
-      if (!mounted) return;
-
-      final raw   = res.data;
-      final users = raw is List
-          ? raw
-          : (raw is Map ? (raw['users'] ?? raw['data'] ?? []) as List : <dynamic>[]);
-
-      if (users.isEmpty) {
-        setState(() { _loading = false; _notFound = true; });
-        return;
-      }
-
-      final u     = users.first as Map;
-      final phone = (u['phone_primary'] ?? u['phone'] ?? '').toString().trim();
-
-      if (phone.isEmpty) {
-        setState(() { _loading = false; _notFound = true; });
-        return;
-      }
-
-      final jina = (u['full_name'] ?? '').toString().trim().toUpperCase();
-      final kada = _cadreOf(u);
-      setState(() => _loading = false);
-
-      // Piga push; result ni namba (Ingia) au null (Tafuta tena)
-      final result = await Navigator.of(context).push<String>(
-        MaterialPageRoute(
-          builder: (_) => NambaImepatikanaScreen(
-            jina: jina,
-            kada: kada,
-            namba: phone,
+  Widget _copyButton() => Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: _C.copyBorder),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: _copy,
+          child: const SizedBox(
+            height: 32,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(TablerIcons.copy, size: 15, color: _C.primaryDark),
+                SizedBox(width: 5),
+                Text('Nakili',
+                    style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+              ]),
+            ),
           ),
         ),
       );
-      if (!mounted) return;
 
-      if (result != null) {
-        // Mtumiaji alitap "Ingia" — rudisha namba kwa login screen
-        Navigator.of(context).pop(result);
-      } else {
-        // Mtumiaji alitap "Tafuta tena" — futa field, rudisha focus
-        _ctrl.clear();
-        _focus.requestFocus();
-      }
-    } on DioException catch (e) {
-      if (!mounted) return;
-      if (e.response?.statusCode == 404) {
-        setState(() { _loading = false; _notFound = true; });
-      } else {
-        String msg = 'Imeshindikana kutafuta. Jaribu tena.';
-        final d = e.response?.data;
-        if (d is Map && d['detail'] is String &&
-            (d['detail'] as String).isNotEmpty) {
-          msg = d['detail'] as String;
-        }
-        setState(() { _loading = false; _error = msg; });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error   = 'Imeshindikana kutafuta. Jaribu tena.';
-      });
-    }
-  }
+  Widget _footer({required Widget left, required Widget right}) => Container(
+        margin: const EdgeInsets.only(top: 20),
+        padding: const EdgeInsets.only(top: 14),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: _C.line)),
+        ),
+        child: Row(children: [left, const Spacer(), right]),
+      );
+
+  Widget _textLink(IconData icon, String t, VoidCallback onTap) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 16, color: _C.primaryDark),
+            const SizedBox(width: 6),
+            Text(t,
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+          ]),
+        ),
+      );
+
+  Widget _primaryButton(String t, VoidCallback? onTap, {bool loading = false}) =>
+      SizedBox(
+        height: 36,
+        child: ElevatedButton(
+          onPressed: onTap,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _C.primary,
+            disabledBackgroundColor: _C.primary.withValues(alpha: 0.75),
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+          ),
+          child: loading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text(t, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                  const SizedBox(width: 6),
+                  const Icon(TablerIcons.arrowRight, size: 16),
+                ]),
+        ),
+      );
+
+  OutlineInputBorder _border(Color c) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: c, width: 1.5),
+      );
+}
+
+// ================= LOGO =================
+class _AppLogo extends StatelessWidget {
+  const _AppLogo();
 
   @override
   Widget build(BuildContext context) {
-    final hasError = _error != null;
+    return Image.asset(
+      kLogoAsset,
+      height: kLogoHeight,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
+      errorBuilder: (_, __, ___) => const _LogoPlaceholder(),
+    );
+  }
+}
 
-    return Scaffold(
-      backgroundColor: _C.bg,
-      body: SafeArea(
+class _LogoPlaceholder extends StatelessWidget {
+  const _LogoPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _DashedRRectPainter(color: _C.logoDash, radius: 18),
+      child: const SizedBox(
+        width: 72,
+        height: 72,
         child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: _FormCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const _BrandHeader(),
-                  const SizedBox(height: 20),
-                  const _StepProgress(1),
-                  const SizedBox(height: 22),
-
-                  // ── Ikoni ya hatua ──
-                  Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(
-                      color: _C.accentBg,
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                    child: const Icon(Icons.person_search_rounded,
-                        color: _C.accent, size: 20),
-                  ),
-                  const SizedBox(height: 14),
-
-                  const Text(
-                    'Umesahau namba?',
-                    style: TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w800,
-                      color: _C.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Andika jina lako kamili tukutafutie namba uliyosajili nayo.',
-                    style: TextStyle(
-                      fontSize: 13, color: _C.textSecondary, height: 1.45,
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Jina kamili',
-                    style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700,
-                      color: _C.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-
-                  // ── Input field ──
-                  Container(
-                    height: 42,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: hasError ? _C.errorColor : _C.accent,
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.person_outline_rounded,
-                            size: 16,
-                            color: hasError ? _C.errorColor : _C.accent),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _ctrl,
-                            focusNode: _focus,
-                            textCapitalization: TextCapitalization.words,
-                            textInputAction: TextInputAction.search,
-                            onSubmitted: (_) => _loading ? null : _tafuta(),
-                            onChanged: (_) {
-                              if (_error != null || _notFound) {
-                                setState(() {
-                                  _error    = null;
-                                  _notFound = false;
-                                });
-                              }
-                            },
-                            style: const TextStyle(
-                                fontSize: 13, color: _C.textPrimary),
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              border: InputBorder.none,
-                              hintText: 'Mfano: Amani Selemani',
-                              hintStyle: TextStyle(
-                                  fontSize: 13, color: _C.textMuted),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 7),
-
-                  // ── Hint / error chini ya field ──
-                  if (hasError)
-                    Row(children: [
-                      const Icon(Icons.error_outline_rounded,
-                          size: 12, color: _C.errorColor),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(_error!,
-                            style: const TextStyle(
-                                fontSize: 11, color: _C.errorColor)),
-                      ),
-                    ])
-                  else
-                    const Row(children: [
-                      Icon(Icons.verified_rounded,
-                          size: 12, color: _C.success),
-                      SizedBox(width: 5),
-                      Text('Andika jina kama lilivyosajiliwa',
-                          style: TextStyle(
-                              fontSize: 11, color: _C.textMuted)),
-                    ]),
-
-                  // ── "Hatukupata" inline card ──
-                  if (_notFound) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _C.errorBg,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                            color: _C.errorBorder, width: 0.5),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Hatukupata',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: _C.errorColor,
-                              )),
-                          SizedBox(height: 3),
-                          Text('Hatukupata namba kwa jina hilo.',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: _C.textSecondary)),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 18),
-                  const Divider(height: 0.5, color: _C.border),
-                  const SizedBox(height: 16),
-
-                  // ── Footer: Rudi | Tafuta ──
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton.icon(
-                        onPressed: () => Navigator.of(context).maybePop(),
-                        icon: const Icon(Icons.arrow_back, size: 14),
-                        label: const Text('Rudi kuingia'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: _C.accent,
-                          textStyle: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w700),
-                          padding: EdgeInsets.zero,
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: _loading ? null : _tafuta,
-                        icon: _loading
-                            ? const SizedBox(
-                                width: 12, height: 12,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.arrow_forward, size: 14),
-                        label: const Text('Tafuta'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _C.accent,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: const Color(0xFF8AAAF5),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(9)),
-                          textStyle: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+          child: Text('Logo\nyako',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: _C.logoText, height: 1.2)),
         ),
       ),
     );
   }
 }
 
-// =============================================================================
-// SKRINI 2 — Matokeo (hatua 2/2)
-// =============================================================================
+class _DashedRRectPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  _DashedRRectPainter({required this.color, required this.radius});
 
-class NambaImepatikanaScreen extends StatelessWidget {
-  final String jina;
-  final String kada;
-  final String namba;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)));
+    for (final m in path.computeMetrics()) {
+      double d = 0;
+      while (d < m.length) {
+        canvas.drawPath(m.extractPath(d, d + 5), paint);
+        d += 9;
+      }
+    }
+  }
 
-  const NambaImepatikanaScreen({
-    super.key,
-    required this.jina,
-    required this.kada,
-    required this.namba,
-  });
+  @override
+  bool shouldRepaint(covariant _DashedRRectPainter old) => old.color != color;
+}
+
+// ================= MISTARI YA HATUA =================
+class _StepBar extends StatelessWidget {
+  final bool step2;
+  const _StepBar({required this.step2});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _C.bg,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: _FormCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const _BrandHeader(),
-                  const SizedBox(height: 20),
-                  const _StepProgress(2),
-                  const SizedBox(height: 22),
-
-                  // ── Ikoni ya mafanikio ──
-                  Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(
-                      color: _C.successBg,
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                    child: const Icon(Icons.check_circle_rounded,
-                        color: _C.success, size: 20),
-                  ),
-                  const SizedBox(height: 14),
-
-                  const Text(
-                    'Namba imepatikana',
-                    style: TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w800,
-                      color: _C.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Hii ndiyo namba uliyojisajili nayo.',
-                    style: TextStyle(
-                        fontSize: 13, color: _C.textSecondary),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ── Tile ya namba + nakili ──
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 11),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: _C.accent, width: 1.5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.smartphone_rounded,
-                            size: 17, color: _C.accent),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _fmtPhone(namba),
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: _C.textPrimary,
-                            ),
-                          ),
-                        ),
-                        InkWell(
-                          borderRadius: BorderRadius.circular(7),
-                          onTap: () {
-                            Clipboard.setData(ClipboardData(text: namba));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    'Namba imenakiliwa: ${_fmtPhone(namba)}'),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(10)),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: 28, height: 28,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  color: _C.border, width: 0.5),
-                              borderRadius: BorderRadius.circular(7),
-                            ),
-                            child: const Icon(Icons.copy_rounded,
-                                size: 14, color: _C.accent),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-                  _InfoRow(
-                    icon: Icons.badge_outlined,
-                    label: 'Jina',
-                    value: jina,
-                    topBorder: false,
-                  ),
-                  _InfoRow(
-                    icon: Icons.work_outline_rounded,
-                    label: 'Kada',
-                    value: kada,
-                    topBorder: true,
-                  ),
-
-                  const SizedBox(height: 18),
-                  const Divider(height: 0.5, color: _C.border),
-                  const SizedBox(height: 16),
-
-                  // ── Footer: Tafuta tena | Ingia ──
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton.icon(
-                        // null → SahauNambaScreen itafuta field
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.refresh_rounded, size: 14),
-                        label: const Text('Tafuta tena'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: _C.accent,
-                          textStyle: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w700),
-                          padding: EdgeInsets.zero,
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        // namba → login screen inajaza field
-                        onPressed: () =>
-                            Navigator.of(context).pop(namba),
-                        icon: const Icon(Icons.arrow_forward, size: 14),
-                        label: const Text('Ingia'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _C.accent,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(9)),
-                          textStyle: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+    Widget bar(bool on) => Expanded(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: 5,
+            decoration: BoxDecoration(
+              color: on ? _C.primary : _C.line,
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
-        ),
-      ),
-    );
+        );
+    return Row(children: [bar(true), const SizedBox(width: 8), bar(step2)]);
   }
 }
