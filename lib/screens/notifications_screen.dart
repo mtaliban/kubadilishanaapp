@@ -97,7 +97,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   // ── Muonekano wa icon kwa kila aina ───────────────────────────────────────
   static (IconData, Color, Color) _look(String type) {
     return switch (type) {
-      'payment.approved'                    => (Icons.verified_outlined,            const Color(0xFFD1FAE5), const Color(0xFF047857)),
+      'payment.approved'                    => (Icons.check_circle_outline_rounded,  const Color(0xFFD1FAE5), const Color(0xFF047857)),
       'payment.rejected'                    => (Icons.cancel_outlined,              const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
       'payment.submitted' ||
       'payment.message'   ||
@@ -105,7 +105,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       'match.found' || 'match.new'          => (Icons.compare_arrows_rounded,       const Color(0xFFFCE7F3), const Color(0xFFBE185D)),
       'user.registered'                     => (Icons.person_add_outlined,          const Color(0xFFEDE9FE), const Color(0xFF6D28D9)),
       'announcement' || 'announcement.new'  => (Icons.campaign_rounded,             const Color(0xFFFEF3C7), const Color(0xFFB45309)),
-      'feedback.replied' || 'admin.reply'   => (Icons.mark_chat_read_outlined,      const Color(0xFFDBEAFE), const Color(0xFF1E40AF)),
+      'feedback.replied' || 'admin.reply'   => (Icons.chat_bubble_outline_rounded,   const Color(0xFFDBEAFE), const Color(0xFF1E40AF)),
       'feedback.new'                        => (Icons.chat_bubble_outline_rounded,  const Color(0xFFFFF7ED), const Color(0xFFEA580C)),
       'message.sent' || 'message.new' ||
       'message'                             => (Icons.forum_outlined,               const Color(0xFFDBEAFE), const Color(0xFF1E40AF)),
@@ -329,7 +329,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Container(
               width: 54, height: 54,
               decoration: BoxDecoration(
-                color: read ? _kGrey100 : iconBg,
+                color: _kGrey100,
                 shape: BoxShape.circle,
               ),
               child: Center(

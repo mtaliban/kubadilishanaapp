@@ -50,7 +50,7 @@ class AdminBadgeService extends ChangeNotifier {
         // Refresh kutoka server — tunahakikisha count sahihi
         refresh();
       case 'feedback.new':
-        refresh();
+        bumpFeedback();
       case 'user.registered':
         bumpUsers();
       case 'match.found':
