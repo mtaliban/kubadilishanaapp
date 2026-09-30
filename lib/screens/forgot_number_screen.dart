@@ -58,29 +58,21 @@ class _BrandHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 54,
-          height: 54,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _C.border, width: 0.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.07),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            color: _C.accent,
+            borderRadius: BorderRadius.circular(20),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(20),
             child: Image.asset(
               'assets/images/app_icon.png',
-              fit: BoxFit.contain,
+              fit: BoxFit.cover,
               errorBuilder: (ctx, err, st) => const Icon(
                 Icons.sync_alt_rounded,
-                color: _C.accent,
-                size: 26,
+                color: Colors.white,
+                size: 36,
               ),
             ),
           ),
