@@ -74,32 +74,32 @@ class AdminBadgeService extends ChangeNotifier {
 
   // ── Clear (admin amefungua ukurasa) ──────────────────────────────────────
 
-  void clearUsers() {
+  Future<void> clearUsers() async {
     if (users == 0) return;
     users = 0;
     notifyListeners();
-    _markSeen('users');
+    await _markSeen('users');
   }
 
-  void clearMatches() {
+  Future<void> clearMatches() async {
     if (matches == 0) return;
     matches = 0;
     notifyListeners();
-    _markSeen('matches');
+    await _markSeen('matches');
   }
 
-  void clearContacts() {
+  Future<void> clearContacts() async {
     if (contacts == 0) return;
     contacts = 0;
     notifyListeners();
-    _markSeen('contacts');
+    await _markSeen('contacts');
   }
 
-  void clearAnnouncements() {
+  Future<void> clearAnnouncements() async {
     if (announcements == 0) return;
     announcements = 0;
     notifyListeners();
-    _markSeen('matangazo');
+    await _markSeen('matangazo');
   }
 
   void clearPayments() {
@@ -148,7 +148,7 @@ class AdminBadgeService extends ChangeNotifier {
 
   // ── Private helpers ───────────────────────────────────────────────────────
 
-  void _markSeen(String page) {
-    ApiService().adminMarkPageSeen(page).catchError((_) {});
+  Future<void> _markSeen(String page) async {
+    try { await ApiService().adminMarkPageSeen(page); } catch (_) {}
   }
 }

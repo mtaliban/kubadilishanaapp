@@ -242,6 +242,7 @@ class _AdminShellState extends State<AdminShell> {
           badges: {
             'watumiaji': _badges.users,
             'wenzao':    _badges.matches,
+            'match':     _badges.matches,
             'simu':      _badges.contacts,
             'maoni':     _badges.feedback,
             'malipo':    _badges.payments,
@@ -256,8 +257,10 @@ class _AdminShellState extends State<AdminShell> {
       ),
       body: Builder(builder: (ctx) {
         // Kila ukurasa unaofunguliwa: futa badge yake + hesabu upya counts
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _clearBadgeForPage(_idx);
+        // await clear kwanza — kuzuia race: refreshBadges isipige server
+        // kabla _markSeen haijafika (ingekurejesha count ya zamani).
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          await _clearBadgeForPage(_idx);
           refreshBadges();
         });
         return widget.child ?? _pageFor(_idx);
@@ -383,6 +386,7 @@ class _AdminShellState extends State<AdminShell> {
     switch (index) {
       case 1: return _badges.users;         // Watumiaji wapya
       case 2: return _badges.matches;       // Waliopata wenzao wapya
+      case 3: return _badges.matches;       // Match za Kweli (same pool)
       case 6: return _badges.payments;      // Malipo yanasubiri
       case 7: return _badges.contacts;      // Waliopigiana wapya
       case 8: return _badges.feedback;      // Maoni yasiyojibiwa
@@ -391,12 +395,13 @@ class _AdminShellState extends State<AdminShell> {
     }
   }
 
-  void _clearBadgeForPage(int index) {
+  Future<void> _clearBadgeForPage(int index) async {
     switch (index) {
-      case 1: _badges.clearUsers();         // Watumiaji — angalia tu
-      case 2: _badges.clearMatches();       // Wenzao — angalia tu
-      case 7: _badges.clearContacts();      // Waliopigiana — angalia tu
-      case 9: _badges.clearAnnouncements(); // Matangazo — angalia tu
+      case 1: await _badges.clearUsers();         // Watumiaji — angalia tu
+      case 2:
+      case 3: await _badges.clearMatches();       // Wenzao / Match za Kweli — angalia tu
+      case 7: await _badges.clearContacts();      // Waliopigiana — angalia tu
+      case 9: await _badges.clearAnnouncements(); // Matangazo — angalia tu
       // Malipo (6): HAIISHI ukiangalia — inaisha baada ya approve/reject
       // Maoni (8): HAIISHI ukiangalia — inaisha baada ya kujibu
     }
