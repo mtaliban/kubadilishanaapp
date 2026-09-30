@@ -8,6 +8,7 @@ import '../../widgets/app_shell.dart' show LanguageProvider;
 import '../../services/app_navigator.dart' show adminPageNotifier;
 import '../../widgets/admin_top_bar.dart';
 import '../../widgets/admin_drawer.dart';
+import '../../widgets/network_banner.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_users_v2_page.dart';
 import 'admin_matches_page.dart';
@@ -21,7 +22,6 @@ import 'admin_reports_page.dart';
 import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';
 import 'admin_profile_screen.dart';
-import '../../utils/safe_cast.dart';
 
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey200 = Color(0xFFE5E7EB);
@@ -257,13 +257,14 @@ class _AdminShellState extends State<AdminShell> {
       ),
       body: Builder(builder: (ctx) {
         // Kila ukurasa unaofunguliwa: futa badge yake + hesabu upya counts
-        // await clear kwanza — kuzuia race: refreshBadges isipige server
-        // kabla _markSeen haijafika (ingekurejesha count ya zamani).
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           await _clearBadgeForPage(_idx);
           refreshBadges();
         });
-        return widget.child ?? _pageFor(_idx);
+        return Column(children: [
+          const NetworkBanner(),
+          Expanded(child: widget.child ?? _pageFor(_idx)),
+        ]);
       }),
       bottomNavigationBar: _buildBottomNav(),
     );

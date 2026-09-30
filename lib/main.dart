@@ -11,6 +11,7 @@ import 'providers/auth_provider.dart';
 import 'services/api_service.dart';
 import 'services/app_cache.dart';
 import 'services/app_navigator.dart';
+import 'services/network_service.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -107,6 +108,13 @@ void main() {
       await AppCache().warmUp();
     } catch (e) {
       _crashLog.add('[Cache] $e');
+    }
+
+    // Anza huduma ya mtandao — inaangalia connectivity na /health
+    try {
+      NetworkService().start();
+    } catch (e) {
+      _crashLog.add('[Network] $e');
     }
 
     runApp(const KubadilishanaApp());
