@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
 class _C {
-  static const pageBg      = Color(0xFFF7F7F5);
+  static const pageBg      = Colors.white;
   static const cardBorder  = Color(0xFFEDEDED);
   static const primary     = Color(0xFF2878D6);
   static const primaryDark = Color(0xFF1B4F9C);
@@ -252,16 +252,20 @@ class _AddAdminFormState extends State<AddAdminForm> {
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       const Icon(TablerIcons.arrowLeft, size: 15, color: _C.primaryDark),
                       const SizedBox(width: 5),
-                      const Text('Ghairi',
-                          style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: _C.primaryDark)),
+                      Flexible(
+                        child: Text('Ghairi',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: _C.primaryDark)),
+                      ),
                     ]),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               SizedBox(
                 height: 36,
                 child: ElevatedButton(
@@ -308,11 +312,15 @@ class _AddAdminFormState extends State<AddAdminForm> {
         child: Row(children: [
           Icon(icon, size: 17, color: _C.primaryDark),
           const SizedBox(width: 6),
-          Text(text,
-              style: const TextStyle(
-                  fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
+          Flexible(
+            child: Text(text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
+          ),
           if (trailing != null) ...[
-            const Spacer(),
+            const SizedBox(width: 6),
             Text(trailing,
                 style: const TextStyle(fontSize: 12, color: _C.note)),
           ],
