@@ -452,7 +452,10 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: _C.line)),
         ),
-        child: Row(children: [left, const Spacer(), right]),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [Flexible(child: left), right],
+        ),
       );
 
   Widget _textLink(IconData icon, String t, VoidCallback onTap) => InkWell(
@@ -463,9 +466,13 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon, size: 16, color: _C.primaryDark),
             const SizedBox(width: 6),
-            Text(t,
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+            Flexible(
+              child: Text(t,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+            ),
           ]),
         ),
       );
