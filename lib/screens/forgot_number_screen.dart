@@ -510,7 +510,15 @@ class _AppLogo extends StatelessWidget {
   const _AppLogo();
 
   @override
-  Widget build(BuildContext context) => const _LogoPlaceholder();
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/app_icon.png',
+      height: 110,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
+      errorBuilder: (_, __, ___) => const _LogoPlaceholder(),
+    );
+  }
 }
 
 class _LogoPlaceholder extends StatelessWidget {
