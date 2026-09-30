@@ -1,675 +1,384 @@
+// =====================================================================
+//  FOMU YA "ONGEZA ADMIN" — Kubadilishana
+//  Kadi moja: Jina kamili, Barua pepe, Namba ya simu (si lazima), Nywila.
+//  Chini: "Ghairi" (kushoto) na kitufe KIDOGO "Hifadhi" (kulia, bila icon).
+// =====================================================================
+
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:flutter/services.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
-/* ============================================================
-   DATA INAYORUDISHWA
-   ============================================================ */
-class NewAdminData {
-  final String name;
-  final String email;
-  final String phone; // mf. 0712345678
-  final String password;
+class _C {
+  static const pageBg      = Color(0xFFF7F7F5);
+  static const cardBorder  = Color(0xFFEDEDED);
+  static const primary     = Color(0xFF2878D6);
+  static const primaryDark = Color(0xFF1B4F9C);
+  static const text        = Color(0xFF111111);
+  static const hint        = Color(0xFF9A9A9A);
+  static const note        = Color(0xFF8A8A8A);
+  static const line        = Color(0xFFE6E6E6);
+  static const inputBorder = Color(0xFFD5DEEB);
+  static const eye         = Color(0xFF6B7280);
+  static const error       = Color(0xFFB91C1C);
+}
 
-  const NewAdminData({
-    required this.name,
+class NewAdmin {
+  final String  fullName;
+  final String  email;
+  final String? phone;    // "+2557XXXXXXXX" au null
+  final String  password;
+  const NewAdmin({
+    required this.fullName,
     required this.email,
     required this.phone,
     required this.password,
   });
 }
 
-/* ============================================================
-   UKURASA WA KUONGEZA ADMIN
-   Tumia kama:
-   Navigator.push(context, MaterialPageRoute(
-     builder: (_) => AddAdminPage(onSave: (d) async { ... }),
-   ));
-   ============================================================ */
-class AddAdminPage extends StatefulWidget {
-  final Future<void> Function(NewAdminData data)? onSave;
+/// Ukurasa mzima (AppBar + fomu).
+class AddAdminPage extends StatelessWidget {
+  /// Rudisha null kama imefanikiwa, au ujumbe wa kosa (mf. "Barua pepe hii ipo tayari").
+  /// Si lazima — tests zinaweza kutumia const AddAdminPage() bila onSave.
+  final Future<String?> Function(NewAdmin admin)? onSave;
   const AddAdminPage({super.key, this.onSave});
 
   @override
-  State<AddAdminPage> createState() => _AddAdminPageState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _C.pageBg,
+      appBar: AppBar(
+        backgroundColor:  _C.pageBg,
+        surfaceTintColor: _C.pageBg,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(TablerIcons.arrowLeft, color: _C.text, size: 22),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        titleSpacing: 0,
+        title: const Text('Ongeza admin',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _C.text)),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+          child: AddAdminForm(
+            onSave: onSave,
+            onCancel: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _AddAdminPageState extends State<AddAdminPage> {
-  final nameCtrl = TextEditingController();
-  final emailCtrl = TextEditingController();
-  final phoneCtrl = TextEditingController();
-  final pwCtrl = TextEditingController();
-  bool showPw = false;
-  bool saving = false;
-  bool showErr = false; // kitufe kinakuwa chekundu kwa muda mfupi
-
-  static final _emailRe = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+class AddAdminForm extends StatefulWidget {
+  final Future<String?> Function(NewAdmin admin)? onSave;
+  final VoidCallback onCancel;
+  const AddAdminForm({super.key, required this.onCancel, this.onSave});
 
   @override
-  void initState() {
-    super.initState();
-    emailCtrl.addListener(() => setState(() {}));
-    pwCtrl.addListener(() => setState(() {}));
-  }
+  State<AddAdminForm> createState() => _AddAdminFormState();
+}
+
+class _AddAdminFormState extends State<AddAdminForm> {
+  final _name     = TextEditingController();
+  final _email    = TextEditingController();
+  final _phone    = TextEditingController();
+  final _password = TextEditingController();
+
+  bool    _showPassword = false;
+  bool    _saving       = false;
+  String? _nameErr, _emailErr, _phoneErr, _passwordErr, _formErr;
 
   @override
   void dispose() {
-    nameCtrl.dispose();
-    emailCtrl.dispose();
-    phoneCtrl.dispose();
-    pwCtrl.dispose();
+    _name.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _password.dispose();
     super.dispose();
   }
 
-  String _digits(String s) => s.replaceAll(RegExp(r'\D'), '');
+  bool _validate() {
+    final name  = _name.text.trim();
+    final email = _email.text.trim();
+    final phone = _phone.text.replaceAll(' ', '');
+    final pass  = _password.text;
 
-  bool get _emailOk => _emailRe.hasMatch(emailCtrl.text.trim());
-
-  // 0 - 4
-  int get _strength {
-    final v = pwCtrl.text;
-    var s = 0;
-    if (v.length >= 6) s++;
-    if (v.length >= 10) s++;
-    if (RegExp(r'[0-9]').hasMatch(v) && RegExp(r'[a-zA-Z]').hasMatch(v)) s++;
-    if (RegExp(r'[^a-zA-Z0-9]').hasMatch(v)) s++;
-    return s;
-  }
-
-  static const _strengthLabels = ['Dhaifu sana', 'Dhaifu', 'Wastani', 'Nzuri', 'Imara'];
-
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg)));
-  }
-
-  String? _validate() {
-    if (nameCtrl.text.trim().isEmpty) return 'Andika jina kamili';
-    if (!_emailOk) return 'Andika barua pepe sahihi';
-    if (_digits(phoneCtrl.text).length != 9) {
-      return 'Namba ya simu iwe tarakimu 9 baada ya +255';
-    }
-    if (pwCtrl.text.length < 6) return 'Nywila iwe angalau herufi 6';
-    return null;
-  }
-
-  Future<void> _flashError(String msg) async {
-    _toast(msg);
-    setState(() => showErr = true);
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (mounted) setState(() => showErr = false);
+    setState(() {
+      _formErr     = null;
+      _nameErr     = name.split(RegExp(r'\s+')).length < 2
+          ? 'Andika majina mawili au zaidi'
+          : null;
+      _emailErr    = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)
+          ? null
+          : 'Barua pepe si sahihi';
+      _phoneErr    = phone.isEmpty || RegExp(r'^[67]\d{8}$').hasMatch(phone)
+          ? null
+          : 'Andika tarakimu 9, mfano 712 345 678';
+      _passwordErr = pass.length < 8 ? 'Nywila iwe na herufi 8 au zaidi' : null;
+    });
+    return _nameErr == null &&
+        _emailErr == null &&
+        _phoneErr == null &&
+        _passwordErr == null;
   }
 
   Future<void> _save() async {
-    final err = _validate();
-    if (err != null) return _flashError(err);
-
-    final data = NewAdminData(
-      name: nameCtrl.text.trim(),
-      email: emailCtrl.text.trim().toLowerCase(),
-      phone: '0${_digits(phoneCtrl.text)}',
-      password: pwCtrl.text,
-    );
-
-    setState(() => saving = true);
-    try {
-      await widget.onSave?.call(data);
-      if (!mounted) return;
-      _toast('Admin ameongezwa');
-      Navigator.maybePop(context);
-    } catch (e) {
-      if (mounted) _toast('Imeshindikana kuongeza admin: $e');
-    } finally {
-      if (mounted) setState(() => saving = false);
-    }
+    FocusScope.of(context).unfocus();
+    if (!_validate()) return;
+    setState(() => _saving = true);
+    final phone = _phone.text.replaceAll(' ', '');
+    final err   = await widget.onSave?.call(NewAdmin(
+      fullName: _name.text.trim().toUpperCase(),
+      email:    _email.text.trim().toLowerCase(),
+      phone:    phone.isEmpty ? null : '+255$phone',
+      password: _password.text,
+    ));
+    if (!mounted) return;
+    setState(() {
+      _saving  = false;
+      _formErr = err;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final c = _AColors.of(context);
-    final emailText = emailCtrl.text.trim();
-    final emailBad = emailText.isNotEmpty && !_emailOk;
-    final s = _strength;
-    final meterColor = switch (s) {
-      1 => c.red,
-      2 || 3 => c.amber,
-      4 => c.green,
-      _ => c.borderStrong,
-    };
-
-    return Scaffold(
-      backgroundColor: c.page,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Kichwa
-            Container(
-              padding: const EdgeInsets.fromLTRB(6, 8, 14, 8),
-              decoration: BoxDecoration(
-                color: c.page,
-                border: Border(bottom: BorderSide(color: c.border)),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.maybePop(context),
-                    icon: Icon(PhosphorIcons.arrowLeft(), size: 21, color: c.text),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Ongeza admin',
-                            style: TextStyle(
-                                color: c.text,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600)),
-                        Text('Msimamizi mpya wa mfumo',
-                            style: TextStyle(color: c.muted, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Maelezo
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: c.blueBg,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(PhosphorIcons.shieldCheck(), size: 20, color: c.blue),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text.rich(
-                              TextSpan(
-                                style: TextStyle(color: c.blue, fontSize: 13),
-                                children: const [
-                                  TextSpan(text: 'Admin anaingia kwa '),
-                                  TextSpan(
-                                      text: 'barua pepe na nywila',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w600)),
-                                  TextSpan(
-                                      text: '. Hahitaji idara wala kada.'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    _Section(
-                        icon: PhosphorIcons.userGear(),
-                        title: 'Taarifa za admin',
-                        c: c),
-
-                    _Label('Jina kamili', c: c, required: true),
-                    _Input(
-                      c: c,
-                      controller: nameCtrl,
-                      icon: PhosphorIcons.user(),
-                      hint: 'mf. Hamisi Selemani',
-                      capitalization: TextCapitalization.words,
-                    ),
-
-                    _Label('Barua pepe', c: c, required: true),
-                    _Input(
-                      c: c,
-                      controller: emailCtrl,
-                      icon: PhosphorIcons.envelope(),
-                      hint: 'jina@mfano.com',
-                      keyboard: TextInputType.emailAddress,
-                      error: emailBad,
-                      suffix: _emailOk
-                          ? Icon(PhosphorIcons.checkCircle(),
-                              size: 19, color: c.green)
-                          : null,
-                    ),
-                    _Hint(
-                      c: c,
-                      icon: emailBad
-                          ? PhosphorIcons.warningCircle()
-                          : PhosphorIcons.info(),
-                      text: emailBad
-                          ? 'Barua pepe si sahihi'
-                          : 'Atatumia barua pepe hii kuingia',
-                      color: emailBad ? c.red : null,
-                    ),
-
-                    _Label('Namba ya simu', c: c, required: true),
-                    _Input(
-                      c: c,
-                      controller: phoneCtrl,
-                      icon: PhosphorIcons.phone(),
-                      hint: '712 345 678',
-                      keyboard: TextInputType.phone,
-                      prefix255: true,
-                    ),
-
-                    _Label('Nywila',
-                        c: c,
-                        required: true,
-                        trailing: pwCtrl.text.isEmpty
-                            ? null
-                            : _strengthLabels[s]),
-                    _Input(
-                      c: c,
-                      controller: pwCtrl,
-                      icon: PhosphorIcons.lock(),
-                      hint: 'Angalau herufi 6',
-                      obscure: !showPw,
-                      suffix: IconButton(
-                        onPressed: () => setState(() => showPw = !showPw),
-                        icon: Icon(
-                            showPw ? PhosphorIcons.eyeSlash() : PhosphorIcons.eye(),
-                            size: 19,
-                            color: c.muted),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: List.generate(4, (i) {
-                        return Expanded(
-                          child: Container(
-                            height: 4,
-                            margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
-                            decoration: BoxDecoration(
-                              color: i < s ? meterColor : c.borderStrong,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-
-                    _Section(
-                        icon: PhosphorIcons.key(),
-                        title: 'Atakachoweza kufanya',
-                        c: c),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: c.borderStrong),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          _Perm(
-                              c: c,
-                              icon: PhosphorIcons.usersThree(),
-                              text: 'Kusimamia watumiaji'),
-                          Divider(height: 1, color: c.border),
-                          _Perm(
-                              c: c,
-                              icon: PhosphorIcons.megaphone(),
-                              text: 'Kutuma matangazo'),
-                          Divider(height: 1, color: c.border),
-                          _Perm(
-                              c: c,
-                              icon: PhosphorIcons.creditCard(),
-                              text: 'Kuthibitisha malipo'),
-                        ],
-                      ),
-                    ),
-
-                    // Vitufe (mtindo B: bluu hafifu, vyembamba)
-                    Container(
-                      margin: const EdgeInsets.only(top: 18),
-                      padding: const EdgeInsets.only(top: 12),
-                      decoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: c.border)),
-                      ),
-                      // Wrap badala ya Row: vitufe vinashuka mstari chini
-                      // kwenye skrini ndogo badala ya kumwaga (overflow).
-                      child: Wrap(
-                        alignment: WrapAlignment.end,
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          SizedBox(
-                            height: 30,
-                            child: TextButton(
-                              onPressed: saving
-                                  ? null
-                                  : () => Navigator.maybePop(context),
-                              style: TextButton.styleFrom(
-                                foregroundColor: c.muted,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                minimumSize: const Size(0, 30),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                textStyle: const TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w400),
-                              ),
-                              child: const Text('Ghairi'),
-                            ),
-                          ),
-                          SizedBox(
-                            height: 30,
-                            child: TextButton(
-                              onPressed: saving || showErr ? null : _save,
-                              style: TextButton.styleFrom(
-                                backgroundColor: showErr ? c.redBg : c.blueBg,
-                                foregroundColor: showErr ? c.red : c.blue,
-                                disabledBackgroundColor:
-                                    showErr ? c.redBg : c.blueBg,
-                                disabledForegroundColor:
-                                    showErr ? c.red : c.blue,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                minimumSize: const Size(0, 30),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8)),
-                                textStyle: const TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w400),
-                              ),
-                              child: saving
-                                  ? SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: c.blue),
-                                    )
-                                  : Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                            showErr
-                                                ? PhosphorIcons.warningCircle()
-                                                : PhosphorIcons.userPlus(),
-                                            size: 14),
-                                        const SizedBox(width: 5),
-                                        Text(showErr
-                                            ? 'Jaza sehemu zote'
-                                            : 'Ongeza admin'),
-                                      ],
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      decoration: BoxDecoration(
+        color:        Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border:       Border.all(color: _C.cardBorder),
       ),
-    );
-  }
-}
-
-/* ============================================================
-   VIPANDE VIDOGO
-   ============================================================ */
-class _Section extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final _AColors c;
-  const _Section({required this.icon, required this.title, required this.c});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 18),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: c.blue),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    color: c.text, fontSize: 15, fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Label extends StatelessWidget {
-  final String text;
-  final bool required;
-  final String? trailing;
-  final _AColors c;
-  const _Label(this.text,
-      {required this.c, this.required = false, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 14, bottom: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                text: text,
-                style: TextStyle(
-                    color: c.text, fontSize: 13, fontWeight: FontWeight.w600),
-                children: [
-                  if (required)
-                    TextSpan(text: ' *', style: TextStyle(color: c.red)),
-                ],
-              ),
-            ),
-          ),
-          if (trailing != null)
-            Flexible(
-              child: Text(trailing!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: c.muted, fontSize: 12)),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Hint extends StatelessWidget {
-  final _AColors c;
-  final IconData icon;
-  final String text;
-  final Color? color;
-  const _Hint(
-      {required this.c, required this.icon, required this.text, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final col = color ?? c.muted;
-    return Padding(
-      padding: const EdgeInsets.only(top: 5),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: col),
-          const SizedBox(width: 5),
-          Expanded(
-            child: Text(text,
-                style: TextStyle(color: col, fontSize: 12)),
+          // ---------- JINA ----------
+          _label(TablerIcons.userSquareRounded, 'Jina kamili'),
+          _field(
+            controller: _name,
+            hint:       'Mfano: Amani Selemani',
+            prefix:     _icon(TablerIcons.userCircle),
+            error:      _nameErr,
+            caps:       TextCapitalization.words,
+            onChanged:  () => _nameErr = null,
+          ),
+
+          // ---------- BARUA PEPE ----------
+          _gap(),
+          _label(TablerIcons.mail, 'Barua pepe'),
+          _field(
+            controller: _email,
+            hint:       'jina@mfano.go.tz',
+            prefix:     _icon(TablerIcons.at),
+            error:      _emailErr,
+            keyboard:   TextInputType.emailAddress,
+            onChanged:  () => _emailErr = null,
+          ),
+
+          // ---------- SIMU ----------
+          _gap(),
+          _label(TablerIcons.deviceMobile, 'Namba ya simu', trailing: 'Si lazima'),
+          _field(
+            controller: _phone,
+            hint:       '7XX XXX XXX',
+            prefix: Container(
+              margin:  const EdgeInsets.only(left: 12, right: 10),
+              padding: const EdgeInsets.only(right: 10),
+              decoration: const BoxDecoration(
+                border: Border(right: BorderSide(color: _C.line)),
+              ),
+              child: const Text('+255',
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700, color: _C.text)),
+            ),
+            error:      _phoneErr,
+            keyboard:   TextInputType.phone,
+            formatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(9),
+            ],
+            onChanged: () => _phoneErr = null,
+          ),
+
+          // ---------- NYWILA ----------
+          _gap(),
+          _label(TablerIcons.lock, 'Nywila'),
+          _field(
+            controller: _password,
+            hint:       'Angalau herufi 8',
+            prefix:     _icon(TablerIcons.key),
+            error:      _passwordErr,
+            obscure:    !_showPassword,
+            suffix: IconButton(
+              tooltip:   _showPassword ? 'Ficha nywila' : 'Onyesha nywila',
+              onPressed: () => setState(() => _showPassword = !_showPassword),
+              icon: Icon(
+                _showPassword ? TablerIcons.eyeOff : TablerIcons.eye,
+                size: 20, color: _C.eye,
+              ),
+            ),
+            onChanged: () => _passwordErr = null,
+          ),
+          if (_passwordErr == null) ...[
+            const SizedBox(height: 6),
+            const Text(
+                'Mpe admin nywila hii kwa njia salama. Ataweza kuibadilisha.',
+                style: TextStyle(fontSize: 12, color: _C.note, height: 1.35)),
+          ],
+
+          // Kosa kutoka server
+          if (_formErr != null) ...[
+            const SizedBox(height: 12),
+            _errorLine(_formErr!),
+          ],
+
+          // ---------- CHINI ----------
+          Container(
+            margin:  const EdgeInsets.only(top: 18),
+            padding: const EdgeInsets.only(top: 12),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: _C.line)),
+            ),
+            child: Row(children: [
+              Flexible(
+                child: InkWell(
+                  onTap:         _saving ? null : widget.onCancel,
+                  borderRadius:  BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(TablerIcons.arrowLeft, size: 15, color: _C.primaryDark),
+                      const SizedBox(width: 5),
+                      const Text('Ghairi',
+                          style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: _C.primaryDark)),
+                    ]),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 36,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:         _C.primary,
+                    disabledBackgroundColor: _C.primary.withValues(alpha: 0.75),
+                    foregroundColor:         Colors.white,
+                    disabledForegroundColor: Colors.white,
+                    elevation:  0,
+                    padding:    const EdgeInsets.symmetric(horizontal: 20),
+                    minimumSize:    Size.zero,
+                    tapTargetSize:  MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9)),
+                  ),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Text('Hifadhi',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ]),
           ),
         ],
       ),
     );
   }
-}
 
-class _Input extends StatelessWidget {
-  final _AColors c;
-  final TextEditingController controller;
-  final IconData icon;
-  final String hint;
-  final bool prefix255;
-  final bool obscure;
-  final bool error;
-  final TextInputType? keyboard;
-  final TextCapitalization capitalization;
-  final Widget? suffix;
+  // ---------------- VIPANDE ----------------
+  Widget _gap() => const SizedBox(height: 14);
 
-  const _Input({
-    required this.c,
-    required this.controller,
-    required this.icon,
-    required this.hint,
-    this.prefix255 = false,
-    this.obscure = false,
-    this.error = false,
-    this.keyboard,
-    this.capitalization = TextCapitalization.none,
-    this.suffix,
-  });
+  Widget _icon(IconData i) => Padding(
+        padding: const EdgeInsets.only(left: 12, right: 10),
+        child:   Icon(i, size: 20, color: _C.primaryDark),
+      );
 
-  @override
-  Widget build(BuildContext context) {
-    OutlineInputBorder b(Color col, [double w = 1]) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: col, width: w),
-        );
-    return TextField(
-      controller: controller,
-      obscureText: obscure,
-      keyboardType: keyboard,
-      textCapitalization: capitalization,
-      autocorrect: !obscure,
-      style: TextStyle(color: c.text, fontSize: 15),
-      cursorColor: c.blue,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: c.faint, fontSize: 15),
-        isDense: true,
-        filled: true,
-        fillColor: c.page,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.only(left: 12, right: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 20, color: c.blue),
-              if (prefix255) ...[
-                const SizedBox(width: 10),
-                Text('+255', style: TextStyle(color: c.text, fontSize: 15)),
-                const SizedBox(width: 10),
-                Container(width: 1, height: 20, color: c.borderStrong),
-              ],
-            ],
+  Widget _label(IconData icon, String text, {String? trailing}) => Padding(
+        padding: const EdgeInsets.only(bottom: 7),
+        child: Row(children: [
+          Icon(icon, size: 17, color: _C.primaryDark),
+          const SizedBox(width: 6),
+          Text(text,
+              style: const TextStyle(
+                  fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
+          if (trailing != null) ...[
+            const Spacer(),
+            Text(trailing,
+                style: const TextStyle(fontSize: 12, color: _C.note)),
+          ],
+        ]),
+      );
+
+  Widget _errorLine(String msg) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(TablerIcons.alertCircle, size: 15, color: _C.error),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(msg,
+                style: const TextStyle(
+                    fontSize: 12.5, color: _C.error, height: 1.3)),
+          ),
+        ],
+      );
+
+  Widget _field({
+    required TextEditingController controller,
+    required String                 hint,
+    required Widget                 prefix,
+    required String?                error,
+    required VoidCallback           onChanged,
+    Widget?                         suffix,
+    bool                            obscure    = false,
+    TextInputType?                  keyboard,
+    TextCapitalization              caps       = TextCapitalization.none,
+    List<TextInputFormatter>?       formatters,
+  }) {
+    final hasError = error != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller:           controller,
+          obscureText:          obscure,
+          keyboardType:         keyboard,
+          textCapitalization:   caps,
+          inputFormatters:      formatters,
+          onChanged: (_) { if (hasError) setState(onChanged); },
+          style: const TextStyle(fontSize: 15, color: _C.text, height: 1.2),
+          decoration: InputDecoration(
+            hintText:  hint,
+            hintStyle: const TextStyle(fontSize: 15, color: _C.hint, height: 1.2),
+            prefixIcon:            prefix,
+            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 44),
+            suffixIcon:            suffix,
+            contentPadding:        const EdgeInsets.fromLTRB(0, 14, 12, 14),
+            filled:      true,
+            fillColor:   Colors.white,
+            enabledBorder: _border(hasError ? _C.error : _C.inputBorder),
+            focusedBorder: _border(hasError ? _C.error : _C.primary),
           ),
         ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-        suffixIcon: suffix,
-        border: b(error ? c.red : c.borderStrong),
-        enabledBorder: b(error ? c.red : c.borderStrong),
-        focusedBorder: b(error ? c.red : c.blue, 1.5),
-      ),
-    );
-  }
-}
-
-class _Perm extends StatelessWidget {
-  final _AColors c;
-  final IconData icon;
-  final String text;
-  const _Perm({required this.c, required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: c.blueBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 17, color: c.blue),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(text, style: TextStyle(color: c.text, fontSize: 14)),
-          ),
-          Icon(PhosphorIcons.check(), size: 18, color: c.green),
+        if (hasError) ...[
+          const SizedBox(height: 6),
+          _errorLine(error),
         ],
-      ),
+      ],
     );
   }
-}
 
-/* ============================================================
-   RANGI (nyeupe, zisizopauka)
-   ============================================================ */
-class _AColors {
-  final Color page, border, borderStrong, text, muted, faint;
-  final Color blue, blueBg, blueRing, green, amber, red, redBg;
-
-  const _AColors({
-    required this.page,
-    required this.border,
-    required this.borderStrong,
-    required this.text,
-    required this.muted,
-    required this.faint,
-    required this.blue,
-    required this.blueBg,
-    required this.blueRing,
-    required this.green,
-    required this.amber,
-    required this.red,
-    required this.redBg,
-  });
-
-  static const light = _AColors(
-    page: Color(0xFFFFFFFF),
-    border: Color(0xFFE3E7EE),
-    borderStrong: Color(0xFFC3CAD6),
-    text: Color(0xFF111827),
-    muted: Color(0xFF5B6475),
-    faint: Color(0xFF8A93A3),
-    blue: Color(0xFF1E66E0),
-    blueBg: Color(0xFFE8F0FD),
-    blueRing: Color(0xFFBBD2F8),
-    green: Color(0xFF0F7A52),
-    amber: Color(0xFFD08A00),
-    red: Color(0xFFC62828),
-    redBg: Color(0xFFFDECEC),
-  );
-
-  static const dark = _AColors(
-    page: Color(0xFF12161D),
-    border: Color(0xFF2A3240),
-    borderStrong: Color(0xFF465164),
-    text: Color(0xFFEEF1F6),
-    muted: Color(0xFFA8B1C1),
-    faint: Color(0xFF7C8699),
-    blue: Color(0xFF7AA7FF),
-    blueBg: Color(0xFF1C2A44),
-    blueRing: Color(0xFF2B4270),
-    green: Color(0xFF5FD49A),
-    amber: Color(0xFFF0B35A),
-    red: Color(0xFFFF8A8A),
-    redBg: Color(0xFF3A1D1F),
-  );
-
-  static _AColors of(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? dark : light;
+  OutlineInputBorder _border(Color c) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide:   BorderSide(color: c, width: 1.5),
+      );
 }
