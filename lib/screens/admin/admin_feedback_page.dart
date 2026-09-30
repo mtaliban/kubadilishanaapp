@@ -222,7 +222,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   }
 
   Future<void> _reply(String id, String text) async {
-    if (!NetworkService().isOnline) {
+    if (NetworkService().isOffline) {
       await OfflineQueue().enqueue(
         type: 'reply_feedback',
         payload: {'feedback_id': id, 'reply': text},

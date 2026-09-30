@@ -138,7 +138,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   /* ── Vitendo ── */
 
   Future<void> _approve(Payment p) async {
-    if (!NetworkService().isOnline) {
+    if (NetworkService().isOffline) {
       await OfflineQueue().enqueue(
         type: 'approve_payment',
         payload: {'order_id': p.id},
@@ -161,7 +161,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 
   Future<void> _reject(Payment p, String reason) async {
-    if (!NetworkService().isOnline) {
+    if (NetworkService().isOffline) {
       await OfflineQueue().enqueue(
         type: 'reject_payment',
         payload: {'order_id': p.id, 'note': reason},
