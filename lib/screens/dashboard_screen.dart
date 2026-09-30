@@ -63,10 +63,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _globalToast;
   Timer? _globalToastTimer;
 
+  // Match banner (nyekundu/pink) — mtu mpya wa kubadilishana amepatikana
+  String? _matchBanner;
+  String? _matchBannerSub;
+  Timer? _matchBannerTimer;
+
   // ── WS listeners zilizopewa jina — kwa kuzifuta kwenye dispose ─────────
   // (bila hii, kila ukifungua dashboard listeners mpya zinajongezwa —
   //  events zinakua, API calls zinajirudia, toasts zinatokea mara mbili)
-  void _onMatchFound(Map<String, dynamic> _) { _loadBoard(); _loadTrueMatches(); }
+  void _onMatchFound(Map<String, dynamic> payload) {
+    _loadBoard();
+    _loadTrueMatches();
+    // Onyesha banner kali — mtumiaji aone mara moja bila kutazama simu
+    if (!mounted) return;
+    final cand = payload['candidate'] as Map<String, dynamic>?;
+    final name  = (cand?['full_name']  as String? ?? '').trim();
+    final cadre = (cand?['cadre_display'] as String? ?? '').trim();
+    final st    = cand?['current_station'] as Map<String, dynamic>?;
+    final region = (st?['region_name'] as String? ?? '').trim();
+    final parts  = [if (cadre.isNotEmpty) cadre, if (region.isNotEmpty) region];
+    _showMatchBanner(
+      name.isNotEmpty ? '$name — mwenzako mpya!' : 'Mechi mpya imepatikana!',
+      parts.join(' · '),
+    );
+  }
   void _onUserRegistered(Map<String, dynamic> _) { _loadBoard(); _loadTrueMatches(); }
   void _onUserChanged(Map<String, dynamic> _) => _loadBoard();
   void _onUserRemoved(Map<String, dynamic> _) => _loadBoard();
@@ -101,6 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ws.off('announcement.new', _onAnnouncement);
     ws.off('notification', _onWsNotification);
     _globalToastTimer?.cancel();
+    _matchBannerTimer?.cancel();
     super.dispose();
   }
 
@@ -288,6 +309,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _showMatchBanner(String title, String sub) {
+    _matchBannerTimer?.cancel();
+    if (!mounted) return;
+    setState(() { _matchBanner = title; _matchBannerSub = sub.isEmpty ? null : sub; });
+    _matchBannerTimer = Timer(const Duration(seconds: 8), () {
+      if (mounted) setState(() { _matchBanner = null; _matchBannerSub = null; });
+    });
+  }
+
   // ── Kuchanganya matangazo (dedup kama web: title+message key) ────────────
   List<dynamic> get _dedupedAnnouncements {
     final seen = <String, dynamic>{};
@@ -427,10 +457,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
           ),
         ),
+        // Match banner (nyekundu/pink) — mtu mpya wa kubadilishana
+        if (_matchBanner != null)
+          Positioned(
+            top: 12, left: 16, right: 16,
+            child: Material(
+              elevation: 10,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFBE185D), Color(0xFF9D174D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFBE185D).withValues(alpha: 0.45),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Icon(Icons.compare_arrows_rounded, color: Colors.white, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(_matchBanner!,
+                          style: const TextStyle(color: Colors.white, fontSize: 13,
+                              fontWeight: FontWeight.w800, height: 1.3)),
+                      if (_matchBannerSub != null) ...[
+                        const SizedBox(height: 2),
+                        Text(_matchBannerSub!,
+                            style: const TextStyle(color: Colors.white70, fontSize: 11,
+                                fontWeight: FontWeight.w500)),
+                      ],
+                    ]),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      _matchBannerTimer?.cancel();
+                      setState(() { _matchBanner = null; _matchBannerSub = null; });
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.only(left: 6),
+                      child: Icon(Icons.close, color: Colors.white70, size: 16),
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          ),
         // Global toast — payment/contact_toggled notification (iko juu ya screen)
         if (_globalToast != null)
           Positioned(
-            top: 12, left: 16, right: 16,
+            top: _matchBanner != null ? 82 : 12, left: 16, right: 16,
             child: Material(
               elevation: 6,
               borderRadius: BorderRadius.circular(10),

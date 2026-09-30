@@ -328,6 +328,7 @@ class NotificationService {
     const adminNotifiable = {
       'payment.submitted', 'payment.message',
       'feedback.new', 'user.registered', 'password_reset.new',
+      'match.found', 'match.new',
     };
     const userNotifiable = {
       'notification', 'notification.new',
