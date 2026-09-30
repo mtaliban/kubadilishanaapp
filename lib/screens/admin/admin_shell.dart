@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
@@ -32,12 +32,10 @@ const _kGrey200 = Color(0xFFE5E7EB);
 class _NavItem {
   final int index;
   final String label;
-  final IconData Function() icon;
-  final IconData Function() iconFill;
-  /// Rangi za tile (drawer-style icon) — fg na bg
+  final IconData icon;
   final Color tileFg;
   final Color tileBg;
-  _NavItem(this.index, this.label, this.icon, this.iconFill, {
+  const _NavItem(this.index, this.label, this.icon, {
     this.tileFg = const Color(0xFF2A78D6),
     this.tileBg = const Color(0xFFD3E5FA),
   });
@@ -45,34 +43,25 @@ class _NavItem {
 
 // ─── Master list of all nav items ────────────────────────────────────────────
 
-List<_NavItem> _allNavItems() => [
-  _NavItem(9,  'Statistics',          () => PhosphorIcons.chartBar(),
-                                      () => PhosphorIcons.chartBar(PhosphorIconsStyle.fill),
-                                      tileFg: const Color(0xFF2A78D6), tileBg: const Color(0xFFD3E5FA)),
-  _NavItem(1,  'Watumiaji',           () => PhosphorIcons.usersThree(),
-                                      () => PhosphorIcons.usersThree(PhosphorIconsStyle.fill),
-                                      tileFg: const Color(0xFF2A78D6), tileBg: const Color(0xFFD3E5FA)),
-  _NavItem(2,  'Waliopata Wenzao',    () => PhosphorIcons.handshake(),
-                                      () => PhosphorIcons.handshake(PhosphorIconsStyle.fill),
-                                      tileFg: const Color(0xFF1E6B1E), tileBg: const Color(0xFFCDEBCB)),
-  _NavItem(3,  'Match za Kweli',      () => PhosphorIcons.heart(),
-                                      () => PhosphorIcons.heart(PhosphorIconsStyle.fill),
-                                      tileFg: const Color(0xFF8E2A2A), tileBg: const Color(0xFFF8D7D7)),
-  _NavItem(4,  'Data',                () => PhosphorIcons.database(),
-                                      () => PhosphorIcons.database(PhosphorIconsStyle.fill),
-                                      tileFg: const Color(0xFF3C3C3A), tileBg: const Color(0xFFEFEFEC)),
-  _NavItem(5,  'Matangazo',           () => PhosphorIcons.megaphone(),
-                                      () => PhosphorIcons.megaphone(PhosphorIconsStyle.fill),
-                                      tileFg: const Color(0xFF7A4A00), tileBg: const Color(0xFFF9DDA4)),
-  _NavItem(6,  'Malipo',              () => PhosphorIcons.wallet(),
-                                      () => PhosphorIcons.wallet(PhosphorIconsStyle.fill),
-                                      tileFg: const Color(0xFF1E6B1E), tileBg: const Color(0xFFCDEBCB)),
-  _NavItem(7,  'Waliopigiana',        () => PhosphorIcons.phoneCall(),
-                                      () => PhosphorIcons.phoneCall(PhosphorIconsStyle.fill),
-                                      tileFg: const Color(0xFF1E6B1E), tileBg: const Color(0xFFCDEBCB)),
-  _NavItem(8,  'Maoni na Malalamiko', () => PhosphorIcons.chatCenteredText(),
-                                      () => PhosphorIcons.chatCenteredText(PhosphorIconsStyle.fill),
-                                      tileFg: const Color(0xFF7A4A00), tileBg: const Color(0xFFF9DDA4)),
+const _allNavItems = <_NavItem>[
+  _NavItem(9,  'Statistics',          TablerIcons.layoutDashboard,
+                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
+  _NavItem(1,  'Watumiaji',           TablerIcons.usersGroup,
+                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
+  _NavItem(2,  'Waliopata Wenzao',    TablerIcons.replace,
+                                      tileFg: Color(0xFF1E6B1E), tileBg: Color(0xFFCDEBCB)),
+  _NavItem(3,  'Match za Kweli',      TablerIcons.circleCheck,
+                                      tileFg: Color(0xFF8E2A2A), tileBg: Color(0xFFF8D7D7)),
+  _NavItem(4,  'Data',                TablerIcons.database,
+                                      tileFg: Color(0xFF3C3C3A), tileBg: Color(0xFFEFEFEC)),
+  _NavItem(5,  'Matangazo',           TablerIcons.speakerphone,
+                                      tileFg: Color(0xFF7A4A00), tileBg: Color(0xFFF9DDA4)),
+  _NavItem(6,  'Malipo',              TablerIcons.wallet,
+                                      tileFg: Color(0xFF1E6B1E), tileBg: Color(0xFFCDEBCB)),
+  _NavItem(7,  'Waliopigiana',        TablerIcons.phoneCall,
+                                      tileFg: Color(0xFF1E6B1E), tileBg: Color(0xFFCDEBCB)),
+  _NavItem(8,  'Maoni na Malalamiko', TablerIcons.message2,
+                                      tileFg: Color(0xFF7A4A00), tileBg: Color(0xFFF9DDA4)),
 ];
 
 // Bottom nav shows 5 key items (subset of drawer)
@@ -283,8 +272,7 @@ class _AdminShellState extends State<AdminShell> {
   // ── Bottom Nav ──────────────────────────────────────────────────────────────
 
   Widget _buildBottomNav() {
-    final all = _allNavItems();
-    final bottomItems = all.where((i) => _bottomNavIndices.contains(i.index)).toList();
+    final bottomItems = _allNavItems.where((i) => _bottomNavIndices.contains(i.index)).toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -334,7 +322,7 @@ class _AdminShellState extends State<AdminShell> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            active ? item.iconFill() : item.icon(),
+                            item.icon,
                             size: 20,
                             color: fg,
                           ),
