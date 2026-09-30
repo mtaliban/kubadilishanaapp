@@ -116,6 +116,7 @@ class AdminShell extends StatefulWidget {
 
 class _AdminShellState extends State<AdminShell> {
   int _idx = 9;
+  int? _lastClearedIdx; // Kufuatilia ukurasa uliofutwa badge — sio kila rebuild
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final AdminBadgeService _badges = AdminBadgeService();
 
@@ -257,11 +258,19 @@ class _AdminShellState extends State<AdminShell> {
         ),
       ),
       body: Builder(builder: (ctx) {
-        // Kila ukurasa unaofunguliwa: futa badge yake + hesabu upya counts
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          await _clearBadgeForPage(_idx);
-          refreshBadges();
-        });
+        // Futa badge MARA MOJA ukurasa ukibadilika — siyo kila rebuild.
+        // Kutofanya hivi kungesababisha badge kufutwa tena na tena kila
+        // WS event ikija, ambayo inasababisha race condition na periodic poll.
+        if (_idx != _lastClearedIdx) {
+          _lastClearedIdx = _idx;
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted) return;
+            await _clearBadgeForPage(_idx);
+            // Hakuna refreshBadges() hapa — kuitumia sasa kunaweza kubadilisha
+            // badge kurudi (markSeen POST bado njiani). Poll ya sekunde 45
+            // itapata count sahihi kutoka server.
+          });
+        }
         return Column(children: [
           const NetworkBanner(),
           const QueueBanner(),
