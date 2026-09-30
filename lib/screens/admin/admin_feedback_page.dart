@@ -4,9 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import '../../services/admin_badge_service.dart';
+import '../../services/network_service.dart';
+import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
-import '../../services/admin_badge_service.dart';
 
 // ─── Rangi (zingatia esstranfer.com/admin) ───────────────────────────────────
 const _kBlue    = Color(0xFF1959D6);
@@ -220,6 +222,15 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   }
 
   Future<void> _reply(String id, String text) async {
+    if (!NetworkService().isOnline) {
+      await OfflineQueue().enqueue(
+        type: 'reply_feedback',
+        payload: {'feedback_id': id, 'reply': text},
+        displayText: 'Jibu maoni',
+      );
+      _showFlash('success', '⏳ Jibu limewekwa foleni — litatumwa mtandao ukiingia');
+      return;
+    }
     try {
       await ApiService().adminReplyFeedback(id, text);
       if (!mounted) return;

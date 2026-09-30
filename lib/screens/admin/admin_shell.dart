@@ -9,6 +9,7 @@ import '../../services/app_navigator.dart' show adminPageNotifier;
 import '../../widgets/admin_top_bar.dart';
 import '../../widgets/admin_drawer.dart';
 import '../../widgets/network_banner.dart';
+import '../../widgets/queue_banner.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_users_v2_page.dart';
 import 'admin_matches_page.dart';
@@ -263,6 +264,7 @@ class _AdminShellState extends State<AdminShell> {
         });
         return Column(children: [
           const NetworkBanner(),
+          const QueueBanner(),
           Expanded(child: widget.child ?? _pageFor(_idx)),
         ]);
       }),

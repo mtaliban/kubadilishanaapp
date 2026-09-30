@@ -15,6 +15,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../config/api.dart';
 import 'admin_badge_service.dart';
+import 'offline_queue.dart';
 
 enum NetStatus { unknown, checking, online, offline }
 
@@ -120,6 +121,8 @@ class NetworkService extends ChangeNotifier {
   void _onCameOnline() {
     // Sasisha badges za admin bila mtu kubonyeza chochote
     AdminBadgeService().refresh();
+    // Chapua vitendo vilivyohifadhiwa wakati wa offline
+    OfflineQueue().processAll();
     // Arifu waliangaliwa (screens zinaweza ku-reload)
     for (final cb in List.of(_onlineCallbacks)) {
       try { cb(); } catch (_) {}

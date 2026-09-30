@@ -8,6 +8,8 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
+import '../../services/network_service.dart';
+import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
 import 'malipo_view.dart';
 
@@ -136,6 +138,16 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   /* ── Vitendo ── */
 
   Future<void> _approve(Payment p) async {
+    if (!NetworkService().isOnline) {
+      await OfflineQueue().enqueue(
+        type: 'approve_payment',
+        payload: {'order_id': p.id},
+        displayText: 'Thibitisha malipo',
+      );
+      _snack('⏳ Imewekwa foleni — itatumwa mtandao ukiingia',
+          const Color(0xFFF59E0B));
+      return;
+    }
     try {
       await ApiService().adminApproveDonation(p.id);
       if (!mounted) return;
@@ -149,6 +161,16 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 
   Future<void> _reject(Payment p, String reason) async {
+    if (!NetworkService().isOnline) {
+      await OfflineQueue().enqueue(
+        type: 'reject_payment',
+        payload: {'order_id': p.id, 'note': reason},
+        displayText: 'Kataa malipo',
+      );
+      _snack('⏳ Imewekwa foleni — itatumwa mtandao ukiingia',
+          const Color(0xFFF59E0B));
+      return;
+    }
     try {
       await ApiService().adminRejectDonation(p.id, note: reason);
       if (!mounted) return;

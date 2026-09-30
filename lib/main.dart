@@ -12,6 +12,7 @@ import 'services/api_service.dart';
 import 'services/app_cache.dart';
 import 'services/app_navigator.dart';
 import 'services/network_service.dart';
+import 'services/offline_queue.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -115,6 +116,13 @@ void main() {
       NetworkService().start();
     } catch (e) {
       _crashLog.add('[Network] $e');
+    }
+
+    // Pakia foleni ya vitendo vilivyosubiri kutumwa (offline queue)
+    try {
+      await OfflineQueue().load();
+    } catch (e) {
+      _crashLog.add('[Queue] $e');
     }
 
     runApp(const KubadilishanaApp());
