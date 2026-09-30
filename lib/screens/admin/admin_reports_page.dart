@@ -15,6 +15,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
@@ -563,6 +564,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
                   // ── Filters ──
                   _FilterDropdown(
+                    icon: TablerIcons.map2,
                     label: _region == null || _region!.isEmpty
                         ? 'Mkoa wote' : _region!,
                     active: _region != null && _region!.isNotEmpty,
@@ -570,6 +572,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                   ),
                   const SizedBox(height: 10),
                   _FilterDropdown(
+                    icon: TablerIcons.building,
                     label: _category == null || _category!.isEmpty
                         ? 'Idara zote' : _deptLabel(_category!),
                     active: _category != null && _category!.isNotEmpty,
@@ -577,6 +580,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                   ),
                   const SizedBox(height: 10),
                   _FilterDropdown(
+                    icon: TablerIcons.school,
                     label: _level.isEmpty ? 'Ngazi zote'
                         : (_level == 'Primary' ? 'Primary (Msingi)' : 'Secondary (Sekondari)'),
                     active: _level.isNotEmpty,
@@ -1145,33 +1149,41 @@ class SectionCard extends StatelessWidget {
 
 // ═══ FILTER DROPDOWN ROW (kama web: Mkoa wote / Idara zote / Ngazi zote) ═════
 class _FilterDropdown extends StatelessWidget {
+  final IconData icon;
   final String label;
   final bool active;
   final VoidCallback onTap;
-  const _FilterDropdown({required this.label, this.active = false, required this.onTap});
+  const _FilterDropdown({required this.icon, required this.label, this.active = false, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 46,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: active ? _cBlueBg : _cBg,
-          border: Border.all(color: active ? _cBlue : _cBorder, width: active ? 1.4 : 1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Expanded(child: Text(label,
-                style: TextStyle(
-                    color: active ? _cBlue : _cTextDark,
-                    fontSize: 14.5,
-                    fontWeight: active ? FontWeight.w600 : FontWeight.w400))),
-            Icon(Icons.keyboard_arrow_down_rounded,
-                color: active ? _cBlue : _cTextGrey),
-          ],
+    return Material(
+      color: active ? _cBlueBg : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: active ? _cBlue : _cBorder, width: active ? 1.4 : 1),
+          ),
+          child: Row(children: [
+            Icon(icon, size: 17, color: _cBlue),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: active ? _cBlue : _cTextDark,
+                      fontSize: 13.5,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w400)),
+            ),
+            Icon(TablerIcons.chevronDown, size: 14, color: active ? _cBlue : _cTextGrey),
+          ]),
         ),
       ),
     );

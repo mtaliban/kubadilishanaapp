@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
 
@@ -432,6 +433,7 @@ class _State extends State<AdminDashboardPage>
         children: [
           // ── 3 Filter dropdowns ─────────────────────────────────────────
           _filterDrop(
+            icon: TablerIcons.map2,
             value: _region,
             items: [
               const DropdownMenuItem(value: '', child: Text('Mikoa yote')),
@@ -441,6 +443,7 @@ class _State extends State<AdminDashboardPage>
           ),
           const SizedBox(height: 8),
           _filterDrop(
+            icon: TablerIcons.building,
             value: _dept,
             items: [
               const DropdownMenuItem(value: '', child: Text('Idara zote')),
@@ -457,6 +460,7 @@ class _State extends State<AdminDashboardPage>
           ),
           const SizedBox(height: 8),
           _filterDrop(
+            icon: TablerIcons.school,
             value: _level,
             items: const [
               DropdownMenuItem(value: '',          child: Text('Viwango vyote')),
@@ -691,6 +695,7 @@ class _State extends State<AdminDashboardPage>
   );
 
   Widget _filterDrop({
+    required IconData icon,
     required String value,
     required List<DropdownMenuItem<String>> items,
     required void Function(String?) onChanged,
@@ -700,12 +705,17 @@ class _State extends State<AdminDashboardPage>
     decoration: InputDecoration(
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.only(left: 12, right: 8),
+        child: Icon(icon, size: 17, color: _kBlue),
+      ),
+      prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 44),
       filled: true, fillColor: Colors.white,
-      border:        OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue)),
+      border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _kBlue)),
     ),
-    style: const TextStyle(fontSize: 14, color: _kGrey900),
+    style: const TextStyle(fontSize: 13.5, color: _kGrey900),
     items: items,
     onChanged: onChanged,
   );

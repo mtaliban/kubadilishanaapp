@@ -22,7 +22,7 @@ import 'admin_feedback_page.dart';
 import 'admin_reports_page.dart';
 import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';
-import 'admin_profile_screen.dart';
+import 'profile_page.dart';
 
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey200 = Color(0xFFE5E7EB);
@@ -49,19 +49,19 @@ const _allNavItems = <_NavItem>[
   _NavItem(1,  'Watumiaji',           TablerIcons.usersGroup,
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(2,  'Waliopata Wenzao',    TablerIcons.replace,
-                                      tileFg: Color(0xFF1E6B1E), tileBg: Color(0xFFCDEBCB)),
+                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(3,  'Match za Kweli',      TablerIcons.circleCheck,
-                                      tileFg: Color(0xFF8E2A2A), tileBg: Color(0xFFF8D7D7)),
+                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(4,  'Data',                TablerIcons.database,
-                                      tileFg: Color(0xFF3C3C3A), tileBg: Color(0xFFEFEFEC)),
+                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(5,  'Matangazo',           TablerIcons.speakerphone,
-                                      tileFg: Color(0xFF7A4A00), tileBg: Color(0xFFF9DDA4)),
+                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(6,  'Malipo',              TablerIcons.wallet,
-                                      tileFg: Color(0xFF1E6B1E), tileBg: Color(0xFFCDEBCB)),
+                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(7,  'Waliopigiana',        TablerIcons.phoneCall,
-                                      tileFg: Color(0xFF1E6B1E), tileBg: Color(0xFFCDEBCB)),
+                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(8,  'Maoni na Malalamiko', TablerIcons.message2,
-                                      tileFg: Color(0xFF7A4A00), tileBg: Color(0xFFF9DDA4)),
+                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
 ];
 
 // Bottom nav shows 5 key items (subset of drawer)
@@ -184,26 +184,25 @@ class _AdminShellState extends State<AdminShell> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.user;
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => AdminProfileScreen(
+      builder: (_) => ProfilePage(
         profile: AdminProfile(
-          name: user?.fullName ?? 'Admin',
-          email: user?.email ?? '',
-          emailVerified: true,
+          fullName: user?.fullName ?? 'Admin',
+          role: 'Administrator',
           phone: user?.phone ?? '',
+          email: user?.email,
           whatsapp: (user?.phoneAlt ?? '').trim().isEmpty
               ? null
               : user!.phoneAlt,
         ),
-        onSave: (updated) async {
+        onSave: (fullName, whatsapp) async {
           try {
             await ApiService().updateProfile({
-              'full_name': updated.name,
-              // phone_alt huhifadhiwa kama '255XXXXXXXXX' (au null kufuta).
-              'phone_alt': updated.whatsapp,
+              'full_name': fullName,
+              'phone_alt': whatsapp,
             });
-            return true;
-          } catch (_) {
-            return false;
+            return null;
+          } catch (e) {
+            return e.toString();
           }
         },
       ),

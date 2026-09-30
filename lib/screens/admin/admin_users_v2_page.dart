@@ -795,7 +795,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                   isLabelVisible: _trash.isNotEmpty,
                   backgroundColor: v2Danger,
                   child: Icon(PhosphorIcons.trash(),
-                      size: 17,
+                      size: 22,
                       color: _trash.isEmpty ? v2TextMuted : v2Danger),
                 ),
               ),
