@@ -1,53 +1,37 @@
-/// "Sahau namba?" — ukurasa mmoja (SahauNambaScreen).
+/// "Umesahau namba?" — skrini mbili:
+///   1. SahauNambaScreen  — fomu ya jina (hatua 1/2)
+///   2. NambaImepatikanaScreen — matokeo (hatua 2/2)
 ///
-/// Kadi moja inabadilika ndani kwa AnimatedSwitcher:
-///   search  → fomu ya jina (default)
-///   found   → "Namba imepatikana" + namba + Jina/Kada + "Tafuta tena" | "Ingia →"
-///   notFound → kadi ya "Hatukupata"
-///
-/// "Ingia →" inarudisha namba kwa Navigator.pop(context, phone) — LoginScreen
-/// inaikaribisha na kujaza field ya simu moja kwa moja.
+/// Login screen inangoja matokeo: Navigator.pushNamed('/forgot-number')
+/// "Ingia →" inarudisha namba kwa Navigator.pop(context, phone)
+/// "Tafuta tena" inarudisha null → field inafutwa kwa utafutaji mpya
 library;
-
-import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../services/api_service.dart';
 
-class SahauNambaColors {
-  static const primary = Color(0xFF1E40AF);
-  static const primarySoft = Color(0xFFF5F7FF);
-  static const primaryBorder = Color(0xFFE0E7FF);
-  static const text = Color(0xFF111827);
-  static const label = Color(0xFF374151);
-  static const muted = Color(0xFF6B7280);
-  static const hint = Color(0xFF9CA3AF);
-  static const border = Color(0xFFE5E7EB);
-  static const inputBorder = Color(0xFFD1D5DB);
-  static const divider = Color(0xFFF0F1F3);
-  static const page = Color(0xFFF9FAFB);
-  static const success = Color(0xFF047857);
-  static const successSoft = Color(0xFFECFDF5);
-  static const successBorder = Color(0xFFA7F3D0);
-  static const copyBorder = Color(0xFFC7D2FE);
-  static const error = Color(0xFFB91C1C);
+// ── Rangi ──────────────────────────────────────────────────────────────────────
+
+class _C {
+  static const accent       = Color(0xFF2952E3);
+  static const accentBg     = Color(0xFFEAEFFF);
+  static const success      = Color(0xFF12B76A);
+  static const successBg    = Color(0xFFE9F9F0);
+  static const errorColor   = Color(0xFFD92D20);
+  static const errorBg      = Color(0xFFFFF1F0);
+  static const errorBorder  = Color(0xFFFFCCC7);
+  static const border       = Color(0xFFE4E7EC);
+  static const textPrimary  = Color(0xFF101828);
+  static const textSecondary = Color(0xFF667085);
+  static const textMuted    = Color(0xFF98A2B3);
+  static const bg           = Color(0xFFF5F7FA);
 }
 
-/// Matokeo ya utafutaji kwa mtumiaji mmoja
-class _FoundUser {
-  final String phone;
-  final String fullName;
-  final String cadre;
-  const _FoundUser({required this.phone, required this.fullName, required this.cadre});
-}
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
-enum _CardState { search, loading, found, notFound, error }
-
-/// +255763795805  ->  +255 763 795 805
-String formatPhone(String phone) {
+String _fmtPhone(String phone) {
   final d = phone.replaceAll(' ', '');
   if (d.startsWith('+255') && d.length == 13) {
     return '${d.substring(0, 4)} ${d.substring(4, 7)} ${d.substring(7, 10)} ${d.substring(10)}';
@@ -55,166 +39,497 @@ String formatPhone(String phone) {
   return phone;
 }
 
-String _categoryLabel(String? c) => c == 'health'
-    ? 'Idara ya Afya'
-    : c == 'education'
-        ? 'Idara ya Elimu'
-        : (c ?? '').trim();
-
-String _cadreOf(Map u) {
+String _cadreOf(Map<dynamic, dynamic> u) {
   final cadre = (u['cadre_display'] ?? '').toString().trim();
   if (cadre.isNotEmpty) return cadre;
-  return _categoryLabel(u['category']?.toString());
+  final cat = u['category']?.toString();
+  if (cat == 'health') return 'Idara ya Afya';
+  if (cat == 'education') return 'Idara ya Elimu';
+  return cat ?? '';
 }
 
-class SahauNambaScreen extends StatefulWidget {
-  const SahauNambaScreen({super.key, this.onBackToLogin});
+// ── BrandHeader ────────────────────────────────────────────────────────────────
 
-  final VoidCallback? onBackToLogin;
+class _BrandHeader extends StatelessWidget {
+  const _BrandHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 54,
+          height: 54,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _C.border, width: 0.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.07),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.asset(
+              'assets/images/app_icon.png',
+              fit: BoxFit.contain,
+              errorBuilder: (ctx, err, st) => const Icon(
+                Icons.sync_alt_rounded,
+                color: _C.accent,
+                size: 26,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 7),
+        RichText(
+          text: const TextSpan(
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+              color: _C.textPrimary,
+            ),
+            children: [
+              TextSpan(text: 'ESS'),
+              TextSpan(
+                text: 'TRANSFER',
+                style: TextStyle(color: _C.accent),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'CONNECT · MATCH · TRANSFER',
+          style: TextStyle(
+            fontSize: 9,
+            letterSpacing: 1.5,
+            color: _C.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── StepProgress ───────────────────────────────────────────────────────────────
+
+class _StepProgress extends StatelessWidget {
+  final int activeSteps;
+  const _StepProgress(this.activeSteps);
+
+  @override
+  Widget build(BuildContext context) {
+    Widget seg(bool on) => Expanded(
+          child: Container(
+            height: 4,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            decoration: BoxDecoration(
+              color: on ? _C.accent : _C.border,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        );
+    return Row(children: [seg(activeSteps >= 1), seg(activeSteps >= 2)]);
+  }
+}
+
+// ── FormCard ───────────────────────────────────────────────────────────────────
+
+class _FormCard extends StatelessWidget {
+  final Widget child;
+  const _FormCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 340),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _C.border, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      child: child,
+    );
+  }
+}
+
+// ── InfoRow (inayotumiwa kwenye NambaImepatikanaScreen) ────────────────────────
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool topBorder;
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.topBorder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: topBorder
+          ? const BoxDecoration(
+              border: Border(
+                  top: BorderSide(color: _C.border, width: 0.5)),
+            )
+          : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(children: [
+            Icon(icon, size: 14, color: _C.textMuted),
+            const SizedBox(width: 5),
+            Text(label,
+                style: const TextStyle(fontSize: 12, color: _C.textMuted)),
+          ]),
+          Expanded(
+            child: Text(
+              value.isEmpty ? '—' : value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _C.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// SKRINI 1 — Fomu ya jina (hatua 1/2)
+// =============================================================================
+
+class SahauNambaScreen extends StatefulWidget {
+  const SahauNambaScreen({super.key});
 
   @override
   State<SahauNambaScreen> createState() => _SahauNambaScreenState();
 }
 
 class _SahauNambaScreenState extends State<SahauNambaScreen> {
-  final _ctrl = TextEditingController();
+  final _ctrl  = TextEditingController();
   final _focus = FocusNode();
-
-  _CardState _state = _CardState.search;
-  String? _errorMsg;
-  _FoundUser? _found;
-  bool _copied = false;
-  Timer? _copyTimer;
+  bool    _loading  = false;
+  String? _error;
+  bool    _notFound = false;
 
   @override
   void dispose() {
     _ctrl.dispose();
     _focus.dispose();
-    _copyTimer?.cancel();
     super.dispose();
   }
 
-  // ---------------------------------------------------------------------------
-  Future<void> _onSearch() async {
-    FocusScope.of(context).unfocus();
-    final name = _ctrl.text.trim();
+  Future<void> _tafuta() async {
+    final name  = _ctrl.text.trim();
     final words = name.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
 
     if (words.length < 2) {
       setState(() {
-        _state = _CardState.error;
-        _errorMsg = 'Weka jina la kwanza na la mwisho.';
+        _error    = 'Weka jina la kwanza na la mwisho.';
+        _notFound = false;
       });
       return;
     }
 
-    setState(() {
-      _state = _CardState.loading;
-      _errorMsg = null;
-      _found = null;
-      _copied = false;
-    });
+    setState(() { _loading = true; _error = null; _notFound = false; });
+    FocusScope.of(context).unfocus();
 
     try {
-      final r = await ApiService().lookupByName(name);
+      final res = await ApiService().lookupByName(name);
       if (!mounted) return;
 
-      final raw = r.data;
+      final raw   = res.data;
       final users = raw is List
           ? raw
           : (raw is Map ? (raw['users'] ?? raw['data'] ?? []) as List : <dynamic>[]);
 
       if (users.isEmpty) {
-        setState(() => _state = _CardState.notFound);
+        setState(() { _loading = false; _notFound = true; });
         return;
       }
 
-      final u = users.first as Map;
+      final u     = users.first as Map;
       final phone = (u['phone_primary'] ?? u['phone'] ?? '').toString().trim();
-      final fullName = (u['full_name'] ?? '').toString().trim();
-      final cadre = _cadreOf(u);
 
       if (phone.isEmpty) {
-        setState(() => _state = _CardState.notFound);
+        setState(() { _loading = false; _notFound = true; });
         return;
       }
 
-      setState(() {
-        _found = _FoundUser(phone: phone, fullName: fullName, cadre: cadre);
-        _state = _CardState.found;
-      });
+      final jina = (u['full_name'] ?? '').toString().trim().toUpperCase();
+      final kada = _cadreOf(u);
+      setState(() => _loading = false);
+
+      // Piga push; result ni namba (Ingia) au null (Tafuta tena)
+      final result = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (_) => NambaImepatikanaScreen(
+            jina: jina,
+            kada: kada,
+            namba: phone,
+          ),
+        ),
+      );
+      if (!mounted) return;
+
+      if (result != null) {
+        // Mtumiaji alitap "Ingia" — rudisha namba kwa login screen
+        Navigator.of(context).pop(result);
+      } else {
+        // Mtumiaji alitap "Tafuta tena" — futa field, rudisha focus
+        _ctrl.clear();
+        _focus.requestFocus();
+      }
     } on DioException catch (e) {
       if (!mounted) return;
       if (e.response?.statusCode == 404) {
-        setState(() => _state = _CardState.notFound);
+        setState(() { _loading = false; _notFound = true; });
       } else {
         String msg = 'Imeshindikana kutafuta. Jaribu tena.';
         final d = e.response?.data;
-        if (d is Map && d['detail'] is String && (d['detail'] as String).isNotEmpty) {
+        if (d is Map && d['detail'] is String &&
+            (d['detail'] as String).isNotEmpty) {
           msg = d['detail'] as String;
         }
-        setState(() {
-          _state = _CardState.error;
-          _errorMsg = msg;
-        });
+        setState(() { _loading = false; _error = msg; });
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
-        _state = _CardState.error;
-        _errorMsg = 'Imeshindikana kutafuta. Jaribu tena.';
+        _loading = false;
+        _error   = 'Imeshindikana kutafuta. Jaribu tena.';
       });
     }
   }
 
-  void _searchAgain() {
-    setState(() {
-      _state = _CardState.search;
-      _errorMsg = null;
-      _found = null;
-      _copied = false;
-    });
-    _ctrl.clear();
-    _focus.requestFocus();
-  }
-
-  Future<void> _copy() async {
-    final phone = _found?.phone;
-    if (phone == null) return;
-    await Clipboard.setData(ClipboardData(text: phone));
-    _copyTimer?.cancel();
-    setState(() => _copied = true);
-    _copyTimer = Timer(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _copied = false);
-    });
-  }
-
-  void _login() {
-    final phone = _found?.phone ?? '';
-    if (widget.onBackToLogin != null) {
-      Navigator.maybePop(context, phone);
-    } else {
-      Navigator.maybePop(context, phone);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
+    final hasError = _error != null;
+
     return Scaffold(
-      backgroundColor: SahauNambaColors.page,
+      backgroundColor: _C.bg,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 32, 20, 32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+            padding: const EdgeInsets.all(16),
+            child: _FormCard(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildLogo(),
-                  const SizedBox(height: 28),
-                  _buildCard(),
+                  const _BrandHeader(),
+                  const SizedBox(height: 20),
+                  const _StepProgress(1),
+                  const SizedBox(height: 22),
+
+                  // ── Ikoni ya hatua ──
+                  Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      color: _C.accentBg,
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: const Icon(Icons.person_search_rounded,
+                        color: _C.accent, size: 20),
+                  ),
+                  const SizedBox(height: 14),
+
+                  const Text(
+                    'Umesahau namba?',
+                    style: TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.w800,
+                      color: _C.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Andika jina lako kamili tukutafutie namba uliyosajili nayo.',
+                    style: TextStyle(
+                      fontSize: 13, color: _C.textSecondary, height: 1.45,
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Jina kamili',
+                    style: TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w700,
+                      color: _C.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+
+                  // ── Input field ──
+                  Container(
+                    height: 42,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: hasError ? _C.errorColor : _C.accent,
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_outline_rounded,
+                            size: 16,
+                            color: hasError ? _C.errorColor : _C.accent),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _ctrl,
+                            focusNode: _focus,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.search,
+                            onSubmitted: (_) => _loading ? null : _tafuta(),
+                            onChanged: (_) {
+                              if (_error != null || _notFound) {
+                                setState(() {
+                                  _error    = null;
+                                  _notFound = false;
+                                });
+                              }
+                            },
+                            style: const TextStyle(
+                                fontSize: 13, color: _C.textPrimary),
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              border: InputBorder.none,
+                              hintText: 'Mfano: Amani Selemani',
+                              hintStyle: TextStyle(
+                                  fontSize: 13, color: _C.textMuted),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 7),
+
+                  // ── Hint / error chini ya field ──
+                  if (hasError)
+                    Row(children: [
+                      const Icon(Icons.error_outline_rounded,
+                          size: 12, color: _C.errorColor),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(_error!,
+                            style: const TextStyle(
+                                fontSize: 11, color: _C.errorColor)),
+                      ),
+                    ])
+                  else
+                    const Row(children: [
+                      Icon(Icons.verified_rounded,
+                          size: 12, color: _C.success),
+                      SizedBox(width: 5),
+                      Text('Andika jina kama lilivyosajiliwa',
+                          style: TextStyle(
+                              fontSize: 11, color: _C.textMuted)),
+                    ]),
+
+                  // ── "Hatukupata" inline card ──
+                  if (_notFound) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _C.errorBg,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: _C.errorBorder, width: 0.5),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Hatukupata',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: _C.errorColor,
+                              )),
+                          SizedBox(height: 3),
+                          Text('Hatukupata namba kwa jina hilo.',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: _C.textSecondary)),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 18),
+                  const Divider(height: 0.5, color: _C.border),
+                  const SizedBox(height: 16),
+
+                  // ── Footer: Rudi | Tafuta ──
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(Icons.arrow_back, size: 14),
+                        label: const Text('Rudi kuingia'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: _C.accent,
+                          textStyle: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w700),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: _loading ? null : _tafuta,
+                        icon: _loading
+                            ? const SizedBox(
+                                width: 12, height: 12,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.arrow_forward, size: 14),
+                        label: const Text('Tafuta'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _C.accent,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: const Color(0xFF8AAAF5),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9)),
+                          textStyle: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -223,445 +538,183 @@ class _SahauNambaScreenState extends State<SahauNambaScreen> {
       ),
     );
   }
-
-  Widget _buildLogo() {
-    return Center(
-      child: Image.asset(
-        'assets/images/app_icon.png',
-        height: 96,
-        fit: BoxFit.contain,
-        errorBuilder: (context2, err, st) => Container(
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            color: SahauNambaColors.primarySoft,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: SahauNambaColors.primaryBorder),
-          ),
-          child: const Icon(Icons.apps_rounded,
-              size: 44, color: SahauNambaColors.primary),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: SahauNambaColors.border),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOut,
-        alignment: Alignment.topCenter,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          transitionBuilder: (child, anim) => FadeTransition(
-            opacity: anim,
-            child: child,
-          ),
-          child: _state == _CardState.found || _state == _CardState.notFound
-              ? _FoundContent(
-                  key: const ValueKey('found'),
-                  state: _state,
-                  found: _found,
-                  copied: _copied,
-                  onCopy: _copy,
-                  onSearchAgain: _searchAgain,
-                  onLogin: _state == _CardState.found ? _login : null,
-                )
-              : _SearchContent(
-                  key: const ValueKey('search'),
-                  ctrl: _ctrl,
-                  focus: _focus,
-                  loading: _state == _CardState.loading,
-                  error: _errorMsg,
-                  onSearch: _onSearch,
-                  onClearError: () => setState(() => _errorMsg = null),
-                  onBackToLogin: widget.onBackToLogin ?? () => Navigator.maybePop(context),
-                ),
-        ),
-      ),
-    );
-  }
 }
 
 // =============================================================================
-// Search content — fomu ya jina
+// SKRINI 2 — Matokeo (hatua 2/2)
 // =============================================================================
-class _SearchContent extends StatelessWidget {
-  const _SearchContent({
-    super.key,
-    required this.ctrl,
-    required this.focus,
-    required this.loading,
-    required this.error,
-    required this.onSearch,
-    required this.onClearError,
-    required this.onBackToLogin,
-  });
 
-  final TextEditingController ctrl;
-  final FocusNode focus;
-  final bool loading;
-  final String? error;
-  final VoidCallback onSearch;
-  final VoidCallback onClearError;
-  final VoidCallback onBackToLogin;
+class NambaImepatikanaScreen extends StatelessWidget {
+  final String jina;
+  final String kada;
+  final String namba;
+
+  const NambaImepatikanaScreen({
+    super.key,
+    required this.jina,
+    required this.kada,
+    required this.namba,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final hasError = error != null;
+    return Scaffold(
+      backgroundColor: _C.bg,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: _FormCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const _BrandHeader(),
+                  const SizedBox(height: 20),
+                  const _StepProgress(2),
+                  const SizedBox(height: 22),
 
-    OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: c, width: w),
-        );
+                  // ── Ikoni ya mafanikio ──
+                  Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      color: _C.successBg,
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: const Icon(Icons.check_circle_rounded,
+                        color: _C.success, size: 20),
+                  ),
+                  const SizedBox(height: 14),
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _IconBadge(icon: Icons.person_search_outlined, soft: SahauNambaColors.primarySoft, border: SahauNambaColors.primaryBorder, color: SahauNambaColors.primary),
-          const SizedBox(height: 16),
-          const Text(
-            'Sahau namba?',
-            style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: SahauNambaColors.text),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Weka jina lako tulikutafutie.',
-            style: TextStyle(fontSize: 14, color: SahauNambaColors.muted),
-          ),
-          const SizedBox(height: 22),
-          const Text(
-            'Jina kamili',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: SahauNambaColors.label),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: ctrl,
-            focusNode: focus,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => onSearch(),
-            onChanged: (_) { if (error != null) onClearError(); },
-            style: const TextStyle(fontSize: 15, color: SahauNambaColors.text),
-            decoration: InputDecoration(
-              hintText: 'Amani Selemani',
-              hintStyle: const TextStyle(color: SahauNambaColors.hint),
-              prefixIcon: const Icon(Icons.badge_outlined, size: 20, color: SahauNambaColors.hint),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 13),
-              filled: true,
-              fillColor: Colors.white,
-              enabledBorder: border(hasError ? SahauNambaColors.error : SahauNambaColors.inputBorder),
-              focusedBorder: border(hasError ? SahauNambaColors.error : SahauNambaColors.primary, 1.5),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(
-                hasError ? Icons.error_outline : Icons.verified_user_outlined,
-                size: 14,
-                color: hasError ? SahauNambaColors.error : SahauNambaColors.muted,
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  error ?? 'Jina kama lilivyosajiliwa.',
-                  style: TextStyle(fontSize: 12, color: hasError ? SahauNambaColors.error : SahauNambaColors.muted),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Divider(height: 1, color: SahauNambaColors.divider),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: onBackToLogin,
-                      style: TextButton.styleFrom(
-                        foregroundColor: SahauNambaColors.primary,
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        minimumSize: const Size(0, 44),
-                        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                      icon: const Icon(Icons.undo_rounded, size: 16),
-                      label: const Text('Rudi kwenye kuingia'),
+                  const Text(
+                    'Namba imepatikana',
+                    style: TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.w800,
+                      color: _C.textPrimary,
                     ),
                   ),
-                ),
-                FilledButton(
-                  onPressed: loading ? null : onSearch,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: SahauNambaColors.primary,
-                    disabledBackgroundColor: const Color(0xFF6B82CF),
-                    foregroundColor: Colors.white,
-                    disabledForegroundColor: Colors.white,
-                    minimumSize: const Size(0, 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Hii ndiyo namba uliyojisajili nayo.',
+                    style: TextStyle(
+                        fontSize: 13, color: _C.textSecondary),
                   ),
-                  child: loading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Tafuta'),
-                            SizedBox(width: 6),
-                            Icon(Icons.arrow_forward_rounded, size: 17),
-                          ],
-                        ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-// =============================================================================
-// Found / not-found content — matokeo ndani ya kadi ile ile
-// =============================================================================
-class _FoundContent extends StatelessWidget {
-  const _FoundContent({
-    super.key,
-    required this.state,
-    required this.found,
-    required this.copied,
-    required this.onCopy,
-    required this.onSearchAgain,
-    required this.onLogin,
-  });
+                  const SizedBox(height: 16),
 
-  final _CardState state;
-  final _FoundUser? found;
-  final bool copied;
-  final VoidCallback onCopy;
-  final VoidCallback onSearchAgain;
-  final VoidCallback? onLogin;
-
-  bool get _isFound => state == _CardState.found && found != null;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _IconBadge(
-            icon: _isFound ? Icons.check_rounded : Icons.search_off_rounded,
-            soft: _isFound ? SahauNambaColors.successSoft : const Color(0xFFF3F4F6),
-            border: _isFound ? SahauNambaColors.successBorder : const Color(0xFFE5E7EB),
-            color: _isFound ? SahauNambaColors.success : SahauNambaColors.muted,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _isFound ? 'Namba imepatikana' : 'Hatukupata',
-            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: SahauNambaColors.text),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _isFound
-                ? 'Hii ndiyo namba uliyojisajili nayo.'
-                : 'Hatukupata namba kwa jina hilo.',
-            style: const TextStyle(fontSize: 14, color: SahauNambaColors.muted),
-          ),
-          const SizedBox(height: 18),
-          if (_isFound) ...[
-            _phoneTile(found!.phone),
-            const SizedBox(height: 14),
-            _infoRow('Jina', found!.fullName),
-            const SizedBox(height: 8),
-            _infoRow('Kada', found!.cadre),
-          ] else
-            _emptyHint(),
-          const SizedBox(height: 20),
-          const Divider(height: 1, color: SahauNambaColors.divider),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: onSearchAgain,
-                      style: TextButton.styleFrom(
-                        foregroundColor: SahauNambaColors.primary,
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        minimumSize: const Size(0, 44),
-                        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                      icon: const Icon(Icons.undo_rounded, size: 16),
-                      label: const Text('Tafuta tena'),
+                  // ── Tile ya namba + nakili ──
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 11),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: _C.accent, width: 1.5),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ),
-                ),
-                if (onLogin != null)
-                  FilledButton(
-                    onPressed: onLogin,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: SahauNambaColors.primary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 40),
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Row(
                       children: [
-                        Text('Ingia'),
-                        SizedBox(width: 6),
-                        Icon(Icons.arrow_forward_rounded, size: 17),
+                        const Icon(Icons.smartphone_rounded,
+                            size: 17, color: _C.accent),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _fmtPhone(namba),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: _C.textPrimary,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(7),
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: namba));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Namba imenakiliwa: ${_fmtPhone(namba)}'),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(10)),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 28, height: 28,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: _C.border, width: 0.5),
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: const Icon(Icons.copy_rounded,
+                                size: 14, color: _C.accent),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _phoneTile(String phone) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: copied ? SahauNambaColors.success : SahauNambaColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: SahauNambaColors.primarySoft,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.smartphone_rounded, size: 20, color: SahauNambaColors.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              formatPhone(phone),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: SahauNambaColors.text),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Tooltip(
-            message: copied ? 'Imenakiliwa' : 'Nakili namba',
-            child: Material(
-              color: copied ? SahauNambaColors.success : Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: copied ? SahauNambaColors.success : SahauNambaColors.copyBorder),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: onCopy,
-                child: SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: Icon(
-                    copied ? Icons.check_rounded : Icons.copy_rounded,
-                    size: 19,
-                    color: copied ? Colors.white : SahauNambaColors.primary,
+                  const SizedBox(height: 6),
+                  _InfoRow(
+                    icon: Icons.badge_outlined,
+                    label: 'Jina',
+                    value: jina,
+                    topBorder: false,
                   ),
-                ),
+                  _InfoRow(
+                    icon: Icons.work_outline_rounded,
+                    label: 'Kada',
+                    value: kada,
+                    topBorder: true,
+                  ),
+
+                  const SizedBox(height: 18),
+                  const Divider(height: 0.5, color: _C.border),
+                  const SizedBox(height: 16),
+
+                  // ── Footer: Tafuta tena | Ingia ──
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton.icon(
+                        // null → SahauNambaScreen itafuta field
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.refresh_rounded, size: 14),
+                        label: const Text('Tafuta tena'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: _C.accent,
+                          textStyle: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w700),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        // namba → login screen inajaza field
+                        onPressed: () =>
+                            Navigator.of(context).pop(namba),
+                        icon: const Icon(Icons.arrow_forward, size: 14),
+                        label: const Text('Ingia'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _C.accent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9)),
+                          textStyle: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 44,
-          child: Text(label, style: const TextStyle(fontSize: 13, color: SahauNambaColors.muted)),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value.isEmpty ? '—' : value,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: SahauNambaColors.text),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _emptyHint() {
-    return const Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(Icons.info_outline, size: 14, color: SahauNambaColors.muted),
-        SizedBox(width: 5),
-        Expanded(
-          child: Text(
-            'Hakikisha jina limeandikwa kama lilivyosajiliwa, kisha tafuta tena.',
-            style: TextStyle(fontSize: 12, color: SahauNambaColors.muted),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// =============================================================================
-// Shared helper
-// =============================================================================
-class _IconBadge extends StatelessWidget {
-  const _IconBadge({required this.icon, required this.soft, required this.border, required this.color});
-  final IconData icon;
-  final Color soft;
-  final Color border;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: soft,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: Icon(icon, color: color, size: 22),
     );
   }
 }

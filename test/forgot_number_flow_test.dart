@@ -1,11 +1,11 @@
 // ============================================================================
 // test/forgot_number_flow_test.dart
-// Mtiririko wa "Sahau namba?" (kadi moja inabadilika):
+// Mtiririko wa "Umesahau namba?" (skrini mbili: fomu → matokeo):
 //   - validation ya jina (lazima maneno 2+)
-//   - tafuta kwa jina → kadi inabadilika "Namba imepatikana" (AnimatedSwitcher)
-//   - namba + jina + kada zinaonyeshwa kwenye kadi ile ile
-//   - hakuna matokeo → kadi inabadilika "Hatukupata"
-//   - "Tafuta tena" inafuta matokeo na kufuta field (kadi inarudi search)
+//   - tafuta → push NambaImepatikanaScreen yenye namba + jina + kada
+//   - "Tafuta tena" → inarudisha SahauNambaScreen, field inafutwa
+//   - "Ingia →" → inarudisha namba kwa login (Navigator.pop(context, phone))
+//   - hakuna matokeo → "Hatukupata" inaonyeshwa kwenye SahauNambaScreen
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,58 +46,93 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Weka jina la kwanza na la mwisho.'), findsOneWidget);
-    // Kadi ya matokeo haijabadilika — bado iko kwenye hali ya search.
+    // Haijapeleka kwenye skrini ya matokeo
     expect(find.text('Namba imepatikana'), findsNothing);
   });
 
-  testWidgets('tafuta kwa jina — kadi inabadilika na kuonyesha namba',
+  testWidgets('tafuta kwa jina — NambaImepatikanaScreen inaonyeshwa',
       (tester) async {
     await pumpPage(tester);
 
     await tester.enterText(find.byType(TextField), 'Amani Selemani');
     await tester.tap(find.text('Tafuta'));
-    await tester.pump(); // frame ya loading
-    await tester.pump(const Duration(milliseconds: 400)); // API + AnimatedSwitcher
-    await tester.pump(const Duration(milliseconds: 400)); // AnimatedSize
+    await tester.pump(); // loading frame
+    await tester.pump(const Duration(milliseconds: 400)); // API response
+    await tester.pumpAndSettle(); // navigation animation
 
-    // Ukurasa UNAENDELIA hapa hapa — hakuna screen mpya iliyopushwa.
-    expect(find.byType(SahauNambaScreen), findsOneWidget);
-    // Kadi ile ile inabadilika kuwa "Namba imepatikana"
+    // Skrini mpya imepushwa — "Namba imepatikana" inaonekana
     expect(find.text('Namba imepatikana'), findsOneWidget);
     expect(find.text('Hii ndiyo namba uliyojisajili nayo.'), findsOneWidget);
-    // Namba imeformatiwa: +255 763 795 805
+    // Namba imeformatiwa
     expect(find.text('+255 763 795 805'), findsOneWidget);
     // Kada kutoka cadre_display
     expect(find.text('Mwalimu'), findsOneWidget);
+    // Kitufe cha Tafuta tena kipo
     expect(find.text('Tafuta tena'), findsOneWidget);
+    // Kitufe cha Ingia kipo
+    expect(find.text('Ingia'), findsOneWidget);
   });
 
-  testWidgets('"Tafuta tena" inafuta matokeo na kufuta field', (tester) async {
+  testWidgets('"Tafuta tena" inarudisha fomu na kufuta field', (tester) async {
     await pumpPage(tester);
 
     await tester.enterText(find.byType(TextField), 'Amani Selemani');
     await tester.tap(find.text('Tafuta'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
     expect(find.text('Namba imepatikana'), findsOneWidget);
 
-    // 'Tafuta tena' iko ndani ya kadi — vilete kwenye screen kwanza
-    await tester.ensureVisible(find.text('Tafuta tena'));
-    await tester.pump(const Duration(milliseconds: 300));
+    // Rudi nyuma kwa "Tafuta tena"
     await tester.tap(find.text('Tafuta tena'));
     await tester.pumpAndSettle();
 
-    // Kadi inarudi hali ya search — "Namba imepatikana" haipo tena
+    // Skrini ya fomu inarudi — "Namba imepatikana" haitakiwi tena
     expect(find.text('Namba imepatikana'), findsNothing);
-    final ctrl =
-        tester.widget<TextField>(find.byType(TextField)).controller!.text;
-    expect(ctrl, isEmpty);
+    // Field imefutwa
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, isEmpty);
   });
 
-  testWidgets('hakuna matokeo — kadi inabadilika "Hatukupata"',
+  testWidgets('"Ingia" inarudisha namba kwa caller (login screen)',
       (tester) async {
-    // Badilisha adapter kuwa na majibu yasiyo na users
+    String? poppedPhone;
+
+    await tester.pumpWidget(MaterialApp(
+      home: Builder(
+        builder: (ctx) => ElevatedButton(
+          onPressed: () async {
+            poppedPhone = await Navigator.of(ctx).push<String>(
+              MaterialPageRoute(
+                  builder: (_) => const SahauNambaScreen()),
+            );
+          },
+          child: const Text('Fungua'),
+        ),
+      ),
+    ));
+
+    await tester.tap(find.text('Fungua'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Amani Selemani');
+    await tester.tap(find.text('Tafuta'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Namba imepatikana'), findsOneWidget);
+
+    await tester.tap(find.text('Ingia'));
+    await tester.pumpAndSettle();
+
+    // Namba ilirudi kwa caller bila kuongezwa nafasi
+    expect(poppedPhone, isNotNull);
+    expect(poppedPhone, startsWith('+255'));
+  });
+
+  testWidgets('hakuna matokeo — "Hatukupata" inaonyeshwa kwenye fomu',
+      (tester) async {
     final api = ApiService();
     ApiService.dioForTest(api).httpClientAdapter =
         FakeApiAdapter(routes: {'/auth/lookup-by-name': {'users': []}});
@@ -108,10 +143,11 @@ void main() {
     await tester.tap(find.text('Tafuta'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
 
-    // Kadi inabadilika kuwa "Hatukupata" (si "Namba imepatikana")
+    // Hakuna navigation — kadi ya "Hatukupata" inaonyeshwa ndani ya fomu
     expect(find.text('Hatukupata'), findsOneWidget);
     expect(find.text('Hatukupata namba kwa jina hilo.'), findsOneWidget);
+    expect(find.text('Namba imepatikana'), findsNothing);
   });
 }
