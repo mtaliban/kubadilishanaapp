@@ -16,7 +16,7 @@ import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 
 const _kPrimary = Color(0xFF1E40AF);
-const _kBg      = Color(0xFFF8FAFC);
+const _kBg      = Colors.white;
 const _kInk     = Color(0xFF0F172A);
 const _kMuted   = Color(0xFF64748B);
 const _kLine    = Color(0xFFE2E8F0);

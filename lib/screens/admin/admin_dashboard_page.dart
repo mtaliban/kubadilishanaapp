@@ -15,7 +15,7 @@ const _kGrey500 = Color(0xFF6B7280);
 const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kGrey100 = Color(0xFFF3F4F6);
-const _kGrey50  = Color(0xFFF9FAFB);
+const _kGrey50  = Colors.white;
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 class AdminDashboardPage extends StatefulWidget {

@@ -28,7 +28,7 @@ const _kGrey300  = Color(0xFFD1D5DB);
 const _kGrey200  = Color(0xFFE5E7EB);
 const _kGrey100  = Color(0xFFF3F4F6);
 const _kGrey50   = Color(0xFFF9FAFB);
-const _kBgSoft   = Color(0xFFF8FAFC);
+const _kBgSoft   = Colors.white;
 
 class AdminDataPage extends StatefulWidget {
   const AdminDataPage({super.key});

@@ -23,7 +23,7 @@ const _kInk     = Color(0xFF16181D);
 const _kGrey    = Color(0xFF6B7280);
 const _kGrey400 = Color(0xFF9CA3AF);
 const _kBorder  = Color(0xFFECEEF1);
-const _kSoft    = Color(0xFFF7F8FA);
+const _kSoft    = Colors.white;
 
 const _kPageSize = 5;
 

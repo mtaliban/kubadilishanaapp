@@ -682,7 +682,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F5F9),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Stack(
           children: [
@@ -761,7 +761,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: v2Border, width: 0.8),
       ),

@@ -162,7 +162,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF8FAFC),
+        backgroundColor: Colors.white,
         body: Center(
           child: CircularProgressIndicator(color: Color(0xFF0F7A52)),
         ),
@@ -171,7 +171,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
 
     if (_error != null) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: Colors.white,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -205,7 +205,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: _load,
         color: const Color(0xFF0F7A52),
