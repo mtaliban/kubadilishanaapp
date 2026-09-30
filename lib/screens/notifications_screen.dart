@@ -204,7 +204,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     'wenzao'    => (Icons.compare_arrows_rounded, const Color(0xFFD1FAE5), const Color(0xFF047857)),
     'malipo'    => (Icons.receipt_long_outlined, const Color(0xFFD1FAE5), const Color(0xFF047857)),
     'matangazo' => (Icons.campaign_rounded, const Color(0xFFFEF3C7), const Color(0xFFB45309)),
-    'maoni'     => (Icons.chat_bubble_outline_rounded, _kBrand100, _kBrand),
+    'maoni'     => (Icons.mark_chat_read_outlined, _kBrand100, _kBrand),
     _           => (Icons.notifications_none_rounded, _kGrey100, _kGrey500),
   };
 

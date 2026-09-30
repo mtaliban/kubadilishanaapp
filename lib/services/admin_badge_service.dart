@@ -47,8 +47,7 @@ class AdminBadgeService extends ChangeNotifier {
     switch (type) {
       case 'payment.submitted':
       case 'payment.message':
-        // Refresh kutoka server — tunahakikisha count sahihi
-        refresh();
+        bumpPayments();
       case 'feedback.new':
         bumpFeedback();
       case 'user.registered':
