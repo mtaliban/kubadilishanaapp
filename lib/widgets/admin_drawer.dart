@@ -245,9 +245,9 @@ class _SectionTitle extends StatelessWidget {
         child: Text(text,
             style: const TextStyle(
                 fontSize:     11,
-                fontWeight:   FontWeight.w700,
+                fontWeight:   FontWeight.w800,
                 letterSpacing: 1.4,
-                color:        _D.section)),
+                color:        _D.blue)),
       );
 }
 
