@@ -21,11 +21,31 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   String? _error;
   List<MatchPair> _pairs = [];
   final Set<String> _starred = {};
+  List<String> _allRegions = const [];
 
   @override
   void initState() {
     super.initState();
+    _loadRegions();
     _load();
+  }
+
+  Future<void> _loadRegions() async {
+    try {
+      final res = await ApiService().getRegions();
+      final raw = res.data;
+      final list = raw is List
+          ? raw
+          : ((raw is Map ? raw['regions'] ?? raw['data'] : null) as List? ?? []);
+      final names = <String>[];
+      for (final r in list) {
+        if (r is! Map) continue;
+        final name = '${r['name'] ?? r['region_name'] ?? ''}'.trim();
+        if (name.isNotEmpty) names.add(name);
+      }
+      names.sort();
+      if (mounted) setState(() => _allRegions = names);
+    } catch (_) {}
   }
 
   Future<void> _load() async {
@@ -191,6 +211,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
         color: const Color(0xFF0F7A52),
         child: MatchView(
           pairs: _pairs,
+          allRegions: _allRegions,
           starredIds: _starred,
           onStar: (pair, on) => setState(
             () => on

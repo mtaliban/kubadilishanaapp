@@ -56,12 +56,16 @@ class WenzaoView extends StatefulWidget {
   final List<WenzaoPerson> people;
   final int pageSize;
   final bool live;
+  /// Mikoa yote ya Tanzania kutoka API — kwa filter ya mkoa wa lengo.
+  /// Kama tupu, inajaza kutoka data iliyopakiwa (tabia ya zamani).
+  final List<String> allRegions;
 
   const WenzaoView({
     super.key,
     required this.people,
     this.pageSize = 10,
     this.live = true,
+    this.allRegions = const [],
   });
 
   @override
@@ -93,6 +97,8 @@ class _WenzaoViewState extends State<WenzaoView> {
 
   /* ---------- Data ---------- */
   List<String> get _regionOptions {
+    // API regions kama zinapatikana; vinginevyo jaza kutoka destinations za data.
+    if (widget.allRegions.isNotEmpty) return widget.allRegions;
     final s = widget.people
         .expand((p) => p.destinations.map((d) => d.mkoa))
         .map(_place)

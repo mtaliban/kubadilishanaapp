@@ -20,11 +20,31 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   bool _loading = true;
   String? _error;
   List<WenzaoPerson> _people = [];
+  List<String> _allRegions = const [];
 
   @override
   void initState() {
     super.initState();
+    _loadRegions();
     _load();
+  }
+
+  Future<void> _loadRegions() async {
+    try {
+      final res = await ApiService().getRegions();
+      final raw = res.data;
+      final list = raw is List
+          ? raw
+          : ((raw is Map ? raw['regions'] ?? raw['data'] : null) as List? ?? []);
+      final names = <String>[];
+      for (final r in list) {
+        if (r is! Map) continue;
+        final name = '${r['name'] ?? r['region_name'] ?? ''}'.trim();
+        if (name.isNotEmpty) names.add(name);
+      }
+      names.sort();
+      if (mounted) setState(() => _allRegions = names);
+    } catch (_) {}
   }
 
   Future<void> _load() async {
@@ -156,7 +176,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
       body: RefreshIndicator(
         onRefresh: _load,
         color: const Color(0xFF0F7A52),
-        child: WenzaoView(people: _people),
+        child: WenzaoView(people: _people, allRegions: _allRegions),
       ),
     );
   }

@@ -71,6 +71,8 @@ class MatchView extends StatefulWidget {
   final void Function(MatchPair pair, bool starred)? onStar;
   final int pageSize;
   final bool live;
+  /// Mikoa yote ya Tanzania kutoka API — kwa filter ya mkoa.
+  final List<String> allRegions;
 
   const MatchView({
     super.key,
@@ -79,6 +81,7 @@ class MatchView extends StatefulWidget {
     this.onStar,
     this.pageSize = 20,
     this.live = true,
+    this.allRegions = const [],
   });
 
   @override
@@ -94,6 +97,7 @@ class _MatchViewState extends State<MatchView> {
 
   String? idara;
   String? kada;
+  String? mkoa; // mkoa wa mtu yeyote kwenye pair
   int page = 0;
   late Set<String> starred = {...widget.starredIds};
 
@@ -113,6 +117,18 @@ class _MatchViewState extends State<MatchView> {
   }
 
   /* ---------- Data ---------- */
+  List<String> get _mkoaOptions {
+    if (widget.allRegions.isNotEmpty) return widget.allRegions;
+    // Fallback: extract from pair data
+    final s = widget.pairs
+        .expand((p) => [p.a.fromMkoa, p.b.fromMkoa])
+        .where((r) => r.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+    return s;
+  }
+
   List<String> get _idaraOptions {
     const order = ['afya', 'elimu', 'kilimo', 'umma'];
     final keys = widget.pairs.map((p) => _idaraKey(p.idara)).toSet();
@@ -137,6 +153,9 @@ class _MatchViewState extends State<MatchView> {
     return widget.pairs.where((m) {
       if (idara != null && _idaraKey(m.idara) != idara) return false;
       if (kada != null && m.kada != kada) return false;
+      if (mkoa != null &&
+          m.a.fromMkoa != mkoa &&
+          m.b.fromMkoa != mkoa) return false;
       if (q.isNotEmpty && !_matches(_haystack(m), q)) return false;
       if (qs.isNotEmpty && !_subjectHay(m).contains(qs)) return false;
       return true;
@@ -173,6 +192,21 @@ class _MatchViewState extends State<MatchView> {
       _scroll.animateTo(0,
           duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     }
+  }
+
+  Future<void> _pickMkoa() async {
+    final v = await _sheet(
+      title: 'Chagua mkoa',
+      allLabel: 'Mikoa yote',
+      icon: TablerIcons.map2,
+      options: [for (final r in _mkoaOptions) (r, r)],
+      current: mkoa,
+    );
+    if (v == null) return;
+    setState(() {
+      mkoa = v == _all ? null : v;
+      page = 0;
+    });
   }
 
   Future<void> _pickIdara() async {
@@ -249,6 +283,16 @@ class _MatchViewState extends State<MatchView> {
         _header(c, list.length),
         const SizedBox(height: 12),
         Row(children: [
+          Expanded(
+            child: _FilterBtn(
+              c: c,
+              icon: TablerIcons.mapPin,
+              label: mkoa ?? 'Mikoa yote',
+              active: mkoa != null,
+              onTap: _pickMkoa,
+            ),
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: _FilterBtn(
               c: c,
