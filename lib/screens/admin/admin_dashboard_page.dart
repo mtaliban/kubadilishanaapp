@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
+import '../../widgets/app_toast.dart';
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);
@@ -83,7 +84,7 @@ class _State extends State<AdminDashboardPage>
       setState(() { _stats = asMapOrNull(s.data) ?? {}; _loading = false; });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() { _loading = false; _error = friendlyError(e); });
     }
     await _loadReports();
     try {

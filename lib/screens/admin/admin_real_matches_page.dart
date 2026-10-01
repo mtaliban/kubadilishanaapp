@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_toast.dart';
 import 'match_view.dart';
 
 class AdminRealMatchesPage extends StatefulWidget {
@@ -71,7 +72,7 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.toString();
+        _error = friendlyError(e);
       });
     }
   }

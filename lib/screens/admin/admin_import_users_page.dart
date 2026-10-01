@@ -5,6 +5,7 @@ import 'package:excel/excel.dart' hide Border, TextSpan, BorderSide;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../widgets/app_toast.dart';
 
 /* ============================================================
    IDARA NA SAFU ZA FAILI
@@ -98,12 +99,6 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
   _Idara get _cur => _idara.firstWhere((d) => d.key == idara);
   List<ImportColumn> get _cols => importColumnsFor(idara);
 
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   /* ---------- Kiolezo ---------- */
   Future<void> _downloadTemplate() async {
     final excel = Excel.createExcel();
@@ -111,7 +106,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
     final sheet = excel[sheetName];
     sheet.appendRow(_cols.map((c) => TextCellValue(c.name)).toList());
     final bytes = excel.encode();
-    if (bytes == null) return _toast('Imeshindikana kutengeneza kiolezo');
+    if (bytes == null) return AppToast.error('Imeshindikana kutengeneza kiolezo');
 
     final name = 'kiolezo_$idara.xlsx';
     try {
@@ -121,7 +116,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
       if (!mounted) return;
       setState(() => templateDone = true);
     } catch (e) {
-      if (mounted) _toast('Imeshindikana kupakua: $e');
+      if (mounted) AppToast.error(friendlyError(e));
     }
   }
 
@@ -134,17 +129,17 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
     );
     if (res == null || res.files.isEmpty) return;
     final f = res.files.single;
-    if (f.bytes == null) return _toast('Imeshindikana kusoma faili');
-    if (f.size > _maxBytes) return _toast('Faili ni kubwa kuliko MB 5');
+    if (f.bytes == null) return AppToast.error('Imeshindikana kusoma faili');
+    if (f.size > _maxBytes) return AppToast.warning('Faili ni kubwa kuliko MB 5');
 
     setState(() => reading = true);
     try {
       final parsed = _parse(f.name, f.size, f.bytes!);
       if (!mounted) return;
       setState(() => file = parsed);
-      if (parsed.total == 0) _toast('Faili halina safu za watumiaji');
+      if (parsed.total == 0) AppToast.warning('Faili halina safu za watumiaji');
     } catch (e) {
-      if (mounted) _toast('Faili si sahihi. Tumia kiolezo cha Excel (.xlsx)');
+      if (mounted) AppToast.warning('Faili si sahihi. Tumia kiolezo cha Excel (.xlsx)');
     } finally {
       if (mounted) setState(() => reading = false);
     }
@@ -217,10 +212,10 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
     try {
       await widget.onImport?.call(idara, f.valid);
       if (!mounted) return;
-      _toast('Watumiaji ${f.valid.length} wameongezwa');
+      AppToast.success('Watumiaji ${f.valid.length} wameongezwa');
       Navigator.maybePop(context);
     } catch (e) {
-      if (mounted) _toast('Imeshindikana ku-import: $e');
+      if (mounted) AppToast.error(friendlyError(e));
     } finally {
       if (mounted) setState(() => importing = false);
     }
@@ -236,7 +231,8 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
   @override
   Widget build(BuildContext context) {
     final c = _IColors.of(context);
-    return Scaffold(
+    return ToastHost(
+      child: Scaffold(
       backgroundColor: c.page,
       body: SafeArea(
         child: Column(
@@ -615,7 +611,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

@@ -19,6 +19,7 @@ import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
+import '../../widgets/app_toast.dart';
 
 // ── Rangi (zinazolingana na esstranfer.com/admin) ───────────────────────────
 const _cBlue      = Color(0xFF1959D6);
@@ -56,18 +57,14 @@ String _simuSafi(String s) {
 Future<void> _pigaSimu(BuildContext context, String simu) async {
   final ok = await launchUrl(Uri(scheme: 'tel', path: '+$simu'));
   if (!ok && context.mounted) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Imeshindwa kufungua simu')));
+    AppToast.error('Imeshindwa kufungua simu');
   }
 }
 
 Future<void> _nakiliNamba(BuildContext context, String simu) async {
   await Clipboard.setData(ClipboardData(text: '+$simu'));
   if (context.mounted) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Namba imenakiliwa')));
+    AppToast.success('Namba imenakiliwa');
   }
 }
 
@@ -227,7 +224,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       setState(() { _data = asMap(res.data); _loading = false; });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); if (firstLoad) _loading = false; });
+      setState(() { _error = friendlyError(e); if (firstLoad) _loading = false; });
     }
     if (refresh) _loadNotifs();
   }

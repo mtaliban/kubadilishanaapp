@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../config/theme.dart';
+import '../widgets/app_toast.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
@@ -67,7 +68,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = friendlyError(e);
           _loading = false;
         });
       }

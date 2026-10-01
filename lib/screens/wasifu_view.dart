@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import '../widgets/app_toast.dart';
 
 /* ============================================================
    MODELS
@@ -104,8 +105,6 @@ class _WasifuViewState extends State<WasifuView> {
   late UserProfile p = widget.profile;
   bool editing = false;
   bool saving = false;
-  bool toast = false;
-  Timer? _toastTimer;
 
   // Hali ya kuhariri
   late TextEditingController nameCtrl, phoneCtrl, waCtrl;
@@ -122,7 +121,6 @@ class _WasifuViewState extends State<WasifuView> {
 
   @override
   void dispose() {
-    _toastTimer?.cancel();
     if (editing) {
       nameCtrl.dispose();
       phoneCtrl.dispose();
@@ -188,9 +186,7 @@ class _WasifuViewState extends State<WasifuView> {
     setState(() => editing = false);
   }
 
-  void _snack(String m) => ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(m)));
+  void _snack(String m) => AppToast.warning(m);
 
   Future<void> _save() async {
     final name = nameCtrl.text.trim();
@@ -229,19 +225,13 @@ class _WasifuViewState extends State<WasifuView> {
       });
       _showToast();
     } catch (e) {
-      if (mounted) _snack('Imeshindikana kuhifadhi: $e');
+      if (mounted) AppToast.error(friendlyError(e));
     } finally {
       if (mounted) setState(() => saving = false);
     }
   }
 
-  void _showToast() {
-    _toastTimer?.cancel();
-    setState(() => toast = true);
-    _toastTimer = Timer(const Duration(milliseconds: 2500), () {
-      if (mounted) setState(() => toast = false);
-    });
-  }
+  void _showToast() => AppToast.success('Mabadiliko yamehifadhiwa');
 
   /// Orodha ya kuchagua (bottom sheet yenye kutafuta)
   Future<String?> _pick({
@@ -282,22 +272,6 @@ class _WasifuViewState extends State<WasifuView> {
             _header(c),
             if (editing) ..._edit(c) else ..._view(c),
           ],
-        ),
-        Positioned(
-          left: 10,
-          right: 10,
-          bottom: widget.toastBottom,
-          child: IgnorePointer(
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 300),
-              offset: toast ? Offset.zero : const Offset(0, .6),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 250),
-                opacity: toast ? 1 : 0,
-                child: _toastBox(c),
-              ),
-            ),
-          ),
         ),
       ],
     );
@@ -691,29 +665,6 @@ class _WasifuViewState extends State<WasifuView> {
       ]),
     );
   }
-
-  Widget _toastBox(_WC c) => Material(
-        color: c.card,
-        elevation: 4,
-        shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: c.borderStrong, width: .5)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(color: c.greenBg, shape: BoxShape.circle),
-              child: Icon(TablerIcons.check, size: 15, color: c.green),
-            ),
-            const SizedBox(width: 10),
-            Text('Mabadiliko yamehifadhiwa',
-                style: TextStyle(color: c.text, fontSize: 13, fontWeight: FontWeight.w600)),
-          ]),
-        ),
-      );
 
   static String _initials(String n) => n
       .trim()

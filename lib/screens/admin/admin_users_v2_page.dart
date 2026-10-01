@@ -11,6 +11,7 @@ import 'admin_filter_users_sheet.dart';
 import 'admin_users_v2_screens.dart';
 import 'admin_view_user_page.dart';
 import 'admin_users_v2_theme.dart';
+import '../../widgets/app_toast.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // WATUMIAJI (Admin) — MOCKUP TIMELINE LAYOUT:
@@ -181,7 +182,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = friendlyError(e);
         _loading = false;
       });
     }

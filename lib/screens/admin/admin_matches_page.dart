@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_toast.dart';
 import 'wenzao_view.dart';
 
 class AdminMatchesPage extends StatefulWidget {
@@ -68,7 +69,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.toString();
+        _error = friendlyError(e);
       });
     }
   }

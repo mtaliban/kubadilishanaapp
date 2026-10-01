@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import '../widgets/app_toast.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /* ============================================================
@@ -157,11 +158,6 @@ class _ChangiaViewState extends State<ChangiaView> {
 
   bool get _canSend => !sending && smsCtrl.text.trim().length > 10;
 
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg)));
-  }
 
   /* ---------- Vitendo ---------- */
   Future<void> _copy() async {
@@ -177,13 +173,13 @@ class _ChangiaViewState extends State<ChangiaView> {
   Future<void> _send() async {
     final amount = int.tryParse(_digits(amountCtrl.text)) ?? 0;
     final phone = _digits(_local9(phoneCtrl.text));
-    if (amount <= 0) return _toast('Andika kiasi ulicholipa');
+    if (amount <= 0) return AppToast.warning('Andika kiasi ulicholipa');
     // Backend DonateRequest: amount ge=500 — zuia hapa badala ya 422 ya server
-    if (amount < 500) return _toast('Kiasi kiwe angalau TZS 500');
-    if (phone.length != 9) return _toast('Namba iwe tarakimu 9 baada ya +255');
+    if (amount < 500) return AppToast.warning('Kiasi kiwe angalau TZS 500');
+    if (phone.length != 9) return AppToast.warning('Namba iwe tarakimu 9 baada ya +255');
     // Backend: sms_text min_length=10 — zuia hapa pia
     if (smsCtrl.text.trim().length < 10) {
-      return _toast('Bandika SMS nzima ya malipo (herufi 10+)');
+      return AppToast.warning('Bandika SMS nzima ya malipo (herufi 10+)');
     }
 
     setState(() => sending = true);
@@ -209,9 +205,9 @@ class _ChangiaViewState extends State<ChangiaView> {
         step2Done = true;
         filter = null;
       });
-      _toast('Imetumwa. Subiri uthibitisho.');
+      AppToast.success('Imetumwa. Subiri uthibitisho');
     } catch (e) {
-      if (mounted) _toast('Imeshindikana kutuma: $e');
+      if (mounted) AppToast.error(friendlyError(e));
     } finally {
       if (mounted) setState(() => sending = false);
     }

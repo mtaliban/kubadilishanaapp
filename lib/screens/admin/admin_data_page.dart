@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../services/websocket_service.dart';
+import '../../widgets/app_toast.dart';
 import 'admin_idara_dialogs.dart';
 import 'admin_masomo_dialogs.dart';
 import 'admin_kada_dialogs.dart';
@@ -364,9 +365,7 @@ class _AdminDataPageState extends State<AdminDataPage>
       _loadType(type);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
+      AppToast.error(friendlyError(e));
     }
   }
 
@@ -396,9 +395,7 @@ class _AdminDataPageState extends State<AdminDataPage>
       _loadType(type);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
+      AppToast.error(friendlyError(e));
     }
   }
 

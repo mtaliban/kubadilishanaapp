@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../config/theme.dart';
+import '../widgets/app_toast.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -33,17 +34,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     if (!mounted) return;
     if (ok && auth.pendingAdminEmail != null) {
       setState(() => _showOtp = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('OTP imetumwa — angalia email yako'),
-            backgroundColor: AppColors.info));
+      AppToast.info('OTP imetumwa. Angalia email yako');
     } else if (ok) {
       Navigator.pushReplacementNamed(context, '/admin');
     } else if (auth.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(auth.error!),
-            backgroundColor: AppColors.error));
+      AppToast.error(auth.error!);
     }
   }
 
@@ -55,10 +50,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     if (ok) {
       Navigator.pushReplacementNamed(context, '/admin');
     } else if (auth.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(auth.error!),
-            backgroundColor: AppColors.error));
+      AppToast.error(auth.error!);
     }
   }
 
@@ -67,7 +59,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     final auth = context.watch<AuthProvider>();
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Login')),
-      body: Center(
+      body: ToastHost(child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -176,7 +168,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 }

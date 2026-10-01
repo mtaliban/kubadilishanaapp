@@ -3,6 +3,7 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/app_toast.dart';
 import 'admin_otp_step.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -159,7 +160,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final loading = auth.loading || _otpLoading;
     final isAdminEmail = _identifierCtrl.text.contains('@');
 
-    return Scaffold(
+    return ToastHost(
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Stack(
@@ -446,6 +448,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../widgets/app_toast.dart';
 
 /* ============================================================
    DATA YA FOMU (inayorudishwa ukibonyeza Hifadhi)
@@ -267,15 +268,9 @@ class _NewUserPageState extends State<NewUserPage> {
     return null;
   }
 
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   Future<void> _next() async {
     final err = _validate();
-    if (err != null) return _toast(err);
+    if (err != null) return AppToast.warning(err);
     if (step < 2) {
       setState(() {
         step++;
@@ -320,10 +315,10 @@ class _NewUserPageState extends State<NewUserPage> {
     try {
       await widget.onSave?.call(data);
       if (!mounted) return;
-      _toast('Mtumiaji amehifadhiwa');
+      AppToast.success('Mtumiaji amehifadhiwa');
       Navigator.maybePop(context);
     } catch (e) {
-      if (mounted) _toast('Imeshindikana kuhifadhi: $e');
+      if (mounted) AppToast.error(friendlyError(e));
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -335,7 +330,8 @@ class _NewUserPageState extends State<NewUserPage> {
   @override
   Widget build(BuildContext context) {
     final c = FormColors.of(context);
-    return Scaffold(
+    return ToastHost(
+      child: Scaffold(
       backgroundColor: c.page,
       body: SafeArea(
         child: Column(
@@ -356,7 +352,7 @@ class _NewUserPageState extends State<NewUserPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _header(FormColors c) {

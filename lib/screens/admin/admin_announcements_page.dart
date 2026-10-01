@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
+import '../../widgets/app_toast.dart';
 import 'admin_users_v2_theme.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -191,7 +192,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.toString();
+        _error = friendlyError(e);
       });
     }
   }
@@ -273,19 +274,11 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   Future<void> _send() async {
     // Validate (kama design ya picha: jaza kichwa + ujumbe)
     if (_titleCtrl.text.trim().isEmpty || _msgCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Jaza kichwa na ujumbe kwanza'),
-            backgroundColor: v2Danger),
-      );
+      AppToast.warning('Jaza kichwa na ujumbe kwanza');
       return;
     }
     if (_audiences.contains('user') && _selectedUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Tafuta na chagua mtumiaji mmoja kwanza'),
-            backgroundColor: v2Danger),
-      );
+      AppToast.warning('Tafuta na chagua mtumiaji mmoja kwanza');
       return;
     }
     setState(() {
@@ -331,9 +324,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _sending = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Imeshindikana kutuma: $e'), backgroundColor: v2Danger),
-      );
+      AppToast.error(friendlyError(e));
     }
   }
 
@@ -366,9 +357,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Imeshindikana kufuta: $e'), backgroundColor: v2Danger),
-      );
+      AppToast.error(friendlyError(e));
     }
   }
 

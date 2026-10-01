@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
+import '../../widgets/app_toast.dart';
 import '../../services/network_service.dart';
 import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
@@ -101,7 +102,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() { _loading = false; _error = friendlyError(e); });
     }
   }
 
@@ -621,13 +622,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                     GestureDetector(
                       onLongPress: () {
                         Clipboard.setData(ClipboardData(text: phone));
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(SnackBar(
-                              content: const Text('Namba imenakiliwa'),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12))));
+                        AppToast.success('Namba imenakiliwa');
                       },
                       child: Row(children: [
                         Icon(PhosphorIcons.phone(PhosphorIconsStyle.fill),
@@ -758,10 +753,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                       : () async {
                           final text = _ctrl.text.trim();
                           if (text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Andika jibu kwanza'),
-                                  behavior: SnackBarBehavior.floating));
+                            AppToast.warning('Andika jibu kwanza');
                             return;
                           }
                           setState(() => _sending = true);

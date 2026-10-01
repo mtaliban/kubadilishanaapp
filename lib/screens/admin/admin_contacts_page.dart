@@ -14,6 +14,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_toast.dart';
 
 const _kPrimary = Color(0xFF1E40AF);
 const _kBg      = Colors.white;
@@ -176,7 +177,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() { _loading = false; _error = friendlyError(e); });
     }
   }
 
@@ -187,13 +188,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
 
   void _copy(String phone) {
     Clipboard.setData(ClipboardData(text: phone));
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: const Text('Namba imenakiliwa'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ));
+    AppToast.success('Namba imenakiliwa');
   }
 
   void _clearSearch() {

@@ -9,6 +9,7 @@ import '../services/app_cache.dart';
 import '../services/websocket_service.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_shell.dart';
+import '../widgets/app_toast.dart';
 
 // ── Msaidizi wa namba ─────────────────────────────────────────────────────────
 String _fmtPhone(String p) {
@@ -703,9 +704,7 @@ class _ViewAdmin extends StatelessWidget {
                 trailingIcon: Icons.copy_outlined, trailingColor: _textSecondary, trailingBg: _surface1,
                 onTrailingTap: () {
                   Clipboard.setData(ClipboardData(text: email));
-                  ScaffoldMessenger.of(context)
-                    ..clearSnackBars()
-                    ..showSnackBar(const SnackBar(behavior: SnackBarBehavior.floating, content: Text('Barua pepe imenakiliwa')));
+                  AppToast.success('Barua pepe imenakiliwa');
                 },
               ),
               const Divider(height: 26, color: _border),

@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../config/theme.dart';
+import 'app_toast.dart';
 import 'network_banner.dart';
 import 'user_top_bar.dart';
 
@@ -138,11 +139,6 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   final _badge = BadgeService();
 
-  // Global WS toast (payment events + namba ya simu)
-  String? _toastMsg;
-  bool _toastIsSuccess = true;
-  Timer? _toastTimer;
-
   @override
   void initState() {
     super.initState();
@@ -162,7 +158,6 @@ class _AppShellState extends State<AppShell> {
 
   @override
   void dispose() {
-    _toastTimer?.cancel();
     _badge.stop(); // simamisha timer ya polling (singelton — hakuna mwingine)
     WebSocketService().off('notification', _onWsNotification);
     WebSocketService().off('match.found', _onMatchFound);
@@ -176,80 +171,25 @@ class _AppShellState extends State<AppShell> {
     _badge.bump(type);
     switch (type) {
       case 'payment.approved':
-        _showGlobalToast('✓ Malipo yamethibitishwa!', success: true);
+        AppToast.success('Malipo yamethibitishwa');
       case 'payment.rejected':
-        _showGlobalToast('✗ Malipo yamekataliwa. Piga: $_kAdminPhone', success: false);
+        AppToast.error('Malipo yamekataliwa · piga $_kAdminPhone');
       case 'feedback.replied':
-        _showGlobalToast('📋 Admin amejibu maoni yako!', success: true);
+        AppToast.success('Admin amejibu maoni yako');
       case 'match.found':
-        _showGlobalToast('🤝 Umepata mwenzako! Angalia dashibodi.', success: true);
+        AppToast.success('Umepata mwenzako. Angalia dashibodi');
       case 'user.registered':
-        _showGlobalToast('🎯 Mtu anayefaa amejiunga! Angalia dashibodi.', success: true);
+        AppToast.success('Mtu anayefaa amejiunga. Angalia dashibodi');
     }
   }
 
   void _onMatchFound(Map<String, dynamic> payload) {
     _badge.bump('match.found');
-    _showGlobalToast('🤝 Umepata mwenzako! Angalia dashibodi.', success: true);
+    AppToast.success('Umepata mwenzako. Angalia dashibodi');
   }
 
   void _onAnnouncement(Map<String, dynamic> payload) {
     _badge.bump('announcement');
-  }
-
-  void _showGlobalToast(String msg, {bool success = true}) {
-    if (!mounted) return;
-    setState(() {
-      _toastMsg = msg;
-      _toastIsSuccess = success;
-    });
-    _toastTimer?.cancel();
-    _toastTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) setState(() => _toastMsg = null);
-    });
-  }
-
-  /// Toast ya KUELEA — kama toast ya web: card ndogo yenye rangi ya maana,
-  /// inaonekana juu ya content (hai-sukumi layout), inabofyika kufunga.
-  Widget _floatingToast() {
-    final ok = _toastIsSuccess;
-    final bg = ok ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2);
-    final border = ok ? const Color(0xFFA7F3D0) : const Color(0xFFFECACA);
-    final fg = ok ? const Color(0xFF047857) : const Color(0xFFB91C1C);
-    return GestureDetector(
-      onTap: () {
-        if (!ok) Navigator.pushReplacementNamed(context, '/donate');
-        setState(() => _toastMsg = null);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: border),
-          boxShadow: [BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 18, offset: const Offset(0, 6))],
-        ),
-        child: Row(children: [
-          Icon(ok ? Icons.check_circle_rounded : Icons.error_rounded,
-              size: 17, color: fg),
-          const SizedBox(width: 9),
-          Expanded(child: Text(_toastMsg!,
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w700, color: fg))),
-          GestureDetector(
-            onTap: () => setState(() => _toastMsg = null),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Icon(Icons.close_rounded,
-                  size: 16, color: fg.withValues(alpha: 0.65)),
-            ),
-          ),
-        ]),
-      ),
-    );
   }
 
   Future<void> _clearCurrentBadge() async {
@@ -346,9 +286,10 @@ class _AppShellState extends State<AppShell> {
       builder: (context, _) {
         final counts = _badge.counts;
 
-        return Scaffold(
+        return NetworkToastListener(
+          child: Scaffold(
           backgroundColor: AppColors.bg,
-          body: SafeArea(
+          body: ToastHost(child: SafeArea(
             child: Stack(children: [
               // Positioned.fill inahakikisha Column inapata constraints zenye
               // kikomo (Expanded inahitaji hilo ndani ya Stack).
@@ -371,14 +312,8 @@ class _AppShellState extends State<AppShell> {
               Expanded(child: widget.child),
               ])),
 
-              // ══ GLOBAL TOAST — inaelea juu ya content (kama web toast) ══════
-              if (_toastMsg != null)
-                Positioned(
-                  left: 12, right: 12, bottom: 12,
-                  child: _floatingToast(),
-                ),
             ]),
-          ),
+          )),
 
           // ══ BOTTOM NAV (min-h-[56px]) ═══════════════════════════════════════
           // Kama web MobileBottomNav: bg-white border-t shadow-up.
@@ -412,7 +347,7 @@ class _AppShellState extends State<AppShell> {
             ),
           ),
           ),
-        );
+        ));
       },
     );
   }

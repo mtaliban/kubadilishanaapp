@@ -163,12 +163,6 @@ class AppTheme {
         textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
       ),
     ),
-    snackBarTheme: SnackBarThemeData(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.grey700,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      contentTextStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-    ),
     dividerTheme: const DividerThemeData(
       color: AppColors.borderLight, thickness: 1, space: 1,
     ),

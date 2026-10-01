@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+import '../widgets/app_toast.dart';
 
 /* ============================================================
    MODEL
@@ -59,8 +60,6 @@ class _MaoniViewState extends State<MaoniView> {
   late List<FeedbackItem> list = List.of(widget.items);
   int page = 0;
   bool sending = false;
-  bool toast = false;
-  Timer? _toastTimer;
 
   @override
   void initState() {
@@ -76,7 +75,6 @@ class _MaoniViewState extends State<MaoniView> {
 
   @override
   void dispose() {
-    _toastTimer?.cancel();
     msgCtrl.dispose();
     super.dispose();
   }
@@ -123,20 +121,13 @@ class _MaoniViewState extends State<MaoniView> {
       _showToast();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Imeshindikana kutuma: $e')));
+      AppToast.error(friendlyError(e));
     } finally {
       if (mounted) setState(() => sending = false);
     }
   }
 
-  void _showToast() {
-    _toastTimer?.cancel();
-    setState(() => toast = true);
-    _toastTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) setState(() => toast = false);
-    });
-  }
+  void _showToast() => AppToast.success('Yametumwa kwa admin');
 
   @override
   Widget build(BuildContext context) {
@@ -183,24 +174,6 @@ class _MaoniViewState extends State<MaoniView> {
           ],
         ),
 
-        // Toast ya "Yametumwa"
-        Positioned(
-          left: 10,
-          right: 10,
-          bottom: widget.toastBottom,
-          child: IgnorePointer(
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-              offset: toast ? Offset.zero : const Offset(0, .6),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: toast ? 1 : 0,
-                child: _toast(c),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -390,36 +363,6 @@ class _MaoniViewState extends State<MaoniView> {
     );
   }
 
-  Widget _toast(_MC c) => Material(
-        color: c.card,
-        elevation: 4,
-        shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: c.borderStrong, width: .5),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(color: c.greenBg, shape: BoxShape.circle),
-              child: Icon(TablerIcons.check, size: 16, color: c.green),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Yametumwa kwa admin',
-                    style: TextStyle(
-                        color: c.text, fontSize: 13, fontWeight: FontWeight.w600)),
-                Text('Utajibiwa hivi karibuni',
-                    style: TextStyle(color: c.muted, fontSize: 12)),
-              ]),
-            ),
-          ]),
-        ),
-      );
 }
 
 /* ============================================================

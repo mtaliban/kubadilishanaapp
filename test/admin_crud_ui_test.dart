@@ -35,6 +35,7 @@ import 'package:kubadilishanaapp/screens/admin/admin_payments_page.dart';
 import 'package:kubadilishanaapp/services/api_service.dart';
 import 'package:kubadilishanaapp/services/app_cache.dart';
 import 'package:kubadilishanaapp/widgets/app_shell.dart' show LanguageProvider;
+import 'package:kubadilishanaapp/widgets/app_toast.dart';
 
 import 'helpers/fake_api.dart';
 
@@ -326,7 +327,8 @@ void main() {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: const [Locale('sw'), Locale('en')],
-          home: Scaffold(body: child),
+          // ToastHost — kama AdminShell halisi: toast za AppToast zinaonekana
+          home: ToastHost(child: Scaffold(body: child)),
         ),
       );
 
@@ -586,10 +588,10 @@ void main() {
 
       final sent = routes.bodies['approve:ORD1'];
       expect(sent, isNotNull, reason: 'POST /payments/admin/ORD1/approve');
-      // Exact match — kadi ina hatua 'Malipo yamethibitishwa' (bila ✓),
-      // snackbar ina 'Malipo yamethibitishwa ✓'.
-      expect(find.text('Malipo yamethibitishwa ✓'), findsOneWidget,
-          reason: 'Snackbar ya mafanikio imeonekana');
+      // Kadi ina hatua 'Malipo yamethibitishwa' NA toast ya mafanikio ina
+      // ujumbe huo huo (design mpya: hakuna ✓) — jumla ni 2.
+      expect(find.text('Malipo yamethibitishwa'), findsNWidgets(2),
+          reason: 'Toast ya mafanikio imeonekana juu ya kadi');
       // Page inaonyesha status zote — kadi ya Juma Ali ibaki,
       // LAKINI vitufe vya 'Thibitisha' vimepotea (status siyo verifying tena).
       expect(find.byTooltip('Thibitisha'), findsNothing,

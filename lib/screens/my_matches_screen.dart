@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../utils/safe_cast.dart';
+import '../widgets/app_toast.dart';
 
 // ── Brand colors (same as web globals.css) ────────────────────────────────────
 const _kBlue      = Color(0xFF1E40AF);
@@ -198,7 +199,7 @@ class _MyMatchesTabState extends State<_MyMatchesTab>
       final data = asMap(res.data);
       setState(() { _matches = data['matches'] ?? []; _loading = false; });
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = friendlyError(e); _loading = false; });
     }
   }
 
@@ -339,7 +340,7 @@ class _RealMatchesTabState extends State<_RealMatchesTab>
       final data = asMap(res.data);
       setState(() { _matches = data['matches'] ?? []; _loading = false; });
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = friendlyError(e); _loading = false; });
     }
   }
 

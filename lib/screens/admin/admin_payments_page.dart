@@ -11,6 +11,7 @@ import '../../services/admin_badge_service.dart';
 import '../../services/network_service.dart';
 import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
+import '../../widgets/app_toast.dart';
 import 'malipo_view.dart';
 
 class AdminPaymentsPage extends StatefulWidget {
@@ -69,7 +70,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() { _loading = false; _error = friendlyError(e); });
     }
   }
 
@@ -144,19 +145,18 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
         payload: {'order_id': p.id},
         displayText: 'Thibitisha malipo',
       );
-      _snack('⏳ Imewekwa foleni — itatumwa mtandao ukiingia',
-          const Color(0xFFF59E0B));
+      AppToast.info('Imewekwa foleni. Itatumwa mtandao ukiingia');
       return;
     }
     try {
       await ApiService().adminApproveDonation(p.id);
       if (!mounted) return;
       AdminBadgeService().refresh();
-      _snack('Malipo yamethibitishwa ✓', const Color(0xFF16A34A));
+      AppToast.success('Malipo yamethibitishwa');
       await _load();
     } catch (e) {
       if (!mounted) return;
-      _snack('Kosa: $e', const Color(0xFFDC2626));
+      AppToast.error(friendlyError(e));
     }
   }
 
@@ -167,33 +167,19 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
         payload: {'order_id': p.id, 'note': reason},
         displayText: 'Kataa malipo',
       );
-      _snack('⏳ Imewekwa foleni — itatumwa mtandao ukiingia',
-          const Color(0xFFF59E0B));
+      AppToast.info('Imewekwa foleni. Itatumwa mtandao ukiingia');
       return;
     }
     try {
       await ApiService().adminRejectDonation(p.id, note: reason);
       if (!mounted) return;
       AdminBadgeService().refresh();
-      _snack('Malipo yamekataliwa', const Color(0xFFF59E0B));
+      AppToast.warning('Malipo yamekataliwa');
       await _load();
     } catch (e) {
       if (!mounted) return;
-      _snack('Kosa: $e', const Color(0xFFDC2626));
+      AppToast.error(friendlyError(e));
     }
-  }
-
-  void _snack(String msg, Color bg) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content:
-            Text(msg, style: const TextStyle(color: Colors.white)),
-        backgroundColor: bg,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
-      ));
   }
 
   /* ── Build ── */

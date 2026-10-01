@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/app_cache.dart';
+import '../widgets/app_toast.dart';
 import '../widgets/select_sheet.dart';
 import '../utils/safe_cast.dart';
 
@@ -517,73 +518,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _showSuccessToast() {
-    final overlay = Overlay.of(context);
-    late OverlayEntry entry;
-    entry = OverlayEntry(builder: (ctx) {
-      final topPad = MediaQuery.of(ctx).padding.top;
-      return Positioned(
-        top: topPad + 24, // top-6 = 24px below status bar
-        left: 0,
-        right: 0,
-        child: Center(
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), // px-5=20 py-3.5=14
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12), // rounded-xl
-                border: Border.all(color: const Color(0xFF86EFAC)), // border-green-300
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                // Green circle with checkmark — w-8 h-8 bg-green-100
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFDCFCE7), // bg-green-100
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Icon(PhosphorIcons.check(), size: 16, color: const Color(0xFF16A34A)), // text-green-600
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: const [
-                  Text('Usajili umefanikiwa',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF15803D))), // text-green-700
-                  SizedBox(height: 2),
-                  Text('Unaelekezwa kwenye dashibodi...',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                ]),
-              ]),
-            ),
-          ),
-        ),
-      );
-    });
-    overlay.insert(entry);
-    Future.delayed(const Duration(milliseconds: 2800), () {
-      if (entry.mounted) entry.remove();
-    });
-  }
+  void _showSuccessToast() => AppToast.success('Umejisajili kikamilifu');
 
   @override
   Widget build(BuildContext context) {
     final steps = List.generate(_totalSteps, (i) => _stepTitle(i));
 
-    return Scaffold(
+    return ToastHost(
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -692,7 +634,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ]),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildStep() {

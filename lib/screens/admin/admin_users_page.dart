@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
+import '../../widgets/app_toast.dart';
 import '../../widgets/select_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,7 +211,7 @@ class _State extends State<AdminUsersPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = friendlyError(e); _loading = false; });
     }
   }
 

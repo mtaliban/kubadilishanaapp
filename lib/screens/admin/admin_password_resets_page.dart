@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
+import '../../widgets/app_toast.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg  = Color(0xFFEFF6FF);
@@ -63,7 +64,7 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
       setState(() { _loading = false; });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = e.toString(); });
+      setState(() { _loading = false; _error = friendlyError(e); });
     }
   }
 
@@ -76,9 +77,7 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
       await _load('pending');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
+      AppToast.error(friendlyError(e));
     }
   }
 
@@ -91,9 +90,7 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
       await _load('pending');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kosa: $e'), backgroundColor: _kRed),
-      );
+      AppToast.error(friendlyError(e));
     }
   }
 

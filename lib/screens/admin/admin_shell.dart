@@ -8,6 +8,7 @@ import '../../widgets/app_shell.dart' show LanguageProvider;
 import '../../services/app_navigator.dart' show adminPageNotifier;
 import '../../widgets/admin_top_bar.dart';
 import '../../widgets/admin_drawer.dart';
+import '../../widgets/app_toast.dart';
 import '../../widgets/network_banner.dart';
 import '../../widgets/queue_banner.dart';
 import 'admin_dashboard_page.dart';
@@ -220,7 +221,8 @@ class _AdminShellState extends State<AdminShell> {
     final name  = auth.user?.fullName ?? 'Admin';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'A';
 
-    return Scaffold(
+    return NetworkToastListener(
+      child: Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
       appBar: AdminTopBar(
@@ -249,7 +251,7 @@ class _AdminShellState extends State<AdminShell> {
           onLogout: _logout,
         ),
       ),
-      body: Builder(builder: (ctx) {
+      body: ToastHost(child: Builder(builder: (ctx) {
         // Futa badge MARA MOJA ukurasa ukibadilika — siyo kila rebuild.
         // Kutofanya hivi kungesababisha badge kufutwa tena na tena kila
         // WS event ikija, ambayo inasababisha race condition na periodic poll.
@@ -268,8 +270,9 @@ class _AdminShellState extends State<AdminShell> {
           const QueueBanner(),
           Expanded(child: widget.child ?? _pageFor(_idx)),
         ]);
-      }),
+      })),
       bottomNavigationBar: _buildBottomNav(),
+    ),
     );
   }
 

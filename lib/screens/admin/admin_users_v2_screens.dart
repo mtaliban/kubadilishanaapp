@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_toast.dart';
 import '../../widgets/select_sheet.dart';
 import 'admin_users_v2_theme.dart';
 
@@ -662,7 +663,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = '$e';
+        _error = friendlyError(e);
       });
     }
   }
@@ -1561,14 +1562,11 @@ class V2UserDetailScreen extends StatelessWidget {
           .adminUpdateUser(id, {'status': active ? 'disabled' : 'active'});
       user['status'] = active ? 'disabled' : 'active';
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(active ? 'Amesitishwa' : 'Amewezeshwa'),
-            backgroundColor: v2Success));
+        AppToast.success(active ? 'Amesitishwa' : 'Amewezeshwa');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Hitilafu: $e'), backgroundColor: v2Danger));
+        AppToast.error(friendlyError(e));
       }
     }
   }
@@ -1852,7 +1850,7 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = '$e';
+        _error = friendlyError(e);
       });
     }
   }
@@ -2042,7 +2040,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = '$e';
+        _error = friendlyError(e);
       });
     }
   }
@@ -2053,18 +2051,21 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
       final path = await FilePicker.platform.saveFile(
           fileName: 'kiolezo_$_cat.xlsx', bytes: Uint8List.fromList(bytes));
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(path == null ? 'Imeghairiwa' : 'Kiolezo: $path')));
+      if (path == null) {
+        AppToast.info('Imeghairiwa');
+      } else {
+        AppToast.success('Kiolezo imepakuliwa');
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Imeshindikana: $e')));
+      AppToast.error(friendlyError(e));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ToastHost(
+      child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
           backgroundColor: Colors.white,
@@ -2240,7 +2241,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                 ),
               ),
           ]),
-    );
+    ));
   }
 
   Widget _stat(String label, int n, Color color) => Container(

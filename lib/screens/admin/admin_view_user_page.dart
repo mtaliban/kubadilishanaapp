@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../widgets/app_toast.dart';
 
 /* ============================================================
    MODEL
@@ -166,12 +167,6 @@ class UserDetailsPage extends StatelessWidget {
     this.emptySeenText = 'Ataonekana na wengine akithibitishwa na kulipa.',
   });
 
-  void _toast(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   Future<void> _confirmDelete(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -203,7 +198,8 @@ class UserDetailsPage extends StatelessWidget {
     final wa = (user.whatsapp ?? '').trim();
     final sameWa = wa.isEmpty || _digits(_intl(wa)) == _digits(_intl(user.phone));
 
-    return Scaffold(
+    return ToastHost(
+      child: Scaffold(
       backgroundColor: c.page,
       body: SafeArea(
         child: Column(
@@ -365,7 +361,7 @@ class UserDetailsPage extends StatelessWidget {
                             await Clipboard.setData(
                                 ClipboardData(text: _prettyPhone(user.phone)));
                             if (context.mounted) {
-                              _toast(context, 'Namba imenakiliwa');
+                              AppToast.success('Namba imenakiliwa');
                             }
                           },
                         ),
@@ -573,7 +569,7 @@ class UserDetailsPage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../config/theme.dart';
 import '../utils/safe_cast.dart';
+import '../widgets/app_toast.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
@@ -70,21 +71,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await ApiService().updateNotificationPrefs(_notifPrefs);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mipangilio ya arifa imehifadhiwa'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        AppToast.success('Mipangilio ya arifa imehifadhiwa');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hitilafu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppToast.error(friendlyError(e));
       }
     } finally {
       if (mounted) setState(() => _notifSaving = false);
@@ -138,21 +129,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'region_ids': _followedRegionIds.toList(),
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mikoa iliyofuatwa imehifadhiwa'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        AppToast.success('Mikoa iliyofuatwa imehifadhiwa');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hitilafu: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppToast.error(friendlyError(e));
       }
     } finally {
       if (mounted) setState(() => _regionsSaving = false);
@@ -165,7 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(children: [
+      body: ToastHost(child: Column(children: [
         Container(
           color: Colors.white,
           padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 12),
@@ -308,7 +289,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
         )),
-      ]),
+      ])),
     );
   }
 

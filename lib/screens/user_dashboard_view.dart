@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/app_toast.dart';
 
 /* ============================================================
    MODELS
@@ -167,16 +168,8 @@ class _UserDashboardViewState extends State<UserDashboardView>
   int? matchFilter; // walimu: null = wote, 2, 1, 0
   int page = 0;
 
-  // Toast
-  late final AnimationController _toastCtrl =
-      AnimationController(vsync: this, duration: const Duration(seconds: 4));
-  bool _toastVisible = false;
-  Timer? _toastTimer;
-
   @override
   void dispose() {
-    _toastTimer?.cancel();
-    _toastCtrl.dispose();
     super.dispose();
   }
 
@@ -239,14 +232,8 @@ class _UserDashboardViewState extends State<UserDashboardView>
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  void _showToast() {
-    _toastTimer?.cancel();
-    setState(() => _toastVisible = true);
-    _toastCtrl.forward(from: 0);
-    _toastTimer = Timer(const Duration(seconds: 4), () {
-      if (mounted) setState(() => _toastVisible = false);
-    });
-  }
+  void _showToast() =>
+      AppToast.warning('Changia ${widget.price} upate namba ya mwenzako');
 
   /* ---------- UI ---------- */
   @override
@@ -293,25 +280,6 @@ class _UserDashboardViewState extends State<UserDashboardView>
           ],
         ),
 
-        // Toast yenye muda unaoisha
-        Positioned(
-          left: 10,
-          right: 10,
-          bottom: widget.toastBottom,
-          child: IgnorePointer(
-            ignoring: !_toastVisible,
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-              offset: _toastVisible ? Offset.zero : const Offset(0, .6),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: _toastVisible ? 1 : 0,
-                child: _toast(c),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -661,63 +629,6 @@ class _UserDashboardViewState extends State<UserDashboardView>
         ],
       );
 
-  Widget _toast(_Cl c) {
-    return Material(
-      color: c.card,
-      elevation: 4,
-      shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: c.borderStrong, width: .5),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 10, 8),
-            child: Row(
-              children: [
-                Icon(TablerIcons.phoneOff, size: 18, color: c.amber),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text.rich(TextSpan(
-                    style: TextStyle(color: c.text, fontSize: 13),
-                    children: [
-                      const TextSpan(text: 'Changia '),
-                      TextSpan(
-                          text: widget.price,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600)),
-                      const TextSpan(text: ' upate namba'),
-                    ],
-                  )),
-                ),
-                _TonalBtn(
-                  c: c,
-                  label: 'Changia',
-                  trailing: TablerIcons.arrowRight,
-                  onTap: () {
-                    setState(() => _toastVisible = false);
-                    widget.onChangia?.call();
-                  },
-                ),
-              ],
-            ),
-          ),
-          AnimatedBuilder(
-            animation: _toastCtrl,
-            builder: (_, __) => LinearProgressIndicator(
-              value: 1 - _toastCtrl.value,
-              minHeight: 3,
-              backgroundColor: c.border,
-              valueColor: AlwaysStoppedAnimation(c.blue),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /* ============================================================
