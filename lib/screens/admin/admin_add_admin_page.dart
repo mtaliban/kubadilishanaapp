@@ -297,11 +297,15 @@ class _AddAdminFormState extends State<AddAdminForm> {
         child: Row(children: [
           Icon(icon, size: 17, color: _C.primaryDark),
           const SizedBox(width: 6),
-          Text(text,
-              style: const TextStyle(
-                  fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
+          Expanded(
+            child: Text(text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
+          ),
           if (trailing != null) ...[
-            const Spacer(),
+            const SizedBox(width: 6),
             Text(trailing, style: const TextStyle(fontSize: 12, color: _C.note)),
           ],
         ]),

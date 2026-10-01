@@ -430,7 +430,7 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Row(children: [
           Icon(icon, size: 17, color: _C.primaryDark),
           const SizedBox(width: 6),
-          Flexible(
+          Expanded(
             child: Text(text,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
