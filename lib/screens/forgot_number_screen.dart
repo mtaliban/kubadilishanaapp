@@ -131,11 +131,14 @@ class ForgotNumberPage extends StatelessWidget {
                       child: _AppLogo(size: screenW * 0.42),
                     ),
                     const SizedBox(height: 28),
-                    // Kadi ya fomu — chini ya logo
-                    ForgotNumberCard(
-                      onSearch: onSearch,
-                      onBackToLogin: onBackToLogin,
-                      onLogin: onLogin,
+                    // Kadi ya fomu — 75% ya upana, katikati
+                    FractionallySizedBox(
+                      widthFactor: 0.75,
+                      child: ForgotNumberCard(
+                        onSearch: onSearch,
+                        onBackToLogin: onBackToLogin,
+                        onLogin: onLogin,
+                      ),
                     ),
                   ],
                 ),
@@ -229,17 +232,17 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
     final step2 = _found != null;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _C.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _StepBar(step2: step2),
-          const SizedBox(height: 22),
+          const SizedBox(height: 14),
           AnimatedSize(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOut,
@@ -262,11 +265,11 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _title('Umesahau namba?'),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         _subtitle('Andika jina lako kamili tukutafutie namba uliyosajili nayo.'),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         _fieldLabel(TablerIcons.user_square_rounded, 'Jina kamili'),
-        const SizedBox(height: 7),
+        const SizedBox(height: 5),
         TextField(
           controller: _name,
           textCapitalization: TextCapitalization.characters,
@@ -275,13 +278,13 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
           onChanged: (_) {
             if (_error != null) setState(() => _error = null);
           },
-          style: const TextStyle(fontSize: 15, color: _C.text, height: 1.2),
+          style: const TextStyle(fontSize: 13, color: _C.text, height: 1.2),
           decoration: InputDecoration(
             hintText: 'Mfano: Amani Selemani',
-            hintStyle: const TextStyle(fontSize: 15, color: _C.hint, height: 1.2),
-            prefixIcon: const Icon(TablerIcons.user_circle, size: 20, color: _C.primaryDark),
-            prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            contentPadding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+            hintStyle: const TextStyle(fontSize: 13, color: _C.hint, height: 1.2),
+            prefixIcon: const Icon(TablerIcons.user_circle, size: 17, color: _C.primaryDark),
+            prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            contentPadding: const EdgeInsets.fromLTRB(0, 8, 10, 8),
             enabledBorder: _border(hasError ? _C.error : _C.inputBorder),
             focusedBorder: _border(hasError ? _C.error : _C.primary),
           ),
@@ -324,14 +327,14 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
                 style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _C.ok)),
           ]),
         ),
-        const SizedBox(height: 10),
-        _title('Namba yako'),
         const SizedBox(height: 6),
+        _title('Namba yako'),
+        const SizedBox(height: 3),
         _subtitle('Hii ndiyo namba uliyojisajili nayo.'),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         _fieldLabel(TablerIcons.device_mobile, 'Namba ya simu'),
         Container(
-          padding: const EdgeInsets.only(top: 4, bottom: 12),
+          padding: const EdgeInsets.only(top: 3, bottom: 8),
           decoration: const BoxDecoration(
             border: Border(bottom: BorderSide(color: _C.line, width: 1.5)),
           ),
@@ -345,7 +348,7 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
                   child: Text(u.phone,
                       maxLines: 1,
                       style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: 15,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.3,
                           color: _C.text)),
@@ -356,10 +359,10 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 8),
         _infoBlock(TablerIcons.user, 'Jina', u.fullName),
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: 8),
           child: Divider(height: 1, thickness: 1, color: _C.line),
         ),
         _infoBlock(TablerIcons.briefcase_2, 'Kada', u.cadre),
@@ -374,41 +377,38 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
   // ---------------- VIPANDE ----------------
   Widget _title(String t) => Text(t,
       style: const TextStyle(
-          fontSize: 22, fontWeight: FontWeight.w900, color: _C.text, height: 1.2));
+          fontSize: 16, fontWeight: FontWeight.w900, color: _C.text, height: 1.2));
 
   Widget _subtitle(String t) =>
-      Text(t, style: const TextStyle(fontSize: 14.5, color: _C.body, height: 1.45));
+      Text(t, style: const TextStyle(fontSize: 12, color: _C.body, height: 1.4));
 
-  Widget _fieldLabel(IconData icon, String t) => Padding(
-        padding: const EdgeInsets.only(bottom: 0),
-        child: Row(children: [
-          Icon(icon, size: 17, color: _C.primaryDark),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(t,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
-          ),
-        ]),
-      );
+  Widget _fieldLabel(IconData icon, String t) => Row(children: [
+        Icon(icon, size: 14, color: _C.primaryDark),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(t,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: _C.text)),
+        ),
+      ]);
 
   Widget _infoBlock(IconData icon, String label, String value) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Icon(icon, size: 16, color: _C.primaryDark),
-            const SizedBox(width: 6),
-            Text(label, style: const TextStyle(fontSize: 12.5, color: _C.hint)),
+            Icon(icon, size: 13, color: _C.primaryDark),
+            const SizedBox(width: 5),
+            Text(label, style: const TextStyle(fontSize: 11, color: _C.hint)),
           ]),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Padding(
-            padding: const EdgeInsets.only(left: 22),
+            padding: const EdgeInsets.only(left: 18),
             child: Text(value,
                 softWrap: true,
                 style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700, color: _C.text, height: 1.35)),
+                    fontSize: 13, fontWeight: FontWeight.w700, color: _C.text, height: 1.3)),
           ),
         ],
       );
@@ -425,19 +425,19 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
         borderRadius: BorderRadius.circular(8),
         onTap: _copied ? null : _copy,
         child: SizedBox(
-          height: 32,
+          height: 26,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 180),
               child: Row(
                 key: ValueKey(_copied),
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(_copied ? TablerIcons.check : TablerIcons.copy, size: 15, color: c),
-                  const SizedBox(width: 5),
+                  Icon(_copied ? TablerIcons.check : TablerIcons.copy, size: 13, color: c),
+                  const SizedBox(width: 4),
                   Text(_copied ? 'Imenakiliwa' : 'Nakili',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: c)),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c)),
                 ],
               ),
             ),
@@ -448,8 +448,8 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
   }
 
   Widget _footer({required Widget left, required Widget right}) => Container(
-        margin: const EdgeInsets.only(top: 20),
-        padding: const EdgeInsets.only(top: 14),
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.only(top: 10),
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: _C.line)),
         ),
@@ -458,22 +458,22 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
 
   Widget _textLink(IconData icon, String t, VoidCallback onTap) => InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 16, color: _C.primaryDark),
-            const SizedBox(width: 6),
+            Icon(icon, size: 13, color: _C.primaryDark),
+            const SizedBox(width: 4),
             Text(t,
                 style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+                    fontSize: 12, fontWeight: FontWeight.w700, color: _C.primaryDark)),
           ]),
         ),
       );
 
   Widget _primaryButton(String t, VoidCallback? onTap, {bool loading = false}) =>
       SizedBox(
-        height: 36,
+        height: 30,
         child: ElevatedButton(
           onPressed: onTap,
           style: ElevatedButton.styleFrom(
@@ -482,20 +482,20 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
             foregroundColor: Colors.white,
             disabledForegroundColor: Colors.white,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           child: loading
               ? const SizedBox(
-                  width: 16,
-                  height: 16,
+                  width: 13,
+                  height: 13,
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(t, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                  const SizedBox(width: 6),
-                  const Icon(TablerIcons.arrow_right, size: 16),
+                  Text(t, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  const SizedBox(width: 5),
+                  const Icon(TablerIcons.arrow_right, size: 13),
                 ]),
         ),
       );
