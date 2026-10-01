@@ -182,17 +182,21 @@ class NotificationService {
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
       await android?.createNotificationChannel(const AndroidNotificationChannel(
-        'kubadilishana_messages', 'Ujumbe',
+        'kubadilishana_messages_v2', 'Ujumbe',
         description: 'Ujumbe mpya kutoka kwa wenzako',
         importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
       ));
       await android?.createNotificationChannel(const AndroidNotificationChannel(
-        'kubadilishana_matches', 'Mechi',
+        'kubadilishana_matches_v2', 'Mechi',
         description: 'Mechi mpya zilizopatikana',
         importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
       ));
       await android?.createNotificationChannel(const AndroidNotificationChannel(
-        'kubadilishana_general', 'Matangazo',
+        'kubadilishana_general_v2', 'Matangazo',
         description: 'Matangazo na taarifa za jumla',
         importance: Importance.high,
         playSound: true,
@@ -394,16 +398,16 @@ class NotificationService {
   static String _channelId(String type) {
     if (type.startsWith('payment') ||
         type.startsWith('feedback') ||
-        type == 'admin.reply') { return 'kubadilishana_messages'; }
+        type == 'admin.reply') { return 'kubadilishana_messages_v2'; }
     if (type.startsWith('match') ||
-        type == 'user.registered') { return 'kubadilishana_matches'; }
-    return 'kubadilishana_general';
+        type == 'user.registered') { return 'kubadilishana_matches_v2'; }
+    return 'kubadilishana_general_v2';
   }
 
   static String _channelName(String id) => switch (id) {
-    'kubadilishana_messages' => 'Ujumbe',
-    'kubadilishana_matches'  => 'Mechi',
-    _                        => 'Matangazo',
+    'kubadilishana_messages_v2' => 'Ujumbe',
+    'kubadilishana_matches_v2'  => 'Mechi',
+    _                           => 'Matangazo',
   };
 
   static String _titleForType(String type) => switch (type) {
