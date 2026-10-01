@@ -215,8 +215,9 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                                   decoration: BoxDecoration(
                                     color: isSel
                                         ? AppColors.blue50
-                                        : AppColors.grey100,
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(9),
+                                    border: isSel ? null : Border.all(color: AppColors.grey300),
                                   ),
                                   child: Icon(
                                     widget.itemIcon!,

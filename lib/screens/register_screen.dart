@@ -1621,7 +1621,7 @@ class _Step5StationState extends State<_Step5Station> {
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 6),
         SelectField(
-          icon: PhosphorIcons.mapPin(),
+          leading: const Icon(TablerIcons.map_pin, size: 14, color: Color(0xFF1B4F9C)),
           hint: 'Chagua Mkoa',
           value: _regionId == null ? null : _regions.cast<dynamic>()
               .firstWhere((r) => r['id'] == _regionId, orElse: () => null)?['name'] as String?,
@@ -1633,7 +1633,7 @@ class _Step5StationState extends State<_Step5Station> {
             )).toList();
             final result = await showSelectSheet<int>(
               context, title: 'Chagua Mkoa', items: items, selected: _regionId,
-              searchable: true, itemIcon: PhosphorIcons.mapPin(),
+              searchable: true, itemIcon: TablerIcons.map_pin,
             );
             if (result != null) _onRegionChanged(result);
           },
@@ -1648,7 +1648,7 @@ class _Step5StationState extends State<_Step5Station> {
             Center(child: _loadingRow(verticalPad: 8))
           else
             SelectField(
-              icon: PhosphorIcons.heartbeat(),
+              leading: const Icon(TablerIcons.first_aid_kit, size: 14, color: Color(0xFF1B4F9C)),
               hint: 'Chagua Hospitali ya Rufaa',
               value: _facilityId == null ? null : (_facilities.cast<dynamic>()
                   .firstWhere((f) => '${f['id'] ?? f['code']}' == _facilityId, orElse: () => null)?['name'] as String?),
@@ -1661,7 +1661,7 @@ class _Step5StationState extends State<_Step5Station> {
                 final result = await showSelectSheet<String>(
                   context, title: 'Chagua Hospitali ya Rufaa', items: items,
                   selected: _facilityId, searchable: true,
-                  itemIcon: PhosphorIcons.heartbeat(),
+                  itemIcon: TablerIcons.first_aid_kit,
                 );
                 if (result != null) setState(() => _facilityId = result);
               },
@@ -1677,7 +1677,7 @@ class _Step5StationState extends State<_Step5Station> {
             Center(child: _loadingRow(verticalPad: 8))
           else
             SelectField(
-              icon: PhosphorIcons.city(),
+              leading: const Icon(TablerIcons.building, size: 14, color: Color(0xFF1B4F9C)),
               hint: 'Chagua Wilaya',
               value: _districtId == null ? null : _districts.cast<dynamic>()
                   .firstWhere((d) => d['id'] == _districtId, orElse: () => null)?['name'] as String?,
@@ -1689,7 +1689,7 @@ class _Step5StationState extends State<_Step5Station> {
                 )).toList();
                 final result = await showSelectSheet<int>(
                   context, title: 'Chagua Wilaya', items: items, selected: _districtId,
-                  searchable: true, itemIcon: PhosphorIcons.city(),
+                  searchable: true, itemIcon: TablerIcons.building,
                 );
                 if (result != null) _onDistrictChanged(result);
               },
@@ -1709,17 +1709,25 @@ class _Step5StationState extends State<_Step5Station> {
             Center(child: _loadingRow(verticalPad: 8))
           else
             SelectField(
-              icon: widget.initial['category'] == 'health'
-                  ? PhosphorIcons.heartbeat()
-                  : (widget.initial['cadre_level'] == 'Secondary'
-                      ? PhosphorIcons.graduationCap()
-                      : PhosphorIcons.bookOpen()),
+              leading: Icon(
+                widget.initial['category'] == 'health'
+                    ? TablerIcons.first_aid_kit
+                    : (widget.initial['cadre_level'] == 'Secondary'
+                        ? TablerIcons.microscope
+                        : TablerIcons.book),
+                size: 14, color: const Color(0xFF1B4F9C),
+              ),
               hint: widget.initial['category'] == 'health'
                   ? 'Chagua Hospitali/Kituo (hiari)'
                   : 'Chagua Shule (hiari)',
               value: _facilityId == null ? null : _facilities.cast<dynamic>()
                   .firstWhere((f) => '${f['id'] ?? f['code']}' == _facilityId, orElse: () => null)?['name'] as String?,
               onTap: () async {
+                final isHealth = widget.initial['category'] == 'health';
+                final listIcon = isHealth ? TablerIcons.first_aid_kit
+                    : (widget.initial['cadre_level'] == 'Secondary'
+                        ? TablerIcons.microscope
+                        : TablerIcons.book);
                 final items = [
                   (value: null as String?, label: 'Bila Kituo (Hiari)', subtitle: null),
                   ..._facilities.map((f) => (
@@ -1730,13 +1738,9 @@ class _Step5StationState extends State<_Step5Station> {
                 ];
                 final result = await showSelectSheet<String?>(
                   context,
-                  title: widget.initial['category'] == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
+                  title: isHealth ? 'Chagua Kituo' : 'Chagua Shule',
                   items: items, selected: _facilityId, searchable: true,
-                  itemIcon: widget.initial['category'] == 'health'
-                      ? PhosphorIcons.heartbeat()
-                      : (widget.initial['cadre_level'] == 'Secondary'
-                          ? PhosphorIcons.graduationCap()
-                          : PhosphorIcons.bookOpen()),
+                  itemIcon: listIcon,
                 );
                 if (result != null || result == null) setState(() => _facilityId = result);
               },
@@ -1974,7 +1978,7 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
       const SizedBox(height: 6),
       SelectField(
-        icon: PhosphorIcons.briefcase(),
+        leading: const Icon(TablerIcons.briefcase_2, size: 14, color: Color(0xFF1B4F9C)),
         hint: 'Chagua miaka ya kazi',
         value: _years.isEmpty ? null : (_years == '3' ? '3+ (miaka 3 au zaidi)' : _years),
         onTap: () async {
@@ -2016,9 +2020,9 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12), // p-3=12px
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB), // bg-brand-grey-50
-        borderRadius: BorderRadius.circular(12), // rounded-xl
-        border: Border.all(color: const Color(0xFFE5E7EB)), // border-brand-grey-200
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Header — web: text-[11px] font-bold text-brand-blue flex items-center gap-1
@@ -2042,7 +2046,7 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
 
         // Region select
         SelectField(
-          icon: PhosphorIcons.mapPin(),
+          leading: const Icon(TablerIcons.map_pin, size: 14, color: Color(0xFF1B4F9C)),
           hint: '— Chagua Mkoa wa Lengo —',
           value: rid == null ? null : _regions.cast<dynamic>()
               .firstWhere((r) => r['id'] == rid, orElse: () => null)?['name'] as String?,
@@ -2054,7 +2058,7 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
             )).toList();
             final result = await showSelectSheet<int>(
               context, title: 'Chagua Mkoa wa Lengo', items: items, selected: rid,
-              searchable: true, itemIcon: PhosphorIcons.mapPin(),
+              searchable: true, itemIcon: TablerIcons.map_pin,
             );
             if (result != null) _onRegionChanged(i, result);
           },
@@ -2078,7 +2082,7 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
             )
           else
             SelectField(
-              icon: PhosphorIcons.heartbeat(),
+              leading: const Icon(TablerIcons.first_aid_kit, size: 14, color: Color(0xFF1B4F9C)),
               hint: 'Chagua Hospitali ya Rufaa',
               value: d.facilityId == null ? null : (_regionFacilities[rid!] ?? []).cast<dynamic>()
                   .firstWhere((f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null)?['name'] as String?,
@@ -2092,7 +2096,7 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
                 final result = await showSelectSheet<String>(
                   context, title: 'Chagua Hospitali ya Rufaa', items: items,
                   selected: d.facilityId, searchable: true,
-                  itemIcon: PhosphorIcons.heartbeat(),
+                  itemIcon: TablerIcons.first_aid_kit,
                 );
                 if (result != null) setState(() {
                   d.facilityId = result;
@@ -2142,17 +2146,24 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
           const SizedBox(height: 8),
           // Kituo / Shule select (hiari)
           SelectField(
-            icon: _category == 'health'
-                ? PhosphorIcons.heartbeat()
-                : (widget.initial['cadre_level'] == 'Secondary'
-                    ? PhosphorIcons.graduationCap()
-                    : PhosphorIcons.bookOpen()),
+            leading: Icon(
+              _category == 'health'
+                  ? TablerIcons.first_aid_kit
+                  : (widget.initial['cadre_level'] == 'Secondary'
+                      ? TablerIcons.microscope
+                      : TablerIcons.book),
+              size: 14, color: const Color(0xFF1B4F9C),
+            ),
             hint: _category == 'health'
                 ? 'Chagua Hospitali/Kituo (hiari)'
                 : 'Chagua Shule (hiari)',
             value: d.facilityId == null ? null : tamisemiFacs.cast<dynamic>()
                 .firstWhere((f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null)?['name'] as String?,
             onTap: () async {
+              final listIcon = _category == 'health' ? TablerIcons.first_aid_kit
+                  : (widget.initial['cadre_level'] == 'Secondary'
+                      ? TablerIcons.microscope
+                      : TablerIcons.book);
               final items = [
                 (value: null as String?, label: 'Bila Kituo (Hiari)', subtitle: null),
                 ...tamisemiFacs.map((f) => (
@@ -2165,11 +2176,7 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
                 context,
                 title: _category == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
                 items: items, selected: d.facilityId, searchable: true,
-                itemIcon: _category == 'health'
-                    ? PhosphorIcons.heartbeat()
-                    : (widget.initial['cadre_level'] == 'Secondary'
-                        ? PhosphorIcons.graduationCap()
-                        : PhosphorIcons.bookOpen()),
+                itemIcon: listIcon,
               );
               setState(() {
                 d.facilityId = result;
