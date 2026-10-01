@@ -222,9 +222,7 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                                   child: Icon(
                                     widget.itemIcon!,
                                     size: 17,
-                                    color: isSel
-                                        ? AppColors.primary
-                                        : AppColors.textSecondary,
+                                    color: const Color(0xFF1B4F9C),
                                   ),
                                 ),
                                 const SizedBox(width: 12),

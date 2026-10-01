@@ -200,7 +200,8 @@ class _IconPickerSheet extends StatelessWidget {
 class _KadaPickerSheet extends StatefulWidget {
   final List<dynamic> cadres;
   final String? selected;
-  const _KadaPickerSheet({required this.cadres, this.selected});
+  final String? category;
+  const _KadaPickerSheet({required this.cadres, this.selected, this.category});
   @override
   State<_KadaPickerSheet> createState() => _KadaPickerSheetState();
 }
@@ -224,14 +225,22 @@ class _KadaPickerSheetState extends State<_KadaPickerSheet> {
   IconData _icon(String? level) {
     if (level == 'Primary') return TablerIcons.book;
     if (level == 'Secondary') return TablerIcons.microscope;
-    return TablerIcons.apps;
+    switch (widget.category) {
+      case 'health': return TablerIcons.first_aid_kit;
+      case 'service': return TablerIcons.briefcase_2;
+      default: return TablerIcons.plant;
+    }
   }
 
   Color _fg(String? level, bool sel) {
     if (sel) return _kBlue;
     if (level == 'Primary') return const Color(0xFF16A34A);
     if (level == 'Secondary') return const Color(0xFF7C3AED);
-    return _kGrey500;
+    switch (widget.category) {
+      case 'health': return const Color(0xFF1B4F9C);
+      case 'service': return const Color(0xFF1B4F9C);
+      default: return const Color(0xFF1B4F9C);
+    }
   }
 
   Color _bg(String? level, bool sel) {
@@ -1109,7 +1118,10 @@ class _Step2IdaraState extends State<_Step2Idara> {
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 8),
         SelectField(
-          icon: _selected.isEmpty ? TablerIcons.apps : _deptIcon(_selected),
+          leading: Icon(
+            _selected.isEmpty ? TablerIcons.apps : _deptIcon(_selected),
+            size: 14, color: const Color(0xFF1B4F9C),
+          ),
           hint: 'Chagua idara yako',
           value: _selected.isEmpty
               ? null
@@ -1357,6 +1369,7 @@ class _Step4KadaState extends State<_Step4Kada> {
               builder: (_) => _KadaPickerSheet(
                 cadres: _cadres,
                 selected: _cadreCode.isEmpty ? null : _cadreCode,
+                category: widget.initial['category'] as String?,
               ),
             );
             if (result != null) _onCadreChanged(result);
