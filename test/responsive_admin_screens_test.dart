@@ -22,7 +22,7 @@ import 'package:kubadilishanaapp/screens/admin/admin_password_resets_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_add_user_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_add_admin_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_import_users_page.dart';
-import 'package:kubadilishanaapp/screens/admin/admin_profile_screen.dart';
+import 'package:kubadilishanaapp/screens/admin/profile_page.dart';
 
 import 'helpers/responsive_pump.dart';
 
@@ -116,7 +116,8 @@ void main() {
   });
 
   testWidgets('AddAdminPage', (tester) async {
-    await check(tester, (_) => const AddAdminPage(), label: 'AddAdminPage');
+    await check(tester, (_) => AddAdminPage(onSave: (_) async => null),
+        label: 'AddAdminPage');
   });
 
   testWidgets('ImportUsersPage', (tester) async {
@@ -124,39 +125,41 @@ void main() {
         label: 'ImportUsersPage');
   });
 
-  testWidgets('AdminProfilePage (view mode, data mbili)', (tester) async {
+  testWidgets('ProfilePage (view mode, data mbili)', (tester) async {
     // Hakuna API halisi hapa: onSave inajifanya tu.
-    Future<bool> fakeSave(AdminProfile updated) async => true;
+    Future<String?> fakeSave(String fullName, String? whatsapp) async => null;
 
     // 1) Taarifa kamili (WhatsApp ipo).
     var overflows = await pumpResponsive(
       tester,
-      (_) => AdminProfilePage(
+      (_) => ProfilePage(
         profile: const AdminProfile(
-          name: 'Amani Selemani',
+          fullName: 'Amani Selemani',
+          role: 'Administrator',
+          phone: '+255 712 345 678',
           email: 'amani@kubadilishana.app',
-          phone: '0712345678',
-          whatsapp: '255712345678',
+          whatsapp: '+255 712 345 678',
         ),
         onSave: fakeSave,
       ),
       loggedIn: false,
     );
-    expect(overflows, isEmpty, reason: 'OVERFLOW kwenye AdminProfilePage (kamili)');
+    expect(overflows, isEmpty, reason: 'OVERFLOW kwenye ProfilePage (kamili)');
 
     // 2) Jina ndefu + barua ndefu + hakuna WhatsApp (mistari ya "Haijawekwa").
     overflows = await pumpResponsive(
       tester,
-      (_) => AdminProfilePage(
+      (_) => ProfilePage(
         profile: const AdminProfile(
-          name: 'Amani Selemani Mkwajuni Nyanguso',
+          fullName: 'Amani Selemani Mkwajuni Nyanguso',
+          role: 'Administrator',
+          phone: '+255 712 345 678',
           email: 'amani.mkwajuni.nyanguso@kubadilishana.app',
-          phone: '0712345678',
         ),
         onSave: fakeSave,
       ),
       loggedIn: false,
     );
-    expect(overflows, isEmpty, reason: 'OVERFLOW kwenye AdminProfilePage (ndefu)');
+    expect(overflows, isEmpty, reason: 'OVERFLOW kwenye ProfilePage (ndefu)');
   });
 }
