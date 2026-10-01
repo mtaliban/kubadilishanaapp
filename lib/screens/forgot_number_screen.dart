@@ -185,47 +185,41 @@ class _SahauNambaFlowScreenState extends State<_SahauNambaFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-    final logoSize = w * 0.5;
-
     return Scaffold(
       backgroundColor: _kBg,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(child: _Logo(size: logoSize)),
-                const SizedBox(height: 28),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 280),
-                  transitionBuilder: (child, anim) => FadeTransition(
-                    opacity: anim,
-                    child: SizeTransition(sizeFactor: anim, axisAlignment: -1, child: child),
-                  ),
-                  child: _found
-                      ? _ResultView(
-                          key: const ValueKey('result'),
-                          user: _user!,
-                          copied: _copied,
-                          onNakili: _nakili,
-                          onTafutaTena: _tafutaTena,
-                          onIngia: () => widget.onLogin(_user!.phone),
-                        )
-                      : _SearchForm(
-                          key: const ValueKey('form'),
-                          ctrl: _ctrl,
-                          loading: _loading,
-                          error: _error,
-                          onTafuta: _tafuta,
-                          onBack: widget.onBackToLogin,
-                        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: const _Logo(size: 100)),
+              const SizedBox(height: 24),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 280),
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: SizeTransition(sizeFactor: anim, axisAlignment: -1, child: child),
                 ),
-              ],
-            ),
+                child: _found
+                    ? _ResultView(
+                        key: const ValueKey('result'),
+                        user: _user!,
+                        copied: _copied,
+                        onNakili: _nakili,
+                        onTafutaTena: _tafutaTena,
+                        onIngia: () => widget.onLogin(_user!.phone),
+                      )
+                    : _SearchForm(
+                        key: const ValueKey('form'),
+                        ctrl: _ctrl,
+                        loading: _loading,
+                        error: _error,
+                        onTafuta: _tafuta,
+                        onBack: widget.onBackToLogin,
+                      ),
+              ),
+            ],
           ),
         ),
       ),
