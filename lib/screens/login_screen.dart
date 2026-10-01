@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -256,10 +257,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontSize: 12,
                                 color: Color(0xFF6B7280), // placeholder-brand-grey-500
                               ),
-                              // Phone icon — left-3=12px from left, size=16, text-grey-400
-                              prefixIcon: Padding(
-                                padding: const EdgeInsets.only(left: 12, right: 8),
-                                child: Icon(PhosphorIcons.phone(), size: 16, color: const Color(0xFF9CA3AF)),
+                              prefixIcon: const Padding(
+                                padding: EdgeInsets.only(left: 12, right: 8),
+                                child: Icon(TablerIcons.phone, size: 20, color: Color(0xFF1B4F9C)),
                               ),
                               prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                               // .input borders
@@ -406,7 +406,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: loading
                                     ? const SizedBox(width: 16, height: 16,
                                         child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                                    : const Text('Ingia'),
+                                    : const Row(mainAxisSize: MainAxisSize.min, children: [
+                                        Icon(TablerIcons.login, size: 20, color: Colors.white),
+                                        SizedBox(width: 8),
+                                        Text('Ingia'),
+                                      ]),
                               ),
                             )
                           else
@@ -506,14 +510,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _identifierCtrl.text = phone;
                                 }
                               },
-                              child: const Text(
-                                'Sahau namba yako?',
-                                style: TextStyle(
-                                  fontSize: 12, // text-xs
-                                  color: Color(0xFF1E40AF), // text-brand-blue hover:underline
-                                  fontWeight: FontWeight.w500, // font-medium
+                              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                                Icon(TablerIcons.help_circle, size: 18, color: Color(0xFF1E40AF)),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Sahau namba yako?',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF1E40AF),
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
+                              ]),
                             ),
                           ),
 
@@ -536,7 +544,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
                                 textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                               ),
-                              child: const Text('Jisajili sasa'),
+                              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                                Icon(TablerIcons.user_plus, size: 18, color: Color(0xFF1E40AF)),
+                                SizedBox(width: 6),
+                                Text('Jisajili sasa'),
+                              ]),
                             ),
                           ),
                         ],
