@@ -159,9 +159,15 @@ class _ToastPill extends StatelessWidget {
                 children: [
                   Icon(icon, size: 18, color: color),
                   const SizedBox(width: 8),
-                  Flexible(
+                  // ConstrainedBox badala ya Flexible — Flexible ndani ya
+                  // IntrinsicWidth inakataa intrinsic za infinite (crash).
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width - 96,
+                    ),
                     child: Text(
                       d.text,
+                      softWrap: true,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,

@@ -274,7 +274,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _header(_IColors c) {
@@ -611,7 +611,7 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
           ),
         ],
       ),
-    ));
+    );
   }
 }
 
