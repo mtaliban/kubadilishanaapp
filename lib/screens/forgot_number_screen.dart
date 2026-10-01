@@ -124,8 +124,12 @@ class ForgotNumberPage extends StatelessWidget {
               constraints: BoxConstraints(
                 minHeight: screenH * 0.75,
               ),
-              child: IntrinsicHeight(
+              // Center badala ya IntrinsicHeight — intrinsics za
+              // IntrinsicHeight zinatofautiana na layout halisi wakati wa
+              // mpito wa AnimatedSwitcher (hatua 2↔1) → overflow ya muda.
+              child: Center(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
