@@ -81,10 +81,10 @@ Widget _loadingRow({double verticalPad = 32}) => Padding(
 
 IconData _deptIcon(String code) {
   switch (code) {
-    case 'health': return PhosphorIcons.heartbeat();
-    case 'education': return PhosphorIcons.graduationCap();
-    case 'service': return PhosphorIcons.buildings();
-    default: return PhosphorIcons.briefcase();
+    case 'health': return PhosphorIcons.heartbeat(PhosphorIconsStyle.fill);
+    case 'education': return PhosphorIcons.graduationCap(PhosphorIconsStyle.fill);
+    case 'service': return PhosphorIcons.buildings(PhosphorIconsStyle.fill);
+    default: return PhosphorIcons.briefcase(PhosphorIconsStyle.fill);
   }
 }
 
@@ -175,38 +175,34 @@ class _IconPickerSheet extends StatelessWidget {
     final isSel = selected == item.value;
     return InkWell(
       onTap: () => Navigator.pop(context, item.value),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
-          color: isSel ? const Color(0xFFEFF6FF) : Colors.white,
-          border: Border.all(
-            color: isSel ? _kBlue : const Color(0xFFE5E7EB),
-            width: isSel ? 1.5 : 1.0,
-          ),
-          borderRadius: BorderRadius.circular(12),
+          color: isSel ? const Color(0xFFEFF6FF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Row(children: [
           Container(
-            width: 40, height: 40,
+            width: 34, height: 34,
             decoration: BoxDecoration(
-              color: isSel ? const Color(0xFFDBEAFE) : item.iconBg,
-              borderRadius: BorderRadius.circular(10),
+              color: isSel ? const Color(0xFFDBEAFE) : const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(item.icon, size: 19,
+            child: Icon(item.icon, size: 17,
                 color: isSel ? _kBlue : item.iconFg),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(item.label,
                 style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 13.5,
+                    fontWeight: isSel ? FontWeight.w600 : FontWeight.w400,
                     color: isSel ? _kBlue : _kGrey700)),
           ),
           if (isSel)
             Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
-                size: 18, color: _kBlue),
+                size: 16, color: _kBlue),
         ]),
       ),
     );
