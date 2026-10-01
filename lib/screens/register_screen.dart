@@ -363,7 +363,7 @@ class _KadaPickerSheetState extends State<_KadaPickerSheet> {
                                 border: isSel ? null : Border.all(color: const Color(0xFFE5E7EB)),
                               ),
                               child: Icon(_icon(level), size: 22,
-                                  color: _fg(level, isSel)),
+                                  color: _fg(level, false)),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
