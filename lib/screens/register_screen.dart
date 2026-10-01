@@ -81,30 +81,16 @@ Widget _loadingRow({double verticalPad = 32}) => Padding(
 
 IconData _deptIcon(String code) {
   switch (code) {
-    case 'health': return PhosphorIcons.heartbeat(PhosphorIconsStyle.fill);
-    case 'education': return PhosphorIcons.graduationCap(PhosphorIconsStyle.fill);
-    case 'service': return PhosphorIcons.buildings(PhosphorIconsStyle.fill);
-    default: return PhosphorIcons.briefcase(PhosphorIconsStyle.fill);
+    case 'health': return TablerIcons.first_aid_kit;
+    case 'education': return TablerIcons.school;
+    case 'service': return TablerIcons.briefcase_2;
+    default: return TablerIcons.plant;
   }
 }
 
-Color _deptBg(String code) {
-  switch (code) {
-    case 'health': return const Color(0xFFFFF1F2);
-    case 'education': return const Color(0xFFEFF6FF);
-    case 'service': return const Color(0xFFF0FDF4);
-    default: return const Color(0xFFF3F4F6);
-  }
-}
+Color _deptBg(String _) => Colors.white;
 
-Color _deptFg(String code) {
-  switch (code) {
-    case 'health': return const Color(0xFFDC2626);
-    case 'education': return _kBlue;
-    case 'service': return _kGreen600;
-    default: return _kGrey500;
-  }
-}
+Color _deptFg(String _) => const Color(0xFF1B4F9C);
 
 // _PickItem — data ya kila chaguo kwenye _IconPickerSheet
 class _PickItem {
@@ -186,11 +172,12 @@ class _IconPickerSheet extends StatelessWidget {
           Container(
             width: 34, height: 34,
             decoration: BoxDecoration(
-              color: isSel ? const Color(0xFFDBEAFE) : const Color(0xFFF3F4F6),
+              color: isSel ? const Color(0xFFDBEAFE) : Colors.white,
               borderRadius: BorderRadius.circular(8),
+              border: isSel ? null : Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            child: Icon(item.icon, size: 17,
-                color: isSel ? _kBlue : item.iconFg),
+            child: Icon(item.icon, size: 22,
+                color: const Color(0xFF1B4F9C)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1123,7 +1110,7 @@ class _Step2IdaraState extends State<_Step2Idara> {
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 8),
         SelectField(
-          icon: _selected.isEmpty ? PhosphorIcons.squaresFour() : _deptIcon(_selected),
+          icon: _selected.isEmpty ? TablerIcons.apps : _deptIcon(_selected),
           hint: 'Chagua idara yako',
           value: _selected.isEmpty
               ? null
@@ -1195,10 +1182,10 @@ class _Step3WizaraState extends State<_Step3Wizara> {
       const SizedBox(height: 8),
       SelectField(
         icon: _sector == 'wizara_afya'
-            ? PhosphorIcons.heartbeat()
+            ? TablerIcons.first_aid_kit
             : _sector == 'tamisemi'
-                ? PhosphorIcons.buildings()
-                : PhosphorIcons.squaresFour(),
+                ? TablerIcons.briefcase_2
+                : TablerIcons.apps,
         hint: 'Chagua wizara',
         value: _sector == 'wizara_afya'
             ? 'Wizara ya Afya'
@@ -1216,16 +1203,16 @@ class _Step3WizaraState extends State<_Step3Wizara> {
                 _PickItem(
                   value: 'wizara_afya',
                   label: 'Wizara ya Afya',
-                  icon: PhosphorIcons.heartbeat(),
-                  iconBg: const Color(0xFFFFF1F2),
-                  iconFg: const Color(0xFFDC2626),
+                  icon: TablerIcons.first_aid_kit,
+                  iconBg: Colors.white,
+                  iconFg: const Color(0xFF1B4F9C),
                 ),
                 _PickItem(
                   value: 'tamisemi',
                   label: 'TAMISEMI',
-                  icon: PhosphorIcons.buildings(),
-                  iconBg: const Color(0xFFF0FDF4),
-                  iconFg: _kGreen600,
+                  icon: TablerIcons.briefcase_2,
+                  iconBg: Colors.white,
+                  iconFg: const Color(0xFF1B4F9C),
                 ),
               ],
             ),
