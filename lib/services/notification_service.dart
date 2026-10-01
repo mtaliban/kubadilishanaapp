@@ -338,6 +338,7 @@ class NotificationService {
       'notification', 'notification.new',
       'message.new', 'message',
       'match.found', 'match.new',
+      'user.registered', // mtu anayefaa amejiunga (destination-based)
       'user.verified',
       'payment.approved', 'payment.rejected',
       'payment.message', 'payment.reply',
@@ -364,7 +365,7 @@ class NotificationService {
         d['message']?.toString() ??
         event['body']?.toString() ??
         event['message']?.toString() ?? '';
-    if (body.isEmpty && type != 'match.found') { return; }
+    if (body.isEmpty && type != 'match.found' && type != 'user.registered') { return; }
     if (_isDuplicate(type,
         d['id']?.toString() ?? event['id']?.toString() ?? '',
         title + body)) { return; }
@@ -419,7 +420,7 @@ class NotificationService {
     'payment.submitted'                          => 'Malipo mapya — angalia',
     'feedback.new'                               => 'Maoni mapya ya mtumiaji',
     'feedback.replied' || 'admin.reply'          => 'Admini amejibu maoni yako',
-    'user.registered'                            => 'Mtumiaji mpya amejiunga',
+    'user.registered'                            => 'Mtu anayefaa amejiunga!',
     'password_reset.new'                         => 'Ombi la kubadilisha nywila',
     'announcement'     || 'announcement.new'     => 'Tangazo jipya',
     _                                            => 'Kubadilishana',
