@@ -237,29 +237,22 @@ class _AddAdminFormState extends State<AddAdminForm> {
               border: Border(top: BorderSide(color: _C.line)),
             ),
             child: Row(children: [
-              Flexible(
-                child: InkWell(
-                  onTap: _saving ? null : widget.onCancel,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(TablerIcons.arrow_left, size: 15, color: _C.primaryDark),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text('Ghairi',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: _C.primaryDark)),
-                      ),
-                    ]),
-                  ),
+              InkWell(
+                onTap: _saving ? null : widget.onCancel,
+                borderRadius: BorderRadius.circular(8),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(TablerIcons.arrow_left, size: 15, color: _C.primaryDark),
+                    SizedBox(width: 5),
+                    Text('Ghairi',
+                        style: TextStyle(
+                            fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+                  ]),
                 ),
               ),
-              const SizedBox(width: 12),
+              const Spacer(),
+              // Kitufe KIDOGO, bila icon
               SizedBox(
                 height: 32,
                 child: ElevatedButton(
@@ -304,15 +297,11 @@ class _AddAdminFormState extends State<AddAdminForm> {
         child: Row(children: [
           Icon(icon, size: 17, color: _C.primaryDark),
           const SizedBox(width: 6),
-          Flexible(
-            child: Text(text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
-          ),
+          Text(text,
+              style: const TextStyle(
+                  fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
           if (trailing != null) ...[
-            const SizedBox(width: 6),
+            const Spacer(),
             Text(trailing, style: const TextStyle(fontSize: 12, color: _C.note)),
           ],
         ]),
