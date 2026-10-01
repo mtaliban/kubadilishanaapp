@@ -26,8 +26,6 @@ class _C {
   static const okBg = Color(0xFFE3F4E1);
   static const ok = Color(0xFF1B6B1B);
   static const error = Color(0xFFB91C1C);
-  static const logoDash = Color(0xFFB5C9E6);
-  static const logoText = Color(0xFF6B8AB8);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -111,27 +109,38 @@ class ForgotNumberPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenH = MediaQuery.of(context).size.height;
+    final screenW = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: _C.pageBg,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Logo KUBWA — NJE ya kadi
-              SizedBox(
-                height: screenH * 0.28,
-                child: const Center(child: _AppLogo()),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: screenH * 0.75,
               ),
-              // Kadi ya fomu — chini ya logo
-              ForgotNumberCard(
-                onSearch: onSearch,
-                onBackToLogin: onBackToLogin,
-                onLogin: onLogin,
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo KUBWA — NJE ya kadi
+                    Center(
+                      child: _AppLogo(size: screenW * 0.42),
+                    ),
+                    const SizedBox(height: 28),
+                    // Kadi ya fomu — chini ya logo
+                    ForgotNumberCard(
+                      onSearch: onSearch,
+                      onBackToLogin: onBackToLogin,
+                      onLogin: onLogin,
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -499,51 +508,18 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
 
 // ================= LOGO — NJE ya kadi, kubwa =================
 class _AppLogo extends StatelessWidget {
-  const _AppLogo();
+  final double size;
+  const _AppLogo({required this.size});
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size.width * 0.52;
-    return CustomPaint(
-      painter: _DashedRRectPainter(color: _C.logoDash, radius: 20),
-      child: SizedBox(
-        width: size,
-        height: size,
-        child: const Center(
-          child: Text('Logo\nyako',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w700, color: _C.logoText, height: 1.3)),
-        ),
-      ),
+    return Image.asset(
+      'assets/images/logo.jpeg',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
     );
   }
-}
-
-class _DashedRRectPainter extends CustomPainter {
-  final Color color;
-  final double radius;
-  _DashedRRectPainter({required this.color, required this.radius});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)));
-    for (final m in path.computeMetrics()) {
-      double d = 0;
-      while (d < m.length) {
-        canvas.drawPath(m.extractPath(d, d + 5), paint);
-        d += 9;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedRRectPainter old) => old.color != color;
 }
 
 // ================= MISTARI YA HATUA =================
