@@ -433,7 +433,7 @@ Widget _fieldError(String msg) => Padding(
 
 // Button row — web mobile: flex-col-reverse (primary on top, back below), both full-width, gap-2, pt-3
 Widget _btnRow({required VoidCallback onBack, required VoidCallback onNext,
-    String nextLabel = 'Endelea', bool nextEnabled = true, bool loading = false}) =>
+    String nextLabel = 'Endelea →', bool nextEnabled = true, bool loading = false}) =>
     Padding(
       padding: const EdgeInsets.only(top: 12), // pt-3
       child: Column(children: [
@@ -452,11 +452,7 @@ Widget _btnRow({required VoidCallback onBack, required VoidCallback onNext,
                       SizedBox(width: 8),
                       Text('Ninajisajili...'),
                     ])
-                : Row(mainAxisSize: MainAxisSize.min, children: [
-                    Text(nextLabel),
-                    const SizedBox(width: 6),
-                    const Icon(TablerIcons.arrow_right, size: 14),
-                  ]),
+                : Text(nextLabel),
           ),
         ),
         const SizedBox(height: 8), // gap-2
@@ -1047,11 +1043,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
               }
             },
             style: _btnPrimary(),
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('Endelea'),
-                SizedBox(width: 6),
-                Icon(TablerIcons.arrow_right, size: 14),
-              ]),
+            child: const Text('Endelea →'),
           ),
         ),
       ),
