@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -935,7 +936,21 @@ class _Step1IdentityState extends State<_Step1Identity> {
       const SizedBox(height: 16),
 
       // Full name
-      _fieldLabel(PhosphorIcons.userCircle(PhosphorIconsStyle.fill), 'Jina Kamili *'),
+      const Padding(
+        padding: EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(TablerIcons.user, size: 20, color: Color(0xFF1B4F9C)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text('Jina Kamili *',
+                  style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+            ),
+          ],
+        ),
+      ),
       TextField(
         controller: _nameCtrl,
         style: const TextStyle(fontSize: 12),
@@ -946,7 +961,21 @@ class _Step1IdentityState extends State<_Step1Identity> {
       const SizedBox(height: 14),
 
       // Phone primary
-      _fieldLabel(PhosphorIcons.deviceMobile(PhosphorIconsStyle.fill), 'Namba ya Simu *'),
+      const Padding(
+        padding: EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(TablerIcons.phone_call, size: 20, color: Color(0xFF1B4F9C)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text('Namba ya Simu *',
+                  style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+            ),
+          ],
+        ),
+      ),
       TextField(
         controller: _phoneCtrl,
         keyboardType: TextInputType.phone,
@@ -966,7 +995,21 @@ class _Step1IdentityState extends State<_Step1Identity> {
       const SizedBox(height: 14),
 
       // WhatsApp
-      _fieldLabel(PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill), 'Namba ya WhatsApp *'),
+      const Padding(
+        padding: EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(TablerIcons.brand_whatsapp, size: 20, color: Color(0xFF1B4F9C)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text('Namba ya WhatsApp *',
+                  style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
+            ),
+          ],
+        ),
+      ),
       TextField(
         controller: _altCtrl,
         keyboardType: TextInputType.phone,

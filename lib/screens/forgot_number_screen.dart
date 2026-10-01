@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
 
@@ -80,7 +81,7 @@ class SahauNambaScreen extends StatelessWidget {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const _kAccent  = Color(0xFF2F6FED);
-const _kBg      = Color(0xFFF5F4F0);
+const _kBg      = Colors.white;
 const _kDark    = Color(0xFF1A1A1A);
 const _kMuted   = Color(0xFF6B6A64);
 const _kHint    = Color(0xFF8C8B85);
@@ -264,8 +265,8 @@ class _SearchForm extends StatelessWidget {
           style: TextStyle(fontSize: 14, color: _kMuted, height: 1.5),
         ),
         const SizedBox(height: 20),
-        Row(children: const [
-          Icon(Icons.person_outline, size: 17, color: _kDark),
+        const Row(children: [
+          Icon(TablerIcons.user, size: 17, color: _kDark),
           SizedBox(width: 6),
           Text('Jina kamili',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kDark)),
@@ -301,7 +302,7 @@ class _SearchForm extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(children: [
-              const Icon(Icons.error_outline_rounded, size: 15, color: _kError),
+              const Icon(TablerIcons.alert_circle, size: 15, color: _kError),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(error!,
@@ -322,7 +323,7 @@ class _SearchForm extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.arrow_back, size: 15, color: _kAccent),
+                const Icon(TablerIcons.arrow_left, size: 15, color: _kAccent),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text('Rudi kuingia',
@@ -352,7 +353,7 @@ class _SearchForm extends StatelessWidget {
                 : const Row(mainAxisSize: MainAxisSize.min, children: [
                     Text('Tafuta', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     SizedBox(width: 6),
-                    Icon(Icons.arrow_forward, size: 15),
+                    Icon(TablerIcons.arrow_right, size: 15),
                   ]),
           ),
         ]),
@@ -401,8 +402,8 @@ class _ResultView extends StatelessWidget {
             children: [
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: const [
-                    Icon(Icons.phone_outlined, size: 14, color: _kHint),
+                  const Row(children: [
+                    Icon(TablerIcons.phone, size: 14, color: _kHint),
                     SizedBox(width: 4),
                     Text('Namba ya simu',
                         style: TextStyle(fontSize: 12, color: _kHint)),
@@ -423,7 +424,7 @@ class _ResultView extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(copied ? Icons.check_rounded : Icons.copy_outlined, size: 14),
+                  Icon(copied ? TablerIcons.check : TablerIcons.copy, size: 14),
                   const SizedBox(width: 4),
                   Text(copied ? 'Imenakiliwa' : 'Nakili',
                       style: const TextStyle(
@@ -434,8 +435,8 @@ class _ResultView extends StatelessWidget {
           ),
         ),
 
-        _infoRow(Icons.person_outline, 'Jina', user.fullName),
-        _infoRow(Icons.work_outline, 'Kada', user.cadre),
+        _infoRow(TablerIcons.user, 'Jina', user.fullName),
+        _infoRow(TablerIcons.briefcase, 'Kada', user.cadre),
 
         const SizedBox(height: 22),
 
@@ -450,7 +451,7 @@ class _ResultView extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.refresh, size: 15, color: _kAccent),
+                const Icon(TablerIcons.refresh, size: 15, color: _kAccent),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text('Tafuta tena',
@@ -475,7 +476,7 @@ class _ResultView extends StatelessWidget {
             child: const Row(mainAxisSize: MainAxisSize.min, children: [
               Text('Ingia', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               SizedBox(width: 6),
-              Icon(Icons.arrow_forward, size: 15),
+              Icon(TablerIcons.arrow_right, size: 15),
             ]),
           ),
         ]),
