@@ -17,7 +17,7 @@ import '../services/api_service.dart';
 
 // ------------------------- RANGI -------------------------
 class _C {
-  static const pageBg = Color(0xFFF7F7F5);
+  static const pageBg = Colors.white;
   static const cardBorder = Color(0xFFEDEDED);
   static const primary = Color(0xFF2878D6);
   static const primaryDark = Color(0xFF1B4F9C);
