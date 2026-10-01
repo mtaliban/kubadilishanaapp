@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_config.dart';
@@ -10,9 +11,10 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
 
   late final AnimationController _fadeCtrl;
+  late final AnimationController _dotsCtrl;
   late final Animation<double>   _fadeAnim;
   late final Animation<double>   _scaleAnim;
 
@@ -27,11 +29,16 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+    _fadeAnim  = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _scaleAnim = Tween(begin: 0.88, end: 1.0).animate(
       CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOutBack),
     );
     _fadeCtrl.forward();
+
+    _dotsCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
 
     _checkAuth();
   }
@@ -39,14 +46,11 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkAuth() async {
     final auth = context.read<AuthProvider>();
     final sw = Stopwatch()..start();
-
     final loggedIn = await auth.restoreSession();
     if (!mounted) return;
-
     final remaining = _minDur.inMilliseconds - sw.elapsedMilliseconds;
     if (remaining > 0) await Future.delayed(Duration(milliseconds: remaining));
     if (!mounted) return;
-
     setState(() => _isLoggedIn = loggedIn);
     _navigate();
   }
@@ -66,13 +70,14 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _fadeCtrl.dispose();
+    _dotsCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF2F1EC),
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _fadeCtrl,
@@ -80,92 +85,107 @@ class _SplashScreenState extends State<SplashScreen>
             opacity: _fadeAnim.value,
             child: Transform.scale(scale: _scaleAnim.value, child: child),
           ),
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                  // ── Logo kwenye rounded square kubwa ────────────────────
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // ── Logo ────────────────────────────────────────────
                   Container(
-                    width: 185,
-                    height: 185,
+                    width: 165,
+                    height: 165,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(40),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1A52A8).withValues(alpha: 0.10),
-                          blurRadius: 32,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 10),
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(36),
+                      border: Border.all(color: const Color(0xFFCECECE), width: 1.5),
                     ),
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
                     child: Image.asset(
                       'assets/images/logo.jpeg',
                       fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
                     ),
                   ),
 
                   const SizedBox(height: 36),
 
-                  // ── Jina kuu ────────────────────────────────────────────
+                  // ── Jina kuu ────────────────────────────────────────
                   const Text(
-                    'KUBADILISHANA PORTAL',
+                    'Kubadilishana portal',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0C1A4F),
-                      letterSpacing: 2.2,
-                      height: 1.2,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF111111),
+                      height: 1.15,
                     ),
                   ),
 
                   const SizedBox(height: 10),
 
-                  // ── Tagline ──────────────────────────────────────────────
-                  const Text(
-                    'Jukwaa la Watumishi wa Umma',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF6B7590),
-                      letterSpacing: 0.2,
+                  // ── Mstari bluu ─────────────────────────────────────
+                  Container(
+                    width: 56,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A78D6),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
 
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 14),
 
-                  // ── Progress bar nyembamba ───────────────────────────────
-                  SizedBox(
-                    width: 220,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: const LinearProgressIndicator(
-                        backgroundColor: Color(0xFFD5DCF0),
-                        valueColor: AlwaysStoppedAnimation(Color(0xFF1A52A8)),
-                        minHeight: 7,
-                      ),
+                  // ── Tagline ─────────────────────────────────────────
+                  const Text(
+                    'Jukwaa la watumishi wa umma',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF7A7A7A),
+                      height: 1.4,
                     ),
+                  ),
+
+                  const SizedBox(height: 44),
+
+                  // ── Dots tatu — staggered pulse ─────────────────────
+                  AnimatedBuilder(
+                    animation: _dotsCtrl,
+                    builder: (context2, child2) {
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(3, (i) {
+                          final t = (_dotsCtrl.value + i / 3) % 1.0;
+                          final s = math.sin(t * math.pi);
+                          final opacity = 0.20 + 0.80 * s * s;
+                          final scale   = 0.65 + 0.35 * s * s;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: SizedBox(
+                              width: 13,
+                              height: 13,
+                              child: Center(
+                                child: Container(
+                                  width: 11 * scale,
+                                  height: 11 * scale,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2A78D6)
+                                        .withValues(alpha: opacity),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      );
+                    },
                   ),
                 ],
               ),
             ),
-              const Spacer(flex: 3),
-            ],
           ),
         ),
       ),
