@@ -415,7 +415,9 @@ class AuthProvider extends ChangeNotifier {
       }
     });
 
-    // Delay notification init by 5s so it never blocks app startup
+    // Delay notification init by 5s so it never blocks app startup.
+    // Ifike app inayotarajia (5s) — user ameona UI kwanza (Android 13+
+    // inapenda ruhusa iombwe baada ya user kuona app, si juu ya splash).
     Future.delayed(const Duration(seconds: 5), () {
       _notif.onNotificationTapped = handleNotificationTap;
       _notif.init().catchError((_) {});
@@ -423,7 +425,9 @@ class AuthProvider extends ChangeNotifier {
 
     // ── WebSocket events → arifa za ndani (kama WhatsApp) ──
     // Event yoyote ya arifa ikija na screen haiyofunguliwa, ionyeshe heads-up.
-    // NotificationService inafanya dedupe dhidi ya FCM (event ile ile haionekani mara 2).
+    // Dedupe inafanywa na NotificationService kwa notification_id (FCM na WS
+    // zina ID ile ile kutoka backend — event haionekani mara 2, na FCM
+    // haionyamazi WS tena kwa makosa).
     _ws.onAny((event) {
       final type = (event['event'] ?? event['type'])?.toString() ?? '';
       if (type.isEmpty || type == 'pong') return;

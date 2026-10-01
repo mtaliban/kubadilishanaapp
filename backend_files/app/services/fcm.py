@@ -7,6 +7,7 @@ broadcast to all users with stored FCM tokens.
 import json
 import logging
 import os
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -32,17 +33,19 @@ def _safe_oid(uid: str):
 def _channel_for(data: Optional[dict]) -> str:
     """Android channel ID inayolingana na channels za Flutter app.
 
-    App imeunda: kubadilishana_messages / kubadilishana_matches /
-    kubadilishana_general. Backend ilikuwa inatuma "kubadilishana"
-    isiyokuwepo — Android 8+ ingetupilia channel ya "Miscellaneous"
-    bila sauti/vibration sahihi.
+    App imeunda channels zenye KIANGIZI "_v2" (sauti + vibration +
+    Importance.max ziko hapa): kubadilishana_messages_v2 /
+    kubadilishana_matches_v2 / kubadilishana_general_v2.
+    KUTUMA channel isiyokuwepo (bila _v2) kwenye Android 8+ kunatupilia
+    channel ya fallback "Miscellaneous" BILA sauti, vibration wala
+    heads-up — ndiyo chanzo cha arifa za kimya.
     """
     t = (data or {}).get("type", "")
     if "message" in t or "call" in t or "reply" in t:
-        return "kubadilishana_messages"
+        return "kubadilishana_messages_v2"
     if "match" in t or "verified" in t or "registered" in t:
-        return "kubadilishana_matches"
-    return "kubadilishana_general"
+        return "kubadilishana_matches_v2"
+    return "kubadilishana_general_v2"
 
 
 def _get_firebase_app():
@@ -74,7 +77,12 @@ def _get_firebase_app():
             logger.info("[FCM] Firebase Admin SDK initialised from %s", cred_path)
             return _firebase_app
 
-        logger.warning("[FCM] No Firebase service account found — push notifications disabled")
+        # ERROR (si warning): ishara wazi kwenye journalctl kwamba push
+        # hazitafanya kazi mpaka env var iwekwe na service irestartiwe.
+        logger.error(
+            "[FCM] Hakuna Firebase service account — PUSH ZOTE ZIMEZIMWA. "
+            "Weka FIREBASE_SERVICE_ACCOUNT_JSON (au FIREBASE_SERVICE_ACCOUNT_PATH) "
+            "kwenye env ya kv_backend kisha restart.")
         _initialized = True  # Don't retry
         return None
 
@@ -96,11 +104,30 @@ async def send_push_to_user(
     Looks up the user's stored FCM tokens from the database and sends
     to all registered devices.
     """
+    return await send_push_with_id(user_id, title, body, data, image)
+
+
+async def send_push_with_id(
+    user_id: str,
+    title: str,
+    body: str,
+    data: Optional[dict] = None,
+    image: Optional[str] = None,
+) -> dict:
+    """Push moja ya FCM — data inayotumwa inabaki kama ilivyo (mlio
+    wa 'notification_id' kutoka caller unahifadhiwa ili app ifanye dedupe
+    sahihi kati ya FCM na WS event ile ile)."""
     from ..db import get_db
 
     app = _get_firebase_app()
     if not app:
-        logger.debug("[FCM] Firebase not initialised — skipping push for user %s", user_id)
+        # ERROR (si debug): lazima ionekane kwenye `journalctl -u kv_backend`
+        # — hii ndiyo ishara pekee kwamba FIREBASE_SERVICE_ACCOUNT_JSON
+        # haipo kwenye env ya service na push zote zinaachwa kimya.
+        logger.error(
+            "[FCM] Firebase HAIJAANZISHWA — push kwa user %s imeachwa. "
+            "Weka FIREBASE_SERVICE_ACCOUNT_JSON (au _PATH) kwenye env ya "
+            "service kisha restart kv_backend.", user_id)
         return {"sent": 0, "error": "firebase_not_initialised"}
 
     try:
@@ -152,10 +179,16 @@ async def send_push_to_user(
         )
 
         # Send to multiple tokens (batch)
-        # Hakikisha 'type' ipo kwenye data — app inaitumia kufungua
-        # screen sahihi (deep-link) wakati arifa inaguswa.
+        # Hakikisha 'type' + 'notification_id' zipo kwenye data — app
+        # inaitumia kufungua screen sahihi (deep-link) + dedupe na WS.
         fcm_data = {"type": (data or {}).get("type", "notification")}
         fcm_data.update(data or {})
+        if not fcm_data.get("notification_id"):
+            fcm_data["notification_id"] = str(uuid.uuid4())
+        # FCM data lazima iwe na maandishi (strings) TUTU — thamani
+        # zisizo-string (float n.k.) zinashindwa kimya na ujumbe hutumwa.
+        fcm_data = {str(k): str(v) for k, v in fcm_data.items()
+                    if v is not None}
 
         sent_count = 0
         failed_tokens = []

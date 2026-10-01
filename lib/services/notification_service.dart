@@ -22,6 +22,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'api_service.dart';
 import 'app_navigator.dart';
+import 'network_service.dart';
 import 'websocket_service.dart' show resolveNotificationEventType;
 
 /// Lazima iwe top-level — inasajiliwa na Android mpangilio wa app ikiwa imufungwa.
@@ -151,13 +152,19 @@ class NotificationService {
   Function(Map<String, String>)? onNotificationTapped;
   String? get fcmToken => _fcmToken;
   bool _initialized = false;
+  bool _tokenNeedsRetry = false;
+  bool _networkHooked = false;
 
   // ── Dedupe (FCM + WS) ────────────────────────────────────────────────────
+  // Ufunguo ni UTAMBULISHO (notification_id / type+id+title) — SI title/body
+  // pekee. Hapo awali FCM na WS zilikuwa na fingerprint tofauti hata kwa
+  // event ile ile → arifa mara 2; au FCM ikifika kimya kwanza (title ya
+  // backend tofauti na ya app) ilinyamazisha WS event halisi.
   final Map<String, DateTime> _recent = {};
   static const _dedupeTtl = Duration(seconds: 30);
 
-  bool _isDuplicate(String type, String id, String title) {
-    final key = '$type|$id|$title';
+  bool _isDuplicate(String type, String id, String title, String body) {
+    final key = '$type|${id.isNotEmpty ? id : '$title|$body'}';
     final now = DateTime.now();
     _recent.removeWhere((_, t) => now.difference(t) > _dedupeTtl);
     if (_recent.containsKey(key)) return true;
@@ -169,6 +176,8 @@ class NotificationService {
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
+
+    initNetworkListener();
 
     try {
       const initSettings = InitializationSettings(
@@ -204,22 +213,15 @@ class NotificationService {
       ));
     } catch (_) {}
 
-    try {
-      final settings = await _fcm.requestPermission(
-        alert: true, badge: true, sound: true, provisional: false,
-      );
-      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional) {
-        _fcmToken = await _fcm.getToken();
-        if (_fcmToken != null) await _registerToken(_fcmToken!);
-        _fcm.onTokenRefresh.listen((t) { _fcmToken = t; _registerToken(t); });
-      }
+    await _ensurePermissionAndToken();
 
+    try {
       FirebaseMessaging.onMessage.listen((msg) {
         final n    = msg.notification;
         final type = msg.data['type']?.toString() ?? '';
         if (n != null) {
-          if (_isDuplicate(type, n.title ?? '', n.body ?? '')) return;
+          if (_isDuplicate(type, msg.data['notification_id']?.toString() ?? '',
+              n.title ?? '', n.body ?? '')) return;
           _show(type: type, title: n.title ?? 'Kubadilishana',
               body: n.body ?? '', payload: msg.data);
         } else if (msg.data.isNotEmpty) {
@@ -233,6 +235,73 @@ class NotificationService {
         if (msg != null) _notifyTap(msg.data);
       }).catchError((_) {});
     } catch (_) {}
+  }
+
+  /// Ruhusa ya POST_NOTIFICATIONS (Android 13+) + token ya FCM.
+  ///
+  /// Hapo awali: ombi moja tu — mtumiaji akikataa (au kubonyeza nje ya
+  /// dialog) token HAIPATIKANI kamwe → backend inaona "no_tokens" → hakuna
+  /// push kwenye simu hiyo MILELE, hata kuingia upya. Sasa: tunajaribu
+  /// mara 3, na mtumiaji akikataa tunaweza kuomba tena kesho (Android
+  /// inaruhusu mara mbili tu mfululizo; baada ya hapo dialog haionyeshwi
+  /// tena — tunahifadhi hali ili user apate njia ya kuiruhusu kwa mkono).
+  Future<void> _ensurePermissionAndToken({bool retryAttempt = false}) async {
+    try {
+      var settings = await _fcm.getNotificationSettings();
+      if (settings.authorizationStatus == AuthorizationStatus.notDetermined ||
+          retryAttempt) {
+        settings = await _fcm.requestPermission(
+          alert: true, badge: true, sound: true, provisional: false,
+        );
+      }
+
+      final granted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+
+      if (granted) {
+        await _fetchAndRegisterToken();
+      } else {
+        // Ruhusa imekataliwa — alama na upange jaribio la baadaye.
+        _tokenNeedsRetry = true;
+        _schedulePermissionRetry(retryAttempt ? 2 : 1);
+      }
+    } catch (_) {
+      _tokenNeedsRetry = true;
+    }
+  }
+
+  Future<void> _fetchAndRegisterToken() async {
+    try {
+      _fcmToken = await _fcm.getToken();
+      _tokenNeedsRetry = false;
+      if (_fcmToken != null) await _registerToken(_fcmToken!);
+      _fcm.onTokenRefresh.listen((t) { _fcmToken = t; _registerToken(t); });
+    } catch (_) {
+      // Token imeshindikana (mtandao n.k.) — tajaribu tena mtandao ukirejea.
+      _tokenNeedsRetry = true;
+    }
+  }
+
+  void _schedulePermissionRetry(int attempt) {
+    // Mara 3 tu kila session (baada ya sekunde 30, 120, 270) — usimwague
+    // mtumiaji dialog kila wakati.
+    if (attempt > 3) return;
+    Future.delayed(Duration(seconds: 30 * attempt * attempt), () async {
+      if (_tokenNeedsRetry) await _ensurePermissionAndToken(retryAttempt: true);
+    });
+  }
+
+  /// Iitwa mara moja wakati wa init — mtandao ukirejea (offline → online)
+  /// jaribio la token linalyochelewa linapigwa papo hapo (FIX: token
+  /// ilipatikana mara moja tu, hakuna retry wala kusikiliza mtandao).
+  void initNetworkListener() {
+    if (_networkHooked) return;
+    _networkHooked = true;
+    NetworkService().addOnlineListener(() async {
+      if (!_tokenNeedsRetry) return;
+      await _fetchAndRegisterToken();
+    });
   }
 
   void _onLocalTap(NotificationResponse response) {
@@ -273,7 +342,7 @@ class NotificationService {
       final categoryLabel = _categoryLabel(type);
       final channelId     = _channelId(type);
       final channelName   = _channelName(channelId);
-      final isUrgent      = channelId != 'kubadilishana_general';
+      final isUrgent      = channelId != 'kubadilishana_general_v2';
 
       final android = AndroidNotificationDetails(
         channelId, channelName,
@@ -322,7 +391,8 @@ class NotificationService {
         data['message']?.toString() ??
         data['notification_body']?.toString() ?? '';
     if (body.isEmpty && title.isEmpty) return;
-    if (_isDuplicate(type, title, body)) return;
+    if (_isDuplicate(type, data['notification_id']?.toString() ?? '',
+        title, body)) { return; }
     _show(type: type, title: title, body: body, payload: data);
   }
 
@@ -336,7 +406,8 @@ class NotificationService {
     };
     const userNotifiable = {
       'notification', 'notification.new',
-      'message.new', 'message',
+      'message.new', 'message', 'message.sent',
+      'call.initiated',
       'match.found', 'match.new',
       'user.registered', // mtu anayefaa amejiunga (destination-based)
       'user.verified',
@@ -366,9 +437,11 @@ class NotificationService {
         event['body']?.toString() ??
         event['message']?.toString() ?? '';
     if (body.isEmpty && type != 'match.found' && type != 'user.registered') { return; }
-    if (_isDuplicate(type,
-        d['id']?.toString() ?? event['id']?.toString() ?? '',
-        title + body)) { return; }
+    // Dedupe na FCM: backend inatuma notification_id ILE ILE kwenye WS
+    // payload na FCM data — tuingia kwa id, si title+body.
+    final nid = (d['notification_id'] ?? event['notification_id'] ??
+                 d['id'] ?? event['id'])?.toString() ?? '';
+    if (_isDuplicate(type, nid, title, body)) { return; }
 
     _show(type: type, title: title, body: body, payload: event);
   }
@@ -378,6 +451,8 @@ class NotificationService {
       try { await ApiService().removeFcmToken(_fcmToken!); } catch (_) {}
     }
     _recent.clear();
+    _tokenNeedsRetry = false;
+    _fcmToken = null;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -402,6 +477,8 @@ class NotificationService {
         type == 'admin.reply') { return 'kubadilishana_messages_v2'; }
     if (type.startsWith('match') ||
         type == 'user.registered') { return 'kubadilishana_matches_v2'; }
+    if (type.startsWith('message') || type.startsWith('call') ||
+        type.startsWith('chat')) { return 'kubadilishana_messages_v2'; }
     return 'kubadilishana_general_v2';
   }
 
@@ -413,6 +490,8 @@ class NotificationService {
 
   static String _titleForType(String type) => switch (type) {
     'message.new'      || 'message'             => 'Ujumbe mpya',
+    'message.sent'                               => 'Ujumbe mpya',
+    'call.initiated'                             => 'Simu mpya',
     'match.found'      || 'match.new'           => 'Mechi mpya imepatikana!',
     'user.verified'                              => 'Akaunti yaidhinishwa',
     'payment.approved'                           => 'Malipo yameidhinishwa ✓',

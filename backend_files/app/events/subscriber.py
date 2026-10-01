@@ -141,14 +141,21 @@ def _push_batch_to_users(batch: list[tuple[dict, str]]) -> None:
 def _fcm_push(user_id: str, title: str, body: str, data: dict | None = None) -> None:
     """Send FCM push notification (from a background thread)."""
     import asyncio
+    import uuid
+    # notification_id moja kwa ajili ya event hii — app inaitumia kufanya
+    # dedupe kati ya FCM (foreground) na WS event ile ile (bila hii, app
+    # inaonyesha arifa MARA 2 au inanyamazisha moja kwa makosa).
+    payload = dict(data or {})
+    payload.setdefault("notification_id", str(uuid.uuid4()))
     async def _send():
-        await send_push_to_user(user_id, title, body, data)
+        await send_push_with_id(user_id, title, body, payload)
     try:
         loop = asyncio.new_event_loop()
         loop.run_until_complete(_send())
         loop.close()
     except Exception as e:
-        logger.debug(f"FCM push failed (non-critical): {e}")
+        # error (si debug): push ikishindwa lazima ionekane kwenye journalctl.
+        logger.error(f"FCM push failed: {e}")
 
 
 def _admin_user_ids(db) -> list[str]:
@@ -396,7 +403,11 @@ def _generate_notifications(msg, client: mqtt.Client) -> None:
             ws_batch.append((notif_payload, uid))
             # FCM push — notify mtumiaji kwa phone yake (push notification)
             # data ina 'type' → app inafungua screen sahihi + channel sahihi.
-            _fcm_push(uid, title, body, {"type": ntype, **data})
+            # FCM push — notify mtumiaji kwa phone yake (push notification)
+            # data ina 'type' + 'notification_id' (sawa na WS payload) → app
+            # inafungua screen sahihi + channel sahihi + dedupe sahihi.
+            _fcm_push(uid, title, body,
+                      {"type": ntype, "notification_id": str(doc["_id"]), **data})
     if ws_batch:
         _push_batch_to_users(ws_batch)
 

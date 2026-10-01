@@ -1,14 +1,18 @@
 /// Real-time WebSocket — live board updates, notifications, presence.
 ///
-/// Udhibiti wa makosa (v3):
-///  • Reconnect ina MWISHO (jaribio 5, kisha inapumzika) — hakuna loop ya milele
-///    inayozalisha SocketException kila sekunde server ikiwa haipatikani.
-///    connect() mpya (login / app resume) inaianza upya kwa urahisi.
+/// Udhibiti wa makosa (v4):
+///  • Reconnect HAINA MWISHO: backoff 1s → 2s → 4s … juu ya 60s. Mtandao
+///    ukikatika (au server ipumzike) app inaendelea kujaribu kila dakika
+///    moja — live events na arifa hazifi kama zamani (zilikuwa zinakufa
+///    baada ya jaribio 5 hadi login mpya). Jitter ndogo inazuia wake
+///    mfululizo wa mashine zote kwenye sekunde ile ile server ikirejea.
+///    connect() mpya (login / app resume) inaanza upya kwa sekunde 1.
 ///  • Ujumbe usio String (binary/frame) hauanguki — unapuuzwa salama.
 ///  • listeners haziongezi mara mbili (on() inagundua callback ile ile).
 ///  • offAny() kuondoa wildcard listeners (screens zote sasa hutumia dispose).
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -43,9 +47,11 @@ class WebSocketService {
   String? _token;
   int _reconnectDelay = 1;
   int _reconnectAttempts = 0;
+  final Random _random = Random();
   final Map<String, List<WsEventCallback>> _listeners = {};
 
-  static const int _maxReconnectAttempts = 5;
+  /// Kiwango cha juu cha kuchelewa kati ya majaribio ya reconnect (sekunde).
+  static const int _maxReconnectDelay = 60;
 
   bool get isConnected => _connected;
 
@@ -118,15 +124,18 @@ class WebSocketService {
 
   void _scheduleReconnect() {
     if (_stopped) return;
-    // MWISHO wa majaribio — isijaribu milele (ndiyo ilikuwa chanzo cha
-    // SocketException nyingi server ikiwa imezimwa).
-    if (_reconnectAttempts >= _maxReconnectAttempts) return;
+    // Hakuna MWISHO — backoff inafikia 60s na inabaki hapo; mtandao
+    // ukirejea (au server ikirejea) tunaunganishwa bila mtumiaji kufanya
+    // chochote. Hii ndiyo nyuma ya "arifa zimekufa" baada ya dakika chache.
     _reconnectAttempts++;
 
     _reconnectTimer?.cancel();
-    final delay = _reconnectDelay;
-    _reconnectDelay = (_reconnectDelay * 2).clamp(1, 30);
-    _reconnectTimer = Timer(Duration(seconds: delay), _doConnect);
+    // Jitter ±20% — vifaa vyote visijaribu kwa wakati mmoja ukionisha
+    // (thundering herd) server ikirejea baada ya kufa.
+    final jitter = _reconnectDelay ~/ 5;
+    final delay = _reconnectDelay + (_random.nextInt(jitter * 2 + 1) - jitter);
+    _reconnectTimer = Timer(Duration(seconds: delay.clamp(1, _maxReconnectDelay)), _doConnect);
+    _reconnectDelay = (_reconnectDelay * 2).clamp(1, _maxReconnectDelay);
   }
 
   /// Test hook: ita event kama ilivyo incoming kwenye socket halisi.

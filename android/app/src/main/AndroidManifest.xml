@@ -44,10 +44,13 @@
             </intent-filter>
         </service>
 
-        <!-- FCM: channel inayotumika wakati app imefungwa kabisa -->
+        <!-- FCM: channel inayotumika wakati app imefungwa kabisa.
+             LAZIMA iwe _v2 — ndiyo channel yenye sauti/vibration (app
+             imeiunda wakati wa init). Channel isiyokuwepo → fallback
+             Miscellaneous bila sauti. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="kubadilishana_general" />
+            android:value="kubadilishana_general_v2" />
         <!-- FCM: icon ndogo nyeupe inayoonekana kwenye status bar -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
