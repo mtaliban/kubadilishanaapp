@@ -433,7 +433,7 @@ Widget _fieldError(String msg) => Padding(
 
 // Button row — web mobile: flex-col-reverse (primary on top, back below), both full-width, gap-2, pt-3
 Widget _btnRow({required VoidCallback onBack, required VoidCallback onNext,
-    String nextLabel = 'Endelea →', bool nextEnabled = true, bool loading = false}) =>
+    String nextLabel = 'Endelea', bool nextEnabled = true, bool loading = false}) =>
     Padding(
       padding: const EdgeInsets.only(top: 12), // pt-3
       child: Column(children: [
@@ -444,15 +444,19 @@ Widget _btnRow({required VoidCallback onBack, required VoidCallback onNext,
             onPressed: (nextEnabled && !loading) ? onNext : null,
             style: _btnPrimary(),
             child: loading
-                ? Row(mainAxisAlignment: MainAxisAlignment.center,
+                ? const Row(mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       SizedBox(width: 12, height: 12,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
                       SizedBox(width: 8),
                       Text('Ninajisajili...'),
                     ])
-                : Text(nextLabel),
+                : Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text(nextLabel),
+                    const SizedBox(width: 6),
+                    const Icon(TablerIcons.arrow_right, size: 14),
+                  ]),
           ),
         ),
         const SizedBox(height: 8), // gap-2
@@ -462,7 +466,11 @@ Widget _btnRow({required VoidCallback onBack, required VoidCallback onNext,
           child: OutlinedButton(
             onPressed: loading ? null : onBack,
             style: _btnOutline(),
-            child: const Text('Rudi'),
+            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(TablerIcons.arrow_left, size: 14),
+              SizedBox(width: 6),
+              Text('Rudi'),
+            ]),
           ),
         ),
       ]),
@@ -1039,7 +1047,11 @@ class _Step1IdentityState extends State<_Step1Identity> {
               }
             },
             style: _btnPrimary(),
-            child: const Text('Endelea →'),
+            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('Endelea'),
+                SizedBox(width: 6),
+                Icon(TablerIcons.arrow_right, size: 14),
+              ]),
           ),
         ),
       ),
@@ -2009,6 +2021,9 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
           ];
           final result = await showSelectSheet<String>(
             context, title: 'Miaka ya Kazi', items: items, selected: _years.isEmpty ? null : _years,
+            itemIconBuilder: (v) => v == '1' ? TablerIcons.circle_number_1
+                : v == '2' ? TablerIcons.circle_number_2
+                : TablerIcons.circle_number_3,
           );
           if (result != null) setState(() => _years = result);
         },

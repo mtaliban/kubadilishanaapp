@@ -13,6 +13,7 @@ Future<T?> showSelectSheet<T>(
   required T? selected,
   bool searchable = false,
   IconData? itemIcon,
+  IconData? Function(T value)? itemIconBuilder,
 }) async {
   return showModalBottomSheet<T>(
     context: context,
@@ -25,6 +26,7 @@ Future<T?> showSelectSheet<T>(
       selected: selected,
       searchable: searchable,
       itemIcon: itemIcon,
+      itemIconBuilder: itemIconBuilder,
     ),
   );
 }
@@ -35,6 +37,7 @@ class SelectSheet<T> extends StatefulWidget {
   final T? selected;
   final bool searchable;
   final IconData? itemIcon;
+  final IconData? Function(T value)? itemIconBuilder;
   const SelectSheet({
     super.key,
     required this.title,
@@ -42,6 +45,7 @@ class SelectSheet<T> extends StatefulWidget {
     required this.selected,
     this.searchable = false,
     this.itemIcon,
+    this.itemIconBuilder,
   });
   @override
   State<SelectSheet<T>> createState() => _SelectSheetState<T>();
@@ -187,7 +191,8 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                       itemBuilder: (_, i) {
                         final item = list[i];
                         final isSel = item.value == widget.selected;
-                        final hasIcon = widget.itemIcon != null;
+                        final resolvedIcon = widget.itemIconBuilder?.call(item.value) ?? widget.itemIcon;
+                        final hasIcon = resolvedIcon != null;
                         return GestureDetector(
                           onTap: () => Navigator.pop(context, item.value),
                           behavior: HitTestBehavior.opaque,
@@ -221,7 +226,7 @@ class _SelectSheetState<T> extends State<SelectSheet<T>> {
                                     border: isSel ? null : Border.all(color: AppColors.grey300),
                                   ),
                                   child: Icon(
-                                    widget.itemIcon!,
+                                    resolvedIcon,
                                     size: 17,
                                     color: const Color(0xFF1B4F9C),
                                   ),
