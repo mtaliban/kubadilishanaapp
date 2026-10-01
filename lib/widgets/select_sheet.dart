@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../config/theme.dart';
 
@@ -354,10 +355,10 @@ class SelectField extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Icon(
-            PhosphorIcons.caretDown(),
-            size: useIcon ? 14 : 16,
-            color: hasValue ? AppColors.primary : const Color(0xFF9CA3AF),
+          const Icon(
+            TablerIcons.circle_chevron_down,
+            size: 20,
+            color: Color(0xFF1B4F9C),
           ),
         ]),
       ),

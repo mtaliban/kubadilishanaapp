@@ -1991,7 +1991,14 @@ class _Step6DestinationsState extends State<_Step6Destinations> {
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
       const SizedBox(height: 6),
       SelectField(
-        leading: const Icon(TablerIcons.briefcase_2, size: 14, color: Color(0xFF1B4F9C)),
+        leading: Icon(
+          _years == '1' ? TablerIcons.circle_number_1
+            : _years == '2' ? TablerIcons.circle_number_2
+            : _years == '3' ? TablerIcons.circle_number_3
+            : TablerIcons.circle_number_1,
+          size: 14,
+          color: const Color(0xFF1B4F9C),
+        ),
         hint: 'Chagua miaka ya kazi',
         value: _years.isEmpty ? null : (_years == '3' ? '3+ (miaka 3 au zaidi)' : _years),
         onTap: () async {
