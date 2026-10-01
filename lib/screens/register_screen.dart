@@ -1121,37 +1121,40 @@ class _Step2IdaraState extends State<_Step2Idara> {
         const Text('Chagua Idara *',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
         const SizedBox(height: 8),
-        SelectField(
-          leading: Icon(
-            _selected.isEmpty ? TablerIcons.apps : _deptIcon(_selected),
-            size: 14, color: const Color(0xFF1B4F9C),
+        SizedBox(
+          height: 28,
+          child: SelectField(
+            leading: Icon(
+              _selected.isEmpty ? TablerIcons.apps : _deptIcon(_selected),
+              size: 14, color: const Color(0xFF1B4F9C),
+            ),
+            hint: 'Chagua idara yako',
+            value: _selected.isEmpty
+                ? null
+                : '${_departments.cast<dynamic>().firstWhere(
+                      (d) => '${d['code']}' == _selected, orElse: () => null)?['name'] ?? _selected}',
+            onTap: () async {
+              final result = await showModalBottomSheet<String>(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (_) => _IconPickerSheet(
+                  title: 'Chagua Idara',
+                  selected: _selected.isEmpty ? null : _selected,
+                  items: [
+                    for (final d in _departments)
+                      _PickItem(
+                        value: '${d['code']}',
+                        label: '${d['name'] ?? d['code']}',
+                        icon: _deptIcon('${d['code']}'),
+                        iconBg: _deptBg('${d['code']}'),
+                        iconFg: _deptFg('${d['code']}'),
+                      ),
+                  ],
+                ),
+              );
+              if (result != null) setState(() => _selected = result);
+            },
           ),
-          hint: 'Chagua idara yako',
-          value: _selected.isEmpty
-              ? null
-              : '${_departments.cast<dynamic>().firstWhere(
-                    (d) => '${d['code']}' == _selected, orElse: () => null)?['name'] ?? _selected}',
-          onTap: () async {
-            final result = await showModalBottomSheet<String>(
-              context: context,
-              backgroundColor: Colors.transparent,
-              builder: (_) => _IconPickerSheet(
-                title: 'Chagua Idara',
-                selected: _selected.isEmpty ? null : _selected,
-                items: [
-                  for (final d in _departments)
-                    _PickItem(
-                      value: '${d['code']}',
-                      label: '${d['name'] ?? d['code']}',
-                      icon: _deptIcon('${d['code']}'),
-                      iconBg: _deptBg('${d['code']}'),
-                      iconFg: _deptFg('${d['code']}'),
-                    ),
-                ],
-              ),
-            );
-            if (result != null) setState(() => _selected = result);
-          },
         ),
       ],
 

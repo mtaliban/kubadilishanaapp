@@ -3,6 +3,7 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'admin_otp_step.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // LoginScreen — translation 100% ya web LoginContent.tsx
@@ -128,6 +129,30 @@ class _LoginScreenState extends State<LoginScreen> {
     await auth.login(email);
   }
 
+  // ── AdminOtpStep callbacks ──
+  Future<String?> _verifyAdminOtp(String code) async {
+    final auth = context.read<AuthProvider>();
+    final email = _twoFAEmail;
+    if (email == null) return 'Hitilafu ya ndani';
+    final ok = await auth.adminLoginOtp(email, code);
+    if (!mounted) return 'Hitilafu ya ndani';
+    if (ok) {
+      Navigator.pushReplacementNamed(context, auth.isAdmin ? '/admin' : '/dashboard');
+      return null;
+    }
+    return auth.error ?? 'Code si sahihi';
+  }
+
+  Future<String?> _resendAdminOtp() async {
+    final auth = context.read<AuthProvider>();
+    final email = _twoFAEmail;
+    if (email == null) return 'Hitilafu ya ndani';
+    await auth.login(email);
+    if (!mounted) return 'Hitilafu ya ndani';
+    if (auth.error != null) return auth.error;
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -171,223 +196,166 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
 
-                          // ── text-center mb-6 — logo + title + subtitle ──
-                          Column(
-                            children: [
-                              // img: h-20=80px rounded-xl=12px shadow-md mx-auto mb-4
+                          // ── Logo (inabaki daima juu ya kadi) ──
+                          Center(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: const [
+                                  BoxShadow(color: Color(0x1A000000), blurRadius: 6, offset: Offset(0, 4)),
+                                  BoxShadow(color: Color(0x0D000000), blurRadius: 4, offset: Offset(0, 2)),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.asset(
+                                  'assets/images/logo.jpeg',
+                                  height: 80,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // ══════════════════════════════════════════════════════
+                          // HALI YA ADMIN OTP — AdminOtpStep inachukua nafasi yote
+                          // chini ya logo (inabeba kichwa, barua pepe, visanduku 6,
+                          // na vitufe vya Rudi/Ingia yenyewe).
+                          // ══════════════════════════════════════════════════════
+                          if (_twoFAEmail != null) ...[
+                            const SizedBox(height: 16),
+                            AdminOtpStep(
+                              email: _twoFAEmail!,
+                              onVerify: _verifyAdminOtp,
+                              onResend: _resendAdminOtp,
+                              onChangeEmail: _cancelOtp,
+                              onBack: _cancelOtp,
+                            ),
+                          ] else ...[
+
+                            // ── Karibu Tena (inaonekana kwenye hali ya kawaida tu) ──
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Karibu Tena',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Ingia kwenye akaunti yako.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // ════════ FORM ════════
+
+                            Text(
+                              isAdminEmail ? 'Email ya Admin' : 'Namba ya Simu',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF374151),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+
+                            TextField(
+                              controller: _identifierCtrl,
+                              keyboardType: TextInputType.text,
+                              autocorrect: false,
+                              enabled: true,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _submit(),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF111827),
+                              ),
+                              onChanged: (_) => setState(() {}),
+                              contextMenuBuilder: (ctx, state) =>
+                                  AdaptiveTextSelectionToolbar.buttonItems(
+                                anchors: state.contextMenuAnchors,
+                                buttonItems: state.contextMenuButtonItems,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: isAdminEmail ? 'admin@kubadilishana.go.tz' : '0712345678',
+                                hintStyle: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B7280),
+                                ),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(left: 12, right: 8),
+                                  child: Icon(
+                                    isAdminEmail ? TablerIcons.mail : TablerIcons.phone,
+                                    size: 20, color: const Color(0xFF1B4F9C)),
+                                ),
+                                prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(color: Color(0xFF1E40AF), width: 2),
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+
+                            if (_error != null) ...[
                               Container(
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF2F2),
                                   borderRadius: BorderRadius.circular(12),
-                                  boxShadow: const [
-                                    BoxShadow(color: Color(0x1A000000), blurRadius: 6, offset: Offset(0, 4)),
-                                    BoxShadow(color: Color(0x0D000000), blurRadius: 4, offset: Offset(0, 2)),
+                                  border: Border.all(color: const Color(0xFFFEE2E2)),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: Icon(
+                                        _errorIsNetwork ? PhosphorIcons.wifiSlash() : PhosphorIcons.warningCircle(),
+                                        size: 16,
+                                        color: const Color(0xFFDC2626),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _error!,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFFDC2626),
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.asset(
-                                    'assets/images/logo.jpeg',
-                                    height: 80, // h-20
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
                               ),
-                              const SizedBox(height: 16), // mb-4
-
-                              // h1: text-2xl=24px font-bold text-brand-grey-900=#111827
-                              const Text(
-                                'Karibu Tena',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF111827), // text-brand-grey-900
-                                ),
-                              ),
-                              const SizedBox(height: 4), // mt-1
-
-                              // p: text-sm=14px text-brand-grey-500=#6B7280
-                              const Text(
-                                'Ingia kwenye akaunti yako.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF6B7280), // text-brand-grey-500
-                                ),
-                              ),
+                              const SizedBox(height: 14),
                             ],
-                          ),
-                          const SizedBox(height: 24), // mb-6
 
-                          // ════════ FORM — space-y-3.5 (14px kati ya kila element) ════════
-
-                          // ── label — .label = text-sm font-semibold text-brand-grey-700 mb-1.5 ──
-                          Text(
-                            isAdminEmail ? 'Email ya Admin' : 'Namba ya Simu',
-                            style: const TextStyle(
-                              fontSize: 14, // text-sm
-                              fontWeight: FontWeight.w600, // font-semibold
-                              color: Color(0xFF374151), // text-brand-grey-700
-                            ),
-                          ),
-                          const SizedBox(height: 6), // mb-1.5
-
-                          // ── input.pl-9 — .input rounded-md border-grey-300 py-1.5 text-xs ──
-                          // Disabled wakati wa 2FA (kama web: disabled={!!twoFA})
-                          TextField(
-                            controller: _identifierCtrl,
-                            keyboardType: TextInputType.text,
-                            autocorrect: false,
-                            enabled: _twoFAEmail == null,
-                            textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => _twoFAEmail == null ? _submit() : null,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF111827),
-                            ),
-                            onChanged: (_) => setState(() {}),
-                            contextMenuBuilder: (ctx, state) =>
-                                AdaptiveTextSelectionToolbar.buttonItems(
-                              anchors: state.contextMenuAnchors,
-                              buttonItems: state.contextMenuButtonItems,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: isAdminEmail ? 'admin@kubadilishana.go.tz' : '0712345678',
-                              hintStyle: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF6B7280), // placeholder-brand-grey-500
-                              ),
-                              prefixIcon: const Padding(
-                                padding: EdgeInsets.only(left: 12, right: 8),
-                                child: Icon(TablerIcons.phone, size: 20, color: Color(0xFF1B4F9C)),
-                              ),
-                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                              // .input borders
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(6),
-                                borderSide: const BorderSide(color: Color(0xFFD1D5DB)), // border-brand-grey-300
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(6),
-                                borderSide: const BorderSide(color: Color(0xFF1E40AF), width: 2), // focus:ring-brand-blue
-                              ),
-                              disabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(6),
-                                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                              ),
-                              filled: true,
-                              fillColor: Colors.white, // bg-white
-                              isDense: true,
-                              // Web: pl-9(36px) = prefixIcon(left12+icon16+right8=36) + contentLeft(0)
-                              // Flutter: prefixIcon=36px → contentPadding.left=0 ili text ianze 36px kama web
-                              contentPadding: const EdgeInsets.only(top: 6, bottom: 6, right: 10), // py-1.5, pr-2.5
-                            ),
-                          ),
-                          const SizedBox(height: 14), // space-y-3.5
-
-                          // ── ErrorAlert — flex items-start gap-2.5 bg-red-50 border-red-100
-                          //                text-red text-xs font-medium rounded-xl p-3
-                          //                Icon: WifiOff (network) | AlertCircle (validation) ──
-                          if (_error != null) ...[
-                            Container(
-                              padding: const EdgeInsets.all(12), // p-3
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEF2F2), // bg-brand-red-50
-                                borderRadius: BorderRadius.circular(12), // rounded-xl
-                                border: Border.all(color: const Color(0xFFFEE2E2)), // border-brand-red-100
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2), // mt-0.5 = 2px
-                                    child: Icon(
-                                      _errorIsNetwork ? PhosphorIcons.wifiSlash() : PhosphorIcons.warningCircle(),
-                                      size: 16, // size={16}
-                                      color: const Color(0xFFDC2626), // text-brand-red
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10), // gap-2.5
-                                  Expanded(
-                                    child: Text(
-                                      _error!,
-                                      style: const TextStyle(
-                                        fontSize: 12, // text-xs
-                                        fontWeight: FontWeight.w500, // font-medium
-                                        color: Color(0xFFDC2626), // text-brand-red
-                                        height: 1.5, // leading-relaxed
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 14), // space-y-3.5
-                          ],
-
-                          // ── 2FA green box — flex items-center gap-2 bg-green-50 text-green-700
-                          //                   text-xs font-semibold rounded-xl px-3 py-2 border-green-200
-                          //                   AlertCircle(14) text-green-500 + bold email ──
-                          if (_twoFAEmail != null) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // px-3 py-2
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF0FDF4), // bg-green-50
-                                borderRadius: BorderRadius.circular(12), // rounded-xl
-                                border: Border.all(color: const Color(0xFFBBF7D0)), // border-green-200
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(PhosphorIcons.checkCircle(), size: 14, color: const Color(0xFF22C55E)), // AlertCircle text-green-500
-                                  const SizedBox(width: 8), // gap-2
-                                  Expanded(
-                                    child: Text.rich(
-                                      TextSpan(
-                                        style: const TextStyle(
-                                          fontSize: 12, // text-xs
-                                          fontWeight: FontWeight.w600, // font-semibold
-                                          color: Color(0xFF15803D), // text-green-700
-                                        ),
-                                        children: [
-                                          TextSpan(
-                                            text: 'Code ya tarakimu 6 imetumwa kwa ',
-                                            style: const TextStyle(
-                                              fontSize: 12, // text-xs
-                                              fontWeight: FontWeight.w600, // font-semibold
-                                              color: Color(0xFF15803D), // text-green-700
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: _twoFAEmail ?? 'barua pepe yako',
-                                            style: const TextStyle(fontWeight: FontWeight.bold), // <strong>
-                                          ),
-                                          const TextSpan(
-                                            text: ' — iweke hapa chini ili kuingia',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF15803D),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 14), // space-y-3.5
-                          ],
-
-                          // ═══════════════════════════════════════════════════════
-                          // SEHEMU MOJA: btn-primary "Ingia" AU OTP input — pale pale
-                          // Kama web: {!twoFA ? <button> : <div class="relative">input+X+spinner</div>}
-                          // SECURITY: OTP input pia inaonekana kwa kuingia kwa simu
-                          // (code ya email) — 2FA ni ya admin pekee.
-                          // ═══════════════════════════════════════════════════════
-                          if (_twoFAEmail == null && !auth.otpRequired)
-                            // ── btn-primary w-full — bg-brand-blue rounded-md px-3 py-1 text-[11px] font-bold ──
+                            // ── Ingia button ──
                             SizedBox(
                               width: double.infinity,
                               height: 34,
@@ -412,145 +380,59 @@ class _LoginScreenState extends State<LoginScreen> {
                                         Text('Ingia'),
                                       ]),
                               ),
-                            )
-                          else
-                            // ── OTP — div.relative: input text-center text-xl tracking-[0.5em] font-mono pr-10
-                            //         X button: absolute right-2.5 top-1/2 (NDANI ya input → suffixIcon)
-                            //         Spinner: absolute centered (pointer-events-none overlay) ──
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                TextField(
-                                  controller: _otpCtrl,
-                                  keyboardType: TextInputType.number,
-                                  autocorrect: false,
-                                  enableSuggestions: false,
-                                  maxLength: 6,
-                                  textAlign: TextAlign.center,
-                                  autofocus: true,
-                                  enabled: !_otpLoading,
-                                  style: const TextStyle(
-                                    fontSize: 20, // text-xl
-                                    letterSpacing: 10, // tracking-[0.5em] (0.5 × 20px = 10px)
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'monospace', // font-mono
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText: '000000',
-                                    counterText: '',
-                                    hintStyle: const TextStyle(
-                                      fontSize: 20, letterSpacing: 10,
-                                      color: Color(0xFFD1D5DB),
-                                    ),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                      borderSide: const BorderSide(color: Color(0xFF1E40AF), width: 2),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    // pr-10 (40px right) — nafasi ya X button ndani
-                                    contentPadding: const EdgeInsets.only(top: 10, bottom: 10, left: 12, right: 40),
-                                    // X button — absolute right-2.5 top-1/2 (kama web) → suffixIcon
-                                    suffixIcon: GestureDetector(
-                                      onTap: _cancelOtp,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(right: 10), // right-2.5 = 10px
-                                        child: Icon(PhosphorIcons.x(), size: 16, color: const Color(0xFF9CA3AF)),
+                            ),
+
+                            // ── Sahau namba + Jisajili — zinaficha kwa admin ──
+                            if (!isAdminEmail) ...[
+                              const SizedBox(height: 12),
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final phone = await Navigator.pushNamed(context, '/forgot-number');
+                                    if (phone is String && phone.isNotEmpty && mounted) {
+                                      _identifierCtrl.text = phone;
+                                    }
+                                  },
+                                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                                    Icon(TablerIcons.help_circle, size: 18, color: Color(0xFF1E40AF)),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      'Sahau namba yako?',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF1E40AF),
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                                  ),
-                                  onChanged: (v) {
-                                    final code = v.replaceAll(RegExp(r'\D'), '');
-                                    // Auto-submit mara 6 tarakimu — kama web onTwoFAChange
-                                    if (code.length == 6) _submitOtp(code);
-                                  },
+                                  ]),
                                 ),
-                                // Spinner — absolute centered, pointer-events-none kama web
-                                // Web: hakuna overlay, spinner tu katikati (pointer-events-none)
-                                if (_otpLoading)
-                                  const IgnorePointer(
-                                    child: Center(
-                                      child: SizedBox(width: 20, height: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1E40AF))),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 28,
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.pushNamed(context, '/register'),
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    foregroundColor: const Color(0xFF1E40AF),
+                                    side: BorderSide(
+                                      color: const Color(0xFF1E40AF).withValues(alpha: 0.3),
+                                      width: 2,
                                     ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                                    textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                                   ),
-                              ],
-                            ),
-
-                          // ── Refresh: tuma code mpya ya 2FA (email ya admin) ──
-                          if (_twoFAEmail != null)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton.icon(
-                                onPressed: _otpLoading ? null : _resendOtp,
-                                icon: Icon(PhosphorIcons.arrowClockwise(), size: 14),
-                                label: const Text('Tuma code mpya',
-                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF1E40AF),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                                    Icon(TablerIcons.user_plus, size: 18, color: Color(0xFF1E40AF)),
+                                    SizedBox(width: 6),
+                                    Text('Jisajili sasa'),
+                                  ]),
                                 ),
                               ),
-                            ),
-                          const SizedBox(height: 12), // mt-3
-                          Center(
-                            child: GestureDetector(
-                              onTap: () async {
-                                // Sahau Namba — ukichagua namba, inajazwa kwenye field
-                                final phone = await Navigator.pushNamed(context, '/forgot-number');
-                                if (phone is String && phone.isNotEmpty && mounted) {
-                                  _identifierCtrl.text = phone;
-                                }
-                              },
-                              child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                                Icon(TablerIcons.help_circle, size: 18, color: Color(0xFF1E40AF)),
-                                SizedBox(width: 5),
-                                Text(
-                                  'Sahau namba yako?',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF1E40AF),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ]),
-                            ),
-                          ),
-
-                          // ── Register button — NDANI ya card, mt-4
-                          // Style: btn-primary transparent bg, color=brand-blue, border=2px brand-blue/0.3 ──
-                          const SizedBox(height: 16), // mt-4
-                          SizedBox(
-                            width: double.infinity,
-                            height: 28, // same height as btn-primary: py-1+text+py-1=28px
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pushNamed(context, '/register'),
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: const Color(0xFF1E40AF), // color: brand-blue
-                                side: BorderSide(
-                                  color: const Color(0xFF1E40AF).withValues(alpha: 0.3), // 2px solid brand-blue/0.3
-                                  width: 2,
-                                ),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)), // rounded-md
-                                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-                                textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                              ),
-                              child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                                Icon(TablerIcons.user_plus, size: 18, color: Color(0xFF1E40AF)),
-                                SizedBox(width: 6),
-                                Text('Jisajili sasa'),
-                              ]),
-                            ),
-                          ),
+                            ],
+                          ],
                         ],
                       ),
                     ),

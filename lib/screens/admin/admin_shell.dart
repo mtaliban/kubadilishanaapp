@@ -174,6 +174,11 @@ class _AdminShellState extends State<AdminShell> {
 
   Future<void> _logout() async {
     if (Navigator.of(context).canPop()) Navigator.pop(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => const _LogoutDialog(),
+    );
+    if (ok != true) return;
     await Provider.of<AuthProvider>(context, listen: false).logout();
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, '/login');
@@ -403,6 +408,83 @@ class _AdminShellState extends State<AdminShell> {
       // Malipo (6): HAIISHI ukiangalia — inaisha baada ya approve/reject
       // Maoni (8): HAIISHI ukiangalia — inaisha baada ya kujibu
     }
+  }
+}
+
+// ── Dialog ya kuthibitisha kutoka ─────────────────────────────────────────────
+class _LogoutDialog extends StatelessWidget {
+  const _LogoutDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    const red    = Color(0xFFDC2626);
+    const redBg  = Color(0xFFFEF2F2);
+    const text   = Color(0xFF111111);
+    const muted  = Color(0xFF6B7280);
+    const border = Color(0xFFD1D5DB);
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 260),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(
+                color: redBg, borderRadius: BorderRadius.circular(12)),
+              child: const Icon(TablerIcons.logout, size: 22, color: red),
+            ),
+            const SizedBox(height: 10),
+            const Text('Toka kwenye akaunti?',
+                style: TextStyle(
+                    color: text, fontSize: 15, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 2),
+            const Text('Utahitaji kuingia tena',
+                style: TextStyle(color: muted, fontSize: 12)),
+            const SizedBox(height: 14),
+            Row(children: [
+              Expanded(
+                child: SizedBox(
+                  height: 34,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: text,
+                      side: const BorderSide(color: border),
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9)),
+                      textStyle: const TextStyle(fontSize: 13),
+                    ),
+                    child: const Text('Hapana'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: SizedBox(
+                  height: 34,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: red,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9)),
+                      textStyle: const TextStyle(fontSize: 13),
+                    ),
+                    child: const Text('Toka'),
+                  ),
+                ),
+              ),
+            ]),
+          ]),
+        ),
+      ),
+    );
   }
 }
 
