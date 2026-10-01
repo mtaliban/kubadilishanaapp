@@ -231,9 +231,11 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(_p.fullName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w900, color: _C.text, height: 1.25)),
-                const SizedBox(height: 5),
+                        fontSize: 17, fontWeight: FontWeight.w900, color: _C.text, height: 1.0)),
+                const SizedBox(height: 3),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
@@ -399,7 +401,12 @@ class _ProfilePageState extends State<ProfilePage> {
             Row(children: [
               Icon(icon, size: 16, color: _C.primaryDark),
               const SizedBox(width: 6),
-              Text(label, style: const TextStyle(fontSize: 12.5, color: _C.label)),
+              Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12.5, color: _C.label)),
+              ),
             ]),
             const SizedBox(height: 4),
             Padding(padding: const EdgeInsets.only(left: 22), child: value),

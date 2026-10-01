@@ -131,14 +131,11 @@ class ForgotNumberPage extends StatelessWidget {
                       child: _AppLogo(size: screenW * 0.42),
                     ),
                     const SizedBox(height: 28),
-                    // Kadi ya fomu — 75% ya upana, katikati
-                    FractionallySizedBox(
-                      widthFactor: 0.75,
-                      child: ForgotNumberCard(
-                        onSearch: onSearch,
-                        onBackToLogin: onBackToLogin,
-                        onLogin: onLogin,
-                      ),
+                    // Kadi ya fomu
+                    ForgotNumberCard(
+                      onSearch: onSearch,
+                      onBackToLogin: onBackToLogin,
+                      onLogin: onLogin,
                     ),
                   ],
                 ),
@@ -183,8 +180,8 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
 
   Future<void> _search() async {
     final name = _name.text.trim();
-    if (name.isEmpty) {
-      setState(() => _error = 'Weka jina lako kamili kwanza');
+    if (name.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length < 2) {
+      setState(() => _error = 'Weka jina la kwanza na la mwisho.');
       return;
     }
     FocusScope.of(context).unfocus();
