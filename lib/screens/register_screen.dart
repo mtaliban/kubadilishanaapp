@@ -222,9 +222,9 @@ class _KadaPickerSheetState extends State<_KadaPickerSheet> {
   }
 
   IconData _icon(String? level) {
-    if (level == 'Primary') return PhosphorIcons.bookOpen(PhosphorIconsStyle.fill);
-    if (level == 'Secondary') return PhosphorIcons.graduationCap(PhosphorIconsStyle.fill);
-    return PhosphorIcons.identificationCard(PhosphorIconsStyle.fill);
+    if (level == 'Primary') return TablerIcons.book;
+    if (level == 'Secondary') return TablerIcons.microscope;
+    return TablerIcons.apps;
   }
 
   Color _fg(String? level, bool sel) {
@@ -236,9 +236,7 @@ class _KadaPickerSheetState extends State<_KadaPickerSheet> {
 
   Color _bg(String? level, bool sel) {
     if (sel) return const Color(0xFFDBEAFE);
-    if (level == 'Primary') return const Color(0xFFF0FDF4);
-    if (level == 'Secondary') return const Color(0xFFF5F3FF);
-    return const Color(0xFFF3F4F6);
+    return Colors.white;
   }
 
   String _levelName(String? level) {
@@ -251,8 +249,8 @@ class _KadaPickerSheetState extends State<_KadaPickerSheet> {
   Widget build(BuildContext context) {
     final list = _filtered;
     return DraggableScrollableSheet(
-      initialChildSize: 0.72,
-      minChildSize: 0.45,
+      initialChildSize: 0.40,
+      minChildSize: 0.30,
       maxChildSize: 0.94,
       expand: false,
       builder: (_, scrollCtrl) => Container(
@@ -353,8 +351,9 @@ class _KadaPickerSheetState extends State<_KadaPickerSheet> {
                               decoration: BoxDecoration(
                                 color: _bg(level, isSel),
                                 borderRadius: BorderRadius.circular(8),
+                                border: isSel ? null : Border.all(color: const Color(0xFFE5E7EB)),
                               ),
-                              child: Icon(_icon(level), size: 17,
+                              child: Icon(_icon(level), size: 22,
                                   color: _fg(level, isSel)),
                             ),
                             const SizedBox(width: 10),
@@ -1345,9 +1344,8 @@ class _Step4KadaState extends State<_Step4Kada> {
           ]),
         ),
       ] else ...[
-        _fieldLabel(PhosphorIcons.identificationCard(PhosphorIconsStyle.fill), 'Kada *'),
+        _fieldLabel(TablerIcons.id, 'Kada *'),
         SelectField(
-          icon: PhosphorIcons.identificationCard(PhosphorIconsStyle.fill),
           hint: 'Chagua kada yako',
           value: _cadreCode.isEmpty ? null : _cadres.cast<dynamic>()
               .firstWhere((c) => c['code'] == _cadreCode, orElse: () => null)?['display_name'] as String? ?? _cadreCode,
