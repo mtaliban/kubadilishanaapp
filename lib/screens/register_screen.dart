@@ -6,7 +6,6 @@ import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/app_cache.dart';
 import '../widgets/select_sheet.dart';
-import '../widgets/picker_screen.dart';
 import '../utils/safe_cast.dart';
 
 const _kBlue = Color(0xFF1E40AF);
@@ -203,6 +202,210 @@ class _IconPickerSheet extends StatelessWidget {
           if (isSel)
             Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
                 size: 16, color: _kBlue),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Kada picker — bottom sheet yenye icons tofauti kwa kila ngazi ────────────
+class _KadaPickerSheet extends StatefulWidget {
+  final List<dynamic> cadres;
+  final String? selected;
+  const _KadaPickerSheet({required this.cadres, this.selected});
+  @override
+  State<_KadaPickerSheet> createState() => _KadaPickerSheetState();
+}
+
+class _KadaPickerSheetState extends State<_KadaPickerSheet> {
+  String _q = '';
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  List<dynamic> get _filtered {
+    if (_q.trim().isEmpty) return widget.cadres;
+    final q = _q.trim().toLowerCase();
+    return widget.cadres.where((c) {
+      final n = '${c['display_name'] ?? c['name'] ?? c['code']}'.toLowerCase();
+      return n.contains(q);
+    }).toList();
+  }
+
+  IconData _icon(String? level) {
+    if (level == 'Primary') return PhosphorIcons.bookOpen(PhosphorIconsStyle.fill);
+    if (level == 'Secondary') return PhosphorIcons.graduationCap(PhosphorIconsStyle.fill);
+    return PhosphorIcons.identificationCard(PhosphorIconsStyle.fill);
+  }
+
+  Color _fg(String? level, bool sel) {
+    if (sel) return _kBlue;
+    if (level == 'Primary') return const Color(0xFF16A34A);
+    if (level == 'Secondary') return const Color(0xFF7C3AED);
+    return _kGrey500;
+  }
+
+  Color _bg(String? level, bool sel) {
+    if (sel) return const Color(0xFFDBEAFE);
+    if (level == 'Primary') return const Color(0xFFF0FDF4);
+    if (level == 'Secondary') return const Color(0xFFF5F3FF);
+    return const Color(0xFFF3F4F6);
+  }
+
+  String _levelName(String? level) {
+    if (level == 'Primary') return 'Elimu Msingi';
+    if (level == 'Secondary') return 'Elimu Sekondari';
+    return level ?? '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final list = _filtered;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.72,
+      minChildSize: 0.45,
+      maxChildSize: 0.94,
+      expand: false,
+      builder: (_, scrollCtrl) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(children: [
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 4),
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+                color: _kGrey300, borderRadius: BorderRadius.circular(2)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 12, 10),
+            child: Row(children: [
+              const Expanded(
+                child: Text('Chagua Kada',
+                    style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w700, color: _kGrey900)),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 30, height: 30,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFFF3F4F6), shape: BoxShape.circle),
+                  child: Icon(PhosphorIcons.x(), size: 15, color: _kGrey500),
+                ),
+              ),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: TextField(
+              controller: _ctrl,
+              decoration: InputDecoration(
+                hintText: 'Tafuta kada...',
+                isDense: true,
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 8),
+                  child: Icon(PhosphorIcons.magnifyingGlass(),
+                      size: 16, color: _kGrey500),
+                ),
+                prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kGrey300)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: _kGrey300)),
+              ),
+              style: const TextStyle(fontSize: 13),
+              onChanged: (v) => setState(() => _q = v),
+            ),
+          ),
+          Expanded(
+            child: list.isEmpty
+                ? const Center(
+                    child: Text('Hakuna kilichopatikana',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
+                  )
+                : ListView.builder(
+                    controller: scrollCtrl,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    itemCount: list.length,
+                    itemBuilder: (_, i) {
+                      final c = list[i];
+                      final code = '${c['code']}';
+                      final name =
+                          '${c['display_name'] ?? c['name'] ?? code}';
+                      final level = c['level'] as String?;
+                      final isSel = widget.selected == code;
+                      return GestureDetector(
+                        onTap: () => Navigator.pop(context, code),
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSel
+                                ? const Color(0xFFEFF6FF)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(children: [
+                            Container(
+                              width: 34, height: 34,
+                              decoration: BoxDecoration(
+                                color: _bg(level, isSel),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(_icon(level), size: 17,
+                                  color: _fg(level, isSel)),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(name,
+                                      style: TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: isSel
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                          color: isSel ? _kBlue : _kGrey900)),
+                                  if (level != null && level.isNotEmpty) ...[
+                                    const SizedBox(height: 1),
+                                    Text(_levelName(level),
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            color: _fg(level, false))),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            if (isSel) ...[
+                              const SizedBox(width: 8),
+                              Icon(
+                                  PhosphorIcons.checkCircle(
+                                      PhosphorIconsStyle.fill),
+                                  size: 16,
+                                  color: _kBlue),
+                            ],
+                          ]),
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ]),
       ),
     );
@@ -1112,27 +1315,23 @@ class _Step4KadaState extends State<_Step4Kada> {
           ]),
         ),
       ] else ...[
-        const Text('Kada *',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-        const SizedBox(height: 6),
+        _fieldLabel(PhosphorIcons.identificationCard(PhosphorIconsStyle.fill), 'Kada *'),
         SelectField(
-          icon: PhosphorIcons.identificationCard(),
+          icon: PhosphorIcons.identificationCard(PhosphorIconsStyle.fill),
           hint: 'Chagua kada yako',
           value: _cadreCode.isEmpty ? null : _cadres.cast<dynamic>()
               .firstWhere((c) => c['code'] == _cadreCode, orElse: () => null)?['display_name'] as String? ?? _cadreCode,
           onTap: () async {
-            final result = await openPickerScreen(
-              context,
-              title: 'Chagua Kada',
-              allLabel: '-- Chagua Kada --',
-              icon: PhosphorIcons.identificationCard(),
-              options: _cadres.map((c) => (
-                id: '${c['code']}',
-                name: '${c['display_name'] ?? c['name'] ?? c['code']}',
-              )).toList(),
-              selectedId: _cadreCode.isEmpty ? null : _cadreCode,
+            final result = await showModalBottomSheet<String>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => _KadaPickerSheet(
+                cadres: _cadres,
+                selected: _cadreCode.isEmpty ? null : _cadreCode,
+              ),
             );
-            if (result != null && result.id != null) _onCadreChanged(result.id!);
+            if (result != null) _onCadreChanged(result);
           },
         ),
       ],

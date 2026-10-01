@@ -326,7 +326,7 @@ class SelectField extends StatelessWidget {
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: hasValue ? AppColors.blue50 : AppColors.grey100,
+                color: AppColors.blue50,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
