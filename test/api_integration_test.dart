@@ -56,7 +56,11 @@ class _Routes extends FakeApiAdapter {
   int usersRequests = 0;
   final List<String> pathsSeen = [];
   int usersTotal;
-  _Routes({this.usersTotal = 10}) : super();
+
+  /// Path hizi "hazina mtandao" — fetch inatupa DioException(connectionTimeout)
+  /// kama simu isiyofika server (test za sera ya offline).
+  final Set<String> offlinePaths;
+  _Routes({this.usersTotal = 10, this.offlinePaths = const {}}) : super();
 
   @override
   Future<ResponseBody> fetch(
@@ -66,6 +70,14 @@ class _Routes extends FakeApiAdapter {
   ) async {
     final path = options.uri.path.replaceAll(RegExp(r'^/api'), '');
     pathsSeen.add(path);
+
+    if (offlinePaths.contains(path)) {
+      throw DioException(
+        requestOptions: options,
+        type: DioExceptionType.connectionTimeout,
+        error: 'connection timeout (offline test)',
+      );
+    }
     final q = options.uri.queryParameters;
 
     if (path == '/locations/regions') {
@@ -110,6 +122,22 @@ class _Routes extends FakeApiAdapter {
     return ResponseBody.fromString(
       body,
       200,
+      headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+    );
+  }
+}
+
+/// Adapter inayorudisha 500 kwa kila ombi — kosa la seva (badResponse).
+class _BrokenServer extends FakeApiAdapter {
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    return ResponseBody.fromString(
+      jsonEncode({'detail': 'internal error'}),
+      500,
       headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
     );
   }
@@ -228,6 +256,52 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('kv_token'), 'tok-u2',
           reason: 'Token ya mtumiaji mpya imehifadhiwa — si ya zamani');
+    });
+  });
+
+  group('Sera ya offline (Cached + banner) — stale fallback', () {
+    test('GET isiyo na mtandao inarudisha cache hata iliyoisha muda (stale)',
+        () async {
+      final api = ApiService();
+      final dio = ApiService.dioForTest(api);
+      final routes = _Routes(offlinePaths: {'/matches/me'});
+      dio.httpClientAdapter = routes;
+      final cache = AppCache();
+
+      // Jaza cache, kisha fanya iishe muda (TTL fupi).
+      cache.set('/matches/me', {'matches': ['zamani']},
+          ttl: const Duration(milliseconds: 30));
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      expect(cache.get('/matches/me'), isNull,
+          reason: 'Kwanza: TTL imeisha — get() ya kawaida hairudishi');
+
+      // Mtandao hakuna (connectionTimeout) — lazima stale irudi, si kosa.
+      final r = await api.get('/matches/me');
+      expect(r.data, {'matches': ['zamani']},
+          reason: 'Offline lazima irudishe data ya mwisho (stale fallback)');
+
+      dio.httpClientAdapter = _Routes(); // rudisha adapter ya kawaida
+    });
+
+    test('badResponse (kosa la seva) hairudishiwi cache — laonyeshwe kama lilivyo',
+        () async {
+      final api = ApiService();
+      final dio = ApiService.dioForTest(api);
+      dio.httpClientAdapter = _BrokenServer();
+      final cache = AppCache();
+      // Kipengele kilichopita TTL — bado kipo kwa getStale(), lakini GET ya
+      // kawaida hakiisomi. Seva ikijibu 500, kosa LAZIMA lipite (si stale).
+      cache.set('/users/recent', {'users': [1]},
+          ttl: const Duration(milliseconds: 30));
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+
+      await expectLater(
+        api.get('/users/recent'),
+        throwsA(isA<DioException>()),
+        reason: 'Seva ilijibu kweli (500) — cache isitumike kuficha kosa la seva',
+      );
+
+      dio.httpClientAdapter = _Routes(); // rudisha adapter ya kawaida
     });
   });
 

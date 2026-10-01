@@ -127,11 +127,33 @@ class ApiService {
         );
       }
     }
-    final response = await _dio.get(path, queryParameters: queryParameters);
-    if (useCache && response.statusCode == 200) {
-      AppCache().set(key, response.data, ttl: cacheTtl);
+    try {
+      final response = await _dio.get(path, queryParameters: queryParameters);
+      if (useCache && response.statusCode == 200) {
+        AppCache().set(key, response.data, ttl: cacheTtl);
+      }
+      return response;
+    } on DioException catch (e) {
+      // SERA: OFFLINE — Cached + banner. Kama ombi halikufika server kabisa
+      // (timeout / connection), rudisha cache hata iliyoisha muda (stale)
+      // badala ya kosa; banner ya juu inaonyesha hali ya mtandao. Makosa ya
+      // seva (badResponse) yarudishwe kama yalivyo — seva ilijibu kweli.
+      final noServer = e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError;
+      if (noServer && useCache) {
+        final stale = AppCache().getStale(key);
+        if (stale != null) {
+          return Response(
+            data: stale,
+            requestOptions: RequestOptions(path: path),
+            statusCode: 200,
+          );
+        }
+      }
+      rethrow;
     }
-    return response;
   }
 
   Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) =>

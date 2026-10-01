@@ -75,12 +75,17 @@ class AppCache extends ChangeNotifier {
     final e = _store[key];
     if (e == null) return null;
     if (e.isExpired) {
-      _store.remove(key);
-      _prefs?.remove('$_kPfx$key');
+      // USIFUTE hapa — kipengele kimebaki kwa getStale() (sera ya offline:
+      // "Cached + banner"). Inaondolewa na set() mpya, invalidate() au clear().
       return null;
     }
     return e.data;
   }
+
+  /// Soma hata kipenye kilichoisha muda (stale) — SERA YA OFFLINE:
+  /// "Cached + banner". Kwenye mtandao mbaya, GET inarudisha data hii
+  /// badala ya kosa; mtumiaji anaona data za mwisho + banner juu.
+  dynamic getStale(String key) => _store[key]?.data;
 
   void invalidate(String key) {
     final had = _store.remove(key) != null;

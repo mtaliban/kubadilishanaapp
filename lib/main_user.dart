@@ -12,6 +12,7 @@ import 'app_config.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'services/api_service.dart';
+import 'services/app_cache.dart';
 import 'services/app_navigator.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
@@ -92,6 +93,15 @@ void main() {
       ApiService().init();
     } catch (e) {
       _crashLog.add('[ApiService] $e');
+    }
+
+    // SERA: OFFLINE — Cached + banner. Pakia cache iliyohifadhiwa ili pages
+    // zioneeshe data za mwisho MARA MOJA hata bila mtandao (banner ya juu
+    // inaonyesha hali ya mtandao).
+    try {
+      await AppCache().warmUp();
+    } catch (e) {
+      _crashLog.add('[Cache] $e');
     }
 
     runApp(const _UserApp());
