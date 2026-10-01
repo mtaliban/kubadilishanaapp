@@ -736,7 +736,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
       const SizedBox(height: 16),
 
       // Full name
-      _fieldLabel(PhosphorIcons.user(), 'Jina Kamili *'),
+      _fieldLabel(PhosphorIcons.userCircle(PhosphorIconsStyle.fill), 'Jina Kamili *'),
       TextField(
         controller: _nameCtrl,
         style: const TextStyle(fontSize: 12),
@@ -747,7 +747,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
       const SizedBox(height: 14),
 
       // Phone primary
-      _fieldLabel(PhosphorIcons.phone(), 'Namba ya Simu *'),
+      _fieldLabel(PhosphorIcons.deviceMobile(PhosphorIconsStyle.fill), 'Namba ya Simu *'),
       TextField(
         controller: _phoneCtrl,
         keyboardType: TextInputType.phone,
@@ -767,7 +767,7 @@ class _Step1IdentityState extends State<_Step1Identity> {
       const SizedBox(height: 14),
 
       // WhatsApp
-      _fieldLabel(PhosphorIcons.chatCircle(), 'Namba ya WhatsApp *'),
+      _fieldLabel(PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill), 'Namba ya WhatsApp *'),
       TextField(
         controller: _altCtrl,
         keyboardType: TextInputType.phone,
