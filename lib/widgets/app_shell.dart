@@ -183,6 +183,8 @@ class _AppShellState extends State<AppShell> {
         _showGlobalToast('📋 Admin amejibu maoni yako!', success: true);
       case 'match.found':
         _showGlobalToast('🤝 Umepata mwenzako! Angalia dashibodi.', success: true);
+      case 'user.registered':
+        _showGlobalToast('🎯 Mtu anayefaa amejiunga! Angalia dashibodi.', success: true);
     }
   }
 
