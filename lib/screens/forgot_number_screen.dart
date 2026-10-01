@@ -1,12 +1,8 @@
 // =====================================================================
 //  UKURASA WA "UMESAHAU NAMBA?"  —  Kubadilishana
-//  Kadi MOJA yenye hatua 2:
+//  Logo KUBWA juu (nje ya kadi), kadi chini yenye hatua 2:
 //    Hatua 1: fomu ya jina
-//    Hatua 2: namba imepatikana (inachukua nafasi ya fomu, kadi ile ile)
-//
-//  pubspec.yaml:
-//    dependencies:
-//      flutter_tabler_icons: 1.43.0
+//    Hatua 2: namba imepatikana
 // =====================================================================
 
 import 'package:flutter/material.dart';
@@ -114,19 +110,28 @@ class ForgotNumberPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenH = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: _C.pageBg,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(12, 16, 12, 32),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: ForgotNumberCard(
-              onSearch: onSearch,
-              onBackToLogin: onBackToLogin,
-              onLogin: onLogin,
-            ),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Logo KUBWA — NJE ya kadi
+              SizedBox(
+                height: screenH * 0.28,
+                child: const Center(child: _AppLogo()),
+              ),
+              // Kadi ya fomu — chini ya logo
+              ForgotNumberCard(
+                onSearch: onSearch,
+                onBackToLogin: onBackToLogin,
+                onLogin: onLogin,
+              ),
+            ],
           ),
         ),
       ),
@@ -224,8 +229,6 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Center(child: _AppLogo()),
-          const SizedBox(height: 20),
           _StepBar(step2: step2),
           const SizedBox(height: 22),
           AnimatedSize(
@@ -269,7 +272,7 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
             hintStyle: const TextStyle(fontSize: 15, color: _C.hint, height: 1.2),
             prefixIcon: const Icon(TablerIcons.user_circle, size: 20, color: _C.primaryDark),
             prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            contentPadding: const EdgeInsets.fromLTRB(0, 14, 12, 14),
+            contentPadding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
             enabledBorder: _border(hasError ? _C.error : _C.inputBorder),
             focusedBorder: _border(hasError ? _C.error : _C.primary),
           ),
@@ -494,32 +497,53 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
       );
 }
 
-// ================= LOGO =================
+// ================= LOGO — NJE ya kadi, kubwa =================
 class _AppLogo extends StatelessWidget {
   const _AppLogo();
 
   @override
-  Widget build(BuildContext context) => Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
-            ),
-          ],
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size.width * 0.52;
+    return CustomPaint(
+      painter: _DashedRRectPainter(color: _C.logoDash, radius: 20),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: const Center(
+          child: Text('Logo\nyako',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.w700, color: _C.logoText, height: 1.3)),
         ),
-        padding: const EdgeInsets.all(8),
-        child: Image.asset(
-          'assets/images/logo.jpeg',
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
-        ),
-      );
+      ),
+    );
+  }
+}
+
+class _DashedRRectPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  _DashedRRectPainter({required this.color, required this.radius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)));
+    for (final m in path.computeMetrics()) {
+      double d = 0;
+      while (d < m.length) {
+        canvas.drawPath(m.extractPath(d, d + 5), paint);
+        d += 9;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedRRectPainter old) => old.color != color;
 }
 
 // ================= MISTARI YA HATUA =================
