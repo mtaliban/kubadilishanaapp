@@ -243,9 +243,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     const Icon(TablerIcons.shield_check, size: 13, color: _C.primaryDark),
                     const SizedBox(width: 4),
-                    Text(_p.role,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+                    // Flexible + ellipsis — cheo kirefu (au fonti kubwa ya tests)
+                    // kisivuruge chip hii kwenye skrini ndogo.
+                    Flexible(
+                      child: Text(_p.role,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+                    ),
                   ]),
                 ),
               ],

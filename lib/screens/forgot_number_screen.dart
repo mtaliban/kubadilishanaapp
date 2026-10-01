@@ -110,6 +110,9 @@ class ForgotNumberPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenH = MediaQuery.of(context).size.height;
     final screenW = MediaQuery.of(context).size.width;
+    // Logo: kubwa kwenye simu, lakini isizidi 220 — kwenye viewport kubwa
+    // (desktop/tests 800×600) inashuka vitufe chini ya fold.
+    final logoSize = (screenW * 0.42).clamp(96.0, 220.0);
     return Scaffold(
       backgroundColor: _C.pageBg,
       resizeToAvoidBottomInset: true,
@@ -128,7 +131,7 @@ class ForgotNumberPage extends StatelessWidget {
                   children: [
                     // Logo KUBWA — NJE ya kadi
                     Center(
-                      child: _AppLogo(size: screenW * 0.42),
+                      child: _AppLogo(size: logoSize),
                     ),
                     const SizedBox(height: 28),
                     // Kadi ya fomu
@@ -450,7 +453,9 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: _C.line)),
         ),
-        child: Row(children: [left, const Spacer(), right]),
+        // Expanded + Flexible ndani ya link — link ndefu (au fonti kubwa ya
+        // tests) inapungua kwa ellipsis badala ya kuvuruga Row hii.
+        child: Row(children: [Expanded(child: left), right]),
       );
 
   Widget _textLink(IconData icon, String t, VoidCallback onTap) => InkWell(
@@ -461,9 +466,13 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon, size: 13, color: _C.primaryDark),
             const SizedBox(width: 4),
-            Text(t,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+            Flexible(
+              child: Text(t,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+            ),
           ]),
         ),
       );

@@ -398,12 +398,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: const Row(mainAxisSize: MainAxisSize.min, children: [
                                     Icon(TablerIcons.help_circle, size: 18, color: Color(0xFF1E40AF)),
                                     SizedBox(width: 5),
-                                    Text(
-                                      'Sahau namba yako?',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF1E40AF),
-                                        fontWeight: FontWeight.w500,
+                                    // Flexible + ellipsis — fonti kubwa (au Ahem ya tests)
+                                    // isivuruge Row hii kwenye skrini ndogo.
+                                    Flexible(
+                                      child: Text(
+                                        'Sahau namba yako?',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF1E40AF),
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                   ]),

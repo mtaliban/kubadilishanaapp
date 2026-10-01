@@ -148,8 +148,10 @@ class _ToastPill extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: IntrinsicWidth(
-        child: Column(
+      // Row(mainAxisSize: min) inafanya upana ufuatane maneno bila
+      // IntrinsicWidth — intrinsics za IntrinsicWidth zinapishana hadi
+      // ConstrainedBox na 'width.isFinite' inaanguka (hakuna bound hapa).
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
@@ -159,8 +161,6 @@ class _ToastPill extends StatelessWidget {
                 children: [
                   Icon(icon, size: 18, color: color),
                   const SizedBox(width: 8),
-                  // ConstrainedBox badala ya Flexible — Flexible ndani ya
-                  // IntrinsicWidth inakataa intrinsic za infinite (crash).
                   ConstrainedBox(
                     constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width - 96,
@@ -193,7 +193,6 @@ class _ToastPill extends StatelessWidget {
               ),
             ),
           ],
-        ),
       ),
     );
   }
