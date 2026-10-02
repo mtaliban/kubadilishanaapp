@@ -8,9 +8,10 @@
 
 import 'dart:async';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+
+import '../services/network_service.dart';
 
 enum ToastType { success, error, warning, info, offline, online }
 
@@ -32,6 +33,15 @@ class AppToast {
     ToastType type = ToastType.success,
     Duration duration = const Duration(seconds: 3),
   }) {
+    // Ujumbe ULE ULE unaoonekana tayari: usiubadilishe (toast isionekane
+    // kama inaruka/rangi isibadilike — mfano wakati wa offline, banner na
+    // ombi lililoshindwa zote zinasema "Hakuna mtandao"). Ongeza muda tu.
+    final cur = current.value;
+    if (cur != null && cur.text == text) {
+      _timer?.cancel();
+      _timer = Timer(duration, () => current.value = null);
+      return;
+    }
     _timer?.cancel();
     current.value = _ToastData(text, type, duration);
     _timer = Timer(duration, () => current.value = null);
@@ -200,6 +210,13 @@ class _ToastPill extends StatelessWidget {
 
 /// Weka MARA MOJA tu, kwenye shell kuu (juu ya ToastHost au ndani ya body).
 /// Inaonyesha "Hakuna mtandao" na "Mtandao umerudi" kwa skrini zote.
+///
+/// Inatumia NetworkService (ILIYOTHIBITISHWA kwa GET /health) — SI
+/// connectivity ghafi. Sababu: WiFi yenye signal bila internet ilikuwa
+/// inaonyesha "Mtandao umerudi" ya UONGO, kisha maombi yanashindwa na
+/// banner inasema "Hakuna mtandao" — toast za kupingana kila sekunde.
+/// Sasa: toast MOJA kwa kila mzunguko halisi wa kukatika/kurejea, na
+/// starti ya app (haijawahi online) haina toast — banner inatosha.
 class NetworkToastListener extends StatefulWidget {
   final Widget child;
   const NetworkToastListener({super.key, required this.child});
@@ -209,27 +226,39 @@ class NetworkToastListener extends StatefulWidget {
 }
 
 class _NetworkToastListenerState extends State<NetworkToastListener> {
-  StreamSubscription<List<ConnectivityResult>>? _sub;
-  bool _wasOffline = false;
+  bool _seenOffline = false; // tumeingia offline kwenye mzunguko huu
+  bool _everOnline = false;  // tumewahi kuwa online tangu widget ipandishwe
 
   @override
   void initState() {
     super.initState();
-    _sub = Connectivity().onConnectivityChanged.listen((r) {
-      final offline = r.contains(ConnectivityResult.none);
-      if (offline && !_wasOffline) {
-        AppToast.offline();
-      } else if (!offline && _wasOffline) {
-        AppToast.online();
-      }
-      _wasOffline = offline;
-    });
+    final s = NetworkService().status;
+    _everOnline = s == NetStatus.online;
+    _seenOffline = s == NetStatus.offline;
+    NetworkService().addListener(_onStatusChange);
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
+    NetworkService().removeListener(_onStatusChange);
     super.dispose();
+  }
+
+  void _onStatusChange() {
+    final s = NetworkService().status;
+    if (s == NetStatus.online) {
+      _everOnline = true;
+      if (_seenOffline) {
+        // Umerudi KWELI (imethibitishwa kwa /health).
+        _seenOffline = false;
+        AppToast.online();
+      }
+    } else if (s == NetStatus.offline && !_seenOffline) {
+      _seenOffline = true;
+      // Mara MOJA kwa mzunguko huu — retry za NetworkService
+      // (checking→offline kila mara) zisirudie toast.
+      if (_everOnline) AppToast.offline();
+    }
   }
 
   @override
