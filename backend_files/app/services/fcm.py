@@ -40,10 +40,14 @@ def _channel_for(data: Optional[dict]) -> str:
     channel ya fallback "Miscellaneous" BILA sauti, vibration wala
     heads-up — ndiyo chanzo cha arifa za kimya.
     """
+    # Oanisha KIKAMILIFU na _channelId() ya app (notification_service.dart):
+    # payment.*/feedback.* → Ujumbe, match.*/user.registered → Mechi,
+    # mengine (announcement, user.verified, data.changed) → Matangazo.
     t = (data or {}).get("type", "")
-    if "message" in t or "call" in t or "reply" in t:
+    if ("message" in t or "call" in t or "reply" in t or
+            "payment" in t or "feedback" in t):
         return "kubadilishana_messages_v2"
-    if "match" in t or "verified" in t or "registered" in t:
+    if "match" in t or "registered" in t:
         return "kubadilishana_matches_v2"
     return "kubadilishana_general_v2"
 

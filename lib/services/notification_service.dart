@@ -174,67 +174,78 @@ class NotificationService {
 
   // ── Initialise ────────────────────────────────────────────────────────────
   Future<void> init() async {
-    if (_initialized) return;
-    _initialized = true;
+    if (!_initialized) {
+      _initialized = true;
 
-    initNetworkListener();
+      initNetworkListener();
 
-    try {
-      const initSettings = InitializationSettings(
-        android: AndroidInitializationSettings('ic_notification'),
-      );
-      await _localNotifications.initialize(
-        initSettings,
-        onDidReceiveNotificationResponse: _onLocalTap,
-      );
-      final android = _localNotifications
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-      await android?.createNotificationChannel(const AndroidNotificationChannel(
-        'kubadilishana_messages_v2', 'Ujumbe',
-        description: 'Ujumbe mpya kutoka kwa wenzako',
-        importance: Importance.max,
-        playSound: true,
-        enableVibration: true,
-      ));
-      await android?.createNotificationChannel(const AndroidNotificationChannel(
-        'kubadilishana_matches_v2', 'Mechi',
-        description: 'Mechi mpya zilizopatikana',
-        importance: Importance.max,
-        playSound: true,
-        enableVibration: true,
-      ));
-      await android?.createNotificationChannel(const AndroidNotificationChannel(
-        'kubadilishana_general_v2', 'Matangazo',
-        description: 'Matangazo na taarifa za jumla',
-        importance: Importance.high,
-        playSound: true,
-        enableVibration: true,
-      ));
-    } catch (_) {}
+      try {
+        const initSettings = InitializationSettings(
+          android: AndroidInitializationSettings('ic_notification'),
+        );
+        await _localNotifications.initialize(
+          initSettings,
+          onDidReceiveNotificationResponse: _onLocalTap,
+        );
+        final android = _localNotifications
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        await android?.createNotificationChannel(const AndroidNotificationChannel(
+          'kubadilishana_messages_v2', 'Ujumbe',
+          description: 'Ujumbe mpya kutoka kwa wenzako',
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+        ));
+        await android?.createNotificationChannel(const AndroidNotificationChannel(
+          'kubadilishana_matches_v2', 'Mechi',
+          description: 'Mechi mpya zilizopatikana',
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+        ));
+        await android?.createNotificationChannel(const AndroidNotificationChannel(
+          'kubadilishana_general_v2', 'Matangazo',
+          description: 'Matangazo na taarifa za jumla',
+          importance: Importance.high,
+          playSound: true,
+          enableVibration: true,
+        ));
+      } catch (_) {}
 
+      // Token refresh: sikiliza MARA MOJA tu — kila _ensurePermissionAndToken
+      // inayofuata (login mpya / retry) isiongeze listener nyingine.
+      try {
+        _fcm.onTokenRefresh.listen((t) { _fcmToken = t; _registerToken(t); });
+      } catch (_) {}
+
+      try {
+        FirebaseMessaging.onMessage.listen((msg) {
+          final n    = msg.notification;
+          final type = msg.data['type']?.toString() ?? '';
+          if (n != null) {
+            if (_isDuplicate(type, msg.data['notification_id']?.toString() ?? '',
+                n.title ?? '', n.body ?? '')) return;
+            _show(type: type, title: n.title ?? 'Kubadilishana',
+                body: n.body ?? '', payload: msg.data);
+          } else if (msg.data.isNotEmpty) {
+            _showFromData(msg.data);
+          }
+        });
+
+        FirebaseMessaging.onMessageOpenedApp
+            .listen((msg) => _notifyTap(msg.data));
+        _fcm.getInitialMessage().then((msg) {
+          if (msg != null) _notifyTap(msg.data);
+        }).catchError((_) {});
+      } catch (_) {}
+    }
+
+    // HII INAUITWA KILA LOGIN (si run ya kwanza tu!): logout inaondoa token
+    // kwenye server ($pull /fcm-token), kisha login inayofuata LAZIMA
+    // isajili upya — vinginevyo push hazifiki hadi app ifunguliwe upya
+    // (kasoro halisi: init ya zamani ilipita kimya kwa logins za pili).
     await _ensurePermissionAndToken();
-
-    try {
-      FirebaseMessaging.onMessage.listen((msg) {
-        final n    = msg.notification;
-        final type = msg.data['type']?.toString() ?? '';
-        if (n != null) {
-          if (_isDuplicate(type, msg.data['notification_id']?.toString() ?? '',
-              n.title ?? '', n.body ?? '')) return;
-          _show(type: type, title: n.title ?? 'Kubadilishana',
-              body: n.body ?? '', payload: msg.data);
-        } else if (msg.data.isNotEmpty) {
-          _showFromData(msg.data);
-        }
-      });
-
-      FirebaseMessaging.onMessageOpenedApp
-          .listen((msg) => _notifyTap(msg.data));
-      _fcm.getInitialMessage().then((msg) {
-        if (msg != null) _notifyTap(msg.data);
-      }).catchError((_) {});
-    } catch (_) {}
   }
 
   /// Ruhusa ya POST_NOTIFICATIONS (Android 13+) + token ya FCM.
@@ -276,7 +287,8 @@ class NotificationService {
       _fcmToken = await _fcm.getToken();
       _tokenNeedsRetry = false;
       if (_fcmToken != null) await _registerToken(_fcmToken!);
-      _fcm.onTokenRefresh.listen((t) { _fcmToken = t; _registerToken(t); });
+      // onTokenRefresh imesikilizwa mara moja ndani ya init — hapa ni
+      // ku-register tu (server inatumia $addToSet, ku-rudiana ni salama).
     } catch (_) {
       // Token imeshindikana (mtandao n.k.) — tajaribu tena mtandao ukirejea.
       _tokenNeedsRetry = true;
