@@ -678,8 +678,15 @@ class _Pill extends StatelessWidget {
             Icon(icon, size: 12, color: fg),
             const SizedBox(width: 4),
           ],
-          Text(label,
-              style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
+          // Flexible + ellipsis: simu ndogo (320) ikionyesha pill yenye
+          // jina/employer ndefu, maandishi yanapungua — Row haivunjiki tena.
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );

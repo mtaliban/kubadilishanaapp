@@ -1065,8 +1065,12 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            const Text('Ni sawa na namba ya simu',
-                style: TextStyle(color: v2TextPrimary, fontSize: 13)),
+            // Expanded: maandishi yafuata nafasi — font kubwa ya mtumiaji
+            // (scale 1.3+) haivunji row tena kwenye simu ndogo.
+            const Expanded(
+              child: Text('Ni sawa na namba ya simu',
+                  style: TextStyle(color: v2TextPrimary, fontSize: 13)),
+            ),
           ]),
         ),
       ),
@@ -1301,11 +1305,21 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                           color: v2AccentBg,
                           borderRadius: BorderRadius.circular(999)),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Text(label,
-                            style: const TextStyle(
-                                color: v2Accent,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600)),
+                        // ConstrainedBox + ellipsis: wilaya ndefu kwenye simu
+                        // ndogo (320) ilinyonya Row hadi kuvuja 54px. Sasa
+                        // chip inafuata nafasi iliyoachwa na Wrap.
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width -
+                                  110),
+                          child: Text(label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  color: v2Accent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                        ),
                         const SizedBox(width: 4),
                         Icon(PhosphorIcons.x(), size: 13, color: v2Accent),
                       ]),
@@ -1689,32 +1703,38 @@ class V2UserDetailScreen extends StatelessWidget {
                 style:
                     const TextStyle(color: v2TextSecondary, fontSize: 12.5)),
             const SizedBox(height: 14),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              _quick(
-                  PhosphorIcons.phoneCall(),
-                  'Piga',
-                  v2Accent,
-                  phone.isEmpty
-                      ? null
-                      : () => v2Launch(
-                          'tel:+${phone.replaceAll(RegExp(r'\D'), '')}')),
-              const SizedBox(width: 22),
-              _quick(
-                  PhosphorIcons.whatsappLogo(),
-                  'WhatsApp',
-                  v2Success,
-                  wa.isEmpty
-                      ? null
-                      : () => v2Launch('https://wa.me/$waIntl')),
-              const SizedBox(width: 22),
-              _quick(
-                  isActive
-                      ? PhosphorIcons.prohibit()
-                      : PhosphorIcons.checkCircle(),
-                  isActive ? 'Funga' : 'Fungua',
-                  v2Warning,
-                  () => _toggleSuspend(context)),
-            ]),
+            // Wrap (si Row): simu ndogo (320) na font kubwa, quick actions
+            // 3 (Piga/WhatsApp/Funga) zilivuja 24px. Wrap inazigawa mistari
+            // miwili ikibidi — hakuna overflow.
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 22,
+              runSpacing: 10,
+              children: [
+                _quick(
+                    PhosphorIcons.phoneCall(),
+                    'Piga',
+                    v2Accent,
+                    phone.isEmpty
+                        ? null
+                        : () => v2Launch(
+                            'tel:+${phone.replaceAll(RegExp(r'\D'), '')}')),
+                _quick(
+                    PhosphorIcons.whatsappLogo(),
+                    'WhatsApp',
+                    v2Success,
+                    wa.isEmpty
+                        ? null
+                        : () => v2Launch('https://wa.me/$waIntl')),
+                _quick(
+                    isActive
+                        ? PhosphorIcons.prohibit()
+                        : PhosphorIcons.checkCircle(),
+                    isActive ? 'Funga' : 'Fungua',
+                    v2Warning,
+                    () => _toggleSuspend(context)),
+              ],
+            ),
           ]),
         ),
         const SizedBox(height: 16),
