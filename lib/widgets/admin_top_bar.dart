@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import 'app_drawer.dart' show MenuButtonWithDot;
+
 /* ============================================================
    UPAU WA JUU
    Tumia kama:  Scaffold(appBar: AdminTopBar(...), ...)
@@ -50,16 +52,10 @@ class AdminTopBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: Row(
             children: [
-              // Kitufe cha menyu
-              IconButton(
+              // Kitufe cha menyu — dot nyekundu (hakuna namba) ikiwa kuna badge
+              // ya ukurasa usio kwenye bottom bar (Wenzao/Match/Waliopigiana)
+              MenuButtonWithDot(
                 onPressed: onMenu ?? () => Scaffold.maybeOf(context)?.openDrawer(),
-                tooltip: 'Menyu',
-                icon: Icon(PhosphorIcons.list(), size: 24, color: c.text),
-                style: IconButton.styleFrom(
-                  fixedSize: const Size(40, 40),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
               ),
               const Spacer(),
 

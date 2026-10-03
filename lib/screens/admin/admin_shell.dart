@@ -7,7 +7,7 @@ import '../../services/admin_badge_service.dart';
 import '../../widgets/app_shell.dart' show LanguageProvider;
 import '../../services/app_navigator.dart' show adminPageNotifier;
 import '../../widgets/admin_top_bar.dart';
-import '../../widgets/admin_drawer.dart';
+import '../../widgets/app_drawer.dart' show AppDrawer, NavItem;
 import '../../widgets/app_toast.dart';
 import '../../widgets/network_banner.dart';
 import '../../widgets/queue_banner.dart';
@@ -45,11 +45,13 @@ class _NavItem {
 // ─── Master list of all nav items ────────────────────────────────────────────
 
 const _allNavItems = <_NavItem>[
-  _NavItem(9,  'Statistics',          TablerIcons.layoutDashboard,
+  // Icons za bottom nav: NavItem.xxx.icon — icons moja na drawer mpya
+  // (takwimu/watumiaji/wenzao/malipo/maoni). Bottom nav yenyewe haibadilishwi.
+  _NavItem(9,  'Statistics',          NavItem.takwimu.icon,
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(1,  'Watumiaji',           TablerIcons.usersGroup,
+  _NavItem(1,  'Watumiaji',           NavItem.watumiaji.icon,
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(2,  'Waliopata Wenzao',    TablerIcons.replace,
+  _NavItem(2,  'Waliopata Wenzao',    NavItem.wenzao.icon,
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(3,  'Match za Kweli',      TablerIcons.circleCheck,
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
@@ -57,40 +59,40 @@ const _allNavItems = <_NavItem>[
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(5,  'Matangazo',           TablerIcons.speakerphone,
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(6,  'Malipo',              TablerIcons.wallet,
+  _NavItem(6,  'Malipo',              NavItem.malipo.icon,
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
   _NavItem(7,  'Waliopigiana',        TablerIcons.phoneCall,
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(8,  'Maoni na Malalamiko', TablerIcons.message2,
+  _NavItem(8,  'Maoni na Malalamiko', NavItem.maoni.icon,
                                       tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
 ];
 
 // Bottom nav shows 5 key items (subset of drawer)
 const _bottomNavIndices = [9, 1, 2, 6, 8];
 
-// Mapping kati ya AdminPage enum (AdminDrawer) na int index (pages)
-const _pageToIndex = {
-  AdminPage.takwimu:      9,
-  AdminPage.watumiaji:    1,
-  AdminPage.wenzao:       2,
-  AdminPage.match:        3,
-  AdminPage.matangazo:    5,
-  AdminPage.waliopigiana: 7,
-  AdminPage.maoni:        8,
-  AdminPage.malipo:       6,
-  AdminPage.data:         4,
+// Mapping kati ya NavItem (AppDrawer) na int index (pages)
+const _navItemToIndex = {
+  NavItem.takwimu:      9,
+  NavItem.watumiaji:    1,
+  NavItem.wenzao:       2,
+  NavItem.matchZaKweli: 3,
+  NavItem.matangazo:    5,
+  NavItem.waliopigiana: 7,
+  NavItem.maoni:        8,
+  NavItem.malipo:       6,
+  NavItem.data:         4,
 };
 
-const _indexToPage = {
-  9: AdminPage.takwimu,
-  1: AdminPage.watumiaji,
-  2: AdminPage.wenzao,
-  3: AdminPage.match,
-  5: AdminPage.matangazo,
-  7: AdminPage.waliopigiana,
-  8: AdminPage.maoni,
-  6: AdminPage.malipo,
-  4: AdminPage.data,
+const _indexToNavItem = {
+  9: NavItem.takwimu,
+  1: NavItem.watumiaji,
+  2: NavItem.wenzao,
+  3: NavItem.matchZaKweli,
+  5: NavItem.matangazo,
+  7: NavItem.waliopigiana,
+  8: NavItem.maoni,
+  6: NavItem.malipo,
+  4: NavItem.data,
 };
 
 // ─── AdminShell ───────────────────────────────────────────────────────────────
@@ -232,24 +234,35 @@ class _AdminShellState extends State<AdminShell> {
         onLangChanged: (l) => LanguageProvider().setLang(l),
         onAvatarTap: null,
       ),
-      drawer: ListenableBuilder(
-        listenable: _badges,
-        builder: (context, _) => AdminDrawer(
-          selected: _indexToPage[_idx] ?? AdminPage.takwimu,
-          counts: {
-            AdminPage.watumiaji:    _badges.users,
-            AdminPage.wenzao:       _badges.matches,
-            AdminPage.match:        _badges.matches,
-            AdminPage.waliopigiana: _badges.contacts,
-            AdminPage.maoni:        _badges.feedback,
-            AdminPage.malipo:       _badges.payments,
-            AdminPage.matangazo:    _badges.announcements,
-          },
-          adminName: name,
-          onSelect: (page) => _go(_pageToIndex[page] ?? 9),
-          onProfile: _openProfile,
-          onLogout: _logout,
+      // Drawer mpya (AppDrawer) — inasikiliza BadgeController yenyewe; namba
+      // zinamwagika live kupitia bridge ya AdminBadgeService.notifyListeners.
+      drawer: AppDrawer(
+        logo: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.asset(
+            'assets/images/app_icon.png',
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+            errorBuilder: (_, __, ___) => const Center(
+              child: Text('ES',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF6B8AB8))),
+            ),
+          ),
         ),
+        userName: name,
+        userRole: 'Msimamizi',
+        current: _indexToNavItem[_idx] ?? NavItem.takwimu,
+        onSelect: (item) {
+          if (item == NavItem.wasifu) {
+            _openProfile(); // Wasifu wangu — page inapushwa, siyo tab ya shell
+            return;
+          }
+          _go(_navItemToIndex[item] ?? 9);
+        },
+        onLogout: _logout,
       ),
       body: ToastHost(child: Builder(builder: (ctx) {
         // Futa badge MARA MOJA ukurasa ukibadilika — siyo kila rebuild.
