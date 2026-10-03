@@ -23,12 +23,15 @@ void main() {
       expect(AppCache().get('haipo'), isNull);
     });
 
-    test('get hurejesha null kwa TTL iliyopita', () {
+    test('get hurejesha null kwa TTL iliyopita', () async {
       AppCache().set('k2', 'data', ttl: const Duration(milliseconds: 1));
-      // Subiri TTL iishe
-      Future.delayed(const Duration(milliseconds: 5));
-      // Bila kusubiri halisi kwa sababu ya clock, angalia tabia ya set/get
-      expect(AppCache().get('k2'), isNotNull); // bado hai
+      // Subiri TTL iishe HALISI (20ms — mil 1 ya TTL inaisha hata kwenye runner
+      // mzito; awali kulikuwa na race: Future.delayed isiyosubiriwa + isNotNull).
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      // Sera ya offline ("Cached + banner"): get() inarudisha null kwa iliyoisha
+      // muda, lakini entry inabaki kwa getStale() — fallback ya mtandao mbaya.
+      expect(AppCache().get('k2'), isNull);
+      expect(AppCache().getStale('k2'), 'data');
     });
 
     test('data ya aina tofauti zinaweza kuhifadhiwa', () {
