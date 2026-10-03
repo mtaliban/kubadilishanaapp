@@ -44,7 +44,9 @@ class _NavItem {
 
 // ─── Master list of all nav items ────────────────────────────────────────────
 
-const _allNavItems = <_NavItem>[
+// final (siyo const): NavItem.xxx.icon ni instance field ya enum — haiwezi
+// kutumika kwenye const expression. Thamani zenyewe ni static kwa runtime.
+final _allNavItems = <_NavItem>[
   // Icons za bottom nav: NavItem.xxx.icon — icons moja na drawer mpya
   // (takwimu/watumiaji/wenzao/malipo/maoni). Bottom nav yenyewe haibadilishwi.
   _NavItem(9,  'Statistics',          NavItem.takwimu.icon,
