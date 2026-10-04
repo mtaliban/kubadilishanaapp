@@ -520,7 +520,9 @@ void main() {
       expect(routes.bodies['DELETE announcement']!['id'], 'an1');
       expect(find.text('Tangazo la Mwanzo'), findsNothing,
           reason: 'Tangazo limeondoka papo hapo (bila refresh ya mkono)');
-      expect(find.textContaining('Historia (0)'), findsOneWidget);
+      // Design mpya: ndani ya Historia, header inaonyesha 'Rudi' + empty state
+      expect(find.text('Rudi'), findsOneWidget);
+      expect(find.text('Hakuna matangazo'), findsOneWidget);
       expectNoError();
       await drain(tester);
     });
