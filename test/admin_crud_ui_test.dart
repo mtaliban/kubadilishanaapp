@@ -480,7 +480,11 @@ void main() {
           find.byType(TextField).at(0), 'Tangazo la Jaribio');
       await tester.enterText(
           find.byType(TextField).at(1), 'Karibuni wote mnufaike');
-      await tester.tap(find.widgetWithText(FilledButton, 'Tuma'));
+      // Wasikilizaji: washa 'Wote' (switch ya kwanza kwenye hatua 4)
+      await tester.tap(find.byType(Switch).first);
+      await settle(tester);
+      // Tuma: kitufe cha duara (north_east) kwenye send bar
+      await tester.tap(find.byIcon(Icons.north_east));
       await settle(tester);
 
       final sent = routes.bodies['POST /admin/announcements'];
@@ -488,7 +492,7 @@ void main() {
       expect(sent!['title'], 'Tangazo la Jaribio');
       expect(sent['message'], 'Karibuni wote mnufaike');
       expect(sent['audience'], 'all');
-      expect(find.text('Limetumwa'), findsOneWidget,
+      expect(find.textContaining('Limetumwa'), findsOneWidget,
           reason: 'UI imethibitisha kutuma');
 
       // Inaonekana kwenye Historia
@@ -510,13 +514,13 @@ void main() {
 
       await tester.tap(find.byTooltip('Futa'));
       await settle(tester);
-      await tester.tap(find.widgetWithText(FilledButton, 'Futa'));
+      await tester.tap(find.text('Ndiyo')); // thibitisho la inline
       await settle(tester);
 
       expect(routes.bodies['DELETE announcement']!['id'], 'an1');
       expect(find.text('Tangazo la Mwanzo'), findsNothing,
           reason: 'Tangazo limeondoka papo hapo (bila refresh ya mkono)');
-      expect(find.textContaining('Historia · 0'), findsOneWidget);
+      expect(find.textContaining('Historia (0)'), findsOneWidget);
       expectNoError();
       await drain(tester);
     });

@@ -51,6 +51,12 @@ class FakeApiAdapter implements HttpClientAdapter {
     if (path.startsWith('/facilities')) return [fakeFacility];
     if (path.startsWith('/cadres')) return [fakeCadre];
     if (path.startsWith('/subjects')) return [];
+    if (path.startsWith('/admin/announcements')) {
+      return {'announcements': [], 'total': 0};
+    }
+    if (path.startsWith('/admin/stats')) return {'totals': {}, 'by_cadre': []};
+    if (path.startsWith('/admin/users')) return {'users': []};
+    if (path.startsWith('/admin/data/departments')) return [];
     if (path.startsWith('/departments')) return [];
     if (path.startsWith('/notifications')) return {'notifications': []};
     if (path.startsWith('/payments')) {
