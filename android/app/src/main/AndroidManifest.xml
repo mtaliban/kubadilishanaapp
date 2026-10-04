@@ -81,5 +81,15 @@
             <action android:name="android.intent.action.DIAL"/>
             <data android:scheme="tel"/>
         </intent>
+        <!-- Waliopigiana: kitufe cha SMS (sms:) — lazima tudai app ya ujumbe. -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO"/>
+            <data android:scheme="sms"/>
+        </intent>
+        <!-- Waliopigiana: kitufe cha WhatsApp (https://wa.me) — lazima tudai browser/WhatsApp. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
     </queries>
 </manifest>

@@ -58,6 +58,9 @@ class FakeApiAdapter implements HttpClientAdapter {
     if (path.startsWith('/admin/users')) return {'users': []};
     if (path.startsWith('/admin/data/departments')) return [];
     if (path.startsWith('/departments')) return [];
+    if (path.startsWith('/messages/admin/contacts')) {
+      return {'contacts': [fakeContact]};
+    }
     if (path.startsWith('/notifications')) return {'notifications': []};
     if (path.startsWith('/payments')) {
       return {'items': [fakePayment]};
@@ -132,6 +135,21 @@ const fakeRegion = <String, dynamic>{'id': 1, 'name': 'Manyara'};
 const fakeDistrict = <String, dynamic>{'id': 2, 'name': 'Kiteto DC'};
 const fakeFacility = <String, dynamic>{'id': 3, 'name': 'Shule ya Kiteto', 'type': 'sekondari'};
 const fakeCadre = <String, dynamic>{'code': 'TCH', 'display_name': 'Mwalimu wa Sekondari'};
+const fakeContact = <String, dynamic>{
+  'from_user_id': 'u1',
+  'from_full_name': 'Juma Ali',
+  'from_phone': '0715000111',
+  'from_category': 'health',
+  'from_cadre': 'NO',
+  'from_region': 'Arusha',
+  'to_full_name': 'Sara Mwakyusa',
+  'to_phone': '0715000222',
+  'to_category': 'health',
+  'to_cadre': 'CO',
+  'to_region': 'Dodoma',
+  'contact_type': 'call',
+  'initiated_at': '2026-09-26T06:00:00Z',
+};
 const fakePayment = <String, dynamic>{
   'payment_id': 'pay1',
   'amount': 2500,

@@ -15,6 +15,7 @@ import 'package:kubadilishanaapp/screens/admin/admin_data_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_announcements_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_payments_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_contacts_page.dart';
+import 'package:kubadilishanaapp/screens/admin/waliopigiana_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_feedback_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_reports_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_monitoring_page.dart';
@@ -89,6 +90,11 @@ void main() {
   testWidgets('AdminContactsPage', (tester) async {
     await check(tester, (_) => const AdminContactsPage(),
         label: 'AdminContactsPage');
+  });
+
+  testWidgets('WaliopigianaPage', (tester) async {
+    await check(tester, (_) => const WaliopigianaPage(),
+        label: 'WaliopigianaPage');
   });
 
   testWidgets('AdminFeedbackPage', (tester) async {
