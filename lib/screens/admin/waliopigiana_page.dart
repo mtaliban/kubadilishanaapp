@@ -643,8 +643,12 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
           children: [
             _pageBtn('Iliyopita', TablerIcons.chevron_left, true,
                 _page > 1 ? () => setState(() => _page--) : null),
-            Text('Ukurasa $_page / $pages',
-                style: const TextStyle(color: _C.muted2, fontSize: 13)),
+            Flexible(
+              child: Text('Ukurasa $_page / $pages',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: _C.muted2, fontSize: 13)),
+            ),
             _pageBtn('Inayofuata', TablerIcons.chevron_right, false,
                 _page < pages ? () => setState(() => _page++) : null),
           ],
@@ -656,9 +660,13 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
     final children = <Widget>[
       if (iconFirst) Icon(icon, size: 15, color: _C.blue),
       if (iconFirst) const SizedBox(width: 4),
-      Text(label,
-          style: const TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue)),
+      Flexible(
+        child: Text(label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue)),
+      ),
       if (!iconFirst) const SizedBox(width: 4),
       if (!iconFirst) Icon(icon, size: 15, color: _C.blue),
     ];
@@ -733,10 +741,22 @@ class _CallCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const Icon(TablerIcons.clock, size: 19, color: _C.muted),
-              const SizedBox(width: 6),
-              Text(_hm(r.time),
-                  style: const TextStyle(fontSize: 16, color: _C.muted)),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(TablerIcons.clock, size: 19, color: _C.muted),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(_hm(r.time),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 16, color: _C.muted)),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(width: 8),
               _Pressable(
                 onTap: onToggle,
