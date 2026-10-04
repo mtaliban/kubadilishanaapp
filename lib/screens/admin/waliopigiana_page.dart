@@ -595,15 +595,24 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(g.$1,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: _C.ink)),
+              Flexible(
+                child: Text(g.$1,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: _C.ink)),
+              ),
               if (g.$2.isNotEmpty) ...[
                 const SizedBox(width: 8),
-                Text(g.$2,
-                    style: const TextStyle(fontSize: 13.5, color: _C.muted2)),
+                Flexible(
+                  child: Text(g.$2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 13.5, color: _C.muted2)),
+                ),
               ],
             ],
           ),
@@ -641,16 +650,20 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _pageBtn('Iliyopita', TablerIcons.chevron_left, true,
-                _page > 1 ? () => setState(() => _page--) : null),
+            Flexible(
+              child: _pageBtn('Iliyopita', TablerIcons.chevron_left, true,
+                  _page > 1 ? () => setState(() => _page--) : null),
+            ),
             Flexible(
               child: Text('Ukurasa $_page / $pages',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: _C.muted2, fontSize: 13)),
             ),
-            _pageBtn('Inayofuata', TablerIcons.chevron_right, false,
-                _page < pages ? () => setState(() => _page++) : null),
+            Flexible(
+              child: _pageBtn('Inayofuata', TablerIcons.chevron_right, false,
+                  _page < pages ? () => setState(() => _page++) : null),
+            ),
           ],
         ),
       );
@@ -660,13 +673,11 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
     final children = <Widget>[
       if (iconFirst) Icon(icon, size: 15, color: _C.blue),
       if (iconFirst) const SizedBox(width: 4),
-      Flexible(
-        child: Text(label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue)),
-      ),
+      Text(label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue)),
       if (!iconFirst) const SizedBox(width: 4),
       if (!iconFirst) Icon(icon, size: 15, color: _C.blue),
     ];
