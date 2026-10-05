@@ -1001,14 +1001,14 @@ class _PersonBlock extends StatelessWidget {
             ),
             child: Row(
               children: [
-                _routeEnd('Anatoka', person.mkoa, CrossAxisAlignment.start),
+                Flexible(child: _routeEnd('Anatoka', person.mkoa, CrossAxisAlignment.start)),
                 const Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(left: 6, right: 6, top: 14),
                     child: _DashedArrow(),
                   ),
                 ),
-                _routeEnd('Anaenda', to!.mkoa, CrossAxisAlignment.end),
+                Flexible(child: _routeEnd('Anaenda', to!.mkoa, CrossAxisAlignment.end)),
               ],
             ),
           ),
