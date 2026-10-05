@@ -673,11 +673,13 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
     final children = <Widget>[
       if (iconFirst) Icon(icon, size: 15, color: _C.blue),
       if (iconFirst) const SizedBox(width: 4),
-      Text(label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue)),
+      Flexible(
+        child: Text(label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue)),
+      ),
       if (!iconFirst) const SizedBox(width: 4),
       if (!iconFirst) Icon(icon, size: 15, color: _C.blue),
     ];
