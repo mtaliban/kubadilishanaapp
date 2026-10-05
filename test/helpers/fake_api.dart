@@ -65,6 +65,9 @@ class FakeApiAdapter implements HttpClientAdapter {
     if (path.startsWith('/payments')) {
       return {'items': [fakePayment]};
     }
+    if (path.startsWith('/feedback/admin/all')) {
+      return {'total': 2, 'items': [fakeFeedback, fakeFeedbackReplied]};
+    }
     if (path.startsWith('/feedback')) return {'items': []};
     if (path.startsWith('/matches/my')) {
       return {'matches': []};
@@ -135,6 +138,28 @@ const fakeRegion = <String, dynamic>{'id': 1, 'name': 'Manyara'};
 const fakeDistrict = <String, dynamic>{'id': 2, 'name': 'Kiteto DC'};
 const fakeFacility = <String, dynamic>{'id': 3, 'name': 'Shule ya Kiteto', 'type': 'sekondari'};
 const fakeCadre = <String, dynamic>{'code': 'TCH', 'display_name': 'Mwalimu wa Sekondari'};
+const fakeFeedback = <String, dynamic>{
+  'id': 'fb1',
+  'subject': 'Malipo hayajaonekana',
+  'message': 'Nimelipa leo asubuhi lakini hali bado open.',
+  'status': 'open',
+  'admin_reply': null,
+  'admin_replied_at': null,
+  'created_at': '2026-10-04T09:30:00Z',
+  'user_name': 'Amina Hassan',
+  'user_phone': '0757123456',
+};
+const fakeFeedbackReplied = <String, dynamic>{
+  'id': 'fb2',
+  'subject': 'Sahihi kwenye jina',
+  'message': 'Jina langu limeandikwa vibaya kwenye mfumo.',
+  'status': 'replied',
+  'admin_reply': 'Asante, tumelirekebisha jina lako.',
+  'admin_replied_at': '2026-10-04T11:00:00Z',
+  'created_at': '2026-10-03T08:15:00Z',
+  'user_name': '',
+  'user_phone': '0713998877',
+};
 const fakeContact = <String, dynamic>{
   'from_user_id': 'u1',
   'from_full_name': 'Juma Ali',

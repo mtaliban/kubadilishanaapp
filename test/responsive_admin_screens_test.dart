@@ -17,6 +17,7 @@ import 'package:kubadilishanaapp/screens/admin/admin_payments_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_contacts_page.dart';
 import 'package:kubadilishanaapp/screens/admin/waliopigiana_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_feedback_page.dart';
+import 'package:kubadilishanaapp/screens/admin/maoni_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_reports_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_monitoring_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_password_resets_page.dart';
@@ -100,6 +101,10 @@ void main() {
   testWidgets('AdminFeedbackPage', (tester) async {
     await check(tester, (_) => const AdminFeedbackPage(),
         label: 'AdminFeedbackPage');
+  });
+
+  testWidgets('MaoniPage', (tester) async {
+    await check(tester, (_) => const MaoniPage(), label: 'MaoniPage');
   });
 
   testWidgets('AdminReportsPage', (tester) async {

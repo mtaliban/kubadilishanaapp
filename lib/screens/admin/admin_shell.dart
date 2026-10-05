@@ -19,7 +19,7 @@ import 'admin_data_page.dart';
 import 'admin_announcements_page.dart';
 import 'admin_payments_page.dart';
 import 'waliopigiana_page.dart';
-import 'admin_feedback_page.dart';
+import 'maoni_page.dart';
 import 'admin_reports_page.dart';
 import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';
@@ -162,7 +162,7 @@ class _AdminShellState extends State<AdminShell> {
       case 5:  return const AdminAnnouncementsPage();
       case 6:  return const AdminPaymentsPage();
       case 7:  return const WaliopigianaPage();
-      case 8:  return const AdminFeedbackPage();
+      case 8:  return const MaoniPage();
       case 9:  return const AdminReportsPage();
       case 10: return const AdminMonitoringPage();
       case 11: return const AdminPasswordResetsPage();
