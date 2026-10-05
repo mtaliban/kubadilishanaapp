@@ -370,8 +370,10 @@ class _MaoniScreenState extends State<MaoniScreen> {
                 // ── Kisanduku cha kutafuta (kinaonekana moja kwa moja) ──
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                  // Urefu unafuata text scale — kuzuia overflow kwa font kubwa
+                  // (mwonekano sawa kabisa kwenye scale ya kawaida 1.0).
                   child: SizedBox(
-                    height: 44,
+                    height: 44 * MediaQuery.textScalerOf(context).scale(15) / 15,
                     child: TextField(
                       onChanged: (v) => setState(() => _query = v),
                       textAlignVertical: TextAlignVertical.center,

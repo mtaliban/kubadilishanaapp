@@ -631,9 +631,12 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                         Icon(PhosphorIcons.phone(PhosphorIconsStyle.fill),
                             size: 13, color: _kBlue),
                         const SizedBox(width: 5),
-                        Text(phone,
-                            style: GoogleFonts.inter(
-                                fontSize: 13, fontWeight: FontWeight.w600, color: _kBlue)),
+                        Flexible(
+                          child: Text(phone,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                  fontSize: 13, fontWeight: FontWeight.w600, color: _kBlue)),
+                        ),
                       ]),
                     ),
                   ],
