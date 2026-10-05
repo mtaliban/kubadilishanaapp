@@ -1524,8 +1524,7 @@ class _MaoniPageState extends State<MaoniPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 child: Text(_error!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: MC().text2, fontSize: 14)),
+                    style: TextStyle(color: MC().text2, fontSize: 14)),
               ),
               OutlinedButton.icon(
                 onPressed: _load,
