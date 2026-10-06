@@ -922,6 +922,11 @@ class _SmallBtn extends StatelessWidget {
           foregroundColor: fg,
           disabledBackgroundColor: bg,
           disabledForegroundColor: fg,
+          // Border nyembamba — bg nyeupe isipotee kwenye dialog nyeupe.
+          side: BorderSide(
+              color: bg == Colors.white
+                  ? const Color(0xFFD1D5DB)
+                  : Colors.transparent),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           minimumSize: const Size(0, 30),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -989,7 +994,7 @@ class _C {
 
   static const light = _C(
     card: Color(0xFFFFFFFF),
-    soft: Color(0xFFF1F3F7),
+    soft: Colors.white, // nyeupe (ilikuwa kijivu #F1F3F7)
     border: Color(0xFFE3E7EE),
     borderStrong: Color(0xFFC3CAD6),
     text: Color(0xFF111827),

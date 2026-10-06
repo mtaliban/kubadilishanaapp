@@ -888,7 +888,11 @@ class _AdminDataPageState extends State<AdminDataPage>
                   onTap: () => Navigator.pop(ctx),
                   child: Container(
                     width: 30, height: 30,
-                    decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+                    // Nyeupe + border (ilikuwa kijivu #F1F3F6).
+                    decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _kGrey200)),
                     child: Icon(PhosphorIcons.x(), size: 14, color: _kGrey700),
                   ),
                 ),
@@ -907,10 +911,11 @@ class _AdminDataPageState extends State<AdminDataPage>
                   hintText: 'Tafuta...',
                   hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
                   prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: _kGrey400, size: 16),
-                  fillColor: _kGrey100, filled: true,
+                  fillColor: Colors.white, filled: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _kGrey300)),
                 ),
               ),
             ),
@@ -989,7 +994,7 @@ class _AdminDataPageState extends State<AdminDataPage>
     if (type == 'subjects') return (PhosphorIcons.bookOpen(PhosphorIconsStyle.fill), _kAmber, _kAmberBg);
     if (type == 'regions') return (PhosphorIcons.mountains(PhosphorIconsStyle.fill), _kBlue, _kBlueBg);
     if (type == 'districts') return (PhosphorIcons.mapTrifold(PhosphorIconsStyle.fill), _kBlue, _kBlueBg);
-    return (PhosphorIcons.circle(), _kGrey600, _kGrey100);
+    return (PhosphorIcons.circle(), _kGrey600, Colors.white);
   }
 
   Widget _buildItem(String type, Map<String, dynamic> item) {
