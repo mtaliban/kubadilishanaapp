@@ -990,38 +990,55 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
     );
   }
 
+  // Textbox ya kutuma message — kama WhatsApp: emoji kushoto ndani ya
+  // uga mweupe, paperclip + camera nje kulia, kitufe cha duara cha kutuma.
   Widget _inputBar(bool hasText) => Container(
         color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
               child: Container(
                 constraints: const BoxConstraints(minHeight: 46),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  color: _C.field,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: _C.border),
                 ),
-                child: TextField(
-                  controller: _input,
-                  focusNode: _focus,
-                  minLines: 1,
-                  maxLines: 5,
-                  textInputAction: TextInputAction.newline,
-                  style: const TextStyle(fontSize: 15.5, color: _C.ink),
-                  decoration: const InputDecoration(
-                    hintText: 'Andika jibu lako hapa...',
-                    hintStyle:
-                        TextStyle(color: Color(0xFF8A96B2), fontSize: 15.5),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 13),
-                  ),
+                child: Row(
+                  children: [
+                    const Icon(TablerIcons.mood_smile,
+                        size: 24, color: _C.muted2),
+                    Expanded(
+                      child: TextField(
+                        controller: _input,
+                        focusNode: _focus,
+                        minLines: 1,
+                        maxLines: 5,
+                        textInputAction: TextInputAction.newline,
+                        style: const TextStyle(fontSize: 15.5, color: _C.ink),
+                        decoration: const InputDecoration(
+                          hintText: 'Andika jibu lako hapa...',
+                          hintStyle: TextStyle(
+                              color: Color(0xFF8A96B2), fontSize: 15.5),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 13),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
+            const Icon(TablerIcons.paperclip, size: 23, color: _C.muted2),
+            const SizedBox(width: 12),
+            const Icon(TablerIcons.camera, size: 24, color: _C.muted2),
+            const SizedBox(width: 10),
             _Press(
               onTap: hasText ? _send : null,
               child: AnimatedContainer(
@@ -1073,7 +1090,18 @@ class _Bubble extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(11, 8, 11, 6),
         decoration: BoxDecoration(
-          color: out ? _C.greenBg : _C.field,
+          // Nyeupe KABISA (kama WhatsApp): incoming ni nyeupe yenye mstari
+          // mwembamba + kivuli kidogo ili ionekane kwenye background nyeupe.
+          color: out ? _C.greenBg : Colors.white,
+          border: out ? null : Border.all(color: _C.border),
+          boxShadow: out
+              ? null
+              : const [
+                  BoxShadow(
+                      color: Color(0x1214224D),
+                      blurRadius: 5,
+                      offset: Offset(0, 1)),
+                ],
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(out ? 16 : 5),
             topRight: Radius.circular(out ? 5 : 16),

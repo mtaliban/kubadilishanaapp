@@ -39,7 +39,7 @@ class _C {
   static const iconTile = Color(0xFFE3EAFC);
   static const tagBg = Color(0xFFE6EDFB);
   static const barBg = Color(0xFFEEF0F6);
-  static const jmBg = Color(0xFFF7F8FC);
+  static const jmBg = Colors.white; // nyeupe kabisa (ilikuwa #F7F8FC)
   static const orange = Color(0xFFE8590C);
   static const green = Color(0xFF1D9E5A);
   static const greenFg = Color(0xFF0F6E3A);
@@ -48,7 +48,7 @@ class _C {
   static const donutLight = Color(0xFFB9C7EC);
   static const arrow = Color(0xFF8A9BC2);
   static const optBorder = Color(0xFFE1E8F6);
-  static const heroTop = Color(0xFFF4F7FF);
+  static const heroTop = Colors.white; // nyeupe kabisa (ilikuwa #F4F7FF)
 }
 
 // ----------------------------------------------------------------------------
@@ -1342,6 +1342,7 @@ class _TotalStrip extends StatelessWidget {
         decoration: BoxDecoration(
           color: _C.jmBg,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _C.optBorder),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -1,7 +1,7 @@
 // app_drawer.dart
-// DRAWER ONLY (tile design) + red badges + hamburger dot.
-// The bottom nav is NOT replaced: keep your existing bottom nav and only swap its
-// icons with NavItem.xxx.icon (see example at the bottom of this file).
+// DRAWER (mockup ya admin_panel.dart — rows + left-border active + badge nyekundu)
+// + BadgeController (namba halisi za backend) + MenuButtonWithDot (hamburger).
+// Bottom nav (footer) iko kwenye admin_shell.dart — inafuata mockup ileile.
 //
 // Needs:  flutter_tabler_icons   (pubspec: flutter_tabler_icons: ^1.43.0)
 // Flutter 3.10+ (ListenableBuilder).
@@ -13,7 +13,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
 const Color kBrand = Color(0xFF1565C0);
-const Color kBadgeRed = Color(0xFFE24B4A);
+
+// Rangi za mockup (admin_panel.dart — AppColors)
+const Color kBlue = Color(0xFF2F6FBF); // active icon/label
+const Color kBlueTint = Color(0xFFEAF1FA); // active row/tile bg
+const Color kText = Color(0xFF3A3F4B); // row icon/label (inactive)
+const Color kTextStrong = Color(0xFF111111); // active label / titles
+const Color kMuted = Color(0xFF6B7280); // subtitle / chevron
+const Color kBorder = Color(0xFFE5E7EB); // dividers / footer top border
+const Color kTileGray = Color(0xFFF3F4F6); // inactive footer tile
+const Color kRed = Color(0xFFB3261E); // Toka
+const Color kBadgeRed = Color(0xFFE53935); // badge za namba
+const Color kFieldBorder = Color(0xFFD1D5DB); // close button border
+const Color kLogoBorder = Color(0xFFA9BAD6); // logo box border
 
 // ───────────────────────── 1. Menu items ─────────────────────────
 
@@ -90,6 +102,50 @@ class BadgeController extends ChangeNotifier {
 
 // ───────────────────────── 3. Badge widgets ─────────────────────────
 
+/// Badge nyekundu ya mockup (admin_panel.dart — CountBadge):
+///   footer  -> height 20, fontSize 11, borderWidth 2 (mpaka mweupe)
+///   drawer  -> height 22, fontSize 12, borderWidth 0
+class CountBadge extends StatelessWidget {
+  final int count;
+  final double height;
+  final double fontSize;
+  final double borderWidth; // mpaka mweupe (footer = 2, drawer = 0)
+
+  const CountBadge({
+    super.key,
+    required this.count,
+    this.height = 20,
+    this.fontSize = 11,
+    this.borderWidth = 2,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      constraints: BoxConstraints(minWidth: height),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: kBadgeRed,
+        borderRadius: BorderRadius.circular(height / 2),
+        border: borderWidth > 0
+            ? Border.all(color: Colors.white, width: borderWidth)
+            : null,
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: fontSize,
+          fontWeight: FontWeight.w500,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
 class BadgeBubble extends StatelessWidget {
   const BadgeBubble({super.key, required this.count, this.ringColor});
   final int count;
@@ -153,14 +209,13 @@ class MenuButtonWithDot extends StatelessWidget {
   }
 }
 
-// ───────────────────────── 4. Drawer ─────────────────────────
+// ───────────────────────── 4. Drawer (mockup) ─────────────────────────
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({
     super.key,
     required this.logo, // YOUR existing logo widget, e.g. Image.asset('assets/logo.png')
     required this.userName,
-    required this.userRole,
     required this.current,
     required this.onSelect,
     required this.onLogout,
@@ -170,169 +225,203 @@ class AppDrawer extends StatelessWidget {
 
   final Widget logo;
   final String userName;
-  final String userRole;
   final NavItem current;
   final ValueChanged<NavItem> onSelect;
   final VoidCallback onLogout;
   final String title;
   final String subtitle;
 
+  // Mpangilio wa mockup: Takwimu, Watumiaji, Wenzao, Match, Matangazo,
+  // Waliopigiana, Maoni, Malipo, Data. (Wasifu iko chini — profile row.)
   static const _order = [
     NavItem.takwimu, NavItem.watumiaji, NavItem.wenzao, NavItem.matchZaKweli,
     NavItem.matangazo, NavItem.waliopigiana, NavItem.maoni, NavItem.malipo,
-    NavItem.data, NavItem.wasifu,
+    NavItem.data,
   ];
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final w = math.min(MediaQuery.of(context).size.width * 0.84, 340.0);
     return Drawer(
-      width: w,
-      backgroundColor: cs.surface,
+      width: 300,
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.horizontal(right: Radius.circular(22)),
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(14)),
       ),
       child: SafeArea(
-        child: Column(
-          children: [
-            // Header (logo + names + close) — same as the existing one
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
-              child: Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      color: cs.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: cs.outlineVariant),
-                    ),
-                    child: logo,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                        Text(subtitle,
-                            style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
-                      ],
-                    ),
-                  ),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(9),
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(9),
-                        border: Border.all(color: cs.outlineVariant),
-                      ),
-                      child: const Icon(TablerIcons.x, size: 16),
-                    ),
-                  ),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            children: [
+              _DrawerHeader(
+                logo: logo,
+                title: title,
+                subtitle: subtitle,
+                onClose: () => Navigator.of(context).pop(),
               ),
-            ),
-            Divider(height: 1, color: cs.outlineVariant),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Profile card
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest.withOpacity(.5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 17,
-                            backgroundColor: kBrand,
-                            child: Text(
-                              userName.isEmpty ? '?' : userName[0].toUpperCase(),
-                              style: const TextStyle(
-                                  color: Colors.white, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(userName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                                Text(userRole,
-                                    style: TextStyle(
-                                        fontSize: 12, color: cs.onSurfaceVariant)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Tiles (2 columns, short height)
-                    ListenableBuilder(
-                      listenable: BadgeController.instance,
-                      builder: (context, _) => GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-                        itemCount: _order.length,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          mainAxisExtent: 72,
-                        ),
-                        itemBuilder: (context, i) {
-                          final item = _order[i];
-                          return _DrawerTile(
+              const Divider(height: 1, thickness: 0.5, color: kBorder),
+              const SizedBox(height: 10),
+              // Rows — zina-scroll ikitosha screen (mockup: Spacer; screen
+              // ndogo huwa na rows 9 + header, tunazunganisha scroll).
+              Expanded(
+                child: ListenableBuilder(
+                  listenable: BadgeController.instance,
+                  builder: (context, _) => SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        for (final item in _order)
+                          _DrawerRow(
                             item: item,
-                            selected: item == current,
+                            active: item == current,
                             count: BadgeController.instance.count(item),
                             onTap: () {
                               Navigator.of(context).pop();
                               onSelect(item);
                             },
-                          );
-                        },
-                      ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ),
-            // Logout
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 14),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: onLogout,
-                  icon: const Icon(TablerIcons.power, size: 18),
-                  label: const Text('Toka'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: cs.error,
-                    side: BorderSide(color: cs.error.withOpacity(.5), width: .5),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape:
-                        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
+              const Divider(height: 1, thickness: 0.5, color: kBorder),
+              _ProfileRow(
+                name: userName,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  onSelect(NavItem.wasifu);
+                },
+              ),
+              _LogoutRow(onTap: onLogout),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerHeader extends StatelessWidget {
+  final Widget logo;
+  final String title;
+  final String subtitle;
+  final VoidCallback onClose;
+  const _DrawerHeader({
+    required this.logo,
+    required this.title,
+    required this.subtitle,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            clipBehavior: Clip.antiAlias,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border.all(color: kLogoBorder, width: 1.5),
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: logo,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w500,
+                    color: kTextStrong,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: kMuted),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: onClose,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                border: Border.all(color: kFieldBorder, width: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(TablerIcons.x, size: 18, color: kTextStrong),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawerRow extends StatelessWidget {
+  final NavItem item;
+  final bool active;
+  final int count;
+  final VoidCallback onTap;
+  const _DrawerRow({
+    required this.item,
+    required this.active,
+    required this.count,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: active ? kBlueTint : Colors.transparent,
+          border: Border(
+            left: BorderSide(
+              color: active ? kBlue : Colors.transparent,
+              width: 3,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              item.icon,
+              size: 22,
+              color: active ? kBlue : kText,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                item.label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: active ? FontWeight.w500 : FontWeight.w400,
+                  color: active ? kTextStrong : kText,
+                ),
+              ),
+            ),
+            if (count > 0)
+              CountBadge(
+                count: count,
+                height: 22,
+                fontSize: 12,
+                borderWidth: 0,
+              ),
           ],
         ),
       ),
@@ -340,56 +429,80 @@ class AppDrawer extends StatelessWidget {
   }
 }
 
-class _DrawerTile extends StatelessWidget {
-  const _DrawerTile(
-      {required this.item, required this.selected, required this.count, required this.onTap});
-  final NavItem item;
-  final bool selected;
-  final int count;
+class _ProfileRow extends StatelessWidget {
+  final String name;
   final VoidCallback onTap;
+  const _ProfileRow({required this.name, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? kBrand : cs.outlineVariant,
-            width: selected ? 1.5 : .5,
+      child: SizedBox(
+        height: 58,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Row(
+            children: [
+              const Icon(TablerIcons.user_circle, size: 22, color: kText),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Wasifu wangu',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: kTextStrong,
+                      ),
+                    ),
+                    Text(
+                      name.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        letterSpacing: 0.3,
+                        color: kMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(TablerIcons.chevron_right, size: 18, color: kMuted),
+            ],
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                CircleAvatar(
-                  radius: 15,
-                  backgroundColor: item.accent.withOpacity(.13),
-                  child: Icon(item.icon, size: 17, color: item.accent),
-                ),
-                Positioned(top: -7, right: -9, child: BadgeBubble(count: count)),
-              ],
-            ),
-            const SizedBox(height: 5),
-            Text(
-              item.label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.15,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+      ),
+    );
+  }
+}
+
+class _LogoutRow extends StatelessWidget {
+  final VoidCallback onTap;
+  const _LogoutRow({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: 46,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: const Row(
+            children: [
+              Icon(TablerIcons.logout, size: 22, color: kRed),
+              SizedBox(width: 14),
+              Text(
+                'Toka',
+                style: TextStyle(fontSize: 15, color: kRed),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -443,7 +556,6 @@ class _HomeShellState extends State<HomeShell> {
       drawer: AppDrawer(
         logo: const Center(child: Text('ES')), // <- put YOUR existing logo widget here
         userName: 'Hamisi Selemani',
-        userRole: 'Msimamizi',
         current: _current,
         onSelect: _select,
         onLogout: () {/* your logout */},
@@ -459,15 +571,3 @@ class _HomeShellState extends State<HomeShell> {
 // Inside the Maoni page, AFTER the admin replies to ONE complaint:
 //   BadgeController.instance.decrement(NavItem.maoni);
 // Or simply refetch counts from the server and call setCounts(...).
-
-// Bottom nav (yours stays): only use these icons, same ones as the drawer:
-//   Takwimu   -> NavItem.takwimu.icon
-//   Watumiaji -> NavItem.watumiaji.icon
-//   Malipo    -> NavItem.malipo.icon
-//   Maoni     -> NavItem.maoni.icon
-// Optional badge on top of an icon (wrap your icon in a Stack with clipBehavior: Clip.none):
-//   Positioned(top: -5, right: -6,
-//     child: ListenableBuilder(
-//       listenable: BadgeController.instance,
-//       builder: (_, __) => BadgeBubble(count: BadgeController.instance.count(NavItem.malipo)),
-//     ))
