@@ -16,7 +16,7 @@ import 'admin_matches_page.dart';
 import 'admin_real_matches_page.dart';
 import 'admin_data_page.dart';
 import 'matangazo_screen.dart';
-import 'admin_payments_page.dart';
+import 'malipo_screen.dart';
 import 'waliopigiana_page.dart';
 import 'maoni_pages.dart';
 import 'statistics_page.dart';
@@ -159,7 +159,7 @@ class _AdminShellState extends State<AdminShell> {
       case 3:  return const AdminRealMatchesPage();
       case 4:  return const AdminDataPage();
       case 5:  return const AdminMatangazoPage();
-      case 6:  return const AdminPaymentsPage();
+      case 6:  return const AdminMalipoScreenPage();
       case 7:  return const WaliopigianaPage();
       case 8:  return const AdminMaoniPage();
       case 9:  return const AdminStatisticsPage();
