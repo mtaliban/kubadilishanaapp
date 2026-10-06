@@ -54,7 +54,9 @@ class FakeApiAdapter implements HttpClientAdapter {
     if (path.startsWith('/admin/announcements')) {
       return {'announcements': [], 'total': 0};
     }
-    if (path.startsWith('/admin/stats')) return {'totals': {}, 'by_cadre': []};
+    if (path.startsWith('/admin/stats')) return fakeAdminStats;
+    if (path.startsWith('/admin/reports')) return fakeAdminReports;
+    if (path.startsWith('/admin/events')) return {'events': fakeAdminEvents};
     if (path.startsWith('/admin/users')) return {'users': []};
     if (path.startsWith('/admin/data/departments')) return [];
     if (path.startsWith('/departments')) return [];
@@ -182,3 +184,63 @@ const fakePayment = <String, dynamic>{
   'created_at': '2026-09-24T05:10:00Z',
   'note': null,
 };
+
+// ── Statistics (/admin/stats + /admin/reports + /admin/events) ───────────────
+const fakeAdminStats = <String, dynamic>{
+  'totals': {
+    'users': 1349,
+    'users_active_7d': 258,
+    'users_verified': 45,
+    'users_health': 445,
+    'users_education': 883,
+  },
+  'by_cadre': [
+    {'category': 'education', 'cadre': 'Mwalimu wa Sekondari', 'count': 631},
+  ],
+};
+
+const fakeAdminReports = <String, dynamic>{
+  'regions_total': 28,
+  'districts_total': 194,
+  'users_by_region': [
+    {'region': 'Mwanza', 'count': 72},
+    {'region': 'Dar Es Salaam', 'count': 19},
+    {'region': 'Morogoro', 'count': 47},
+  ],
+  'incoming_by_region': [
+    {'region': 'Mwanza', 'count': 308},
+    {'region': 'Dar Es Salaam', 'count': 279},
+    {'region': 'Morogoro', 'count': 232},
+  ],
+  'users_by_district': [
+    {'district': 'Dodoma Cc', 'region': 'Dodoma', 'count': 9},
+    {'district': 'Mbeya Cc', 'region': 'Mbeya', 'count': 11},
+  ],
+  'incoming_by_district': [
+    {'district': 'Dodoma Cc', 'count': 83},
+    {'district': 'Mbeya Cc', 'count': 58},
+  ],
+  'users_by_category': [
+    {'category': 'education', 'count': 883},
+    {'category': 'health', 'count': 445},
+    {'category': 'watumishi_wa_umma', 'count': 9},
+  ],
+  'users_by_status': [
+    {'status': 'active', 'count': 1349},
+  ],
+  'users_by_cadre': [
+    {'cadre': 'Mwalimu wa Sekondari', 'level': 'Secondary', 'count': 631},
+    {'cadre': 'Mwalimu wa Elimu ya Msingi', 'level': 'Primary', 'count': 252},
+    {'cadre': 'Clinical Officer', 'level': '', 'count': 63},
+  ],
+  'incoming_sources': [
+    {'from': 'Mtwara', 'to': 'Mwanza', 'count': 35},
+    {'from': 'Kigoma', 'to': 'Morogoro', 'count': 32},
+  ],
+};
+
+const fakeAdminEvents = <Map<String, dynamic>>[
+  {'event_type': 'user.registered', 'occurred_at': '2026-09-26T08:25:00Z'},
+  {'event_type': 'match.found', 'occurred_at': '2026-09-26T21:45:00Z'},
+  {'event_type': 'feedback.new', 'occurred_at': '2026-09-26T17:04:00Z'},
+];

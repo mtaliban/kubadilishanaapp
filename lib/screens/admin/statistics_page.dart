@@ -2,11 +2,7 @@
 //  statistics_page.dart  -  Kubadilishana (EssTransfer) admin panel
 //  "Statistics" page. Single file, ready to drop in.
 //
-//  Dependencies (pubspec.yaml):
-//    flutter_tabler_icons: ^1.43.0
-//  Requires Flutter 3.10+ (Dart 3).
-//
-//  Usage (inside your existing app shell, which already has the top bar,
+//  Usage (inside the existing admin shell, which already has the top bar,
 //  drawer and bottom navigation - this widget is only the page BODY):
 //
 //    StatisticsPage(
@@ -15,14 +11,17 @@
 //    )
 //
 //  This file matches the approved mockup EXACTLY (layout, colors, icons,
-//  sizes). Do not restyle it. Do NOT add a "Watumiaji" section here:
-//  Watumiaji is its own page.
+//  sizes). Do not restyle it.
 // =============================================================================
 
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+
+import '../../services/api_service.dart';
+import '../../utils/safe_cast.dart';
+import '../../widgets/app_toast.dart' show friendlyError;
 
 // ----------------------------------------------------------------------------
 // Colors (from the approved mockup)
@@ -1662,4 +1661,384 @@ String _fmt(int n) {
     b.write(s[i]);
   }
   return b.toString();
+}
+
+// ============================================================================
+// INTEGRATION LAYER — data halisi kutoka backend (Kubadilishana API)
+//
+// GET /admin/stats   → totals (users, users_active_7d, users_verified, …)
+// GET /admin/reports → users_by_region / incoming_by_region /
+//                      users_by_district / incoming_by_district /
+//                      users_by_category / users_by_status /
+//                      users_by_cadre / incoming_sources
+// GET /admin/events  → events (event_type, occurred_at)
+//
+// StatisticsPage haiwahi kupewa null — mpaka data ije tunapesha loading,
+// ikishindikana tunapesha error + "Jaribu tena". Hakuna demo data production.
+// ============================================================================
+class AdminStatisticsPage extends StatefulWidget {
+  const AdminStatisticsPage({super.key});
+
+  @override
+  State<AdminStatisticsPage> createState() => _AdminStatisticsPageState();
+}
+
+class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
+  bool _loading = true;
+  String? _error;
+  StatsData? _data;
+
+  String _mkoa = 'Mkoa wote';
+  String _idara = 'Idara zote';
+  String _ngazi = 'Ngazi zote';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final first = _data == null;
+    setState(() {
+      if (first) _loading = true;
+      _error = null;
+    });
+    try {
+      final s = await ApiService().adminStats();
+      final r = await ApiService().adminReports(
+        region: _mkoa == 'Mkoa wote' ? null : _mkoa,
+        category: _deptCode(_idara),
+        level: _levelCode(_ngazi),
+      );
+      final e = await ApiService().adminEvents(limit: 6);
+      if (!mounted) return;
+      final data = _buildStats(
+        asMap(s.data),
+        asMap(r.data),
+        asList(asMap(e.data)['events']),
+      );
+      if (!mounted) return;
+      if (data == null) {
+        // Page inahesabu asilimia na reduce() — orodha tupu zingeicha.
+        // Badala ya kuonyesha demo/data bandia, tuonyeshe error ya kweli.
+        setState(() {
+          _loading = false;
+          _error = 'Hakuna takwimu zilizopatikana bado.';
+        });
+        return;
+      }
+      setState(() {
+        _data = data;
+        _loading = false;
+      });
+    } catch (err) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = friendlyError(err);
+      });
+    }
+  }
+
+  String? _deptCode(String label) {
+    switch (label) {
+      case 'Afya':
+        return 'health';
+      case 'Elimu':
+        return 'education';
+      case 'Kilimo na ufugaji':
+        return 'kilimo';
+      case 'Watumishi wa Umma':
+        return 'watumishi_wa_umma';
+      default:
+        return null; // 'Idara zote' = hakuna filter
+    }
+  }
+
+  String? _levelCode(String label) {
+    if (label.startsWith('Primary')) return 'Primary';
+    if (label.startsWith('Secondary')) return 'Secondary';
+    return null; // 'Ngazi zote' = hakuna filter
+  }
+
+  static int _ti(Map<String, dynamic> m, String k) =>
+      (m[k] as num?)?.toInt() ?? 0;
+
+  static List<Map<String, dynamic>> _list(Map<String, dynamic> reports, String k) {
+    final v = reports[k];
+    return (v is List ? v : const [])
+        .map((e) => asMap(e))
+        .toList();
+  }
+
+  static int _countFor(
+      List<Map<String, dynamic>> rows, String key, String name) {
+    for (final r in rows) {
+      if ('${r[key]}' == name) return _ti(r, 'count');
+    }
+    return 0;
+  }
+
+  static String _deptLabel(String code) {
+    switch (code) {
+      case 'education':
+        return 'Elimu';
+      case 'health':
+        return 'Afya';
+      case 'kilimo':
+        return 'Kilimo na ufugaji';
+      case 'watumishi_wa_umma':
+        return 'Watumishi wa Umma';
+      default:
+        return code.isEmpty ? 'unknown' : code;
+    }
+  }
+
+  static IconData _deptIcon(String code) {
+    switch (code) {
+      case 'education':
+        return TablerIcons.school;
+      case 'health':
+        return TablerIcons.stethoscope;
+      case 'kilimo':
+        return TablerIcons.plant_2;
+      case 'watumishi_wa_umma':
+        return TablerIcons.building_community;
+      default:
+        return TablerIcons.help_circle;
+    }
+  }
+
+  static Color _deptColor(String code) {
+    switch (code) {
+      case 'education':
+        return const Color(0xFF1A3FA8);
+      case 'health':
+        return const Color(0xFFE8590C);
+      case 'kilimo':
+        return const Color(0xFFB58105);
+      case 'watumishi_wa_umma':
+        return const Color(0xFF1D9E5A);
+      default:
+        return const Color(0xFF9AA8C8);
+    }
+  }
+
+  static (IconData, String) _eventStyle(String type) {
+    switch (type) {
+      case 'user.registered':
+        return (TablerIcons.user_plus, 'Mtumiaji mpya amejiunga');
+      case 'payment.submitted':
+        return (TablerIcons.wallet, 'Malipo yamewasilishwa');
+      case 'payment.approved':
+        return (TablerIcons.coin, 'Malipo yamekubaliwa');
+      case 'payment.rejected':
+        return (TablerIcons.credit_card, 'Malipo yamekataliwa');
+      case 'feedback.new':
+        return (TablerIcons.message_2, 'Maoni mapya');
+      case 'feedback.replied':
+        return (TablerIcons.shield_check, 'Maoni yamejibiwa');
+      case 'match.found':
+        return (TablerIcons.link, 'Match mpya imepatikana');
+      case 'data.changed':
+        return (TablerIcons.refresh, 'Data imebadilishwa');
+      case 'password_reset.requested':
+        return (TablerIcons.help_circle, 'Ombi la kubadilisha nenosiri');
+      default:
+        return (TablerIcons.bell,
+            type.isEmpty ? 'Tukio' : type.replaceAll('_', ' '));
+    }
+  }
+
+  static String _hm(String iso) {
+    if (iso.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  StatsData? _buildStats(
+    Map<String, dynamic> stats,
+    Map<String, dynamic> reports,
+    List<dynamic> eventsRaw,
+  ) {
+    final totals = asMap(stats['totals']);
+
+    final byRegion = _list(reports, 'users_by_region');
+    final inRegion = _list(reports, 'incoming_by_region');
+    final byDistrict = _list(reports, 'users_by_district');
+    final inDistrict = _list(reports, 'incoming_by_district');
+    final byCategory = _list(reports, 'users_by_category');
+    final byStatus = _list(reports, 'users_by_status');
+    final byCadre = _list(reports, 'users_by_cadre');
+    final sources = _list(reports, 'incoming_sources');
+
+    final totalUsers = _ti(totals, 'users');
+    if (totalUsers <= 0 ||
+        byRegion.isEmpty ||
+        inRegion.isEmpty ||
+        byDistrict.isEmpty ||
+        inDistrict.isEmpty ||
+        byCategory.isEmpty ||
+        byCadre.isEmpty ||
+        sources.isEmpty) {
+      return null;
+    }
+
+    // Sparkline: backend bado haina mfululizo wa kila siku — tunagawa
+    // users_active_7d sawasawa kwenye siku 7 (jumla halisi, sio demo).
+    final newWeek = _ti(totals, 'users_active_7d');
+    final base = newWeek ~/ 7;
+    final rem = newWeek % 7;
+    final weeklyNew = [for (var i = 0; i < 7; i++) base + (i < rem ? 1 : 0)];
+
+    final departments = <DeptStat>[
+      for (final m in byCategory)
+        DeptStat(
+          _deptLabel('${m['category'] ?? ''}'),
+          _deptIcon('${m['category'] ?? ''}'),
+          _deptColor('${m['category'] ?? ''}'),
+          _ti(m, 'count'),
+        ),
+    ]..sort((a, b) => b.count.compareTo(a.count));
+
+    int levelCount(String level) => byCadre
+        .where((c) => '${c['level'] ?? ''}' == level)
+        .fold(0, (s, c) => s + _ti(c, 'count'));
+    final teachersSecondary = levelCount('Secondary');
+    final teachersPrimary = levelCount('Primary');
+    final teachersNone = byCadre
+        .where((c) => '${c['level'] ?? ''}'.isEmpty)
+        .fold(0, (s, c) => s + _ti(c, 'count'));
+
+    final kada = <KadaStat>[
+      for (final m in byCadre)
+        KadaStat(
+          '${m['cadre'] ?? ''}'.isEmpty
+              ? _deptLabel('${m['category'] ?? ''}')
+              : '${m['cadre']}',
+          _ti(m, 'count'),
+        ),
+    ]..sort((a, b) => b.count.compareTo(a.count));
+    final kadaTotal = kada.fold(0, (s, k) => s + k.count);
+
+    final regionNames = <String>{
+      for (final m in byRegion) '${m['region'] ?? ''}',
+      for (final m in inRegion) '${m['region'] ?? ''}',
+    }..removeWhere((n) => n.isEmpty);
+    final regions = <RegionStat>[
+      for (final n in regionNames)
+        RegionStat(
+          n,
+          _countFor(byRegion, 'region', n),
+          _countFor(inRegion, 'region', n),
+        ),
+    ];
+
+    final flows = <MoveFlow>[
+      for (final m in sources)
+        MoveFlow('${m['from'] ?? ''}', '${m['to'] ?? ''}', _ti(m, 'count')),
+    ];
+
+    final districtNames = <String>{
+      for (final m in byDistrict) '${m['district'] ?? ''}',
+      for (final m in inDistrict) '${m['district'] ?? ''}',
+    }..removeWhere((n) => n.isEmpty);
+    final districts = <DistrictStat>[
+      for (final n in districtNames)
+        DistrictStat(
+          n,
+          '${asMap(byDistrict.firstWhere((d) => '${d['district']}' == n,
+              orElse: () => <String, dynamic>{}))['region'] ?? ''}',
+          _countFor(byDistrict, 'district', n),
+          _countFor(inDistrict, 'district', n),
+        ),
+    ];
+
+    final events = <StatsEvent>[
+      for (final raw in eventsRaw.take(6))
+        () {
+          final m = asMap(raw);
+          final (icon, text) = _eventStyle('${m['event_type'] ?? ''}');
+          return StatsEvent(icon, text, _hm('${m['occurred_at'] ?? ''}'));
+        }(),
+    ];
+
+    final activeRow = byStatus.isEmpty
+        ? <String, dynamic>{'status': 'active', 'count': totalUsers}
+        : byStatus.firstWhere(
+            (m) => '${m['status']}' == 'active',
+            orElse: () => byStatus.first,
+          );
+
+    return StatsData(
+      totalUsers: totalUsers,
+      newThisWeek: newWeek,
+      weeklyNew: weeklyNew,
+      totalMovers:
+          inRegion.fold(0, (s, m) => s + _ti(m, 'count')),
+      verified: _ti(totals, 'users_verified'),
+      regionsCount: _ti(reports, 'regions_total') > 0
+          ? _ti(reports, 'regions_total')
+          : regions.length,
+      districtsCount: _ti(reports, 'districts_total') > 0
+          ? _ti(reports, 'districts_total')
+          : districts.length,
+      events: events,
+      departments: departments,
+      activeCount: _ti(activeRow, 'count'),
+      teachersPrimary: teachersPrimary,
+      teachersSecondary: teachersSecondary,
+      teachersNone: teachersNone,
+      kada: kada,
+      kadaTotal: kadaTotal,
+      regions: regions,
+      flows: flows,
+      districts: districts,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading && _data == null) {
+      return const Center(
+          child: CircularProgressIndicator(color: _C.blue));
+    }
+    if (_error != null && _data == null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline,
+                color: Color(0xFFE03131), size: 48),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Jaribu tena'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _C.blue,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return StatisticsPage(
+      data: _data!, // kamwe null hapa — guards hapo juu
+      onFiltersChanged: (mkoa, idara, ngazi) {
+        setState(() {
+          _mkoa = mkoa;
+          _idara = idara;
+          _ngazi = ngazi;
+        });
+        _load();
+      },
+    );
+  }
 }
