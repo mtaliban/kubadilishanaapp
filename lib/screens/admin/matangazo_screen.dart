@@ -17,6 +17,8 @@
 //   ubadilishe mistari ya MtIcons tu - hakuna kingine kinachohitaji kubadilishwa.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
@@ -26,7 +28,6 @@ import '../../widgets/app_toast.dart' show AppToast, friendlyError;
 class _C {
   static const blue = Color(0xFF1A56DB);
   static const surface = Colors.white;
-  static const surface1 = Color(0xFFF1F3F6);
   static const border = Color(0xFFE3E6EB);
   static const borderStrong = Color(0xFFD1D5DB);
   static const text = Color(0xFF111827);
@@ -41,21 +42,25 @@ class _C {
 
 // ───────────────────────── ICON (mahali pamoja) ─────────────────────────
 class MtIcons {
-  static const campaign = Icons.campaign_outlined; // speakerphone
+  // Icon ya matangazo — ile ile ya drawer (bell-ringing ya Tabler).
+  static const campaign = TablerIcons.bell_ringing;
   static const campaignOff = Icons.volume_off_outlined; // speakerphone-off
-  static const compose = Icons.edit_outlined; // pencil-plus
+  // "Tangazo jipya" — Phosphor (kalamu).
+  static const compose = PhosphorIconsRegular.pencilSimpleLine;
   static const history = Icons.history; // history
   static const info = Icons.info_outline; // info-circle
   static const warning = Icons.warning_amber_rounded; // alert-triangle
   static const success = Icons.check_circle_outline; // circle-check
-  static const groups = Icons.groups_outlined; // users-group (Wote)
-  static const afya = Icons.monitor_heart_outlined; // heartbeat
-  static const elimu = Icons.menu_book_outlined; // books
-  static const kilimo = Icons.eco_outlined; // leaf
-  static const umma = Icons.badge_outlined; // id-badge-2
-  static const person = Icons.person_outline; // user
+  // Wasikilizaji (watu) — style ya drawer (Tabler).
+  static const groups = TablerIcons.users_group; // Wote
+  static const afya = TablerIcons.stethoscope; // Afya
+  static const elimu = TablerIcons.school; // Elimu
+  static const kilimo = TablerIcons.plant_2; // Kilimo na ufugaji
+  static const umma = TablerIcons.building_community; // Watumishi wa Umma
+  static const person = TablerIcons.user; // Mtu mmoja
   static const send = Icons.send_rounded; // brand-telegram
-  static const revert = Icons.refresh_rounded; // rotate-clockwise-2
+  // "Tuma tena" — Phosphor (rotate-clockwise).
+  static const revert = PhosphorIconsRegular.arrowsClockwise;
   static const trash = Icons.delete_outline; // trash
   static const calendar = Icons.calendar_month_outlined; // calendar-month
   static const check = Icons.check_rounded;
@@ -374,10 +379,12 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
                 child: Row(
-                  children: const [
-                    Icon(MtIcons.campaign, size: 26, color: _C.blue),
-                    SizedBox(width: 10),
-                    Text('Matangazo',
+                  // Icon ya matangazo — kama ya drawer (bell-ringing) ya Phosphor.
+                  // (const imeondolewa: PhosphorIcons.* ni functions, siyo const.)
+                  children: [
+                    Icon(PhosphorIcons.bellRinging(), size: 26, color: _C.blue),
+                    const SizedBox(width: 10),
+                    const Text('Matangazo',
                         style: TextStyle(
                             fontSize: 28, fontWeight: FontWeight.w500, color: _C.text)),
                   ],
@@ -426,7 +433,12 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: _C.surface1, borderRadius: BorderRadius.circular(14)),
+      // Background yote NYEUPE (ilikuwa kijivu #F1F3F6) — tab active ina border.
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _C.border, width: 0.5),
+      ),
       child: Row(children: [
         tab(0, MtIcons.compose, 'Tangazo jipya'),
         const SizedBox(width: 4),
@@ -592,8 +604,11 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
           _label(5, 'Muonekano'),
           Container(
             padding: const EdgeInsets.all(12),
+            // Background NYEUPE (ilikuwa kijivu #F1F3F6) + mstari mwembamba.
             decoration: BoxDecoration(
-                color: _C.surface1, borderRadius: BorderRadius.circular(12)),
+                color: _C.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _C.border, width: 0.5)),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               _iconBox(_type.icon, _type.fg, _type.bg),
               const SizedBox(width: 12),
@@ -796,7 +811,7 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
               width: 88,
               height: 88,
               decoration: BoxDecoration(color: t.bg, shape: BoxShape.circle),
-              child: Icon(MtIcons.campaignOff, size: 42, color: t.fg),
+              child: Icon(PhosphorIcons.bellSlash(), size: 42, color: t.fg),
             ),
             const SizedBox(height: 16),
             const Text('Hakuna matangazo',
@@ -908,7 +923,7 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
             ),
             const SizedBox(width: 8),
             _squareButton(
-              icon: MtIcons.trash,
+              icon: PhosphorIcons.trash(),
               color: _C.danger,
               label: 'Futa',
               onTap: () => setState(() => _deleteId = t.id),
