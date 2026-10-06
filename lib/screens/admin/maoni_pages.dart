@@ -1423,6 +1423,8 @@ String _dayLabel(DateTime d) {
 // DEMO repository (in memory). Replace with your real backend implementation.
 // ----------------------------------------------------------------------------
 class InMemoryMaoniRepository implements MaoniRepository {
+  InMemoryMaoniRepository();
+
   final Map<String, ({String name, String phone})> _people = {};
   final Map<String, List<ChatMessage>> _msgs = {};
   final _changed = StreamController<String>.broadcast();

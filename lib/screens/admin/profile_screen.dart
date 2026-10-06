@@ -12,7 +12,9 @@
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
@@ -525,10 +527,6 @@ class _RingPainter extends CustomPainter {
 //            save inapuuza mabadiliko yake (kama ukurasa wa zamani).
 //   RING   → % = fields 4 zilizojazwa / 4 (kama mockup).
 // ============================================================================
-
-import 'package:provider/provider.dart';
-
-import '../../providers/auth_provider.dart';
 
 /// Ukurasa wa "Wasifu wangu" kwenye AdminShell — data halisi + save ya API.
 class AdminProfileScreenPage extends StatefulWidget {
