@@ -889,7 +889,8 @@ class _AdminDataPageState extends State<AdminDataPage>
                   child: Container(
                     width: 30, height: 30,
                     // Nyeupe + border (ilikuwa kijivu #F1F3F6).
-                    decoration: const BoxDecoration(
+                    // (const imeondolewa: Border.all si const factory.)
+                    decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
                         border: Border.all(color: _kGrey200)),
