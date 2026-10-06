@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_shell.dart' show LanguageProvider;
 import '../../services/app_navigator.dart' show adminPageNotifier;
@@ -16,14 +15,14 @@ import 'admin_users_v2_page.dart';
 import 'admin_matches_page.dart';
 import 'admin_real_matches_page.dart';
 import 'admin_data_page.dart';
-import 'admin_announcements_page.dart';
+import 'matangazo_screen.dart';
 import 'admin_payments_page.dart';
 import 'waliopigiana_page.dart';
-import 'maoni_page.dart';
+import 'maoni_pages.dart';
 import 'statistics_page.dart';
 import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';
-import 'profile_page.dart';
+import 'profile_screen.dart';
 
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey200 = Color(0xFFE5E7EB);
@@ -159,10 +158,10 @@ class _AdminShellState extends State<AdminShell> {
       case 2:  return const AdminMatchesPage();
       case 3:  return const AdminRealMatchesPage();
       case 4:  return const AdminDataPage();
-      case 5:  return const AdminAnnouncementsPage();
+      case 5:  return const AdminMatangazoPage();
       case 6:  return const AdminPaymentsPage();
       case 7:  return const WaliopigianaPage();
-      case 8:  return const MaoniPage();
+      case 8:  return const AdminMaoniPage();
       case 9:  return const AdminStatisticsPage();
       case 10: return const AdminMonitoringPage();
       case 11: return const AdminPasswordResetsPage();
@@ -191,31 +190,8 @@ class _AdminShellState extends State<AdminShell> {
 
   void _openProfile() {
     if (Navigator.of(context).canPop()) Navigator.pop(context);
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final user = auth.user;
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => ProfilePage(
-        profile: AdminProfile(
-          fullName: user?.fullName ?? 'Admin',
-          role: 'Administrator',
-          phone: user?.phone ?? '',
-          email: user?.email,
-          whatsapp: (user?.phoneAlt ?? '').trim().isEmpty
-              ? null
-              : user!.phoneAlt,
-        ),
-        onSave: (fullName, whatsapp) async {
-          try {
-            await ApiService().updateProfile({
-              'full_name': fullName,
-              'phone_alt': whatsapp,
-            });
-            return null;
-          } catch (e) {
-            return e.toString();
-          }
-        },
-      ),
+    Navigator.of(context).push(const MaterialPageRoute(
+      builder: (_) => AdminProfileScreenPage(),
     ));
   }
 
