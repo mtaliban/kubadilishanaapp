@@ -190,8 +190,8 @@ class _AdminShellState extends State<AdminShell> {
 
   void _openProfile() {
     if (Navigator.of(context).canPop()) Navigator.pop(context);
-    Navigator.of(context).push(const MaterialPageRoute(
-      builder: (_) => AdminProfileScreenPage(),
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => const AdminProfileScreenPage(),
     ));
   }
 
