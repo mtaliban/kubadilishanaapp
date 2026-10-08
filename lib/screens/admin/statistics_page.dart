@@ -1826,29 +1826,132 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
     }
   }
 
-  static (IconData, String) _eventStyle(String type) {
+  /// Ramani kamili ya matukio halisi ya backend (event_log → GET /admin/events):
+  /// kila event_type ina icon + maelezo ya Kiswahili, na pale payload ina
+  /// maelezo halisi (jina, kiasi, score...) tunayatumia — SIYO majina ghafi
+  /// kama "user.presence".
+  static (IconData, String) _eventDisplay(Map<String, dynamic> m) {
+    final type = '${m['event_type'] ?? m['type'] ?? ''}';
+    final payload = asMap(m['payload']);
+    String p(String key) => '${payload[key] ?? m[key] ?? ''}'.trim();
+
     switch (type) {
+      // ── Watumiaji ──
       case 'user.registered':
-        return (TablerIcons.user_plus, 'Mtumiaji mpya amejiunga');
-      case 'payment.submitted':
-        return (TablerIcons.wallet, 'Malipo yamewasilishwa');
-      case 'payment.approved':
-        return (TablerIcons.coin, 'Malipo yamekubaliwa');
-      case 'payment.rejected':
-        return (TablerIcons.credit_card, 'Malipo yamekataliwa');
-      case 'feedback.new':
-        return (TablerIcons.message_2, 'Maoni mapya');
-      case 'feedback.replied':
-        return (TablerIcons.shield_check, 'Maoni yamejibiwa');
+        final name = p('full_name');
+        final cadre = p('cadre_code');
+        final txt = name.isNotEmpty
+            ? '$name amejiunga'
+            : 'Mtumiaji mpya amejiunga';
+        return (TablerIcons.user_plus,
+            cadre.isNotEmpty ? '$txt ($cadre)' : txt);
+      case 'user.profile_updated':
+        final name = p('full_name');
+        return (TablerIcons.user_edit,
+            name.isNotEmpty ? '$name amesasisha wasifu wake' : 'Wasifu umesasishwa');
+      case 'user.station_changed':
+        final name = p('full_name');
+        return (TablerIcons.map_pin,
+            name.isNotEmpty ? '$name amebadilisha kituo chake' : 'Kituo kimebadilishwa');
+      case 'user.destination_changed':
+        final name = p('full_name');
+        return (TablerIcons.arrow_right,
+            name.isNotEmpty
+                ? '$name amebadilisha maeneo anayotaka kwenda'
+                : 'Maeneo ya kuomba yamebadilishwa');
+      case 'user.updated_by_admin':
+        return (TablerIcons.user_cog, 'Mtumiaji amesasishwa na admin');
+      case 'user.deleted':
+        return (TablerIcons.user_x, 'Mtumiaji amefutwa');
+      case 'user.presence':
+        return (TablerIcons.wifi, 'Mtumiaji ameingia mtandaoni');
+
+      // ── Matches ──
       case 'match.found':
-        return (TablerIcons.link, 'Match mpya imepatikana');
+        final raw = payload['score'] ?? m['score'];
+        var score = '';
+        if (raw != null) {
+          final v = double.tryParse('$raw');
+          if (v != null) score = ' — ${v <= 1 ? (v * 100).round() : v.round()}%';
+        }
+        return (TablerIcons.link, 'Match mpya imepatikana$score');
+
+      // ── Ujumbe na simu ──
+      case 'message.sent':
+        final from = p('from_full_name');
+        return (TablerIcons.message,
+            from.isNotEmpty ? 'Ujumbe mpya kutoka $from' : 'Ujumbe mpya umetumwa');
+      case 'call.initiated':
+        final from = p('from_full_name');
+        return (TablerIcons.phone_call,
+            from.isNotEmpty ? '$from amepigiana simu' : 'Simu imepigiana');
+
+      // ── Malipo ──
+      case 'payment.submitted':
+        return (TablerIcons.wallet,
+            'Mchango wa TZS ${p('amount')} unasubiri uthibitisho');
+      case 'payment.approved':
+        return (TablerIcons.coin,
+            'Mchango wa TZS ${p('amount')} umethibitishwa');
+      case 'payment.rejected':
+        return (TablerIcons.credit_card, 'Mchango umekataliwa');
+
+      // ── Maoni ──
+      case 'feedback.new':
+        return (TablerIcons.message_2, 'Maoni mapya yamefika');
+      case 'feedback.replied':
+        return (TablerIcons.shield_check, 'Maoni yamejibiwa na admin');
+
+      // ── Matangazo na data ──
+      case 'announcement':
+        final title = p('title');
+        return (TablerIcons.speakerphone,
+            title.isNotEmpty ? 'Tangazo: $title' : 'Tangazo jipya limetumwa');
       case 'data.changed':
-        return (TablerIcons.refresh, 'Data imebadilishwa');
+        final kind = _dataKindLabel(p('kind'));
+        final action = _dataActionLabel(p('action'));
+        return (TablerIcons.refresh, 'Data $kind $action');
+
+      // ── Nenosiri / barua pepe ──
       case 'password_reset.requested':
         return (TablerIcons.help_circle, 'Ombi la kubadilisha nenosiri');
+      case 'password_reset.completed':
+        return (TablerIcons.lock, 'Nenosiri limebadilishwa');
+      case 'email.verification.requested':
+        return (TablerIcons.mail, 'Ombi la kuthibitisha barua pepe');
+      case 'email.verified':
+        return (TablerIcons.mail_opened, 'Barua pepe imethibitishwa');
+
+      // ── Hawajulikani: tafsiri kwa uangalifu (siyo code ghafi) ──
       default:
-        return (TablerIcons.bell,
-            type.isEmpty ? 'Tukio' : type.replaceAll('_', ' '));
+        if (type.isEmpty) return (TablerIcons.bell, 'Tukio');
+        final last = type.split('.').last.replaceAll('_', ' ').trim();
+        final pretty = last.isEmpty
+            ? 'Tukio'
+            : last[0].toUpperCase() + last.substring(1);
+        return (TablerIcons.bell, 'Tukio: $pretty');
+    }
+  }
+
+  static String _dataKindLabel(String kind) {
+    switch (kind) {
+      case 'department': return 'ya idara';
+      case 'cadre': return 'ya kada';
+      case 'subject': return 'ya somo';
+      case 'region': return 'ya mkoa';
+      case 'district': return 'ya wilaya';
+      case 'facility': return 'ya kituo';
+      case 'school': return 'ya shule';
+      default: return kind.isEmpty ? '' : '($kind)';
+    }
+  }
+
+  static String _dataActionLabel(String action) {
+    switch (action) {
+      case 'created': return 'imeongezwa';
+      case 'updated': return 'imesasishwa';
+      case 'deleted': return 'imefutwa';
+      default: return action.isEmpty ? 'imebadilishwa' : action;
     }
   }
 
@@ -1964,7 +2067,7 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
       for (final raw in eventsRaw.take(6))
         () {
           final m = asMap(raw);
-          final (icon, text) = _eventStyle('${m['event_type'] ?? ''}');
+          final (icon, text) = _eventDisplay(m);
           return StatsEvent(icon, text, _hm('${m['occurred_at'] ?? ''}'));
         }(),
     ];
