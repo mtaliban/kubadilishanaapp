@@ -16,6 +16,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -353,11 +354,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // REGRESSION: kitufe cha "JIBU" kilikuwa hakionekani kwa mtumiaji
-      expect(find.widgetWithText(ElevatedButton, 'JIBU'), findsOneWidget,
+      // REGRESSION: kitufe cha kutuma (paper plane) kilikuwa hakionekani
+      expect(find.byIcon(PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill)),
+          findsOneWidget,
           reason: 'Admin lazima awe na button ya kujibu maoni');
       // Na field ya kuandikia jibu
-      expect(find.text('Andika jibu lako hapa...'), findsOneWidget);
+      expect(find.text('Andika jibu lako...'), findsOneWidget);
     });
 
     testWidgets('Admin anajibu → POST reply inatumwa na status inabadilika',
@@ -372,7 +374,8 @@ void main() {
       // TextFields: [0] = search 'Tafuta...', [1] = 'Andika jibu lako hapa...'
       await tester.enterText(
           find.byType(TextField).last, 'Jibu la haraka la admin');
-      await tester.tap(find.widgetWithText(ElevatedButton, 'JIBU'));
+      await tester.tap(find.byIcon(
+          PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill)));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -396,7 +399,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('JIBU LAKO'), findsOneWidget);
-      expect(find.text('Imejibiwa'), findsOneWidget);
+      // "Yaliyojibiwa" inaonekana mara 2: chip ya kichujio + badge ya kadi.
+      expect(find.text('Yaliyojibiwa'), findsNWidgets(2));
       expect(find.text('Jibu limehifadhiwa'), findsOneWidget);
     });
 

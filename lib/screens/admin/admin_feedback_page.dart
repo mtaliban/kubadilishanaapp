@@ -35,7 +35,8 @@ String _fmtDate(String iso) {
     final dt = DateTime.parse(iso).toLocal();
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day}/${dt.month}/${dt.year}, $h:$m';
+    final s = dt.second.toString().padLeft(2, '0');
+    return '${dt.day}/${dt.month}/${dt.year}, $h:$m:$s';
   } catch (_) {
     return iso;
   }
@@ -307,51 +308,80 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Filter (na counts) + Search pembeni ──
-                    Row(children: [
-                      Expanded(
-                        child: _FilterDropdown(
-                          value: _filter,
-                          total: _all.length,
-                          unanswered: _countUnanswered,
-                          answered: _countAnswered,
-                          onChanged: (v) {
-                            setState(() => _filter = v);
+                    // ── Vichujio: chips zenye duara za namba (kama picha) ──
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(children: [
+                        _FilterChip(
+                          label: 'Yote',
+                          count: _all.length,
+                          badgeBg: _kGreenBg,
+                          badgeFg: _kGreen,
+                          badgeBorder: _kGreenBg,
+                          selected: _filter == 'Yote',
+                          onTap: () {
+                            setState(() => _filter = 'Yote');
                             _applyFilter();
                           },
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchCtrl,
-                          style: GoogleFonts.inter(fontSize: 14, color: _kInk),
-                          decoration: InputDecoration(
-                            hintText: 'Tafuta...',
-                            hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400),
-                            prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
-                                size: 18, color: _kGrey),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: _kBorder),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: _kBorder),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: _kBlue, width: 1.4),
-                            ),
-                          ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'Yasiyojibiwa',
+                          count: _countUnanswered,
+                          badgeBg: _kRed,
+                          badgeFg: Colors.white,
+                          badgeBorder: _kRed,
+                          selected: _filter == 'Hayajajibiwa',
+                          onTap: () {
+                            setState(() => _filter = 'Hayajajibiwa');
+                            _applyFilter();
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'Yaliyojibiwa',
+                          count: _countAnswered,
+                          badgeBg: _kGreenBg,
+                          badgeFg: _kGreen,
+                          badgeBorder: _kGreenBg,
+                          selected: _filter == 'Yamejibiwa',
+                          onTap: () {
+                            setState(() => _filter = 'Yamejibiwa');
+                            _applyFilter();
+                          },
+                        ),
+                      ]),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // ── Tafuta ──
+                    TextField(
+                      controller: _searchCtrl,
+                      style: GoogleFonts.inter(fontSize: 14, color: _kInk),
+                      decoration: InputDecoration(
+                        hintText: 'Tafuta...',
+                        hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400),
+                        prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
+                            size: 18, color: _kGrey),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: const BorderSide(color: _kBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: const BorderSide(color: _kBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: const BorderSide(color: _kBlue, width: 1.2),
                         ),
                       ),
-                    ]),
+                    ),
                     const SizedBox(height: 6),
 
                     // ── Flash ──
@@ -473,69 +503,68 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   }
 }
 
-// ─── Filter dropdown yenye counts ─────────────────────────────────────────────
+// ─── Kidonge cha kichujio + duara la namba (kama picha) ──────────────────────
 
-class _FilterDropdown extends StatelessWidget {
-  final String value;
-  final int total;
-  final int unanswered;
-  final int answered;
-  final ValueChanged<String> onChanged;
-  const _FilterDropdown({
-    required this.value,
-    required this.total,
-    required this.unanswered,
-    required this.answered,
-    required this.onChanged,
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color badgeBg;
+  final Color badgeFg;
+  final Color badgeBorder;
+  final bool selected;
+  final VoidCallback onTap;
+  const _FilterChip({
+    required this.label,
+    required this.count,
+    required this.badgeBg,
+    required this.badgeFg,
+    required this.badgeBorder,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      onSelected: onChanged,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      itemBuilder: (_) => [
-        _item('Yote', 'Yote ($total)'),
-        _item('Hayajajibiwa', 'Hayajajibiwa ($unanswered)'),
-        _item('Yamejibiwa', 'Yamejibiwa ($answered)'),
-      ],
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        height: 46,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: _kBorder),
-        ),
-        child: Row(children: [
-          Expanded(
-            child: Text(
-              value == 'Yote' ? 'Yote ($total)' : value,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(fontSize: 14, color: _kInk),
-            ),
+          color: selected ? const Color(0xFFF3F4F6) : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: selected ? const Color(0xFF6B7280) : _kBorder,
           ),
-          Icon(PhosphorIcons.caretDown(), size: 16, color: _kGrey),
-        ]),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label,
+                style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _kInk)),
+            const SizedBox(width: 8),
+            Container(
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: badgeBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: badgeBorder),
+              ),
+              child: Text('$count',
+                  style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: badgeFg)),
+            ),
+          ],
+        ),
       ),
     );
   }
-
-  PopupMenuItem<String> _item(String v, String label) => PopupMenuItem<String>(
-        value: v,
-        child: Row(children: [
-          if (value == v) ...[
-            Icon(PhosphorIcons.check(PhosphorIconsStyle.bold), size: 15, color: _kBlue),
-            const SizedBox(width: 6),
-          ],
-          Text(label,
-              style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: value == v ? FontWeight.w700 : FontWeight.w400,
-                  color: value == v ? _kBlue : _kInk)),
-        ]),
-      );
 }
 
 // ─── Kadi ya maoni ────────────────────────────────────────────────────────────
@@ -568,6 +597,21 @@ class _FeedbackCardState extends State<_FeedbackCard> {
     super.dispose();
   }
 
+  Future<void> _send() async {
+    final id = widget.item['id']?.toString() ?? '';
+    final text = _ctrl.text.trim();
+    if (text.isEmpty) {
+      AppToast.warning('Andika jibu kwanza');
+      return;
+    }
+    setState(() => _sending = true);
+    await widget.onReply(id, text);
+    if (mounted) {
+      _ctrl.clear();
+      setState(() => _sending = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final item      = widget.item;
@@ -580,218 +624,183 @@ class _FeedbackCardState extends State<_FeedbackCard> {
     final reply     = item['reply'] as String? ?? item['admin_reply'] as String?;
     final replied   = reply != null && reply.trim().isNotEmpty;
 
-    final fullText = subject.isNotEmpty && msg.isNotEmpty && subject != msg
-        ? '$subject\n$msg'
-        : (subject.isNotEmpty ? subject : msg);
-    final isLong = fullText.length > 120;
-    final displayText = (!_expanded && isLong)
-        ? '${fullText.substring(0, 120)}...'
-        : fullText;
+    // Kichwa (bold) + ujumbe (kama picha): title = subject, body = message.
+    final title = subject.isNotEmpty ? subject : msg;
+    final body = (msg.isNotEmpty && msg != subject) ? msg : '';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _kBorder),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2)),
-        ],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFD1D5DB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Namba + jina + simu + badge + futa ──
+          // ── Mstari 1: namba + jina + simu (kulia, bluu) ──
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                width: 20,
+                width: 22,
                 child: Text('${widget.index}',
                     style: GoogleFonts.inter(
-                        fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey400)),
+                        fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey400)),
               ),
-              const SizedBox(width: 8),
               Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(name,
-                      style: GoogleFonts.inter(
-                          fontSize: 15, fontWeight: FontWeight.w700, color: _kInk)),
-                  if (phone.isNotEmpty) ...[
-                    const SizedBox(height: 3),
-                    GestureDetector(
-                      onLongPress: () {
-                        Clipboard.setData(ClipboardData(text: phone));
-                        AppToast.success('Namba imenakiliwa');
-                      },
-                      child: Row(children: [
-                        Icon(PhosphorIcons.phone(PhosphorIconsStyle.fill),
-                            size: 13, color: _kBlue),
-                        const SizedBox(width: 5),
-                        Flexible(
-                          child: Text(phone,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(
-                                  fontSize: 13, fontWeight: FontWeight.w600, color: _kBlue)),
-                        ),
-                      ]),
-                    ),
-                  ],
-                ]),
+                child: Text(name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                        fontSize: 15, fontWeight: FontWeight.w700, color: _kInk)),
               ),
-              const SizedBox(width: 6),
-              _StatusBadge(answered: replied),
               const SizedBox(width: 8),
-              InkWell(
-                onTap: () => widget.onDelete(id),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _kRedBg,
-                    borderRadius: BorderRadius.circular(20),
+              if (phone.isNotEmpty)
+                Flexible(
+                  child: GestureDetector(
+                    onLongPress: () {
+                      Clipboard.setData(ClipboardData(text: phone));
+                      AppToast.success('Namba imenakiliwa');
+                    },
+                    child: Text(phone,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                            fontSize: 14, fontWeight: FontWeight.w600, color: _kBlue)),
                   ),
-                  child: Icon(PhosphorIcons.trash(), size: 16, color: _kRed),
                 ),
-              ),
             ],
+          ),
+          const SizedBox(height: 8),
+
+          // ── Mstari 2: hali (kushoto) + kufuta (kulia) ──
+          Padding(
+            padding: const EdgeInsets.only(left: 22),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _StatusBadge(answered: replied),
+                InkWell(
+                  onTap: () => widget.onDelete(id),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 40,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: _kRedBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFFECACA)),
+                    ),
+                    child: Icon(PhosphorIcons.trash(), size: 16, color: _kRed),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
 
-          // ── Swali (kubwa, bold) ──
-          Text(displayText,
+          // ── Kichwa (bold) na ujumbe ──
+          Text(title,
               style: GoogleFonts.inter(
-                  fontSize: 14.5, fontWeight: FontWeight.w600, color: _kInk, height: 1.5)),
-          if (isLong)
-            GestureDetector(
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(_expanded ? 'Ficha' : 'Soma zaidi',
-                    style: GoogleFonts.inter(
-                        fontSize: 12.5, fontWeight: FontWeight.w600, color: _kBlue)),
-              ),
-            ),
-          const SizedBox(height: 8),
+                  fontSize: 15, fontWeight: FontWeight.w700, height: 1.4, color: _kInk)),
+          if (body.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(body,
+                style: GoogleFonts.inter(
+                    fontSize: 15, height: 1.5, color: _kGrey)),
+          ],
+          const SizedBox(height: 10),
 
           // ── Muda ──
           Row(children: [
-            Icon(PhosphorIcons.clock(), size: 13, color: _kGrey400),
-            const SizedBox(width: 5),
+            Icon(PhosphorIcons.clock(), size: 15, color: _kInk),
+            const SizedBox(width: 6),
             Text(_fmtDate(createdAt),
-                style: GoogleFonts.inter(fontSize: 12, color: _kGrey400)),
+                style: GoogleFonts.inter(fontSize: 13, color: _kInk)),
           ]),
 
-          // ── JIBU LAKO ──
+          // ── JIBU LAKO (kama limejibiwa) ──
           if (replied) ...[
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
               decoration: BoxDecoration(
                 color: _kBlueBg,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
                   Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
-                      size: 13, color: _kBlue),
+                      size: 14, color: _kBlue),
                   const SizedBox(width: 6),
                   Text('JIBU LAKO',
                       style: GoogleFonts.inter(
-                          fontSize: 11.5, fontWeight: FontWeight.w700,
+                          fontSize: 12, fontWeight: FontWeight.w700,
                           color: _kBlue, letterSpacing: 0.4)),
                 ]),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(reply,
-                    style: GoogleFonts.inter(fontSize: 14, color: _kInk, height: 1.45)),
+                    style: GoogleFonts.inter(fontSize: 15, color: _kInk, height: 1.45)),
               ]),
             ),
           ],
 
           const SizedBox(height: 12),
-          const Divider(height: 1, color: _kBorder),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
           const SizedBox(height: 12),
 
-          // ── ANDIKA JIBU (composer ya dhabiti — inaonekana kwa kila kadi) ──
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _kSoft,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _kBorder),
-            ),
-            child: Column(children: [
-              TextField(
-                controller: _ctrl,
-                maxLines: 2,
-                minLines: 1,
-                style: GoogleFonts.inter(fontSize: 14, color: _kInk),
-                decoration: InputDecoration(
-                  hintText: 'Andika jibu lako hapa...',
-                  hintStyle: GoogleFonts.inter(fontSize: 13.5, color: _kGrey400),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kBorder)),
-                  enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kBorder)),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+          // ── Andika jibu + kitufe cha kutuma (bluu, ikoni tu — kama picha) ──
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _ctrl,
+                  maxLines: 2,
+                  minLines: 1,
+                  style: GoogleFonts.inter(fontSize: 14, color: _kInk),
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _send(),
+                  decoration: InputDecoration(
+                    hintText: 'Andika jibu lako...',
+                    hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400),
+                    isDense: true,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _kBlue, width: 1.2),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              // Button NYIA —— full width, haiwezi kufichwa wala kubonyezwa mbaya
-              SizedBox(
-                width: double.infinity,
-                height: 42,
-                child: ElevatedButton.icon(
-                  onPressed: _sending
-                      ? null
-                      : () async {
-                          final text = _ctrl.text.trim();
-                          if (text.isEmpty) {
-                            AppToast.warning('Andika jibu kwanza');
-                            return;
-                          }
-                          setState(() => _sending = true);
-                          await widget.onReply(id, text);
-                          if (mounted) {
-                            _ctrl.clear();
-                            setState(() => _sending = false);
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _sending ? _kGrey400 : _kBlue,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: _sending ? null : _send,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 46,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: _sending ? _kGrey400 : _kBlue,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  icon: _sending
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
+                  child: _sending
+                      ? const Padding(
+                          padding: EdgeInsets.all(11),
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2))
                       : Icon(PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill),
-                          size: 16),
-                  label: Text(_sending ? 'Inatuma...' : 'JIBU',
-                      style: GoogleFonts.inter(
-                          fontSize: 14, fontWeight: FontWeight.w800,
-                          letterSpacing: 0.3)),
+                          size: 19, color: Colors.white),
                 ),
               ),
-            ]),
+            ],
           ),
         ],
       ),
@@ -807,26 +816,28 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = answered ? _kGreen : _kOrange;
-    final bg = answered ? _kGreenBg : _kOrangeBg;
-    final label = answered ? 'Imejibiwa' : 'Hayajajibiwa';
+    // Kama picha: "Yaliyojibiwa" (kijani, duara la check) /
+    // "Yasiyojibiwa" (orange, saa).
+    final fg = answered ? const Color(0xFF15803D) : const Color(0xFFC2410C);
+    final bg = answered ? const Color(0xFFECFDF5) : const Color(0xFFFFF7ED);
+    final bd = answered ? const Color(0xFFA7F3D0) : const Color(0xFFFED7AA);
+    final label = answered ? 'Yaliyojibiwa' : 'Yasiyojibiwa';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: bd),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(
-          answered
-              ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
-              : PhosphorIcons.clock(PhosphorIconsStyle.fill),
-          size: 12, color: color,
+          answered ? Icons.check_circle_outline : Icons.access_time,
+          size: 15, color: fg,
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 6),
         Text(label,
             style: GoogleFonts.inter(
-                fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
+                fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
       ]),
     );
   }

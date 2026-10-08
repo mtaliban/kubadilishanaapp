@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_shell.dart' show LanguageProvider;
 import '../../services/app_navigator.dart' show adminPageNotifier;
 import '../../widgets/admin_top_bar.dart';
-import '../../widgets/app_drawer.dart' show AppDrawer, NavItem;
+import '../../widgets/app_drawer.dart' show AppDrawer, CountBadge, NavItem;
 import '../../widgets/app_toast.dart';
 import '../../widgets/network_banner.dart';
 import '../../widgets/queue_banner.dart';
@@ -16,61 +15,94 @@ import 'admin_users_v2_page.dart';
 import 'admin_matches_page.dart';
 import 'admin_real_matches_page.dart';
 import 'admin_data_page.dart';
-import 'admin_announcements_page.dart';
-import 'admin_payments_page.dart';
+import 'matangazo_screen.dart';
+import 'malipo_screen.dart';
 import 'waliopigiana_page.dart';
-import 'maoni_page.dart';
+import 'admin_feedback_page.dart';
 import 'statistics_page.dart';
 import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';
-import 'profile_page.dart';
+import 'profile_screen.dart';
 
-const _kGrey500 = Color(0xFF6B7280);
-const _kGrey200 = Color(0xFFE5E7EB);
+// ─── Footer (bottom nav) — mockup ya admin_panel.dart ──────────────────────
 
-// ─── Nav item descriptor ──────────────────────────────────────────────────────
-
-class _NavItem {
-  final int index;
-  final String label;
-  final IconData icon;
-  final Color tileFg;
-  final Color tileBg;
-  const _NavItem(this.index, this.label, this.icon, {
-    this.tileFg = const Color(0xFF2A78D6),
-    this.tileBg = const Color(0xFFD3E5FA),
-  });
-}
-
-// ─── Master list of all nav items ────────────────────────────────────────────
-
-// final (siyo const): NavItem.xxx.icon ni instance field ya enum — haiwezi
-// kutumika kwenye const expression. Thamani zenyewe ni static kwa runtime.
-final _allNavItems = <_NavItem>[
-  // Icons za bottom nav: NavItem.xxx.icon — icons moja na drawer mpya
-  // (takwimu/watumiaji/wenzao/malipo/maoni). Bottom nav yenyewe haibadilishwi.
-  _NavItem(9,  'Statistics',          NavItem.takwimu.icon,
-                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(1,  'Watumiaji',           NavItem.watumiaji.icon,
-                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(2,  'Waliopata Wenzao',    NavItem.wenzao.icon,
-                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(3,  'Match za Kweli',      TablerIcons.circleCheck,
-                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(4,  'Data',                TablerIcons.database,
-                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(5,  'Matangazo',           TablerIcons.speakerphone,
-                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(6,  'Malipo',              NavItem.malipo.icon,
-                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(7,  'Waliopigiana',        TablerIcons.phoneCall,
-                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
-  _NavItem(8,  'Maoni na Malalamiko', NavItem.maoni.icon,
-                                      tileFg: Color(0xFF2A78D6), tileBg: Color(0xFFD3E5FA)),
+// (index ya shell, jina fupi la footer, NavItem ya icon). Final (siyo const):
+// NavItem.xxx.icon ni instance field ya enum — haiwezi kwenye const expression.
+final _footerSpecs = <(int, String, NavItem)>[
+  (9, 'Takwimu',   NavItem.takwimu),
+  (1, 'Watumiaji', NavItem.watumiaji),
+  (2, 'Wenzao',    NavItem.wenzao),
+  (6, 'Malipo',    NavItem.malipo),
+  (8, 'Maoni',     NavItem.maoni),
 ];
 
-// Bottom nav shows 5 key items (subset of drawer)
-const _bottomNavIndices = [9, 1, 2, 6, 8];
+const _kFooterBlue = Color(0xFF1E40AF); // active icon/label (mockup)
+const _kFooterBlueTint = Color(0xFFEFF6FF); // active tile bg
+const _kFooterTileGray = Color(0xFFF3F4F6); // inactive tile bg
+const _kFooterMuted = Color(0xFF6B7280); // inactive icon/label
+const _kFooterBorder = Color(0xFFE5E7EB); // footer top border
+
+// ─── Footer item (drawer_na_bottom_nav.dart — _BarButton): tile 44x44 r14 ──
+
+class _FooterTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool active;
+  final int badgeCount;
+  final VoidCallback onTap;
+  const _FooterTile({
+    required this.label,
+    required this.icon,
+    required this.active,
+    required this.badgeCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color fg = active ? _kFooterBlue : _kFooterMuted;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: active ? _kFooterBlueTint : _kFooterTileGray,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, size: 24, color: fg),
+              ),
+              if (badgeCount > 0)
+                Positioned(
+                  top: -6,
+                  right: -6,
+                  child: CountBadge(count: badgeCount),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              color: fg,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Nav index ↔ NavItem (AppDrawer) mapping ───────────────────────────────
 
 // Mapping kati ya NavItem (AppDrawer) na int index (pages)
 const _navItemToIndex = {
@@ -159,10 +191,10 @@ class _AdminShellState extends State<AdminShell> {
       case 2:  return const AdminMatchesPage();
       case 3:  return const AdminRealMatchesPage();
       case 4:  return const AdminDataPage();
-      case 5:  return const AdminAnnouncementsPage();
-      case 6:  return const AdminPaymentsPage();
+      case 5:  return const AdminMatangazoPage();
+      case 6:  return const AdminMalipoScreenPage();
       case 7:  return const WaliopigianaPage();
-      case 8:  return const MaoniPage();
+      case 8:  return const AdminFeedbackPage();
       case 9:  return const AdminStatisticsPage();
       case 10: return const AdminMonitoringPage();
       case 11: return const AdminPasswordResetsPage();
@@ -191,31 +223,8 @@ class _AdminShellState extends State<AdminShell> {
 
   void _openProfile() {
     if (Navigator.of(context).canPop()) Navigator.pop(context);
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final user = auth.user;
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => ProfilePage(
-        profile: AdminProfile(
-          fullName: user?.fullName ?? 'Admin',
-          role: 'Administrator',
-          phone: user?.phone ?? '',
-          email: user?.email,
-          whatsapp: (user?.phoneAlt ?? '').trim().isEmpty
-              ? null
-              : user!.phoneAlt,
-        ),
-        onSave: (fullName, whatsapp) async {
-          try {
-            await ApiService().updateProfile({
-              'full_name': fullName,
-              'phone_alt': whatsapp,
-            });
-            return null;
-          } catch (e) {
-            return e.toString();
-          }
-        },
-      ),
+      builder: (_) => const AdminProfileScreenPage(),
     ));
   }
 
@@ -240,7 +249,7 @@ class _AdminShellState extends State<AdminShell> {
       // zinamwagika live kupitia bridge ya AdminBadgeService.notifyListeners.
       drawer: AppDrawer(
         logo: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           child: Image.asset(
             'assets/images/app_icon.png',
             fit: BoxFit.contain,
@@ -250,12 +259,11 @@ class _AdminShellState extends State<AdminShell> {
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF6B8AB8))),
+                      color: Color(0xFF6B84A8))),
             ),
           ),
         ),
         userName: name,
-        userRole: 'Msimamizi',
         current: _indexToNavItem[_idx] ?? NavItem.takwimu,
         onSelect: (item) {
           if (item == NavItem.wasifu) {
@@ -293,110 +301,33 @@ class _AdminShellState extends State<AdminShell> {
 
   // ── Bottom Nav ──────────────────────────────────────────────────────────────
 
+  // ── Footer (bottom nav) — mockup ya admin_panel.dart ─────────────────────
   Widget _buildBottomNav() {
-    final bottomItems = _allNavItems.where((i) => _bottomNavIndices.contains(i.index)).toList();
-
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: _kGrey200)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10, offset: const Offset(0, -2)),
-        ],
+        border: Border(top: BorderSide(color: _kFooterBorder, width: 0.5)),
       ),
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          height: 68,
-          child: ListenableBuilder(
-            listenable: _badges,
-            builder: (context, _) => Row(
-            children: bottomItems.map((item) {
-              final active = _idx == item.index;
-              final badgeCount = _badgeForIndex(item.index);
-              // Tile colors: colored when active, grey when inactive
-              final fg = active ? item.tileFg : _kGrey500;
-              final bg = active ? item.tileBg : _kGrey200;
-              final labelColor = active ? item.tileFg : _kGrey500;
-
-              final label = item.label == 'Maoni na Malalamiko'
-                  ? 'Maoni'
-                  : item.label == 'Waliopata Wenzao'
-                      ? 'Wenzao'
-                      : item.label;
-
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => _go(item.index),
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Icon tile na badge juu-kulia
-                      Stack(clipBehavior: Clip.none, children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          width: 40,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: bg,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            item.icon,
-                            size: 20,
-                            color: fg,
-                          ),
-                        ),
-                        if (badgeCount > 0)
-                          Positioned(
-                            top: -7, right: -9,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFDC2626),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white, width: 2),
-                                boxShadow: [
-                                  BoxShadow(color: Colors.black.withValues(alpha: 0.18),
-                                    blurRadius: 3, offset: const Offset(0, 1)),
-                                ],
-                              ),
-                              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                              child: Center(
-                                child: Text(
-                                  badgeCount > 99 ? '99+' : '$badgeCount',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    height: 1.0,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ]),
-                      const SizedBox(height: 4),
-                      Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 9,
-                          height: 1.0,
-                          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                          color: labelColor,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
+          child: Row(
+            children: [
+              for (final (index, label, nav) in _footerSpecs)
+                Expanded(
+                  child: ListenableBuilder(
+                    listenable: _badges,
+                    builder: (context, _) => _FooterTile(
+                      label: label,
+                      icon: nav.icon,
+                      active: _idx == index,
+                      badgeCount: _badgeForIndex(index),
+                      onTap: () => _go(index),
+                    ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
+            ],
           ),
         ),
       ),

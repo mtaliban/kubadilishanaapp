@@ -39,7 +39,7 @@ class _C {
   static const iconTile = Color(0xFFE3EAFC);
   static const tagBg = Color(0xFFE6EDFB);
   static const barBg = Color(0xFFEEF0F6);
-  static const jmBg = Color(0xFFF7F8FC);
+  static const jmBg = Colors.white; // nyeupe kabisa (ilikuwa #F7F8FC)
   static const orange = Color(0xFFE8590C);
   static const green = Color(0xFF1D9E5A);
   static const greenFg = Color(0xFF0F6E3A);
@@ -48,7 +48,7 @@ class _C {
   static const donutLight = Color(0xFFB9C7EC);
   static const arrow = Color(0xFF8A9BC2);
   static const optBorder = Color(0xFFE1E8F6);
-  static const heroTop = Color(0xFFF4F7FF);
+  static const heroTop = Colors.white; // nyeupe kabisa (ilikuwa #F4F7FF)
 }
 
 // ----------------------------------------------------------------------------
@@ -1342,6 +1342,7 @@ class _TotalStrip extends StatelessWidget {
         decoration: BoxDecoration(
           color: _C.jmBg,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _C.optBorder),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1825,29 +1826,179 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
     }
   }
 
-  static (IconData, String) _eventStyle(String type) {
+  /// Ramani kamili ya matukio halisi ya backend (event_log → GET /admin/events):
+  /// kila event_type ina icon + maelezo ya Kiswahili, na pale payload ina
+  /// maelezo halisi (jina, kiasi, score...) tunayatumia — SIYO majina ghafi
+  /// kama "user.presence".
+  /// Mkoa wa kituo (current_station) kutoka payload — hierarchic au flat.
+  static String _stationRegion(Map<String, dynamic> m) {
+    final payload = asMap(m['payload']);
+    for (final src in [payload, m]) {
+      final st = asMap(src['current_station'] ?? src['station']);
+      final r = '${st['region_name'] ?? st['region'] ?? src['region_name'] ?? src['region'] ?? ''}'.trim();
+      if (r.isNotEmpty) return r;
+    }
+    return '';
+  }
+
+  /// Maeneo ya kuomba (desired_destinations) — majina ya mikoa, yakiwa yangetenganishwa kwa koma.
+  static String _destRegions(Map<String, dynamic> m) {
+    final payload = asMap(m['payload']);
+    for (final src in [payload, m]) {
+      final raw = src['desired_destinations'] ?? src['destinations'];
+      if (raw is List && raw.isNotEmpty) {
+        final names = <String>[
+          for (final d in raw)
+            '${asMap(d)['region_name'] ?? asMap(d)['region'] ?? ''}'.trim(),
+        ].where((n) => n.isNotEmpty).toList();
+        if (names.isNotEmpty) return names.join(', ');
+      }
+      // Badiliko la destination linaweza kuja kama region moja
+      final r = asMap(src['destination'])['region_name'] ?? src['region_name'];
+      if ('$r'.trim().isNotEmpty) return '$r'.trim();
+    }
+    return '';
+  }
+
+  static (IconData, String) _eventDisplay(Map<String, dynamic> m) {
+    final type = '${m['event_type'] ?? m['type'] ?? ''}';
+    final payload = asMap(m['payload']);
+    String p(String key) => '${payload[key] ?? m[key] ?? ''}'.trim();
+
     switch (type) {
+      // ── Watumiaji ──
       case 'user.registered':
-        return (TablerIcons.user_plus, 'Mtumiaji mpya amejiunga');
-      case 'payment.submitted':
-        return (TablerIcons.wallet, 'Malipo yamewasilishwa');
-      case 'payment.approved':
-        return (TablerIcons.coin, 'Malipo yamekubaliwa');
-      case 'payment.rejected':
-        return (TablerIcons.credit_card, 'Malipo yamekataliwa');
-      case 'feedback.new':
-        return (TablerIcons.message_2, 'Maoni mapya');
-      case 'feedback.replied':
-        return (TablerIcons.shield_check, 'Maoni yamejibiwa');
+        final name = p('full_name');
+        final cadre = p('cadre_code');
+        var txt = name.isNotEmpty ? '$name amejiunga' : 'Mtumiaji mpya amejiunga';
+        // Hamisho halisi: kutoka mkoa wa kituo → maeneo anayotaka kwenda.
+        final from = _stationRegion(m);
+        final to = _destRegions(m);
+        if (from.isNotEmpty && to.isNotEmpty) {
+          txt = '$txt — kutoka $from, anahamia $to';
+        } else if (from.isNotEmpty) {
+          txt = '$txt — kutoka $from';
+        } else if (to.isNotEmpty) {
+          txt = '$txt — anahamia $to';
+        }
+        if (cadre.isNotEmpty) txt = '$txt ($cadre)';
+        return (TablerIcons.user_plus, txt);
+      case 'user.profile_updated':
+        final name = p('full_name');
+        return (TablerIcons.user_edit,
+            name.isNotEmpty ? '$name amesasisha wasifu wake' : 'Wasifu umesasishwa');
+      case 'user.station_changed':
+        final name = p('full_name');
+        final toRegion =
+            _destRegions(m).isNotEmpty ? _destRegions(m) : _stationRegion(m);
+        if (name.isNotEmpty && toRegion.isNotEmpty) {
+          return (TablerIcons.map_pin, '$name amehamia $toRegion');
+        }
+        if (name.isNotEmpty) return (TablerIcons.map_pin, '$name amehamia kituo kingine');
+        return (TablerIcons.map_pin, 'Mtumiaji amehamia kituo kingine');
+      case 'user.destination_changed':
+        final name = p('full_name');
+        final dests = _destRegions(m);
+        if (name.isNotEmpty && dests.isNotEmpty) {
+          return (TablerIcons.arrow_right, '$name sasa anataka kwenda $dests');
+        }
+        return (TablerIcons.arrow_right,
+            name.isNotEmpty
+                ? '$name amebadilisha maeneo anayotaka kwenda'
+                : 'Maeneo ya kuomba yamebadilishwa');
+      case 'user.updated_by_admin':
+        return (TablerIcons.user_cog, 'Mtumiaji amesasishwa na admin');
+      case 'user.deleted':
+        return (TablerIcons.user_x, 'Mtumiaji amefutwa');
+      case 'user.presence':
+        return (TablerIcons.wifi, 'Mtumiaji ameingia mtandaoni');
+
+      // ── Matches ──
       case 'match.found':
-        return (TablerIcons.link, 'Match mpya imepatikana');
+        final raw = payload['score'] ?? m['score'];
+        var score = '';
+        if (raw != null) {
+          final v = double.tryParse('$raw');
+          if (v != null) score = ' — ${v <= 1 ? (v * 100).round() : v.round()}%';
+        }
+        return (TablerIcons.link, 'Match mpya imepatikana$score');
+
+      // ── Ujumbe na simu ──
+      case 'message.sent':
+        final from = p('from_full_name');
+        return (TablerIcons.message,
+            from.isNotEmpty ? 'Ujumbe mpya kutoka $from' : 'Ujumbe mpya umetumwa');
+      case 'call.initiated':
+        final from = p('from_full_name');
+        return (TablerIcons.phone_call,
+            from.isNotEmpty ? '$from amepigiana simu' : 'Simu imepigiana');
+
+      // ── Malipo ──
+      case 'payment.submitted':
+        return (TablerIcons.wallet,
+            'Mchango wa TZS ${p('amount')} unasubiri uthibitisho');
+      case 'payment.approved':
+        return (TablerIcons.coin,
+            'Mchango wa TZS ${p('amount')} umethibitishwa');
+      case 'payment.rejected':
+        return (TablerIcons.credit_card, 'Mchango umekataliwa');
+
+      // ── Maoni ──
+      case 'feedback.new':
+        return (TablerIcons.message_2, 'Maoni mapya yamefika');
+      case 'feedback.replied':
+        return (TablerIcons.shield_check, 'Maoni yamejibiwa na admin');
+
+      // ── Matangazo na data ──
+      case 'announcement':
+        final title = p('title');
+        return (TablerIcons.speakerphone,
+            title.isNotEmpty ? 'Tangazo: $title' : 'Tangazo jipya limetumwa');
       case 'data.changed':
-        return (TablerIcons.refresh, 'Data imebadilishwa');
+        final kind = _dataKindLabel(p('kind'));
+        final action = _dataActionLabel(p('action'));
+        return (TablerIcons.refresh, 'Data $kind $action');
+
+      // ── Nenosiri / barua pepe ──
       case 'password_reset.requested':
         return (TablerIcons.help_circle, 'Ombi la kubadilisha nenosiri');
+      case 'password_reset.completed':
+        return (TablerIcons.lock, 'Nenosiri limebadilishwa');
+      case 'email.verification.requested':
+        return (TablerIcons.mail, 'Ombi la kuthibitisha barua pepe');
+      case 'email.verified':
+        return (TablerIcons.mail_opened, 'Barua pepe imethibitishwa');
+
+      // ── Hawajulikani: tafsiri kwa uangalifu (siyo code ghafi) ──
       default:
-        return (TablerIcons.bell,
-            type.isEmpty ? 'Tukio' : type.replaceAll('_', ' '));
+        if (type.isEmpty) return (TablerIcons.bell, 'Tukio');
+        final last = type.split('.').last.replaceAll('_', ' ').trim();
+        final pretty = last.isEmpty
+            ? 'Tukio'
+            : last[0].toUpperCase() + last.substring(1);
+        return (TablerIcons.bell, 'Tukio: $pretty');
+    }
+  }
+
+  static String _dataKindLabel(String kind) {
+    switch (kind) {
+      case 'department': return 'ya idara';
+      case 'cadre': return 'ya kada';
+      case 'subject': return 'ya somo';
+      case 'region': return 'ya mkoa';
+      case 'district': return 'ya wilaya';
+      case 'facility': return 'ya kituo';
+      case 'school': return 'ya shule';
+      default: return kind.isEmpty ? '' : '($kind)';
+    }
+  }
+
+  static String _dataActionLabel(String action) {
+    switch (action) {
+      case 'created': return 'imeongezwa';
+      case 'updated': return 'imesasishwa';
+      case 'deleted': return 'imefutwa';
+      default: return action.isEmpty ? 'imebadilishwa' : action;
     }
   }
 
@@ -1963,7 +2114,7 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
       for (final raw in eventsRaw.take(6))
         () {
           final m = asMap(raw);
-          final (icon, text) = _eventStyle('${m['event_type'] ?? ''}');
+          final (icon, text) = _eventDisplay(m);
           return StatsEvent(icon, text, _hm('${m['occurred_at'] ?? ''}'));
         }(),
     ];

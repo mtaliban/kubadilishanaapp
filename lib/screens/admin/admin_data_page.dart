@@ -28,6 +28,7 @@ const _kGrey500  = Color(0xFF6B7280);
 const _kGrey400  = Color(0xFF9CA3AF);
 const _kGrey200  = Color(0xFFE5E7EB);
 const _kGrey100  = Color(0xFFF3F4F6);
+const _kGrey300  = Color(0xFFD1D5DB);
 const _kBgSoft   = Colors.white;
 
 class AdminDataPage extends StatefulWidget {
@@ -884,7 +885,12 @@ class _AdminDataPageState extends State<AdminDataPage>
                   onTap: () => Navigator.pop(ctx),
                   child: Container(
                     width: 30, height: 30,
-                    decoration: const BoxDecoration(color: _kGrey100, shape: BoxShape.circle),
+                    // Nyeupe + border (ilikuwa kijivu #F1F3F6).
+                    // (const imeondolewa: Border.all si const factory.)
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _kGrey200)),
                     child: Icon(PhosphorIcons.x(), size: 14, color: _kGrey700),
                   ),
                 ),
@@ -903,10 +909,11 @@ class _AdminDataPageState extends State<AdminDataPage>
                   hintText: 'Tafuta...',
                   hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
                   prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: _kGrey400, size: 16),
-                  fillColor: _kGrey100, filled: true,
+                  fillColor: Colors.white, filled: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _kGrey300)),
                 ),
               ),
             ),
