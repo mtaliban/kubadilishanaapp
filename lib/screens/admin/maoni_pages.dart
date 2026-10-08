@@ -1232,12 +1232,22 @@ class _SwipeToReplyState extends State<_SwipeToReply>
   double _dx = 0;
   double _from = 0;
   bool _fired = false;
-  late final AnimationController _back = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 200),
-  )..addListener(() {
-      setState(() => _dx = _from * (1 - Curves.easeOut.transform(_back.value)));
-    });
+  // AnimationController inaundwa kwenye initState (SIYO late field) —
+  // kuunda ticker wakati wa dispose (late field isiyowahi kutumika) kunasoma
+  // ancestor ya widget iliyo-deactivated —Flutter inakataza (debug assertion).
+  late final AnimationController _back;
+
+  @override
+  void initState() {
+    super.initState();
+    _back = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    )..addListener(() {
+        setState(
+            () => _dx = _from * (1 - Curves.easeOut.transform(_back.value)));
+      });
+  }
 
   @override
   void dispose() {
