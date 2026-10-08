@@ -36,13 +36,13 @@ final _footerSpecs = <(int, String, NavItem)>[
   (8, 'Maoni',     NavItem.maoni),
 ];
 
-const _kFooterBlue = Color(0xFF2F6FBF); // active icon/label
-const _kFooterBlueTint = Color(0xFFEAF1FA); // active tile bg
+const _kFooterBlue = Color(0xFF1E40AF); // active icon/label (mockup)
+const _kFooterBlueTint = Color(0xFFEFF6FF); // active tile bg
 const _kFooterTileGray = Color(0xFFF3F4F6); // inactive tile bg
 const _kFooterMuted = Color(0xFF6B7280); // inactive icon/label
 const _kFooterBorder = Color(0xFFE5E7EB); // footer top border
 
-// ─── Footer item (mockup _FooterItem): tile 40x40 + badge + label ───────────
+// ─── Footer item (drawer_na_bottom_nav.dart — _BarButton): tile 44x44 r14 ──
 
 class _FooterTile extends StatelessWidget {
   final String label;
@@ -60,44 +60,40 @@ class _FooterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color fg = active ? _kFooterBlue : _kFooterMuted;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Stack(
             clipBehavior: Clip.none,
             children: [
-              // Mraba wenye pande sawa: 40 x 40, aikoni 22 (sawa na drawer)
               Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: active ? _kFooterBlueTint : _kFooterTileGray,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(
-                  icon,
-                  size: 22,
-                  color: active ? _kFooterBlue : _kFooterMuted,
-                ),
+                child: Icon(icon, size: 24, color: fg),
               ),
               if (badgeCount > 0)
                 Positioned(
                   top: -6,
-                  right: -8,
+                  right: -6,
                   child: CountBadge(count: badgeCount),
                 ),
             ],
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 11,
-              fontWeight: active ? FontWeight.w500 : FontWeight.w400,
-              color: active ? _kFooterBlue : _kFooterMuted,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              color: fg,
             ),
           ),
         ],

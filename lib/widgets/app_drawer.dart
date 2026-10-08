@@ -14,18 +14,19 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
 const Color kBrand = Color(0xFF1565C0);
 
-// Rangi za mockup (admin_panel.dart — AppColors)
-const Color kBlue = Color(0xFF2F6FBF); // active icon/label
-const Color kBlueTint = Color(0xFFEAF1FA); // active row/tile bg
-const Color kText = Color(0xFF3A3F4B); // row icon/label (inactive)
-const Color kTextStrong = Color(0xFF111111); // active label / titles
-const Color kMuted = Color(0xFF6B7280); // subtitle / chevron
+// Rangi za mockup mpya (drawer_na_bottom_nav.dart — class C)
+const Color kBlue = Color(0xFF1E40AF); // active icon/label
+const Color kBlueTint = Color(0xFFEFF6FF); // active row/tile bg
+const Color kBlueBorder = Color(0xFFBFDBFE); // border ya logo/avatar
+const Color kText = Color(0xFF111827); // row icon/label (inactive)
+const Color kTextStrong = Color(0xFF111827); // active label / titles
+const Color kMuted = Color(0xFF9CA3AF); // chevron / group labels
+const Color kTextSecondary = Color(0xFF6B7280); // subtitle / footer inactive
 const Color kBorder = Color(0xFFE5E7EB); // dividers / footer top border
-const Color kTileGray = Color(0xFFF3F4F6); // inactive footer tile
-const Color kRed = Color(0xFFB3261E); // Toka
-const Color kBadgeRed = Color(0xFFE53935); // badge za namba
-const Color kFieldBorder = Color(0xFFD1D5DB); // close button border
-const Color kLogoBorder = Color(0xFFA9BAD6); // logo box border
+const Color kTileGray = Color(0xFFF3F4F6); // inactive footer tile / group band
+const Color kRed = Color(0xFFDC2626); // Toka + badge
+const Color kBadgeRed = Color(0xFFDC2626); // badge za namba
+const Color kFieldBorder = Color(0xFFE5E7EB); // close button border
 
 // ───────────────────────── 1. Menu items ─────────────────────────
 
@@ -39,9 +40,9 @@ enum BadgeRule { none, clearOnOpen, clearOnAction }
 enum NavItem {
   takwimu('Takwimu', 'Takwimu', TablerIcons.chart_pie, Color(0xFF1565C0), BadgeRule.none, true),
   watumiaji('Watumiaji', 'Watumiaji', TablerIcons.users_group, Color(0xFF00897B), BadgeRule.clearOnOpen, true),
-  wenzao('Waliopata wenzao', 'Wenzao', TablerIcons.hearts, Color(0xFF7E57C2), BadgeRule.clearOnOpen, false),
-  matchZaKweli('Match za kweli', 'Match', TablerIcons.flame, Color(0xFFE64A19), BadgeRule.clearOnOpen, false),
-  matangazo('Matangazo', 'Matangazo', TablerIcons.bell_ringing, Color(0xFFD81B60), BadgeRule.none, false),
+  wenzao('Waliopata wenzao', 'Wenzao', TablerIcons.link, Color(0xFF7E57C2), BadgeRule.clearOnOpen, false),
+  matchZaKweli('Match za kweli', 'Match', TablerIcons.bolt, Color(0xFFE64A19), BadgeRule.clearOnOpen, false),
+  matangazo('Matangazo', 'Matangazo', TablerIcons.speakerphone, Color(0xFFD81B60), BadgeRule.none, false),
   waliopigiana('Waliopigiana', 'Waliopigiana', TablerIcons.phone, Color(0xFFF9A825), BadgeRule.clearOnOpen, false),
   maoni('Maoni na malalamiko', 'Maoni', TablerIcons.message_2, Color(0xFF558B2F), BadgeRule.clearOnAction, true),
   malipo('Malipo', 'Malipo', TablerIcons.coin, Color(0xFF1565C0), BadgeRule.clearOnAction, true),
@@ -239,6 +240,32 @@ class AppDrawer extends StatelessWidget {
     NavItem.data,
   ];
 
+  // Vikundi vya mockup: KUU / MAWASILIANO / MFUMO
+  static const _groups = {
+    NavItem.takwimu: 'KUU',
+    NavItem.matangazo: 'MAWASILIANO',
+    NavItem.malipo: 'MFUMO',
+  };
+
+
+  List<Widget> _drawerRows(BuildContext context) {
+    final rows = <Widget>[];
+    for (final item in _order) {
+      final group = _groups[item];
+      if (group != null) rows.add(_GroupLabel(group));
+      rows.add(_DrawerRow(
+        item: item,
+        active: item == current,
+        count: BadgeController.instance.count(item),
+        onTap: () {
+          Navigator.of(context).pop();
+          onSelect(item);
+        },
+      ));
+    }
+    return rows;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -248,10 +275,12 @@ class AppDrawer extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.horizontal(right: Radius.circular(14)),
       ),
+      // Mockup: KILA KITU ndani ya SingleChildScrollView moja — hakuna
+      // Expanded/Spacer, hivyo hakuna nafasi kubwa tupu kabla ya "Wasifu wangu".
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(14),
+        child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _DrawerHeader(
                 logo: logo,
@@ -260,28 +289,11 @@ class AppDrawer extends StatelessWidget {
                 onClose: () => Navigator.of(context).pop(),
               ),
               const Divider(height: 1, thickness: 0.5, color: kBorder),
-              const SizedBox(height: 10),
-              // Rows — zina-scroll ikitosha screen (mockup: Spacer; screen
-              // ndogo huwa na rows 9 + header, tunazunganisha scroll).
-              Expanded(
-                child: ListenableBuilder(
-                  listenable: BadgeController.instance,
-                  builder: (context, _) => SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        for (final item in _order)
-                          _DrawerRow(
-                            item: item,
-                            active: item == current,
-                            count: BadgeController.instance.count(item),
-                            onTap: () {
-                              Navigator.of(context).pop();
-                              onSelect(item);
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
+              ListenableBuilder(
+                listenable: BadgeController.instance,
+                builder: (context, _) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _drawerRows(context),
                 ),
               ),
               const Divider(height: 1, thickness: 0.5, color: kBorder),
@@ -301,6 +313,24 @@ class AppDrawer extends StatelessWidget {
   }
 }
 
+// ─── Kichwa cha kikundi (KUU / MAWASILIANO / MFUMO) ──────────────────────────
+
+class _GroupLabel extends StatelessWidget {
+  final String text;
+  const _GroupLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: kTileGray,
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 11, letterSpacing: 0.8, color: kMuted)),
+    );
+  }
+}
+
 class _DrawerHeader extends StatelessWidget {
   final Widget logo;
   final String title;
@@ -316,17 +346,18 @@ class _DrawerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 48,
+            height: 48,
             clipBehavior: Clip.antiAlias,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              border: Border.all(color: kLogoBorder, width: 1.5),
-              borderRadius: BorderRadius.circular(10),
+              color: kBlueTint,
+              border: Border.all(color: kBlueBorder, width: 1.5),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: logo,
           ),
@@ -338,14 +369,15 @@ class _DrawerHeader extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                     color: kTextStrong,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 12, color: kMuted),
+                  style: const TextStyle(fontSize: 13, color: kTextSecondary),
                 ),
               ],
             ),
@@ -354,13 +386,13 @@ class _DrawerHeader extends StatelessWidget {
             onTap: onClose,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                border: Border.all(color: kFieldBorder, width: 0.5),
+                border: Border.all(color: kFieldBorder),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(TablerIcons.x, size: 18, color: kTextStrong),
+              child: const Icon(TablerIcons.x, size: 20, color: kTextStrong),
             ),
           ),
         ],
@@ -383,45 +415,40 @@ class _DrawerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color fg = active ? kBlue : kText;
     return InkWell(
       onTap: onTap,
       child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: EdgeInsets.fromLTRB(active ? 15 : 18, 14, 18, 14),
         decoration: BoxDecoration(
-          color: active ? kBlueTint : Colors.transparent,
+          color: active ? kBlueTint : Colors.white,
           border: Border(
             left: BorderSide(
               color: active ? kBlue : Colors.transparent,
               width: 3,
             ),
+            bottom: const BorderSide(color: kBorder),
           ),
         ),
         child: Row(
           children: [
-            Icon(
-              item.icon,
-              size: 22,
-              color: active ? kBlue : kText,
-            ),
-            const SizedBox(width: 14),
+            Icon(item.icon, size: 24, color: fg),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(
                 item.label,
                 style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: active ? FontWeight.w500 : FontWeight.w400,
-                  color: active ? kTextStrong : kText,
+                  fontSize: 16,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                  color: fg,
                 ),
               ),
             ),
             if (count > 0)
-              CountBadge(
-                count: count,
-                height: 22,
-                fontSize: 12,
-                borderWidth: 0,
-              ),
+              CountBadge(count: count, height: 22, fontSize: 12, borderWidth: 0)
+            else
+              const Icon(TablerIcons.chevron_right,
+                  size: 18, color: kMuted),
           ],
         ),
       ),
@@ -436,26 +463,44 @@ class _ProfileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: SizedBox(
-        height: 58,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
+    final initial =
+        name.trim().isEmpty ? 'A' : name.trim()[0].toUpperCase();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: kBorder),
+          ),
           child: Row(
             children: [
-              const Icon(TablerIcons.user_circle, size: 22, color: kText),
-              const SizedBox(width: 14),
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: kBlueTint,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: kBlueBorder),
+                ),
+                child: Text(initial,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, color: kBlue)),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Wasifu wangu',
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w700,
                         color: kTextStrong,
                       ),
                     ),
@@ -465,14 +510,13 @@ class _ProfileRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11,
-                        letterSpacing: 0.3,
-                        color: kMuted,
+                        color: kTextSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(TablerIcons.chevron_right, size: 18, color: kMuted),
+              const Icon(TablerIcons.chevron_right, color: kMuted),
             ],
           ),
         ),
@@ -489,20 +533,18 @@ class _LogoutRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: SizedBox(
-        height: 46,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: const Row(
-            children: [
-              Icon(TablerIcons.logout, size: 22, color: kRed),
-              SizedBox(width: 14),
-              Text(
-                'Toka',
-                style: TextStyle(fontSize: 15, color: kRed),
-              ),
-            ],
-          ),
+      child: const Padding(
+        padding: EdgeInsets.fromLTRB(22, 14, 22, 20),
+        child: Row(
+          children: [
+            Icon(TablerIcons.logout, size: 22, color: kRed),
+            SizedBox(width: 12),
+            Text(
+              'Toka',
+              style: TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.w600, color: kRed),
+            ),
+          ],
         ),
       ),
     );
