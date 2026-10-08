@@ -1830,6 +1830,36 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
   /// kila event_type ina icon + maelezo ya Kiswahili, na pale payload ina
   /// maelezo halisi (jina, kiasi, score...) tunayatumia — SIYO majina ghafi
   /// kama "user.presence".
+  /// Mkoa wa kituo (current_station) kutoka payload — hierarchic au flat.
+  static String _stationRegion(Map<String, dynamic> m) {
+    final payload = asMap(m['payload']);
+    for (final src in [payload, m]) {
+      final st = asMap(src['current_station'] ?? src['station']);
+      final r = '${st['region_name'] ?? st['region'] ?? src['region_name'] ?? src['region'] ?? ''}'.trim();
+      if (r.isNotEmpty) return r;
+    }
+    return '';
+  }
+
+  /// Maeneo ya kuomba (desired_destinations) — majina ya mikoa, yakiwa yangetenganishwa kwa koma.
+  static String _destRegions(Map<String, dynamic> m) {
+    final payload = asMap(m['payload']);
+    for (final src in [payload, m]) {
+      final raw = src['desired_destinations'] ?? src['destinations'];
+      if (raw is List && raw.isNotEmpty) {
+        final names = <String>[
+          for (final d in raw)
+            '${asMap(d)['region_name'] ?? asMap(d)['region'] ?? ''}'.trim(),
+        ].where((n) => n.isNotEmpty).toList();
+        if (names.isNotEmpty) return names.join(', ');
+      }
+      // Badiliko la destination linaweza kuja kama region moja
+      final r = asMap(src['destination'])['region_name'] ?? src['region_name'];
+      if ('$r'.trim().isNotEmpty) return '$r'.trim();
+    }
+    return '';
+  }
+
   static (IconData, String) _eventDisplay(Map<String, dynamic> m) {
     final type = '${m['event_type'] ?? m['type'] ?? ''}';
     final payload = asMap(m['payload']);
@@ -1840,21 +1870,38 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
       case 'user.registered':
         final name = p('full_name');
         final cadre = p('cadre_code');
-        final txt = name.isNotEmpty
-            ? '$name amejiunga'
-            : 'Mtumiaji mpya amejiunga';
-        return (TablerIcons.user_plus,
-            cadre.isNotEmpty ? '$txt ($cadre)' : txt);
+        var txt = name.isNotEmpty ? '$name amejiunga' : 'Mtumiaji mpya amejiunga';
+        // Hamisho halisi: kutoka mkoa wa kituo → maeneo anayotaka kwenda.
+        final from = _stationRegion(m);
+        final to = _destRegions(m);
+        if (from.isNotEmpty && to.isNotEmpty) {
+          txt = '$txt — kutoka $from, anahamia $to';
+        } else if (from.isNotEmpty) {
+          txt = '$txt — kutoka $from';
+        } else if (to.isNotEmpty) {
+          txt = '$txt — anahamia $to';
+        }
+        if (cadre.isNotEmpty) txt = '$txt ($cadre)';
+        return (TablerIcons.user_plus, txt);
       case 'user.profile_updated':
         final name = p('full_name');
         return (TablerIcons.user_edit,
             name.isNotEmpty ? '$name amesasisha wasifu wake' : 'Wasifu umesasishwa');
       case 'user.station_changed':
         final name = p('full_name');
-        return (TablerIcons.map_pin,
-            name.isNotEmpty ? '$name amebadilisha kituo chake' : 'Kituo kimebadilishwa');
+        final toRegion =
+            _destRegions(m).isNotEmpty ? _destRegions(m) : _stationRegion(m);
+        if (name.isNotEmpty && toRegion.isNotEmpty) {
+          return (TablerIcons.map_pin, '$name amehamia $toRegion');
+        }
+        if (name.isNotEmpty) return (TablerIcons.map_pin, '$name amehamia kituo kingine');
+        return (TablerIcons.map_pin, 'Mtumiaji amehamia kituo kingine');
       case 'user.destination_changed':
         final name = p('full_name');
+        final dests = _destRegions(m);
+        if (name.isNotEmpty && dests.isNotEmpty) {
+          return (TablerIcons.arrow_right, '$name sasa anataka kwenda $dests');
+        }
         return (TablerIcons.arrow_right,
             name.isNotEmpty
                 ? '$name amebadilisha maeneo anayotaka kwenda'
