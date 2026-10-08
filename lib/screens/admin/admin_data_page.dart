@@ -12,23 +12,22 @@ import 'admin_vituo_dialogs.dart';
 import '../../utils/safe_cast.dart';
 
 const _kBlue     = Color(0xFF1E40AF);
+const _kTileGrey = Color(0xFFF8FAFC);
+const _kActionFg = Color(0xFF475569);
+const _kSlate500 = Color(0xFF64748B);
 const _kBlueBg   = Color(0xFFEFF6FF);
 const _kBlueDark = Color(0xFF1D4ED8);
 const _kGreen    = Color(0xFF16A34A);
-const _kGreenBg  = Color(0xFFDCFCE7);
 const _kAmber    = Color(0xFFD97706);
 const _kAmberBg  = Color(0xFFFEF3C7);
 const _kRed      = Color(0xFFDC2626);
 const _kRedBg    = Color(0xFFFEE2E2);
 const _kGrey900  = Color(0xFF111827);
 const _kGrey700  = Color(0xFF374151);
-const _kGrey600  = Color(0xFF4B5563);
 const _kGrey500  = Color(0xFF6B7280);
 const _kGrey400  = Color(0xFF9CA3AF);
-const _kGrey300  = Color(0xFFD1D5DB);
 const _kGrey200  = Color(0xFFE5E7EB);
 const _kGrey100  = Color(0xFFF3F4F6);
-const _kGrey50   = Color(0xFFF9FAFB);
 const _kBgSoft   = Colors.white;
 
 class AdminDataPage extends StatefulWidget {
@@ -442,7 +441,7 @@ class _AdminDataPageState extends State<AdminDataPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: disabled ? _kRedBg : _kGreenBg,
+              color: disabled ? _kRedBg : const Color(0xFFF0FDF4),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: disabled ? const Color(0xFFFCA5A5) : const Color(0xFFBBF7D0)),
             ),
@@ -456,7 +455,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                 disabled ? 'Imezimwa' : 'Hai',
                 style: TextStyle(
                   fontSize: 10, fontWeight: FontWeight.w700, height: 1.5,
-                  color: disabled ? _kRed : _kGreen,
+                  color: disabled ? _kRed : const Color(0xFF15803D),
                 ),
               ),
             ]),
@@ -467,8 +466,8 @@ class _AdminDataPageState extends State<AdminDataPage>
         if (level.isEmpty) return [];
         final isSecondary = level == 'secondary';
         return [pill(isSecondary ? 'Secondary' : 'Primary',
-            isSecondary ? _kAmberBg : _kBlueBg,
-            isSecondary ? _kAmber   : _kBlueDark)];
+            const Color(0xFFF1F5F9),
+            const Color(0xFF334155))];
       case 'cadres':
         final cat   = item['category'] as String? ?? '';
         final level = item['level'] as String? ?? '';
@@ -663,9 +662,6 @@ class _AdminDataPageState extends State<AdminDataPage>
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: _kGrey200),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x08000000), blurRadius: 10, offset: Offset(0, 4)),
-                      ],
                     ),
                     child: _buildItem(type, filtered[i] as Map<String, dynamic>),
                   ),
@@ -702,18 +698,18 @@ class _AdminDataPageState extends State<AdminDataPage>
       const SizedBox(height: 10),
       TextField(
         controller: _searchCtrls[type],
-        style: const TextStyle(fontSize: 13, color: _kGrey900),
+        style: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(fontSize: 13, color: _kGrey400),
-          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 16, color: _kGrey400),
+          hintStyle: const TextStyle(fontSize: 13, color: _kSlate500),
+          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 16, color: const Color(0xFF334155)),
           prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 0),
           filled: true,
           fillColor: Colors.white,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
-          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1)),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
         ),
       ),
@@ -946,17 +942,17 @@ class _AdminDataPageState extends State<AdminDataPage>
       final code = (item['code'] as String? ?? '').toLowerCase();
       switch (code) {
         case 'health':
-          return (PhosphorIcons.heartbeat(PhosphorIconsStyle.fill),
-              const Color(0xFFDC2626), const Color(0xFFFEE2E2));
+          return (PhosphorIcons.stethoscope(PhosphorIconsStyle.fill),
+              const Color(0xFFEF4444), const Color(0xFFFEF2F2));
         case 'education':
-          return (PhosphorIcons.graduationCap(PhosphorIconsStyle.fill),
-              const Color(0xFF2563EB), const Color(0xFFEFF6FF));
+          return (PhosphorIcons.chalkboardTeacher(PhosphorIconsStyle.fill),
+              const Color(0xFF3B82F6), const Color(0xFFEFF6FF));
         case 'kilimo':
-          return (PhosphorIcons.plant(PhosphorIconsStyle.fill),
-              const Color(0xFF16A34A), const Color(0xFFF0FDF4));
+          return (PhosphorIcons.grains(PhosphorIconsStyle.fill),
+              const Color(0xFF22C55E), const Color(0xFFF0FDF4));
         case 'watumishi_wa_umma':
-          return (PhosphorIcons.usersThree(PhosphorIconsStyle.fill),
-              const Color(0xFF9333EA), const Color(0xFFF5F3FF));
+          return (PhosphorIcons.scales(PhosphorIconsStyle.fill),
+              const Color(0xFFF97316), const Color(0xFFFFF7ED));
         default:
           return (PhosphorIcons.buildings(PhosphorIconsStyle.fill),
               _kBlue, _kBlueBg);
@@ -967,29 +963,40 @@ class _AdminDataPageState extends State<AdminDataPage>
       final lvl = (item['level'] as String? ?? '').toLowerCase();
       final isEdu = hasSchool || lvl == 'primary' || lvl == 'secondary';
       if (isEdu) {
-        return (PhosphorIcons.graduationCap(PhosphorIconsStyle.fill),
-            const Color(0xFF15803D), const Color(0xFFF0FDF4));
+        return (PhosphorIcons.chalkboardTeacher(PhosphorIconsStyle.fill),
+            const Color(0xFF3B82F6), const Color(0xFFEFF6FF));
       }
       switch (lvl) {
         case 'hospital':
-          return (PhosphorIcons.hospital(PhosphorIconsStyle.fill), _kRed, _kRedBg);
+          return (PhosphorIcons.hospital(PhosphorIconsStyle.fill),
+              const Color(0xFFEF4444), const Color(0xFFFEF2F2));
         case 'health_center':
-          return (PhosphorIcons.firstAidKit(PhosphorIconsStyle.fill), _kRed, _kRedBg);
+          return (PhosphorIcons.firstAidKit(PhosphorIconsStyle.fill),
+              const Color(0xFFEF4444), const Color(0xFFFEF2F2));
         default:
-          return (PhosphorIcons.firstAid(PhosphorIconsStyle.fill), _kRed, _kRedBg);
+          return (PhosphorIcons.firstAid(PhosphorIconsStyle.fill),
+              const Color(0xFFEF4444), const Color(0xFFFEF2F2));
       }
     }
     if (type == 'cadres') {
       final cat = (item['category'] as String? ?? '').toLowerCase();
       return cat == 'education'
-          ? (PhosphorIcons.graduationCap(PhosphorIconsStyle.fill),
-              const Color(0xFF15803D), const Color(0xFFF0FDF4))
-          : (PhosphorIcons.stethoscope(PhosphorIconsStyle.fill), _kRed, _kRedBg);
+          ? (PhosphorIcons.chalkboardTeacher(PhosphorIconsStyle.fill),
+              const Color(0xFF3B82F6), const Color(0xFFEFF6FF))
+          : (PhosphorIcons.stethoscope(PhosphorIconsStyle.fill),
+              const Color(0xFFEF4444), const Color(0xFFFEF2F2));
     }
-    if (type == 'subjects') return (PhosphorIcons.bookOpen(PhosphorIconsStyle.fill), _kAmber, _kAmberBg);
-    if (type == 'regions') return (PhosphorIcons.mountains(PhosphorIconsStyle.fill), _kBlue, _kBlueBg);
-    if (type == 'districts') return (PhosphorIcons.mapTrifold(PhosphorIconsStyle.fill), _kBlue, _kBlueBg);
-    return (PhosphorIcons.circle(), _kGrey600, _kGrey100);
+    if (type == 'subjects') {
+      final level = (item['level'] as String? ?? '').toLowerCase();
+      return level == 'secondary'
+          ? (PhosphorIcons.atom(PhosphorIconsStyle.fill), _kBlue, _kTileGrey)
+          : (PhosphorIcons.textAa(PhosphorIconsStyle.fill), _kBlue, _kTileGrey);
+    }
+    if (type == 'regions') return (PhosphorIcons.mountains(PhosphorIconsStyle.fill),
+        const Color(0xFF3B82F6), const Color(0xFFEFF6FF));
+    if (type == 'districts') return (PhosphorIcons.mapTrifold(PhosphorIconsStyle.fill),
+        const Color(0xFF3B82F6), const Color(0xFFEFF6FF));
+    return (PhosphorIcons.circle(), _kActionFg, _kTileGrey);
   }
 
   Widget _buildItem(String type, Map<String, dynamic> item) {
@@ -1055,11 +1062,11 @@ class _RowAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      _sq(PhosphorIcons.eye(), _kBlue, _kBlueBg, onView),
+      _sq(PhosphorIcons.eye(), _kActionFg, _kTileGrey, onView),
       const SizedBox(width: 6),
-      _sq(PhosphorIcons.pencilSimple(), _kBlue, _kBlueBg, onEdit),
+      _sq(PhosphorIcons.pencilSimple(), _kActionFg, _kTileGrey, onEdit),
       const SizedBox(width: 6),
-      _sq(PhosphorIcons.trash(), _kRed, _kRedBg, onDelete),
+      _sq(PhosphorIcons.trash(), const Color(0xFFEF4444), const Color(0xFFFEF2F2), onDelete),
     ]);
   }
 
