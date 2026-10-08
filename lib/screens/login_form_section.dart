@@ -104,15 +104,21 @@ class LoginFormSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _LinkButton(
-              icon: Icons.help_outline,
-              label: 'Sahau namba?',
-              onTap: onForgot,
+            // Flexible — fonti kubwa (au Ahem ya tests) isivuruge Row hii
+            // kwenye skrini ndogo (overflow guard, kama kwenye LoginScreen ya zamani).
+            Flexible(
+              child: _LinkButton(
+                icon: Icons.help_outline,
+                label: 'Sahau namba?',
+                onTap: onForgot,
+              ),
             ),
-            _LinkButton(
-              icon: Icons.person_add_alt_1_outlined,
-              label: 'Jisajili sasa',
-              onTap: onRegister,
+            Flexible(
+              child: _LinkButton(
+                icon: Icons.person_add_alt_1_outlined,
+                label: 'Jisajili sasa',
+                onTap: onRegister,
+              ),
             ),
           ],
         ),
@@ -144,12 +150,16 @@ class _LinkButton extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: _blue),
             const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: _blue,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: _blue,
+                ),
               ),
             ),
           ],
