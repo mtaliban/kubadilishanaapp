@@ -32,10 +32,10 @@ Future<void> _pump(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _openChat(WidgetTester tester) async {
+Future<void> _openChat(WidgetTester tester, String name) async {
   await _pump(tester);
-  final row = find.textContaining('Godwin').first;
-  expect(row, findsOneWidget, reason: 'Mazungumzo ya demo yanapaswa kuonekana');
+  final row = find.textContaining(name).first;
+  expect(row, findsOneWidget, reason: 'Mazungumzo ya "$name" yanapaswa kuonekana');
   await tester.tap(row);
   await tester.pumpAndSettle();
 }
@@ -46,14 +46,15 @@ void main() {
     await _pump(tester);
     expect(find.text('Maoni'), findsOneWidget);
 
-    final decos = _boxDecorations(tester);
-    expect(
-      decos.any((d) => d.color == Colors.white),
-      isTrue,
-      reason: 'Inbox inapaswa kuwa na Container background nyeupe',
-    );
+    // Inbox root: Container(color: Colors.white) — color parameter (siyo
+    // decoration), kwa hivyo tunakagua Container.color moja kwa moja.
+    final whiteRoot = tester
+        .widgetList<Container>(find.byType(Container))
+        .any((w) => w.color == Colors.white);
+    expect(whiteRoot, isTrue,
+        reason: 'Inbox inapaswa kuwa na Container background nyeupe');
     // Hakuna bluu kali (opaque, blue-dominant) kwenye inbox yote.
-    for (final d in decos) {
+    for (final d in _boxDecorations(tester)) {
       final c = d.color;
       if (c == null) continue;
       expect(
@@ -66,7 +67,7 @@ void main() {
 
   testWidgets('Chat: incoming bubble NI NYEUPE + hakuna bluu kali',
       (tester) async {
-    await _openChat(tester);
+    await _openChat(tester, 'Godwin');
 
     // Chat inaonyesha jumbe za mtumiaji ("sawa").
     expect(find.textContaining('sawa'), findsWidgets);
@@ -92,20 +93,30 @@ void main() {
     }
   });
 
-  testWidgets('Chat: outgoing bubble ni beige (E7E1D6 range), siyo bluu',
+  testWidgets('Chat: outgoing bubble ni kijani hafifu (#D9FDD3), siyo bluu',
       (tester) async {
-    await _openChat(tester);
+    await _openChat(tester, 'SELEMANI');
 
-    final beige = decosAfter(tester);
+    // Background ya chat: Scaffold.backgroundColor = beige (#EFE7DC).
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+    expect(scaffold.backgroundColor, const Color(0xFFEFE7DC),
+        reason: 'Background ya chat inapaswa kuwa beige ya WhatsApp');
+
+    // Bubble ya outgoing: Container yenye #D9FDD3 (jibu la admin "Kwema").
+    final colors = decosAfter(tester);
     expect(
-      beige.any((c) {
-        // beige: r>g>b, luminance kati ya .7 na .95
-        final lum = c.computeLuminance();
-        return c.r > c.g && c.g > c.b && lum > .7 && lum < .95 && c.a == 1.0;
-      }),
+      colors.any((c) => c == const Color(0xFFD9FDD3)),
       isTrue,
-      reason: 'Bubble ya outgoing inapaswa kuwa beige (sent ya WhatsApp)',
+      reason: 'Bubble ya outgoing inapaswa kuwa kijani hafifu (#D9FDD3)',
     );
+    // Hakuna bluu kali (opaque blue-dominant) kwenye chat.
+    for (final c in colors) {
+      expect(
+        _isBlueDominant(c) && c.a == 1.0 && c.computeLuminance() < .8,
+        isFalse,
+        reason: 'Chat ina Container yenye bluu kali: $c',
+      );
+    }
   });
 
   testWidgets('Filter wa inbox: chip haijawi bluu kali', (tester) async {

@@ -539,7 +539,8 @@ void main() {
       // Composer ndiyo TextField ya mwisho (search iko juu)
       await tester.enterText(
           find.byType(TextField).last, 'Nenda profile kisha badilisha');
-      await tester.tap(find.widgetWithText(ElevatedButton, 'JIBU'));
+      await tester.tap(find.byIcon(
+          PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill)));
       await settle(tester);
 
       final sent = routes.bodies['POST reply:fb1'];
@@ -548,7 +549,8 @@ void main() {
       expect(find.text('Jibu limetumwa kwa mtumiaji'), findsOneWidget,
           reason: 'Flash ya mafanikio imeonekana');
       // Composer mpya: button ya JIBU inabaki (admin anaweza kujibu tena)
-      expect(find.widgetWithText(ElevatedButton, 'JIBU'), findsOneWidget,
+      expect(find.byIcon(PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill)),
+          findsOneWidget,
           reason: 'Composer ya kujibu inaonekana kwa kila kadi');
       expectNoError();
       await drain(tester);

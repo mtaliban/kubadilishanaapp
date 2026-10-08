@@ -44,32 +44,34 @@ import '../../widgets/app_toast.dart' show AppToast, friendlyError;
 // Colors (from the approved mockup)
 // ----------------------------------------------------------------------------
 class _C {
-  // Ink/neutral — rangi za herufi tu, HAKUNA bluu kwenye mandhari.
+  // Ink/neutral — rangi za herufi.
   static const ink = Color(0xFF141A26);
   static const title = Color(0xFF141A26);
   static const muted = Color(0xFF8A94A6);
   static const muted2 = Color(0xFF8690A2);
-  // Neutral safi — LAINI ZA WHATSAPP (siyo bluu/kijivu cha kina).
+  // Inbox (background nyeupe).
   static const field = Color(0xFFF7F8FA);
   static const line = Color(0xFFD9DDE1);
   static const border = Color(0xFFEDEFF2);
-  static const green = Color(0xFF075E54);
-  static const greenFg = Color(0xFF0A6C48);
-  static const greenBg = Color(0xFFF0E9E1);
-  static const avatarBg = Color(0xFFE7E0D8);
-  static const quoteIn = Color(0x14075E54);
-  static const quoteOut = Color(0x1F075E54);
-  static const tick = Color(0xFF8696A0);
-  // Nukuu ya jina/dhana (quote author/text) — nyeusi-pedestrian, siyo bluu.
-  static const quoteName = Color(0xFF075E54);
+  // Kijani (inbox chips/badges + header icons za chat).
+  static const green = Color(0xFF25D366); // badge/nukuu ya inbox
+  static const greenFg = Color(0xFF00A344); // maandishi ya chip iliyochaguliwa
+  static const greenBg = Color(0xFFDCF5DC); // chip iliyochaguliwa
+  static const avatarBg = Color(0xFFDFE5E7);
+  // CHAT (WhatsApp halisi):
+  static const chatBg = Color(0xFFEFE7DC); // background ya chat (beige)
+  static const bubbleIn = Color(0xFFFFFFFF); // bubble ya mtumiaji
+  static const bubbleOut = Color(0xFFD9FDD3); // bubble yako (kijani hafifu)
+  static const tickBlue = Color(0xFF53BDEB); // tiki mbili za bluu
+  static const quoteIn = Color(0x11000000); // kijivu hafifu (bubble nyeupe)
+  static const quoteOut = Color(0xFFC8F3BC); // quote kwenye bubble ya kijani
+  static const tick = Color(0xFF8696A0); // saa/tiki moja (kijivu)
+  static const quoteName = Color(0xFF00A344); // jina kwenye quote (kijani)
   static const sendOff = Color(0xFFC9D4CE);
   static const red = Color(0xFFD83A3A);
   static const redBg = Color(0xFFFDECEC);
   static const hint = Color(0xFF8A94A6);
-  // Interactive za nyuma (bar ya kujibu + kitufe cha vuta) — LAZIMA zinabaki
-  // kijivu-safi kwenye background nyeupe (siyo bluu). Kijani hutumika kwenye
-  // jina la mtangazaji tu kwenye quote.
-  static const replyBar = Color(0xFFF2EFEA); // WhatsApp incoming-quote tint
+  static const replyBar = Color(0xFFFFFFFF); // bar ya ku-reply (nyeupe)
   static const replyIconBg = Color(0xFFEFF1F3);
   static const chipText = Color(0xFF3B4451);
 }
@@ -298,7 +300,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
               filled: true,
               fillColor: _C.field,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              suffixIcon:
+              prefixIcon:
                   const Icon(TablerIcons.search, size: 20, color: _C.muted),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -324,22 +326,12 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label,
+              // Kama picha: "Zote 57" — maandishi tu, hakuna pill ya ndani.
+              Text('$label $count',
                   style: TextStyle(
                       fontSize: 14,
-                      fontWeight: on ? FontWeight.w500 : FontWeight.w400,
+                      fontWeight: on ? FontWeight.w600 : FontWeight.w400,
                       color: on ? _C.greenFg : _C.chipText)),
-              const SizedBox(width: 7),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                decoration: BoxDecoration(
-                  color: on ? _C.green : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text('$count',
-                    style: TextStyle(
-                        fontSize: 12.5, color: on ? Colors.white : _C.chipText)),
-              ),
             ],
           ),
         ),
@@ -725,7 +717,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
     final hasText = _input.text.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _C.chatBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -794,7 +786,6 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
         padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
         decoration: const BoxDecoration(
           color: Colors.white,
-          border: Border(bottom: BorderSide(color: _C.line)),
         ),
         child: Row(
           children: [
@@ -946,9 +937,10 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
     final r = _ctrl.replyTo!;
     return Container(
       margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: _C.replyBar,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _C.border, width: 0.5),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -998,7 +990,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
   // Textbox ya kutuma message — kama WhatsApp: emoji kushoto ndani ya
   // uga mweupe, paperclip + camera nje kulia, kitufe cha duara cha kutuma.
   Widget _inputBar(bool hasText) => Container(
-        color: Colors.white,
+        color: _C.chatBg,
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -1095,18 +1087,15 @@ class _Bubble extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(11, 8, 11, 6),
         decoration: BoxDecoration(
-          // Nyeupe KABISA (kama WhatsApp): incoming ni nyeupe yenye mstari
-          // mwembamba + kivuli kidogo ili ionekane kwenye background nyeupe.
-          color: out ? _C.greenBg : Colors.white,
-          border: out ? null : Border.all(color: _C.border),
-          boxShadow: out
-              ? null
-              : const [
-                  BoxShadow(
-                      color: Color(0x16141414),
-                      blurRadius: 5,
-                      offset: Offset(0, 1)),
-                ],
+          // Kama WhatsApp halisi: incoming NYEUPE, outgoing KIJANI HAFIFU
+          // (#D9FDD3) — zote mbili bila border, kivuli kidogo tu.
+          color: out ? _C.bubbleOut : _C.bubbleIn,
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x12141414),
+                blurRadius: 4,
+                offset: Offset(0, 1)),
+          ],
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(out ? 16 : 5),
             topRight: Radius.circular(out ? 5 : 16),
@@ -1170,6 +1159,8 @@ class _Bubble extends StatelessWidget {
   Widget _quote(ReplyRef r, bool out) => Container(
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
+          // Kama picha: quote ndani ya bubble ya kijani ni #C8F3BC (paa zito
+          // kuliko bubble #D9FDD3); kwenye bubble nyeupe ni kijivu hafifu.
           color: out ? _C.quoteOut : _C.quoteIn,
           borderRadius: BorderRadius.circular(10),
         ),
@@ -1368,7 +1359,7 @@ class _Ticks extends StatelessWidget {
       case MsgStatus.delivered:
         return Icon(TablerIcons.checks, size: size, color: _C.tick);
       case MsgStatus.read:
-        return Icon(TablerIcons.checks, size: size, color: _C.green);
+        return Icon(TablerIcons.checks, size: size, color: _C.tickBlue);
       case MsgStatus.failed:
         return Icon(TablerIcons.alert_circle, size: size, color: _C.red);
     }
@@ -1383,7 +1374,7 @@ class _IconBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) => IconButton(
         onPressed: onTap,
-        icon: Icon(icon, size: 22, color: _C.ink),
+        icon: Icon(icon, size: 22, color: _C.green),
         splashRadius: 22,
       );
 }
