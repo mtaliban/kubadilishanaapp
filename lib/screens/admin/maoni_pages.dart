@@ -44,28 +44,34 @@ import '../../widgets/app_toast.dart' show AppToast, friendlyError;
 // Colors (from the approved mockup)
 // ----------------------------------------------------------------------------
 class _C {
-  static const blue = Color(0xFF1A3FA8);
-  static const ink = Color(0xFF14224D);
-  static const title = Color(0xFF0F1B4A);
-  static const muted = Color(0xFF6B7BA3);
-  static const muted2 = Color(0xFF7686AB);
-  static const field = Color(0xFFF1F3F8);
-  static const line = Color(0xFFEEF0F6);
-  static const border = Color(0xFFE6ECF8);
-  static const green = Color(0xFF1D9E5A);
-  static const greenFg = Color(0xFF0F6E3A);
-  static const greenBg = Color(0xFFDCF5E5);
-  static const avatarBg = Color(0xFFE3EAFC);
-  static const quoteIn = Color(0x141A3FA8);
-  static const quoteOut = Color(0x1F1D9E5A);
-  static const tick = Color(0xFF9AA8C8);
+  // Ink/neutral — rangi za herufi tu, HAKUNA bluu kwenye mandhari.
+  static const ink = Color(0xFF141A26);
+  static const title = Color(0xFF141A26);
+  static const muted = Color(0xFF8A94A6);
+  static const muted2 = Color(0xFF8690A2);
+  // Neutral safi — LAINI ZA WHATSAPP (siyo bluu/kijivu cha kina).
+  static const field = Color(0xFFF7F8FA);
+  static const line = Color(0xFFD9DDE1);
+  static const border = Color(0xFFEDEFF2);
+  static const green = Color(0xFF075E54);
+  static const greenFg = Color(0xFF0A6C48);
+  static const greenBg = Color(0xFFF0E9E1);
+  static const avatarBg = Color(0xFFE7E0D8);
+  static const quoteIn = Color(0x14075E54);
+  static const quoteOut = Color(0x1F075E54);
+  static const tick = Color(0xFF8696A0);
+  // Nukuu ya jina/dhana (quote author/text) — nyeusi-pedestrian, siyo bluu.
+  static const quoteName = Color(0xFF075E54);
   static const sendOff = Color(0xFFC9D4CE);
   static const red = Color(0xFFD83A3A);
   static const redBg = Color(0xFFFDECEC);
-  static const hint = Color(0xFF9AA8C8);
-  static const replyBar = Color(0xFFF4F6FA);
-  static const replyIconBg = Color(0xFFE8EBF3);
-  static const chipText = Color(0xFF4A5878);
+  static const hint = Color(0xFF8A94A6);
+  // Interactive za nyuma (bar ya kujibu + kitufe cha vuta) — LAZIMA zinabaki
+  // kijivu-safi kwenye background nyeupe (siyo bluu). Kijani hutumika kwenye
+  // jina la mtangazaji tu kwenye quote.
+  static const replyBar = Color(0xFFF2EFEA); // WhatsApp incoming-quote tint
+  static const replyIconBg = Color(0xFFEFF1F3);
+  static const chipText = Color(0xFF3B4451);
 }
 
 // ----------------------------------------------------------------------------
@@ -272,8 +278,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                 height: 42,
                 decoration: const BoxDecoration(
                     color: _C.field, shape: BoxShape.circle),
-                child:
-                    const Icon(TablerIcons.checks, size: 20, color: _C.green),
+                child: const Icon(TablerIcons.checks, size: 20, color: _C.tick),
               ),
             ),
           ],
@@ -289,7 +294,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
             style: const TextStyle(fontSize: 15, color: _C.ink),
             decoration: InputDecoration(
               hintText: 'Tafuta jina, namba au ujumbe',
-              hintStyle: const TextStyle(color: Color(0xFF8A96B2), fontSize: 15),
+              hintStyle: const TextStyle(color: Color(0xFF8A94A6), fontSize: 15),
               filled: true,
               fillColor: _C.field,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -397,7 +402,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                                     style: const TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.w500,
-                                        color: _C.blue)),
+                                        color: _C.ink)),
                               ),
                               Positioned(
                                 top: -4,
@@ -754,7 +759,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                                 border: Border.all(color: _C.border),
                                 boxShadow: const [
                                   BoxShadow(
-                                      color: Color(0x1F14224D),
+                                      color: Color(0x1A141A26),
                                       blurRadius: 8,
                                       offset: Offset(0, 2))
                                 ],
@@ -967,12 +972,12 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                         style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: _C.greenFg)),
+                            color: _C.quoteName)),
                     Text(r.text,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 14, color: Color(0xFF5A6B92))),
+                            fontSize: 14, color: Color(0xFF6A7280))),
                   ],
                 ),
               ),
@@ -1022,7 +1027,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                         decoration: const InputDecoration(
                           hintText: 'Andika jibu lako hapa...',
                           hintStyle: TextStyle(
-                              color: Color(0xFF8A96B2), fontSize: 15.5),
+                              color: Color(0xFF8A94A6), fontSize: 15.5),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding:
@@ -1098,7 +1103,7 @@ class _Bubble extends StatelessWidget {
               ? null
               : const [
                   BoxShadow(
-                      color: Color(0x1214224D),
+                      color: Color(0x16141414),
                       blurRadius: 5,
                       offset: Offset(0, 1)),
                 ],
@@ -1175,7 +1180,7 @@ class _Bubble extends StatelessWidget {
               Container(
                 width: 3.5,
                 decoration: BoxDecoration(
-                  color: out ? _C.green : _C.blue,
+                  color: out ? _C.green : _C.quoteName,
                   borderRadius: const BorderRadius.horizontal(
                       left: Radius.circular(10)),
                 ),
@@ -1191,12 +1196,12 @@ class _Bubble extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w500,
-                              color: out ? _C.greenFg : _C.blue)),
+                              color: out ? _C.greenFg : _C.quoteName)),
                       Text(r.text,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 13.5, color: Color(0xFF5A6B92))),
+                              fontSize: 13.5, color: Color(0xFF6A7280))),
                     ],
                   ),
                 ),
@@ -1312,7 +1317,7 @@ class _Avatar extends StatelessWidget {
             style: TextStyle(
                 fontSize: fontSize,
                 fontWeight: FontWeight.w500,
-                color: _C.blue)),
+                color: _C.ink)),
       );
 }
 
