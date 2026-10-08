@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/app_toast.dart';
 import 'admin_otp_step.dart';
+import 'login_form_section.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // LoginScreen — translation 100% ya web LoginContent.tsx
@@ -158,7 +158,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final loading = auth.loading || _otpLoading;
-    final isAdminEmail = _identifierCtrl.text.contains('@');
 
     return ToastHost(
       child: Scaffold(
@@ -257,68 +256,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // ════════ FORM ════════
-
-                            Text(
-                              isAdminEmail ? 'Email ya Admin' : 'Namba ya Simu',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF374151),
-                              ),
+                            // ════════ FORM — LoginFormSection (Namba ya Simu → chini) ════════
+                            LoginFormSection(
+                              phoneController: _identifierCtrl,
+                              isLoading: loading,
+                              onLogin: _submit,
+                              onForgot: () async {
+                                final phone = await Navigator.pushNamed(context, '/forgot-number');
+                                if (phone is String && phone.isNotEmpty && mounted) {
+                                  _identifierCtrl.text = phone;
+                                }
+                              },
+                              onRegister: () => Navigator.pushNamed(context, '/register'),
                             ),
-                            const SizedBox(height: 6),
-
-                            TextField(
-                              controller: _identifierCtrl,
-                              keyboardType: TextInputType.text,
-                              autocorrect: false,
-                              enabled: true,
-                              textInputAction: TextInputAction.done,
-                              onSubmitted: (_) => _submit(),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF111827),
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              contextMenuBuilder: (ctx, state) =>
-                                  AdaptiveTextSelectionToolbar.buttonItems(
-                                anchors: state.contextMenuAnchors,
-                                buttonItems: state.contextMenuButtonItems,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: isAdminEmail ? 'admin@kubadilishana.go.tz' : '0712345678',
-                                hintStyle: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF6B7280),
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.only(left: 12, right: 8),
-                                  child: Icon(
-                                    isAdminEmail ? TablerIcons.mail : TablerIcons.phone,
-                                    size: 20, color: const Color(0xFF1B4F9C)),
-                                ),
-                                prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Color(0xFF1E40AF), width: 2),
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
 
                             if (_error != null) ...[
                               Container(
@@ -352,91 +302,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     ),
                                   ],
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                            ],
-
-                            // ── Ingia button ──
-                            SizedBox(
-                              width: double.infinity,
-                              height: 34,
-                              child: ElevatedButton(
-                                onPressed: loading ? null : _submit,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1E40AF),
-                                  foregroundColor: Colors.white,
-                                  disabledBackgroundColor: const Color(0xFF1E40AF),
-                                  disabledForegroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                                  elevation: 0,
-                                ),
-                                child: loading
-                                    ? const SizedBox(width: 16, height: 16,
-                                        child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                                    : const Row(mainAxisSize: MainAxisSize.min, children: [
-                                        Icon(TablerIcons.login, size: 20, color: Colors.white),
-                                        SizedBox(width: 8),
-                                        Text('Ingia'),
-                                      ]),
-                              ),
-                            ),
-
-                            // ── Sahau namba + Jisajili — zinaficha kwa admin ──
-                            if (!isAdminEmail) ...[
-                              const SizedBox(height: 12),
-                              Center(
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    final phone = await Navigator.pushNamed(context, '/forgot-number');
-                                    if (phone is String && phone.isNotEmpty && mounted) {
-                                      _identifierCtrl.text = phone;
-                                    }
-                                  },
-                                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                                    Icon(TablerIcons.help_circle, size: 18, color: Color(0xFF1E40AF)),
-                                    SizedBox(width: 5),
-                                    // Flexible + ellipsis — fonti kubwa (au Ahem ya tests)
-                                    // isivuruge Row hii kwenye skrini ndogo.
-                                    Flexible(
-                                      child: Text(
-                                        'Sahau namba yako?',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF1E40AF),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ]),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 28,
-                                child: OutlinedButton(
-                                  onPressed: () => Navigator.pushNamed(context, '/register'),
-                                  style: OutlinedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    foregroundColor: const Color(0xFF1E40AF),
-                                    side: BorderSide(
-                                      color: const Color(0xFF1E40AF).withValues(alpha: 0.3),
-                                      width: 2,
-                                    ),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-                                    textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                                  ),
-                                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                                    Icon(TablerIcons.user_plus, size: 18, color: Color(0xFF1E40AF)),
-                                    SizedBox(width: 6),
-                                    Text('Jisajili sasa'),
-                                  ]),
                                 ),
                               ),
                             ],
