@@ -18,7 +18,12 @@ import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/registration_flow_screen.dart'
+    show RegistrationFlowScreen, TargetArea, kNoSchool;
 import 'screens/dashboard_screen.dart';
+
+// "Wilaya yeyote" — lebo maalum ya lengo (regiza: registration_flow_screen)
+const String kWilayaAny = 'Wilaya yeyote';
 import 'screens/profile_screen.dart';
 import 'screens/donate_screen.dart';
 import 'screens/feedback_screen.dart';
@@ -165,7 +170,7 @@ class _UserAppState extends State<_UserApp> {
         routes: {
           '/':                (_) => const SplashScreen(),
           '/login':           (_) => const LoginScreen(),
-          '/register':        (_) => const RegisterScreen(),
+          '/register':        (_) => const _RegisterFlowAdapter(),
           '/dashboard':       (_) => const DashboardScreen(),
           '/profile':         (_) => const ProfileScreen(),
           '/donate':          (_) => const DonateScreen(),
@@ -328,5 +333,98 @@ class _ComingSoon extends StatelessWidget {
           child: Text('Inaendelea kuundwa...',
               style: TextStyle(color: AppColors.textSecondary))),
     );
+  }
+}
+
+// ── Adapter: RegistrationFlowScreen → /auth/register ────────────────────────
+// Copy ya _RegisterFlowAdapter kutoka main.dart — user build inatumia hii.
+class _RegisterFlowAdapter extends StatelessWidget {
+  const _RegisterFlowAdapter();
+
+  @override
+  Widget build(BuildContext context) {
+    return RegistrationFlowScreen(
+      onLogin: () => Navigator.pushReplacementNamed(context, '/login'),
+      onSubmit: (data) async {
+        final auth = context.read<AuthProvider>();
+
+        // Eneo la sasa (StationInput) — kutoka IDs halisi za dropdown
+        final station = <String, dynamic>{
+          'region_id': data.mkoaId,
+          'region_name': data.mkoa,
+          'district_id': data.wilayaId,
+          'district_name': data.wilaya,
+          'facility_id': data.kituoId,
+          'facility_name': data.kituo,
+          'facility_type': data.kituoType,
+        };
+
+        // Maeneo ya lengo (DestinationInput) — mkoa moja kwa kila target card
+        final destinations = <Map<String, dynamic>>[];
+        for (final t in data.targets) {
+          if (t.mkoaId == null) continue;
+          final anyDistrict = t.wilaya.contains(kWilayaAny);
+          if (anyDistrict || t.wilayaIds.isEmpty) {
+            destinations.add({
+              'region_id': t.mkoaId,
+              'region_name': t.mkoa,
+              'district_id': null,
+              'district_name': null,
+              'facility_id': t.shuleIds.isEmpty ? null : t.shuleIds.values.first,
+              'facility_name':
+                  (t.shule.isEmpty || t.shule.first == kNoSchool)
+                      ? null
+                      : t.shule.first,
+              'notes': null,
+            });
+          } else {
+            for (final w in t.wilaya) {
+              if (w == kWilayaAny) continue;
+              destinations.add({
+                'region_id': t.mkoaId,
+                'region_name': t.mkoa,
+                'district_id': _districtIdOf(t, w),
+                'district_name': w,
+                'facility_id': t.shuleIds.isEmpty ? null : t.shuleIds.values.first,
+                'facility_name':
+                    (t.shule.isEmpty || t.shule.first == kNoSchool)
+                        ? null
+                        : t.shule.first,
+                'notes': null,
+              });
+            }
+          }
+        }
+
+        final payload = <String, dynamic>{
+          'full_name': data.name,
+          'phone_primary': data.phone,
+          'phone_alt': data.whatsapp,
+          'category': data.categoryCode ?? 'education',
+          if (data.employmentSector != null) 'employment_sector': data.employmentSector,
+          'cadre_code': data.cadreCode ?? '',
+          'subjects': data.subjectCodes,
+          'years_of_service': data.yearsOfService,
+          'current_station': station,
+          'desired_destinations': destinations,
+        };
+
+        final ok = await auth.register(payload);
+        if (!context.mounted) return;
+        if (ok) {
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        } else if (auth.error != null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(auth.error!), backgroundColor: Colors.red),
+          );
+        }
+      },
+    );
+  }
+
+  static int? _districtIdOf(TargetArea t, String wName) {
+    final i = t.wilaya.indexOf(wName);
+    if (i < 0 || i >= t.wilayaIds.length) return null;
+    return t.wilayaIds[i];
   }
 }
