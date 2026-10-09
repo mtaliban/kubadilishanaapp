@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import '../services/api_service.dart';
 
 // =============================================================================
@@ -49,36 +49,40 @@ class AppColors {
 //  ya Tabler/Lucide kwenye app yako, badilisha hapa tu mahali pamoja.
 // ----------------------------------------------------------------------------
 class AppIcons {
-  static const IconData user = LucideIcons.user; // user
-  static const IconData phone = LucideIcons.phone; // phone
-  static const IconData whatsapp = LucideIcons.messageCircle; // whatsapp/chat
-  static const IconData firstAid = LucideIcons.cross; // first-aid (medical)
-  static const IconData school = LucideIcons.school; // school
-  static const IconData plant = LucideIcons.sprout; // plant
-  static const IconData users = LucideIcons.users; // users
-  static const IconData backpack = LucideIcons.backpack; // backpack
-  static const IconData flask = LucideIcons.flaskConical; // flask
-  static const IconData hospital = LucideIcons.cross; // hospital (medical)
-  static const IconData stethoscope = LucideIcons.stethoscope; // stethoscope
-  static const IconData bank = LucideIcons.landmark; // building-bank
-  static const IconData community = LucideIcons.building2; // building-community
-  static const IconData mapPin = LucideIcons.mapPin; // map-pin
-  static const IconData building = LucideIcons.building; // building
-  static const IconData idBadge = LucideIcons.contact2; // id-badge (contact card)
-  static const IconData briefcase = LucideIcons.briefcase; // briefcase
-  static const IconData one = LucideIcons.circleDot; // number-1 (generic)
-  static const IconData two = LucideIcons.circleDot; // number-2
-  static const IconData three = LucideIcons.circleDot; // number-3
-  static const IconData search = LucideIcons.search; // search
-  static const IconData chevronDown = LucideIcons.chevronDown; // chevron-down
-  static const IconData chevronUp = LucideIcons.chevronUp; // chevron-up
-  static const IconData checkFilled = LucideIcons.checkCircle2; // circle-check
-  static const IconData arrowLeft = LucideIcons.arrowLeft; // arrow-left
-  static const IconData arrowRight = LucideIcons.arrowRight; // arrow-right
-  static const IconData plus = LucideIcons.plus; // plus
-  static const IconData trash = LucideIcons.trash2; // trash
-  static const IconData alert = LucideIcons.alertCircle; // alert-circle
-  static const IconData check = LucideIcons.check; // check
+  // NOTE: topics za Tabler (tabler_icons_plus — vendor'd kwenye repo) —
+  // lucide_icons 0.257.0 haifanyi kazi kwenye Flutter mpya (IconData 'final'
+  // hayakubaliwa extend). Tabler ina icons zilezile.
+  static const IconData user = TablerIcons.user; // user
+  static const IconData phone = TablerIcons.phoneCall; // phone-call
+  static const IconData whatsapp = TablerIcons.messageCircle; // whatsapp/chat
+  static const IconData firstAid = TablerIcons.cross; // first-aid-kit
+  static const IconData school = TablerIcons.school; // school
+  static const IconData plant = TablerIcons.plant; // plant-2
+  static const IconData users = TablerIcons.users; // users (watumishi wa umma)
+  static const IconData backpack = TablerIcons.backpack; // backpack
+  static const IconData flask = TablerIcons.flask; // flask
+  static const IconData hospital = TablerIcons.cross; // building-hospital
+  static const IconData stethoscope = TablerIcons.stethoscope; // stethoscope
+  static const IconData bank = TablerIcons.buildingBank; // building-bank
+  static const IconData community = TablerIcons.buildingCommunity; // building-community
+  static const IconData mapPin = TablerIcons.mapPin; // map-pin
+  static const IconData building = TablerIcons.building; // building
+  static const IconData idBadge = TablerIcons.idBadge2; // id-badge-2
+  static const IconData briefcase = TablerIcons.briefcase; // briefcase
+  static const IconData one = TablerIcons.circleDot; // number-1 (generic)
+  static const IconData two = TablerIcons.circleDot; // number-2
+  static const IconData three = TablerIcons.circleDot; // number-3
+  static const IconData search = TablerIcons.search; // search
+  static const IconData chevronDown = TablerIcons.chevronDown; // chevron-down
+  static const IconData chevronUp = TablerIcons.chevronUp; // chevron-up
+  static const IconData checkCircleFilled = TablerIcons.circleCheckFilled; // circle-check-filled
+  static const IconData checkFilled = TablerIcons.circleCheckFilled; // circle-check-filled
+  static const IconData arrowLeft = TablerIcons.arrowLeft; // arrow-left
+  static const IconData arrowRight = TablerIcons.arrowRight; // arrow-right
+  static const IconData plus = TablerIcons.plus; // plus
+  static const IconData trash = TablerIcons.trash; // trash
+  static const IconData alert = TablerIcons.alertCircle; // alert-circle
+  static const IconData check = TablerIcons.check; // check
 }
 
 // ----------------------------------------------------------------------------
