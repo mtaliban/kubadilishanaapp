@@ -37,6 +37,7 @@ dependencies:
     path: packages/phosphor_flutter
   tabler_icons_plus: ^3.19.0
   flutter_tabler_icons: 1.43.0
+  lucide_icons: ^0.257.0
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10
   shimmer: ^3.0.0

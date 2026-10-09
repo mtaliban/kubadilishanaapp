@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../services/api_service.dart';
 
 // =============================================================================
@@ -46,36 +49,36 @@ class AppColors {
 //  ya Tabler/Lucide kwenye app yako, badilisha hapa tu mahali pamoja.
 // ----------------------------------------------------------------------------
 class AppIcons {
-  static const IconData user = Icons.person_outline; // user
-  static const IconData phone = Icons.phone_in_talk_outlined; // phone-call
-  static const IconData whatsapp = Icons.chat_bubble_outline; // brand-whatsapp
-  static const IconData firstAid = Icons.medical_services_outlined; // first-aid-kit
-  static const IconData school = Icons.school_outlined; // school
-  static const IconData plant = Icons.eco_outlined; // plant-2
-  static const IconData users = Icons.groups_outlined; // users
-  static const IconData backpack = Icons.backpack_outlined; // backpack
-  static const IconData flask = Icons.science_outlined; // flask
-  static const IconData hospital = Icons.local_hospital_outlined; // building-hospital
-  static const IconData stethoscope = Icons.health_and_safety_outlined; // stethoscope
-  static const IconData bank = Icons.account_balance_outlined; // building-bank
-  static const IconData community = Icons.apartment_outlined; // building-community
-  static const IconData mapPin = Icons.location_on_outlined; // map-pin
-  static const IconData building = Icons.business_outlined; // building
-  static const IconData idBadge = Icons.badge_outlined; // id-badge-2
-  static const IconData briefcase = Icons.work_outline; // briefcase
-  static const IconData one = Icons.looks_one_outlined; // number-1
-  static const IconData two = Icons.looks_two_outlined; // number-2
-  static const IconData three = Icons.looks_3_outlined; // number-3
-  static const IconData search = Icons.search; // search
-  static const IconData chevronDown = Icons.keyboard_arrow_down; // chevron-down
-  static const IconData chevronUp = Icons.keyboard_arrow_up; // chevron-up
-  static const IconData checkFilled = Icons.check_circle; // circle-check-filled
-  static const IconData arrowLeft = Icons.arrow_back; // arrow-left
-  static const IconData arrowRight = Icons.arrow_forward; // arrow-right
-  static const IconData plus = Icons.add; // plus
-  static const IconData trash = Icons.delete_outline; // trash
-  static const IconData alert = Icons.error_outline; // alert-circle
-  static const IconData check = Icons.check; // check
+  static const IconData user = LucideIcons.user; // user
+  static const IconData phone = LucideIcons.phone; // phone
+  static const IconData whatsapp = LucideIcons.messageCircle; // whatsapp/chat
+  static const IconData firstAid = LucideIcons.cross; // first-aid (medical)
+  static const IconData school = LucideIcons.school; // school
+  static const IconData plant = LucideIcons.sprout; // plant
+  static const IconData users = LucideIcons.users; // users
+  static const IconData backpack = LucideIcons.backpack; // backpack
+  static const IconData flask = LucideIcons.flaskConical; // flask
+  static const IconData hospital = LucideIcons.cross; // hospital (medical)
+  static const IconData stethoscope = LucideIcons.stethoscope; // stethoscope
+  static const IconData bank = LucideIcons.landmark; // building-bank
+  static const IconData community = LucideIcons.building2; // building-community
+  static const IconData mapPin = LucideIcons.mapPin; // map-pin
+  static const IconData building = LucideIcons.building; // building
+  static const IconData idBadge = LucideIcons.contact2; // id-badge (contact card)
+  static const IconData briefcase = LucideIcons.briefcase; // briefcase
+  static const IconData one = LucideIcons.circleDot; // number-1 (generic)
+  static const IconData two = LucideIcons.circleDot; // number-2
+  static const IconData three = LucideIcons.circleDot; // number-3
+  static const IconData search = LucideIcons.search; // search
+  static const IconData chevronDown = LucideIcons.chevronDown; // chevron-down
+  static const IconData chevronUp = LucideIcons.chevronUp; // chevron-up
+  static const IconData checkFilled = LucideIcons.checkCircle2; // circle-check
+  static const IconData arrowLeft = LucideIcons.arrowLeft; // arrow-left
+  static const IconData arrowRight = LucideIcons.arrowRight; // arrow-right
+  static const IconData plus = LucideIcons.plus; // plus
+  static const IconData trash = LucideIcons.trash2; // trash
+  static const IconData alert = LucideIcons.alertCircle; // alert-circle
+  static const IconData check = LucideIcons.check; // check
 }
 
 // ----------------------------------------------------------------------------
@@ -483,24 +486,24 @@ class _DropdownPanelState extends State<_DropdownPanel> {
                 ],
               ),
             ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 200),
-            child: items.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Center(
-                      child: Text('Hakuna matokeo',
-                          style: _ts(13, c: AppColors.lightGray)),
-                    ),
-                  )
-                : ListView(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.all(4),
-                    children: [
-                      for (final o in items) _row(o, sel.contains(o.label)),
-                    ],
-                  ),
-          ),
+          // CHAGUO LA RADIO — HAKUNA SCROLL NDANI YA PANEL: orodha yote
+          // inaonekana wazi (kama Masomo). Kama orodha ni ndefu, page yenyewe
+          // (SingleChildScrollView ya juu) inasogeza — hakuna scroll ndani ndani.
+          if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child:
+                    Text('Hakuna matokeo', style: _ts(13, c: AppColors.lightGray)),
+              ),
+            )
+          else
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final o in items) _row(o, sel.contains(o.label)),
+              ],
+            ),
           if (widget.cfg.multi)
             Padding(
               padding: const EdgeInsets.all(4),
@@ -535,8 +538,9 @@ class _DropdownPanelState extends State<_DropdownPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               children: [
-                _iconBox(o.icon, AppColors.blue,
-                    on ? Colors.white : AppColors.light, 26),
+                // Radio-button widget — duara la bluu kwenye kipengele
+                // kilichochaguliwa, duara tupu kwenye zisizochaguliwa.
+                _ring(on),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -547,9 +551,6 @@ class _DropdownPanelState extends State<_DropdownPanel> {
                         h: 1.3),
                   ),
                 ),
-                if (on)
-                  const Icon(AppIcons.checkFilled,
-                      size: 18, color: AppColors.blue),
               ],
             ),
           ),
@@ -616,6 +617,10 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   // Idara (departments) halisi — jina -> category code
   Map<String, String> _deptNameToCode = {};
 
+  //Status ya namba ya simu (API: /auth/check-phone) — imetumiaka au la
+  String? _phoneCheckMsg; // null = bado kucheck / kimepita
+  bool _phoneChecking = false;
+
   // IDs za current station (kwa API payload)
   int? _mkoaIdC;
   int? _cwIdC;
@@ -632,12 +637,47 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
     for (final c in [nameC, phoneC, waC]) {
       c.addListener(() => setState(() {}));
     }
+    phoneC.addListener(_onPhoneChanged);
     _loadRegions();
     _loadReferenceData();
   }
 
+  // ── Uthibitisho wa namba ya simu (API) — inaitika kila kubadiliko ──
+  Timer? _phoneDebounce;
+
+  void _onPhoneChanged() {
+    _phoneCheckMsg = null;
+    _phoneDebounce?.cancel();
+    final v = phoneC.text.trim();
+    if (v.length < 9) {
+      if (mounted) setState(() {});
+      return;
+    }
+    _phoneDebounce = Timer(const Duration(milliseconds: 700), _checkPhone);
+  }
+
+  Future<void> _checkPhone() async {
+    final v = phoneC.text.trim();
+    if (v.length < 9 || _phoneChecking) return;
+    _phoneChecking = true;
+    try {
+      final res = await _api.checkPhone(v);
+      final d = res.data as Map? ?? {};
+      final exists = d['exists'] == true || d['taken'] == true;
+      if (mounted) {
+        setState(() => _phoneCheckMsg =
+            exists ? 'Namba hii imetumiwa — ingia au tumia namba nyingine' : null);
+      }
+    } catch (_) {
+      // Silent — API haipatikani: usizuie mtumiaji
+    } finally {
+      _phoneChecking = false;
+    }
+  }
+
   @override
   void dispose() {
+    _phoneDebounce?.cancel();
     nameC.dispose();
     phoneC.dispose();
     waC.dispose();
@@ -841,7 +881,8 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
       case StepId.taarifa:
         return nameC.text.trim().isNotEmpty &&
             phoneC.text.trim().isNotEmpty &&
-            waC.text.trim().isNotEmpty;
+            waC.text.trim().isNotEmpty &&
+            _phoneCheckMsg == null; // namba imetumiwa → si valid
       case StepId.idara:
         return idara.isNotEmpty;
       case StepId.wizara:
@@ -863,7 +904,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   String get msg {
     switch (cur) {
       case StepId.taarifa:
-        return 'Jaza taarifa zote ili kuendelea';
+        return _phoneCheckMsg ?? 'Jaza taarifa zote ili kuendelea';
       case StepId.idara:
         return 'Chagua idara ili kuendelea';
       case StepId.wizara:
@@ -1024,6 +1065,9 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
       });
 
   void _toggleDd(String id) => setState(() {
+        // CHAGUO LA RADION na OPEN-CLOSE kwa utaratibu (ni kwa promise) —
+        // inafunguka muda wa kubadikie; ikichagulisha kipengele ina-FUNGA
+        // (single-select pekee; multi bado inabaki wazi).
         openDd = openDd == id ? null : id;
       });
 
@@ -1221,14 +1265,25 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-          child: Column(
-            children: [
-              if (!done) _topHeader(),
-              const SizedBox(height: 10),
-              _card(),
-            ],
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              // Maudhui yakae KATI-KATI YA SKRINI (vertical center) yakifiwa
+              // muda mfupi kuliko skrini — hasa hatua ya 1 na Idara. Yakikua
+              // kuliko skrini, scroll ya kawaida inaendelea bila overflow.
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (!done) _topHeader(),
+                    const SizedBox(height: 10),
+                    Expanded(child: Center(child: _card())),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -1250,9 +1305,11 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(AppIcons.arrowLeft,
-                          size: 16, color: AppColors.darkGray),
+                          size: 16, color: AppColors.blue),
                       const SizedBox(width: 4),
-                      Text('Rudi', style: _ts(13, c: AppColors.darkGray)),
+                      Text('Rudi',
+                          style: _ts(13,
+                              w: FontWeight.w500, c: AppColors.blue)),
                     ],
                   ),
                 ),
@@ -1415,6 +1472,119 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
               ),
             ),
           ],
+        ),
+      );
+
+  // ── SELECTION YA RADIO-STYLE (inline) — kwa mkoa/wilaya/kituo wa sasa ──
+  // Upru: bila search, bila scroll ndani — orodha yote ignaonekana; page
+  // ya juu inasogeza. Single-select: ukibonyeza kipengele unachagua + inafunga.
+  Widget _selectBlock(String label, String id, String value,
+      List<String> items, void Function(String) onPick) {
+    final open = openDd == id;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label(label, req: true),
+        InkWell(
+          onTap: () => _toggleDd(id),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color:
+                      (showErr && value.isEmpty) ? AppColors.red : AppColors.line,
+                  width: 1.5,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(id.startsWith('mkoa')
+                    ? AppIcons.mapPin
+                    : AppIcons.building,
+                    size: 19, color: AppColors.blue),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    value.isEmpty ? 'Chagua $label' : value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: _ts(13.5,
+                        c: value.isNotEmpty
+                            ? AppColors.text
+                            : AppColors.lightGray),
+                  ),
+                ),
+                Icon(open ? AppIcons.chevronUp : AppIcons.chevronDown,
+                    size: 18, color: AppColors.blue),
+              ],
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          alignment: Alignment.topCenter,
+          child: open
+              ? Container(
+                  margin: const EdgeInsets.only(top: 6, bottom: 4),
+                  padding: const EdgeInsets.all(4),
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Color(0x14000000),
+                          blurRadius: 14,
+                          offset: Offset(0, 4)),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final it in items)
+                        _selectRow(
+                            it, value == it, () {
+                          onPick(it);
+                          // SINGLE-select: ukichagua, panel ina-FUNGA
+                          // (kama Masomo radio widget — mtumiaji haambiwi
+                          // kuscroll au kufunga kitufe).
+                          setState(() => openDd = null);
+                        }),
+                    ],
+                  ),
+                )
+              : const SizedBox(width: double.infinity),
+        ),
+      ],
+    );
+  }
+
+  Widget _selectRow(String t, bool on, VoidCallback onTap) => InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          decoration: BoxDecoration(
+            color: on ? AppColors.light : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              _ring(on),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(t,
+                    style: _ts(13,
+                        w: on ? FontWeight.w500 : FontWeight.w400,
+                        c: on ? AppColors.blue : AppColors.text,
+                        h: 1.25)),
+              ),
+            ],
+          ),
         ),
       );
 
@@ -1614,6 +1784,37 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
           _input(AppIcons.user, nameC, 'Jina la kwanza na la ukoo'),
           _label('Namba ya simu'),
           _input(AppIcons.phone, phoneC, '0712345678'),
+          // Uthibitisho wa namba (API) — ngumu ya kioo chini ya ya simu field
+          if (_phoneCheckMsg != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  const Icon(AppIcons.alert, size: 14, color: AppColors.red),
+                  const SizedBox(width: 6),
+                  Expanded(
+                      child: Text(_phoneCheckMsg!,
+                          style:
+                              _ts(12, c: AppColors.red))),
+                ],
+              ),
+            )
+          else if (_phoneChecking)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 11,
+                    height: 11,
+                    child: CircularProgressIndicator(strokeWidth: 1.6),
+                  ),
+                  const SizedBox(width: 6),
+                  Text('Tunathibitisha namba...',
+                      style: _ts(11.5, c: AppColors.gray)),
+                ],
+              ),
+            ),
           _label('Namba ya WhatsApp'),
           _input(AppIcons.whatsapp, waC, '0623456789'),
         ],
@@ -1779,33 +1980,49 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
       children: [
         _title(isEdu ? 'Eneo la Sasa' : 'Kituo Chako cha Sasa',
             isEdu ? 'Unafanya kazi wapi sasa?' : null),
-        _label('Mkoa', req: true),
-        _ddField(
-          id: 'mkoaC',
-          icon: AppIcons.mapPin,
-          value: mkoa,
-          placeholder: 'Chagua Mkoa',
-          bad: showErr && mkoa.isEmpty,
-        ),
-        _label('Wilaya', req: true),
-        _ddField(
-          id: 'cw',
-          icon: AppIcons.building,
-          value: cw,
-          placeholder: 'Chagua Wilaya',
-          bad: showErr && mkoa.isNotEmpty && cw.isEmpty,
-          disabled: mkoa.isEmpty,
-          onOpen: mkoa.isNotEmpty ? () => _ensureWilaya(mkoa) : null,
-        ),
-        _label(unitName, req: true),
-        _ddField(
-          id: 'cs',
-          icon: cfg.icon,
-          value: cs,
-          placeholder: 'Chagua $unitName',
-          bad: showErr && cw.isNotEmpty && cs.isEmpty,
-          disabled: cw.isEmpty,
-        ),
+        // MIKOA — radio-style inline panel (bila dropdown, hakuna scroll;
+        // ukichagua, panel inajifunga na WILAYA inatokea).
+        _selectBlock('Mkoa', 'mkoaC', mkoa, mikoaLive, (v) {
+          mkoa = v;
+          cw = '';
+          cs = '';
+          _mkoaIdC = _regionIds[v];
+          _cwIdC = null;
+          _csIdC = null;
+          _csType = null;
+          if (_mkoaIdC != null) {
+            _ensureWilaya(v);
+            // Wilaya zinapopakiwa, panel ya WILAYA inafunguka moja kwa moja
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => openDd = _wilayaCache.isEmpty ? null : 'cw');
+            });
+          }
+        }),
+        if (mkoa.isNotEmpty) ...[
+          // WILAYA — ile ile radio-style panel kwa mkoa uliochaguliwa.
+          _selectBlock('Wilaya', 'cw', cw,
+              _wilayaCache[mkoa] ?? wilayaOf(mkoa), (v) {
+            cw = v;
+            cs = '';
+            _csIdC = null;
+            _csType = null;
+            _cwIdC = _districtIds['$mkoa/$v'];
+            if (_cwIdC != null) {
+              _ensureFacilities(_cwIdC!);
+              // VITUO zinapopakiwa, panel ya VITUO inafunguka moja kwa moja
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) setState(() => openDd = 'cs');
+              });
+            }
+          }),
+          if (cw.isNotEmpty)
+            _selectBlock(unitName, 'cs', cs, units, (v) {
+              cs = v;
+              final did = _cwIdC;
+              _csIdC = did != null ? _facilityIdOf['$did|$v'] : null;
+              _csType = did != null ? _facilityTypes['$did|$v'] : null;
+            }),
+        ],
       ],
     );
   }
@@ -1874,13 +2091,22 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
                 ),
             ],
           ),
-          _ddField(
-            id: 'mkoaT$k',
-            icon: AppIcons.mapPin,
-            value: t.mkoa,
-            placeholder: 'Chagua Mkoa wa Lengo',
-            bad: showErr && t.mkoa.isEmpty,
-          ),
+          // MIKOA YA LENGO — radio-style panel (bila dropdown). Ukichagua
+          // mkoa mmoja, panel inajifunga na WILAYA ZAKE zinatokea (radio 2-col).
+          _selectBlock('Mkoa wa Lengo', 'mkoaT$k', t.mkoa, mikoaLive, (v) {
+            targets[k].mkoa = v;
+            targets[k].wilaya = [kAny];
+            targets[k].shule = [kNoSchool];
+            targets[k].mkoaId = _regionIds[v];
+            targets[k].wilayaIds = [];
+            targets[k].shuleIds = {};
+            if (targets[k].mkoaId != null) {
+              _ensureWilaya(v);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) setState(() {});
+              });
+            }
+          }),
           if (t.mkoa.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.only(top: 12, bottom: 2),
@@ -1888,6 +2114,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
                   style:
                       _ts(10.5, c: AppColors.gray).copyWith(letterSpacing: .5)),
             ),
+            // WILAYA ZA LENGO — radio widget ya safu 2 (KAMA MASOMO).
             _twoCol(wl, (w) => t.wilaya.contains(w), (w) {
               _togWilaya(t, w);
               // Vituo vya wilaya mpya — pakia silent
@@ -1977,30 +2204,27 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
                     ],
                   ),
                 ),
+              // Endelea — bluu KILA WAKATI (kujaa bluu), na ukubwa mdogo.
               Opacity(
-                opacity: ok ? 1 : .45,
+                opacity: ok ? 1 : .55,
                 child: _pressable(
-                  radius: 12,
-                  onTap: () => _go(1),
-                  color: last ? AppColors.blue : Colors.transparent,
-                  side: last
-                      ? BorderSide.none
-                      : const BorderSide(color: AppColors.line),
+                  radius: 10,
+                  onTap: ok ? () => _go(1) : () => setState(() => showErr = true),
+                  color: AppColors.blue,
+                  side: BorderSide.none,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 9),
+                        horizontal: 14, vertical: 7),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(last ? 'Najisajili' : 'Endelea',
-                            style: _ts(14,
-                                w: FontWeight.w500,
-                                c:
-                                    last ? Colors.white : AppColors.text)),
+                            style:
+                                _ts(13, w: FontWeight.w500, c: Colors.white)),
                         if (!last) ...[
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 5),
                           const Icon(AppIcons.arrowRight,
-                              size: 16, color: AppColors.text),
+                              size: 14, color: Colors.white),
                         ],
                       ],
                     ),

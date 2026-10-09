@@ -268,48 +268,59 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double topInset = MediaQuery.of(context).padding.top;
+    const double barH = 58; // urefu wa AdminTopBar (hamburger pale-pale)
     return Drawer(
-      width: 300,
-      backgroundColor: Colors.white,
+      // Drawer isianzie juu kabisa — inianza CHINI YA hamburger (app bar)
+      // na ishuke hadi maudhui yake tu; status bar haiiguswi.
+      backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.horizontal(right: Radius.circular(14)),
-      ),
-      // Mockup: KILA KITU ndani ya SingleChildScrollView moja — hakuna
-      // Expanded/Spacer, hivyo hakuna nafasi kubwa tupu kabla ya "Wasifu wangu".
-      child: SafeArea(
-        child: SingleChildScrollView(
+      elevation: 0,
+      child: Padding(
+        padding: EdgeInsets.only(top: topInset + barH + 6),
+        child: Material(
+          color: Colors.white,
+          borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(14)),
+          clipBehavior: Clip.antiAlias,
+          elevation: 8,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _DrawerHeader(
-                logo: logo,
-                title: title,
-                subtitle: subtitle,
-                onClose: () => Navigator.of(context).pop(),
-              ),
-              const Divider(height: 1, thickness: 0.5, color: kBorder),
-              ListenableBuilder(
-                listenable: BadgeController.instance,
-                builder: (context, _) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: _drawerRows(context),
-                ),
-              ),
-              const Divider(height: 1, thickness: 0.5, color: kBorder),
-              _ProfileRow(
-                name: userName,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  onSelect(NavItem.wasifu);
-                },
-              ),
-              _LogoutRow(onTap: onLogout),
-            ],
+            children: _drawerChildren(context),
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _drawerChildren(BuildContext context) {
+    return [
+      _DrawerHeader(
+        logo: logo,
+        title: title,
+        subtitle: subtitle,
+        onClose: () => Navigator.of(context).pop(),
+      ),
+      const Divider(height: 1, thickness: 0.5, color: kBorder),
+      ListenableBuilder(
+        listenable: BadgeController.instance,
+        builder: (context, _) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: _drawerRows(context),
+        ),
+      ),
+      const Divider(height: 1, thickness: 0.5, color: kBorder),
+      _ProfileRow(
+        name: userName,
+        onTap: () {
+          Navigator.of(context).pop();
+          onSelect(NavItem.wasifu);
+        },
+      ),
+      _LogoutRow(onTap: onLogout),
+    ];
   }
 }
 
@@ -323,10 +334,10 @@ class _GroupLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: kTileGray,
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
+      padding: const EdgeInsets.fromLTRB(18, 6, 18, 4),
       child: Text(text,
           style: const TextStyle(
-              fontSize: 11, letterSpacing: 0.8, color: kMuted)),
+              fontSize: 10, letterSpacing: 0.8, color: kMuted)),
     );
   }
 }
@@ -346,38 +357,42 @@ class _DrawerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             clipBehavior: Clip.antiAlias,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: kBlueTint,
               border: Border.all(color: kBlueBorder, width: 1.5),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: logo,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: kTextStrong,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 13, color: kTextSecondary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: kTextSecondary),
                 ),
               ],
             ),
@@ -386,13 +401,13 @@ class _DrawerHeader extends StatelessWidget {
             onTap: onClose,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 38,
-              height: 38,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 border: Border.all(color: kFieldBorder),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(TablerIcons.x, size: 20, color: kTextStrong),
+              child: const Icon(TablerIcons.x, size: 18, color: kTextStrong),
             ),
           ),
         ],
@@ -413,13 +428,14 @@ class _DrawerRow extends StatelessWidget {
     required this.onTap,
   });
 
+  // ─── Row padding ndogo (urefu wa row uwe ~nusu ya ulivyo) ─────────
   @override
   Widget build(BuildContext context) {
     final Color fg = active ? kBlue : kText;
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.fromLTRB(active ? 15 : 18, 14, 18, 14),
+        padding: EdgeInsets.fromLTRB(active ? 15 : 18, 7, 18, 7),
         decoration: BoxDecoration(
           color: active ? kBlueTint : Colors.white,
           border: Border(
@@ -437,8 +453,11 @@ class _DrawerRow extends StatelessWidget {
             Expanded(
               child: Text(
                 item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
+                  height: 1.15,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w400,
                   color: fg,
                 ),
@@ -448,7 +467,7 @@ class _DrawerRow extends StatelessWidget {
               CountBadge(count: count, height: 22, fontSize: 12, borderWidth: 0)
             else
               const Icon(TablerIcons.chevron_right,
-                  size: 18, color: kMuted),
+                  size: 16, color: kMuted),
           ],
         ),
       ),
@@ -466,21 +485,21 @@ class _ProfileRow extends StatelessWidget {
     final initial =
         name.trim().isEmpty ? 'A' : name.trim()[0].toUpperCase();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: kBorder),
           ),
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 32,
+                height: 32,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: kBlueTint,
@@ -489,9 +508,10 @@ class _ProfileRow extends StatelessWidget {
                 ),
                 child: Text(initial,
                     style: const TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w700, color: kBlue)),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,7 +519,7 @@ class _ProfileRow extends StatelessWidget {
                     const Text(
                       'Wasifu wangu',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w700,
                         color: kTextStrong,
                       ),
@@ -509,14 +529,15 @@ class _ProfileRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 10.5,
                         color: kTextSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(TablerIcons.chevron_right, color: kMuted),
+              const Icon(TablerIcons.chevron_right,
+                  size: 16, color: kMuted),
             ],
           ),
         ),
@@ -534,15 +555,15 @@ class _LogoutRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: const Padding(
-        padding: EdgeInsets.fromLTRB(22, 14, 22, 20),
+        padding: EdgeInsets.fromLTRB(22, 8, 22, 10),
         child: Row(
           children: [
-            Icon(TablerIcons.logout, size: 22, color: kRed),
+            Icon(TablerIcons.logout, size: 18, color: kRed),
             SizedBox(width: 12),
             Text(
               'Toka',
               style: TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w600, color: kRed),
+                  fontSize: 13.5, fontWeight: FontWeight.w600, color: kRed),
             ),
           ],
         ),
