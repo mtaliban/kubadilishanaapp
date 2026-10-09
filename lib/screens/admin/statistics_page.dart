@@ -424,10 +424,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                CustomPaint(
-                  size: const Size(128, 64),
-                  painter: _SparklinePainter(d.weeklyNew),
-                ),
+                // Flexible: sparkline inafuata nafasi uliyopo (overflow guard 320px)
+                LayoutBuilder(builder: (_, c) {
+                  final w = (c.maxWidth.isFinite ? c.maxWidth : 128).clamp(60.0, 128.0);
+                  return CustomPaint(
+                    size: Size(w, w * 0.5),
+                    painter: _SparklinePainter(d.weeklyNew),
+                  );
+                }),
               ],
             ),
           ],
@@ -532,7 +536,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
   // ---- Filter chips (open a bottom sheet with a clean list + icons) --------
   Widget _filters() => Padding(
         padding: const EdgeInsets.only(bottom: 0),
-        child: Wrap(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
           spacing: 8,
           runSpacing: 8,
           children: [
@@ -552,6 +558,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
               if (v != null) _notify();
             }),
           ],
+        ),
         ),
       );
 

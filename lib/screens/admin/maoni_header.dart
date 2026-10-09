@@ -39,6 +39,7 @@ class _MaoniHeaderState extends State<MaoniHeader> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final side = (MediaQuery.of(context).size.width - 24) >= 350 ? 32.0 : 28.0;
     return Container(
       color: cs.surface,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
@@ -69,14 +70,14 @@ class _MaoniHeaderState extends State<MaoniHeader> {
                   }
                 }),
                 child: Container(
-                  width: 32,
-                  height: 32,
+                  width: side,
+                  height: side,
                   decoration: BoxDecoration(
                     border: Border.all(color: cs.outlineVariant, width: 0.6),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(_searching ? Icons.close : Icons.search,
-                      size: 17),
+                      size: _searching ? 15 : 17),
                 ),
               ),
             ],

@@ -685,28 +685,26 @@ class _FeedbackCardState extends State<_FeedbackCard> {
           const SizedBox(height: 8),
 
           // ── Mstari 2: hali (kushoto) + kufuta (kulia) ──
-          Padding(
-            padding: const EdgeInsets.only(left: 22),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _StatusBadge(answered: replied),
-                InkWell(
-                  onTap: () => widget.onDelete(id),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: 40,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: _kRedBg,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFFECACA)),
-                    ),
-                    child: Icon(PhosphorIcons.trash(), size: 16, color: _kRed),
+          Row(
+            children: [
+              Flexible(
+                child: _StatusBadge(answered: replied),
+              ),
+              InkWell(
+                onTap: () => widget.onDelete(id),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 40,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: _kRedBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFFECACA)),
                   ),
+                  child: Icon(PhosphorIcons.trash(), size: 16, color: _kRed),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
 
@@ -726,8 +724,12 @@ class _FeedbackCardState extends State<_FeedbackCard> {
           Row(children: [
             Icon(PhosphorIcons.clock(), size: 15, color: _kInk),
             const SizedBox(width: 6),
-            Text(_fmtDate(createdAt),
-                style: GoogleFonts.inter(fontSize: 13, color: _kInk)),
+            Flexible(
+              child: Text(_fmtDate(createdAt),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(fontSize: 13, color: _kInk)),
+            ),
           ]),
 
           // ── JIBU LAKO (kama limejibiwa) ──
