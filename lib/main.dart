@@ -82,6 +82,9 @@ void main() {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
+    // Theme (dark/light) ilio-hifadhiwa — isome kabla ya UI.
+    unawaited(ThemeProvider().load());
+
     // Catch widget build errors — show on screen instead of crashing
     FlutterError.onError = (details) {
       _crashLog.add('[Flutter] ${details.exceptionAsString()}');

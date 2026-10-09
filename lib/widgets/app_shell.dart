@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
@@ -35,23 +36,48 @@ class LanguageProvider extends ChangeNotifier {
 // ── Theme Provider (singleton) ──────────────────────────────────────────────
 /// Inabadilisha DARK/LIGHT theme ya app nzima (admins + users).
 /// MaterialApp ina ListenableBuilder juu yake (`themeLight()` na `darkMode()`).
+/// Chaguo LINAHIFADHIWA kwenye shared_preferences — inasoma mwanzoni.
 class ThemeProvider extends ChangeNotifier {
   static final ThemeProvider _i = ThemeProvider._();
   factory ThemeProvider() => _i;
   ThemeProvider._();
 
+  static const _prefKey = 'app_dark_mode';
   bool _dark = false;
+  bool _loaded = false;
   bool get dark => _dark;
+
+  /// Soma chaguo la mwisho kutoka shared_preferences (app inapoanza).
+  Future<void> load() async {
+    if (_loaded) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _dark = prefs.getBool(_prefKey) ?? false;
+    } catch (_) {
+      _dark = false; // fallback: light
+    }
+    _loaded = true;
+    notifyListeners();
+  }
 
   void toggle() {
     _dark = !_dark;
+    _persist();
     notifyListeners();
   }
 
   void setDark(bool d) {
     if (_dark == d) return;
     _dark = d;
+    _persist();
     notifyListeners();
+  }
+
+  Future<void> _persist() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefKey, _dark);
+    } catch (_) {}
   }
 }
 

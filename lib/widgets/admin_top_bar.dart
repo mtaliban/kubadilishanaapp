@@ -60,12 +60,8 @@ class AdminTopBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               const Spacer(),
 
-              // Kitufe cha DARK/LIGHT theme — ThemeProvider.toggle()
+              // Kitufe cha DARK/LIGHT theme — kipekee mahali pa lugha iliyokuwa
               _ThemeButton(c: c),
-              const SizedBox(width: 10),
-
-              // Kitufe cha lugha
-              _LangButton(lang: lang, c: c, onChanged: onLangChanged),
               const SizedBox(width: 10),
 
               // Duara la admin
@@ -114,84 +110,6 @@ class _ThemeButton extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-/* ============================================================
-   KITUFE CHA LUGHA (🇹🇿 SW ⌄)
-   ============================================================ */
-class _LangButton extends StatelessWidget {
-  final String lang;
-  final _BarColors c;
-  final ValueChanged<String>? onChanged;
-
-  const _LangButton({required this.lang, required this.c, this.onChanged});
-
-  static const _langs = {
-    'sw': (flag: '🇹🇿', code: 'SW', name: 'Kiswahili'),
-    'en': (flag: '🇬🇧', code: 'EN', name: 'English'),
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final cur = _langs[lang] ?? _langs['sw']!;
-
-    return PopupMenuButton<String>(
-      tooltip: 'Lugha',
-      initialValue: lang,
-      onSelected: onChanged,
-      color: c.card,
-      elevation: 6,
-      offset: const Offset(0, 42),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: c.borderStrong),
-      ),
-      itemBuilder: (_) => _langs.entries.map((e) {
-        final selected = e.key == lang;
-        return PopupMenuItem<String>(
-          value: e.key,
-          height: 44,
-          child: Row(
-            children: [
-              Text(e.value.flag, style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(e.value.name,
-                    style: TextStyle(
-                        color: c.text,
-                        fontSize: 14,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w400)),
-              ),
-              if (selected)
-                Icon(PhosphorIcons.check(), size: 16, color: c.blue),
-            ],
-          ),
-        );
-      }).toList(),
-      child: Container(
-        height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(
-          color: c.card,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: c.borderStrong),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(cur.flag, style: const TextStyle(fontSize: 15)),
-            const SizedBox(width: 6),
-            Text(cur.code,
-                style: TextStyle(
-                    color: c.text, fontSize: 13, fontWeight: FontWeight.w600)),
-            const SizedBox(width: 4),
-            Icon(PhosphorIcons.caretDown(), size: 14, color: c.muted),
-          ],
-        ),
-      ),
     );
   }
 }

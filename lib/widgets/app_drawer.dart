@@ -268,27 +268,33 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double topInset = MediaQuery.of(context).padding.top;
-    const double barH = 58; // urefu wa AdminTopBar (hamburger pale-pale)
     return Drawer(
-      // Drawer isianzie juu kabisa — inianza CHINI YA hamburger (app bar)
-      // na ishuke hadi maudhui yake tu; status bar haiiguswi.
+      // Drawer IFUNIKE hamburger: juu ya panel = KILELE CHA hamburger
+      // (topInset + chache kidogo), halafu ishuke chini kutoka hapo.
+      // WRAP-CONTENT: kile kikemia (Column mainAxisSize.min) — inaishia
+      // kwenye "Toka", hakuna nafasi nyeupe wala stretch hadi chini.
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       child: Padding(
-        padding: EdgeInsets.only(top: topInset + barH + 6),
-        child: Material(
-          color: Colors.white,
-          borderRadius: const BorderRadius.horizontal(
-              right: Radius.circular(14)),
-          clipBehavior: Clip.antiAlias,
-          elevation: 8,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: _drawerChildren(context),
-          ),
+        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top - 4),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Material(
+                color: Colors.white,
+                borderRadius: const BorderRadius.horizontal(
+                    right: Radius.circular(14)),
+                clipBehavior: Clip.antiAlias,
+                elevation: 8,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _drawerChildren(context),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

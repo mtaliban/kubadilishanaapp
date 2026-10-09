@@ -505,12 +505,18 @@ class _DropdownPanelState extends State<_DropdownPanel> {
               ),
             )
           else
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final o in items) _row(o, sel.contains(o.label)),
-              ],
-            ),
+            // GRIDI 2-COL kama MASOMO: mikoa/wilaya/vituo — display flex mbili
+            // mbili, isionekane ndefu. Single-select: ukibonyeza, inajifunga
+            // (onPick inafunga panel kwenye _pick).
+            if (widget.cfg.multi)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final o in items) _row(o, sel.contains(o.label)),
+                ],
+              )
+            else
+              _twoColPanel(items, sel),
           if (widget.cfg.multi)
             Padding(
               padding: const EdgeInsets.all(4),
@@ -534,6 +540,55 @@ class _DropdownPanelState extends State<_DropdownPanel> {
       ),
     );
   }
+
+  /// Gridi ya radio 2-col (kama Masomo) kwa single-select panels.
+  Widget _twoColPanel(List<Option> items, List<String> sel) {
+    final rows = <Widget>[];
+    for (var i = 0; i < items.length; i += 2) {
+      rows.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+              child: _gridCell(items[i].label,
+                  sel.contains(items[i].label), () => widget.onPick(items[i].label))),
+          const SizedBox(width: 16),
+          Expanded(
+            child: i + 1 < items.length
+                ? _gridCell(items[i + 1].label,
+                    sel.contains(items[i + 1].label),
+                    () => widget.onPick(items[i + 1].label))
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ));
+    }
+    return Column(mainAxisSize: MainAxisSize.min, children: rows);
+  }
+
+  Widget _gridCell(String t, bool on, VoidCallback onTap) => InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 2),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.faint)),
+          ),
+          child: Row(
+            children: [
+              _ring(on),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(t,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: _ts(12.5,
+                        w: on ? FontWeight.w500 : FontWeight.w400,
+                        c: on ? AppColors.blue : AppColors.text,
+                        h: 1.25)),
+              ),
+            ],
+          ),
+        ),
+      );
 
   Widget _row(Option o, bool on) => Padding(
         padding: const EdgeInsets.only(bottom: 2),
@@ -681,10 +736,15 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
     try {
       final res = await _api.checkPhone(v);
       final d = res.data as Map? ?? {};
-      final exists = d['exists'] == true || d['taken'] == true;
+      // API: {available: bool, reason: 'invalid_format'|nig, phone_normalized}
+      final available = d['available'] != false;
+      final invalid = d['reason'] == 'invalid_format';
       if (mounted) {
-        setState(() => _phoneCheckMsg =
-            exists ? 'Namba hii imetumiwa — ingia au tumia namba nyingine' : null);
+        setState(() => _phoneCheckMsg = invalid
+            ? 'Namba si sahihi — tumia mfano 0712345678'
+            : (!available
+                ? 'Namba hii imetumiwa — ingia au tumia namba nyingine'
+                : null));
       }
     } catch (_) {
       // Silent — API haipatikani: usizuie mtumiaji
@@ -1313,30 +1373,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
 
   Widget _topHeader() => Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Opacity(
-                opacity: step == 1 ? .4 : 1,
-                child: GestureDetector(
-                  onTap: () => _go(-1),
-                  behavior: HitTestBehavior.opaque,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(AppIcons.arrowLeft,
-                          size: 16, color: AppColors.blue),
-                      const SizedBox(width: 4),
-                      Text('Rudi',
-                          style: _ts(13,
-                              w: FontWeight.w500, c: AppColors.blue)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          // "Rudi" ya JUU imeondolewa — "Rudi" ya CHINI (footer) inatosha.
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
