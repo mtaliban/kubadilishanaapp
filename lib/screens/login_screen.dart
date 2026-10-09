@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/app_toast.dart';
@@ -284,7 +283,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Padding(
                                       padding: const EdgeInsets.only(top: 2),
                                       child: Icon(
-                                        _errorIsNetwork ? PhosphorIcons.wifiSlash() : PhosphorIcons.warningCircle(),
+                                        _errorIsNetwork
+                                            ? LoginIcons.wifiOff
+                                            : LoginIcons.alertCircle,
                                         size: 16,
                                         color: const Color(0xFFDC2626),
                                       ),

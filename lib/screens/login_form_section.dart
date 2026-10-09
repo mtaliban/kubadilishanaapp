@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
 const Color _blue = Color(0xFF1E40AF);
 const Color _text = Color(0xFF111827);
 const Color _hint = Color(0xFF9CA3AF);
 const Color _fieldBorder = Color(0xFFDDDCF3);
+
+/// Icons za login — Tabler (zime vendor'd kwenye tabler_icons_plus).
+///
+/// ```dart
+/// Icon(LoginIcons.phone, size: 22, color: Color(0xFF1E40AF))
+/// ```
+class LoginIcons {
+  static final IconData phone = TablerIcons.phoneCall; // kupiga simu
+  static final IconData login = TablerIcons.login; // Ingia
+  static final IconData forgot = TablerIcons.key; // Sahau namba?
+  static final IconData register = TablerIcons.userPlus; // Jisajili sasa
+  // Error box (2FA ya network/еёre)
+  static final IconData wifiOff = TablerIcons.wifiOff;
+  static final IconData alertCircle = TablerIcons.alertCircle;
+}
 
 /// Sehemu ya chini ya skrini ya kuingia:
 /// kuanzia "Namba ya Simu" kushuka chini
@@ -58,11 +73,8 @@ class LoginFormSection extends StatelessWidget {
               isDense: true,
               hintText: '0712345678 / email yako',
               hintStyle: const TextStyle(fontSize: 13, color: _hint),
-              prefixIcon: const PhosphorIcon(
-                PhosphorIconsRegular.phone,
-                size: 16,
-                color: _blue,
-              ),
+              prefixIcon: Icon(LoginIcons.phone,
+                  size: 22, color: _blue),
               prefixIconConstraints:
                   const BoxConstraints(minWidth: 34, minHeight: fieldHeight),
               contentPadding:
@@ -93,10 +105,14 @@ class LoginFormSection extends StatelessWidget {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.login, size: 16),
+                : const Icon(LoginIcons.login, size: 16),
             label: const Text('Ingia'),
             style: ElevatedButton.styleFrom(
               backgroundColor: _blue,
+              // loading: DISABLED ile ile — usibadilike kuwa nyeupe,
+              // mission color ibaki bluu huku spinner tu ikizunguka.
+              disabledBackgroundColor: _blue,
+              disabledForegroundColor: Colors.white,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: EdgeInsets.zero,
@@ -116,14 +132,14 @@ class LoginFormSection extends StatelessWidget {
             // kwenye skrini ndogo (overflow guard, kama kwenye LoginScreen ya zamani).
             Flexible(
               child: _LinkButton(
-                icon: PhosphorIconsRegular.key,
+                icon: LoginIcons.forgot,
                 label: 'Sahau namba?',
                 onTap: onForgot,
               ),
             ),
             Flexible(
               child: _LinkButton(
-                icon: PhosphorIconsRegular.userPlus,
+                icon: LoginIcons.register,
                 label: 'Jisajili sasa',
                 onTap: onRegister,
               ),
