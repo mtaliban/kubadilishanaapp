@@ -310,7 +310,9 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
     final slice = view.skip(start).take(_perPage).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),

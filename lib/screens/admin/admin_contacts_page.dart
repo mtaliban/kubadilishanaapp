@@ -209,7 +209,9 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) => _DetailSheet(e: e, sw: sw, onCopy: _copy),
@@ -392,7 +394,9 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
         selected: selected,
         showCheckmark: false,
         selectedColor: c,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         side: BorderSide(color: selected ? c : _kLine),
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),

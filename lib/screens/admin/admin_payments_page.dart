@@ -192,8 +192,10 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
+      return Scaffold(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         body: Center(
           child: CircularProgressIndicator(
               color: Color(0xFF1959D6)),
@@ -203,7 +205,9 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
 
     if (_error != null) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -238,7 +242,9 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       body: RefreshIndicator(
         onRefresh: _load,
         color: const Color(0xFF1959D6),

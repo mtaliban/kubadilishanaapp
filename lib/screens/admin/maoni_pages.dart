@@ -841,7 +841,9 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Futa mazungumzo?',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),

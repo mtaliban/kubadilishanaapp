@@ -137,7 +137,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final unread = _notifications.where((n) => !(n['read'] ?? false)).length;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

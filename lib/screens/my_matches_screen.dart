@@ -103,7 +103,9 @@ class _MyMatchesScreenState extends State<MyMatchesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       body: Column(children: [
         Container(
           color: Colors.white,

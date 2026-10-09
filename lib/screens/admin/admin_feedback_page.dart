@@ -157,7 +157,9 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -260,7 +262,9 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     final windowPages = List.generate(min(5, totalPages), (i) => startPage + i);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       body: RefreshIndicator(
         onRefresh: _load,
         color: _kBlue,

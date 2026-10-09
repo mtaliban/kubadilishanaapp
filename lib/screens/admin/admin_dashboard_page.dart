@@ -148,7 +148,9 @@ class _State extends State<AdminDashboardPage>
     final regTot  = (_reports['regions_total'] as num?)?.toInt();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       body: RefreshIndicator(
         onRefresh: _load,
         color: _kBlue,

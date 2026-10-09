@@ -36,13 +36,18 @@ final _footerSpecs = <(int, String, NavItem)>[
   (8, 'Maoni',     NavItem.maoni),
 ];
 
-const _kFooterBlue = Color(0xFF1E40AF); // active icon/label (mockup)
-const _kFooterBlueTint = Color(0xFFEFF6FF); // active tile bg
-const _kFooterTileGray = Color(0xFFF3F4F6); // inactive tile bg
-const _kFooterMuted = Color(0xFF6B7280); // inactive icon/label
-const _kFooterBorder = Color(0xFFE5E7EB); // footer top border
-
-// ─── Footer item (drawer_na_bottom_nav.dart — _BarButton): tile 44x44 r14 ──
+// ── DARK FOOTER (ThemeProvider.toggle) — inafuata ThemeMode ya Material app
+const _kFooterBlue = Color(0xFF1E40AF); // active icon/label (light)
+const _kFooterBlueTint = Color(0xFFEFF6FF); // active tile bg (light)
+const _kFooterTileGray = Color(0xFFF3F4F6); // inactive tile bg (light)
+const _kFooterMuted = Color(0xFF6B7280); // inactive icon/label (light)
+const _kFooterBorder = Color(0xFFE5E7EB); // footer top border (light)
+// ── DARK (ThemeProvider.toggle — inafuata ThemeMode ya MaterialApp) ──
+const _kFooterBlueDark = Color(0xFF7AA7FF); // active icon/label
+const _kFooterBlueTintDark = Color(0xFF1E293B); // active tile bg
+const _kFooterTileGrayDark = Color(0xFF212833); // inactive tile bg
+const _kFooterMutedDark = Color(0xFFA8B1C1); // inactive icon/label
+const _kFooterBorderDark = Color(0xFF2A3240); // footer top border
 
 class _FooterTile extends StatelessWidget {
   final String label;
@@ -60,7 +65,14 @@ class _FooterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color fg = active ? _kFooterBlue : _kFooterMuted;
+    // Dark/Light: inafuata ThemeMode ya app — rangi za dark zinatumika wakati
+    // brightness ni dark (ThemeProvider.toggle() inabadili MaterialApp).
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
+    final Color fgActive = dark ? _kFooterBlueDark : _kFooterBlue;
+    final Color fgMuted = dark ? _kFooterMutedDark : _kFooterMuted;
+    final Color tintActive = dark ? _kFooterBlueTintDark : _kFooterBlueTint;
+    final Color tintMuted = dark ? _kFooterTileGrayDark : _kFooterTileGray;
+    final Color fg = active ? fgActive : fgMuted;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -74,7 +86,7 @@ class _FooterTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: active ? _kFooterBlueTint : _kFooterTileGray,
+                  color: active ? tintActive : tintMuted,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, size: 24, color: fg),
@@ -237,7 +249,10 @@ class _AdminShellState extends State<AdminShell> {
     return NetworkToastListener(
       child: Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
+      // Dark/Light: inafuata ThemeMode ya app (ThemeProvider.toggle()).
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       appBar: AdminTopBar(
         initials: initial,
         lang: LanguageProvider().lang,
@@ -303,10 +318,12 @@ class _AdminShellState extends State<AdminShell> {
 
   // ── Footer (bottom nav) — mockup ya admin_panel.dart ─────────────────────
   Widget _buildBottomNav() {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _kFooterBorder, width: 0.5)),
+      decoration: BoxDecoration(
+        color: dark ? const Color(0xFF181D26) : Colors.white,
+        border: Border(top: BorderSide(
+            color: dark ? _kFooterBorderDark : _kFooterBorder, width: 0.5)),
       ),
       child: SafeArea(
         top: false,

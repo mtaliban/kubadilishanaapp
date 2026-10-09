@@ -1509,7 +1509,9 @@ class _MaoniPageState extends State<MaoniPage> {
   Widget build(BuildContext context) {
     if (_loading) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         body: const Center(
           child: CircularProgressIndicator(color: kBlue),
         ),
@@ -1517,7 +1519,9 @@ class _MaoniPageState extends State<MaoniPage> {
     }
     if (_error != null) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

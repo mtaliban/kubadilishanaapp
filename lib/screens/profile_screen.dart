@@ -403,7 +403,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /* ---------- Admin shell ---------- */
 
   Widget _adminScaffold(Widget body) => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Colors.white,
         body: SafeArea(
           child: Column(children: [
             Container(
@@ -476,7 +478,9 @@ class _AdminProfilePageState extends State<_AdminProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Colors.white,
       body: SafeArea(
         child: Column(children: [
           // Header bar
