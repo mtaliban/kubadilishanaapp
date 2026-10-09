@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
 import '../../services/websocket_service.dart';
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
+import 'maoni_header.dart';
 
 const Color kBlue = Color(0xFF1A56DB);
 const Color kAmber = Color(0xFFD97706);
@@ -294,7 +295,6 @@ class MaoniScreen extends StatefulWidget {
 class _MaoniScreenState extends State<MaoniScreen> {
   int _filter = 0; // 0 yote, 1 hayajajibiwa, 2 yamejibiwa
   String _query = '';
-  bool _filterOpen = false;
 
   void _open(MaoniThread t) {
     Navigator.of(context).push(MaterialPageRoute(
@@ -324,7 +324,6 @@ class _MaoniScreenState extends State<MaoniScreen> {
               all.where((t) => t.unread > 0).length,
               all.where((t) => t.unread == 0).length,
             ];
-            final badgeCount = _filter == 0 ? counts[1] : counts[_filter];
             final waiting = all.where((t) => t.unread > 0).toList();
 
             final q = _query.trim().toLowerCase();
@@ -340,138 +339,19 @@ class _MaoniScreenState extends State<MaoniScreen> {
 
             return Column(
               children: [
-                // ── Kichwa: Maoni + kitufe cha kuchuja ──
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
-                  child: Row(
-                    children: [
-                      Text('Maoni',
-                          style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w500,
-                              height: 1.15,
-                              color: c.text)),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                            color: kGreen, shape: BoxShape.circle),
-                      ),
-                      const Spacer(),
-                      _FilterButton(
-                        count: badgeCount,
-                        color: _filterColors[_filter],
-                        onTap: () => setState(() => _filterOpen = !_filterOpen),
-                      ),
-                    ],
-                  ),
-                ),
-                // ── Kisanduku cha kutafuta (kinaonekana moja kwa moja) ──
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
-                  // Urefu unafuata text scale — kuzuia overflow kwa font kubwa
-                  // (mwonekano sawa kabisa kwenye scale ya kawaida 1.0).
-                  child: SizedBox(
-                    height: 44 * MediaQuery.textScalerOf(context).scale(15) / 15,
-                    child: TextField(
-                      onChanged: (v) => setState(() => _query = v),
-                      textAlignVertical: TextAlignVertical.center,
-                      style: TextStyle(fontSize: 15, color: c.text),
-                      decoration: InputDecoration(
-                        hintText: 'Tafuta jina, namba au ujumbe',
-                        hintStyle: TextStyle(color: c.muted, fontSize: 15),
-                        prefixIcon: Icon(Icons.search, size: 20, color: c.muted),
-                        filled: true,
-                        fillColor: c.surface1,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
+                // ── Kichwa cha MAPYA (mockup C): kichwa + LIVE + search
+                //    kinafunguka + TABS za mstari (Yote/Yasiyojibiwa/Yaliyojibiwa)
+                MaoniHeader(
+                  selected: _filter,
+                  allCount: counts[0],
+                  unansweredCount: counts[1],
+                  answeredCount: counts[2],
+                  onTabChanged: (i) => setState(() => _filter = i),
+                  onSearch: (q) => setState(() => _query = q),
                 ),
                 Expanded(
                   child: CustomScrollView(
                     slivers: [
-                      // ── Orodha ya kuchuja (inafunguka ukibonyeza kitufe) ──
-                      if (_filterOpen)
-                        SliverToBoxAdapter(
-                          child: Container(
-                            margin: const EdgeInsets.fromLTRB(14, 0, 14, 8),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: c.border, width: 0.5),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Column(
-                              children: List.generate(3, (i) {
-                                return InkWell(
-                                  onTap: () => setState(() {
-                                    _filter = i;
-                                    _filterOpen = false;
-                                  }),
-                                  child: Container(
-                                    height: 54,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    child: Row(
-                                      children: [
-                                        SizedBox(
-                                          width: 28,
-                                          child: _filter == i
-                                              ? const Icon(Icons.check,
-                                                  size: 20, color: kBlue)
-                                              : null,
-                                        ),
-                                        Expanded(
-                                          child: Text(_filterLabels[i],
-                                              style: TextStyle(
-                                                  fontSize: 15, color: c.text)),
-                                        ),
-                                        Text('${counts[i]}',
-                                            style: TextStyle(
-                                                fontSize: 15, color: c.text2)),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ),
-                          ),
-                        ),
-                      // ── Mstari wa kichujio kilichochaguliwa ──
-                      if (_filter != 0)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                      color: _filterColors[_filter],
-                                      shape: BoxShape.circle),
-                                ),
-                                const SizedBox(width: 6),
-                                Text('${_filterLabels[_filter]} (${counts[_filter]})',
-                                    style: TextStyle(fontSize: 13, color: c.text2)),
-                                InkWell(
-                                  onTap: () => setState(() => _filter = 0),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    child: Text('Ondoa',
-                                        style: TextStyle(
-                                            fontSize: 13, color: c.accent)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       // ── Wanaosubiri jibu lako (inasogezwa kulia) ──
                       if (_filter == 0 && waiting.isNotEmpty)
                         SliverToBoxAdapter(
@@ -528,55 +408,6 @@ class _MaoniScreenState extends State<MaoniScreen> {
     );
   }
 }
-
-class _FilterButton extends StatelessWidget {
-  final int count;
-  final Color color;
-  final VoidCallback onTap;
-  const _FilterButton({required this.count, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = MC.of(context);
-    return SizedBox(
-      width: 46,
-      height: 46,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Material(
-            color: c.surface1,
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: onTap,
-              child: SizedBox(
-                width: 46,
-                height: 46,
-                child: Icon(Icons.filter_list, size: 22, color: c.text),
-              ),
-            ),
-          ),
-          if (count > 0)
-            Positioned(
-              top: -4,
-              right: -4,
-              child: IgnorePointer(
-                child: _CountBadge(
-                  n: count,
-                  color: color,
-                  height: 18,
-                  fontSize: 11,
-                  hPad: 5,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _WaitingItem extends StatelessWidget {
   final MaoniThread thread;
   final VoidCallback onTap;

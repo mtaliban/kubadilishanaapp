@@ -1016,18 +1016,34 @@ class _IncomingTable extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kGrey100))),
           child: const Row(children: [
-            SizedBox(width: 20, child: Text('#',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
-                textAlign: TextAlign.center)),
+            // Flexible columns — simu ndogo (320px) isifuruge (overflow guard)
+            Text('#',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400)),
             SizedBox(width: 6),
-            Expanded(child: Text('Kutoka',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400))),
-            SizedBox(width: 52, child: Text('Kwenda',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
-                textAlign: TextAlign.right)),
-            SizedBox(width: 36, child: Text('Idadi',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
-                textAlign: TextAlign.right)),
+            Flexible(
+                flex: 3,
+                child: Text('Kutoka',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400))),
+            Flexible(
+                flex: 2,
+                child: Text('Kwenda',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: _kGrey400))),
+            SizedBox(width: 8),
+            Text('Idadi',
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _kGrey400),
+                textAlign: TextAlign.right),
           ]),
         ),
         ...rows.asMap().entries.map((entry) {
@@ -1037,19 +1053,29 @@ class _IncomingTable extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 7),
             decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kGrey100))),
             child: Row(children: [
-              SizedBox(width: 20, child: Text('${i + 1}',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
-                  textAlign: TextAlign.center)),
+              Text('${i + 1}',
+                  style: const TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400)),
               const SizedBox(width: 6),
-              Expanded(child: Text(s['from'] as String? ?? '',
-                  style: const TextStyle(fontSize: 12, color: _kGrey700, height: 4 / 3),
-                  overflow: TextOverflow.ellipsis)),
-              SizedBox(width: 52, child: Text(s['to'] as String? ?? '',
-                  style: const TextStyle(fontSize: 12, color: _kOrange),
-                  textAlign: TextAlign.right, overflow: TextOverflow.ellipsis)),
-              SizedBox(width: 36, child: Text('${s['count'] ?? 0}',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _kBlue),
-                  textAlign: TextAlign.right)),
+              Flexible(
+                  flex: 3,
+                  child: Text(s['from'] as String? ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 12, color: _kGrey700, height: 4 / 3))),
+              Flexible(
+                  flex: 2,
+                  child: Text(s['to'] as String? ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(fontSize: 12, color: _kOrange))),
+              const SizedBox(width: 8),
+              Text('${s['count'] ?? 0}',
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700, color: _kBlue),
+                  textAlign: TextAlign.right),
             ]),
           );
         }),

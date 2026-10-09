@@ -278,31 +278,37 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Title + LIVE ──
+                    // ── Title + LIVE (flexible — LIVE badge ina-shrink kwenye simu ndogo) ──
                     Row(children: [
                       Icon(PhosphorIcons.chatCenteredDots(PhosphorIconsStyle.fill),
                           color: _kBlue, size: 26),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text('Maoni na Malalamiko',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
                                 fontSize: 22, fontWeight: FontWeight.w800, color: _kInk)),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: _kSoft,
-                          borderRadius: BorderRadius.circular(24),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: _kSoft,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Container(width: 8, height: 8,
+                                decoration: const BoxDecoration(
+                                    color: _kGreen, shape: BoxShape.circle)),
+                            const SizedBox(width: 8),
+                            Text('LIVE',
+                                maxLines: 1,
+                                style: GoogleFonts.inter(
+                                    fontSize: 12.5, fontWeight: FontWeight.w700, color: _kInk)),
+                          ]),
                         ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Container(width: 8, height: 8,
-                              decoration: const BoxDecoration(
-                                  color: _kGreen, shape: BoxShape.circle)),
-                          const SizedBox(width: 8),
-                          Text('LIVE',
-                              style: GoogleFonts.inter(
-                                  fontSize: 12.5, fontWeight: FontWeight.w700, color: _kInk)),
-                        ]),
                       ),
                     ]),
                     const SizedBox(height: 6),
