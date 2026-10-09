@@ -2161,8 +2161,8 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
                     for (final h in hs)
                       _radioRow(h, targets[0].hospitali == h, () => setState(() {
                             targets[0].hospitali = h;
-                            targets[0].hospitaliId =
-                                _hospitalIds[h].isNotEmpty ? _hospitalIds[h] : null;
+                            final hid = _hospitalIds[h] ?? '';
+                            targets[0].hospitaliId = hid.isNotEmpty ? hid : null;
                           })),
                   ],
                 ],
@@ -2369,7 +2369,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
                   color: AppColors.blue,
                   side: BorderSide.none,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                         horizontal: last ? 12 : 14, vertical: 5),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
