@@ -604,7 +604,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   bool _hospitalLoading = false;
   final Map<String, String> _hospitalIds = {};
   final Map<String, int> _hospitalRegionIds = {};
-  final Map<String, int> _hospitalDistrictIds = {};
+  final Map<String, int?> _hospitalDistrictIds = {};
   final Map<String, String> _hospitalDistrictNames = {};
   final Map<String, String> _hospitalTypes = {};
   // Kada / Masomo halisi

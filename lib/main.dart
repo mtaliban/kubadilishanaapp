@@ -20,9 +20,6 @@ import 'screens/register_screen.dart';
 import 'screens/registration_flow_screen.dart'
     show RegistrationFlowScreen, TargetArea, kNoSchool;
 import 'screens/dashboard_screen.dart';
-
-// "Wilaya yeyote" — lebo maalum ya lengo (regiza: registration_flow_screen)
-const String kWilayaAny = 'Wilaya yeyote';
 import 'screens/profile_screen.dart';
 import 'screens/donate_screen.dart';
 import 'screens/feedback_screen.dart';
@@ -39,6 +36,9 @@ import 'screens/call_history_screen.dart';
 import 'screens/settings_screen.dart';
 import 'app_config.dart';
 import 'widgets/app_shell.dart' show LanguageProvider;
+
+// "Wilaya yeyote" — lebo maalum ya lengo (regiza: registration_flow_screen)
+const String kWilayaAny = 'Wilaya yeyote';
 
 // Global error log — displayed in _ErrorApp if crash happens
 final List<String> _crashLog = [];
