@@ -105,7 +105,7 @@ class LoginFormSection extends StatelessWidget {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(LoginIcons.login, size: 16),
+                : Icon(LoginIcons.login, size: 16),
             label: const Text('Ingia'),
             style: ElevatedButton.styleFrom(
               backgroundColor: _blue,
