@@ -52,6 +52,8 @@
 import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
+import 'app_shell.dart' show ThemeProvider;
+
 /// Kurasa nne za app ya mtumiaji
 enum UserPage { dashibodi, changia, maoni, wasifu }
 
@@ -99,10 +101,13 @@ class UserTopBar extends StatelessWidget implements PreferredSizeWidget {
                 onLogout: () => _logout(context),
               ),
               const Spacer(),
-              // 2. Duara la jina: la kuonyesha tu, halibonyezeki
+              // 2. DARK/LIGHT toggle — ThemeProvider.toggle()
+              _ThemeSwitch(c: c),
+              const SizedBox(width: 10),
+              // 3. Duara la jina: la kuonyesha tu, halibonyezeki
               _Avatar(c: c, name: name),
               const SizedBox(width: 10),
-              // 3. Lugha
+              // 4. Lugha
               _LangSwitch(c: c, lang: lang, onChanged: onLangChanged),
             ],
           ),
@@ -312,6 +317,41 @@ class _Avatar extends StatelessWidget {
 /* ============================================================
    3. SW | EN
    ============================================================ */
+/* ============================================================
+   KITUFE CHA DARK/LIGHT THEME (Tabler moon/sun)
+   ============================================================ */
+class _ThemeSwitch extends StatelessWidget {
+  final _TC c;
+  const _ThemeSwitch({required this.c});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: ThemeProvider(),
+      builder: (context, _) {
+        final dark = ThemeProvider().dark;
+        return GestureDetector(
+          onTap: ThemeProvider().toggle,
+          child: Container(
+            width: 34,
+            height: 30,
+            decoration: BoxDecoration(
+              color: c.soft,
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(color: c.border, width: .5),
+            ),
+            child: Icon(
+              dark ? TablerIcons.sun : TablerIcons.moon,
+              size: 16,
+              color: c.text,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _LangSwitch extends StatelessWidget {
   final _TC c;
   final String lang;

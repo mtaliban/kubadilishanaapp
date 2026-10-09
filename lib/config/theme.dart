@@ -180,4 +180,88 @@ class AppTheme {
       ),
     ),
   );
+
+  /// DARK THEME — inatumika admins + users (ThemeProvider.toggle()).
+  /// Tumia Material mpya (dark surfaces) + accent bluu ya brand.
+  static ThemeData get dark => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      brightness: Brightness.dark,
+      surface: const Color(0xFF111827),
+      surfaceTint: Colors.transparent,
+      onSurface: const Color(0xFFF9FAFB),
+    ),
+    scaffoldBackgroundColor: const Color(0xFF0F172A), // brand-navy slate-900
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF0F172A),
+      foregroundColor: Color(0xFFF9FAFB),
+      surfaceTintColor: Color(0xFF0F172A),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: false,
+      iconTheme: IconThemeData(color: Color(0xFFF9FAFB), size: 22),
+      titleTextStyle: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
+        color: Color(0xFFF9FAFB),
+      ),
+      shape: Border(bottom: BorderSide(color: Color(0xFF1F2937))),
+    ),
+    cardTheme: CardThemeData(
+      color: const Color(0xFF1E293B),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFF334155)),
+      ),
+      margin: EdgeInsets.zero,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFF1E293B),
+      isDense: true,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(6),
+        borderSide: const BorderSide(color: Color(0xFF334155)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(6),
+        borderSide: const BorderSide(color: Color(0xFF334155)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(6),
+        borderSide: const BorderSide(color: AppColors.accent, width: 1.6),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 38),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+      ),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFF1F2937), thickness: 1, space: 1,
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.accent,
+      ),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Color(0xFF1E293B),
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+    ),
+  );
 }

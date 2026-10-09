@@ -270,11 +270,14 @@ class TargetArea {
   String mkoa = '';
   List<String> wilaya = [kAny];
   List<String> shule = [kNoSchool];
+  // Afya-Wizara: hospitali ya rufaa ya lengo kwenye mkoa huu (single-select)
+  String hospitali = '';
 
   // ── IDs halisi (API) — adapter inatumia kutuma payload sahihi ──
   int? mkoaId;
   List<int> wilayaIds = [];
   Map<String, String> shuleIds = {}; // jina -> facility_id
+  String? hospitaliId;
 }
 
 class RegistrationData {
@@ -612,6 +615,17 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   final Map<String, int?> _hospitalDistrictIds = {};
   final Map<String, String> _hospitalDistrictNames = {};
   final Map<String, String> _hospitalTypes = {};
+
+  /// Hospitali za rufaa za mkoa fulani (Afya-Wizara) — kwa radio widget
+  List<String> _hospitalsOfRegion(String regionName) {
+    final rid = _regionIds[regionName];
+    if (rid == null) return const [];
+    return [
+      for (final h in _hospitalLive)
+        if (_hospitalRegionIds[h] == rid) h,
+    ];
+  }
+
   // Kada / Masomo halisi
   final Map<String, String> _cadreNameToCode = {};   // health: jina -> code
   List<String> _cadresLiveHealth = [];
@@ -898,9 +912,12 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
         return kadaHealthNames.isEmpty ? true : kadaH.isNotEmpty;
       case StepId.eneo:
         return isAfyaW
-            ? cs.isNotEmpty
+            ? (mkoa.isNotEmpty && cs.isNotEmpty) // mkoa + hospitali ya rufaa
             : (mkoa.isNotEmpty && cw.isNotEmpty && cs.isNotEmpty);
       case StepId.maeneo:
+        if (isAfyaW) {
+          return miaka.isNotEmpty && targets.isNotEmpty && targets.first.mkoa.isNotEmpty;
+        }
         return miaka.isNotEmpty && targets.every((t) => t.mkoa.isNotEmpty);
     }
   }
@@ -919,7 +936,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
             : 'Chagua kada yako ili kuendelea';
       case StepId.eneo:
         return isAfyaW
-            ? 'Chagua hospitali yako ili kuendelea'
+            ? (mkoa.isEmpty ? 'Chagua mkoa ili kuendelea' : 'Chagua hospitali ya rufaa ili kuendelea')
             : 'Chagua mkoa, wilaya na ${unitName.toLowerCase()} ili kuendelea';
       case StepId.maeneo:
         return miaka.isEmpty
@@ -1568,6 +1585,33 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
     );
   }
 
+  /// Radio-row ya IN-LINE (AfyaW hospitali za rufaa; miaka) — ile ile
+  /// radio widget ya Masomo/_cell: duara la bluu + jina.
+  Widget _radioRow(String t, bool on, VoidCallback onTap) => InkWell(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          decoration: BoxDecoration(
+            color: on ? AppColors.light : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              _ring(on),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(t,
+                    style: _ts(13,
+                        w: on ? FontWeight.w500 : FontWeight.w400,
+                        c: on ? AppColors.blue : AppColors.text,
+                        h: 1.25)),
+              ),
+            ],
+          ),
+        ),
+      );
+
   Widget _selectRow(String t, bool on, VoidCallback onTap) => InkWell(
         onTap: onTap,
         child: Container(
@@ -1964,18 +2008,60 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
     if (isAfyaW) {
       // Hospitali za wizara — pakia mara mtumiaji anapofikia hatua hii
       WidgetsBinding.instance.addPostFrameCallback((_) => _ensureHospitals());
+      // MTIRIRIKO: MKOA (radio) → HOSPITALI ZA RUFAAA za mkoa huo (radio).
+      final hospitals = _hospitalsOfRegion(mkoa);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _title('Hospitali Yako ya Sasa', 'Unafanya kazi hospitali gani?'),
-          _label('Hospitali', req: true),
-          _ddField(
-            id: 'cs',
-            icon: cfg.icon,
-            value: cs,
-            placeholder: 'Chagua Hospitali',
-            bad: showErr && cs.isEmpty,
-          ),
+          _title('Eneo la Sasa', 'Mkoa na hospitali unayofanya kazi'),
+          _selectBlock('Mkoa', 'mkoaC', mkoa, mikoaLive, (v) {
+            mkoa = v;
+            cs = '';
+            _mkoaIdC = _regionIds[v];
+            _hospDistrictIdC = null;
+            _hospDistrictNameC = null;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() {});
+            });
+          }),
+          if (mkoa.isNotEmpty) ...[
+            // HOSPITALI RUFAAA za mkoa huo — radio button widget (bila dropdown)
+            Padding(
+              padding: const EdgeInsets.only(top: 14, bottom: 2),
+              child: Text('HOSPITALI RUFAAA ZA MKOA',
+                  style: _ts(10.5, c: AppColors.gray)
+                      .copyWith(letterSpacing: .5)),
+            ),
+            if (_hospitalLoading && hospitals.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(children: [
+                  const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 1.8)),
+                  const SizedBox(width: 8),
+                  Text('Inapakia hospitali...', style: _ts(12.5, c: AppColors.gray)),
+                ]),
+              )
+            else if (hospitals.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text('Hakuna hospitali za mkoa huu kwenye mfumo — chagua mkoa mwingine',
+                    style: _ts(12.5, c: AppColors.gray)),
+              )
+            else
+              ...[
+                for (final h in hospitals)
+                  _radioRow(h, cs == h, () => setState(() {
+                        cs = h;
+                        _csIdC = _hospitalIds[h];
+                        _csType = _hospitalTypes[h];
+                        _hospDistrictIdC = _hospitalDistrictIds[h];
+                        _hospDistrictNameC = _hospitalDistrictNames[h];
+                      })),
+              ],
+          ],
         ],
       );
     }
@@ -2031,29 +2117,57 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
     );
   }
 
-  Widget _stepMaeneo() => Column(
+  Widget _stepMaeneo() {
+    if (isAfyaW) {
+      // WIZARA YA AFYA: MKOA WA LENGO (radio) → HOSPITALI YA LENGO (radio).
+      WidgetsBinding.instance.addPostFrameCallback((_) => _ensureHospitals());
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _title(isEdu ? 'Maeneo ya Lengo' : 'Mkoa Unakotakwa Kwenda',
-              'Unataka kwenda mkoa/wilaya gani?'),
-          for (var k = 0; k < targets.length; k++) _targetCard(k),
-          if (targets.length < 3)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: InkWell(
-                onTap: _addTarget,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(AppIcons.plus, size: 18, color: AppColors.blue),
-                    const SizedBox(width: 6),
-                    Text('Ongeza Mkoa Mwingine',
-                        style:
-                            _ts(13.5, w: FontWeight.w500, c: AppColors.blue)),
+          _title('Maeneo ya Lengo', 'Unataka kwenda mkoa gani?'),
+          _selectBlock('Mkoa wa Lengo', 'mkoaT0', targets[0].mkoa, mikoaLive, (v) {
+            targets[0].mkoa = v;
+            targets[0].hospitali = '';
+            targets[0].mkoaId = _regionIds[v];
+            targets[0].hospitaliId = null;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() {});
+            });
+          }),
+          if (targets[0].mkoa.isNotEmpty)
+            Builder(builder: (_) {
+              final hs = _hospitalsOfRegion(targets[0].mkoa);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14, bottom: 2),
+                    child: Text('HOSPITALI YA RUFAA YA MCOKA (HIARI)',
+                        style: _ts(10.5, c: AppColors.gray)
+                            .copyWith(letterSpacing: .5)),
+                  ),
+                  if (hs.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Text('Hakuna hospitali za mkoa huu — wasijisajili kwa mkoa tu',
+                          style: _ts(12.5, c: AppColors.gray)),
+                    )
+                  else ...[
+                    _radioRow('Bila Hospitali (Hiari)', targets[0].hospitali.isEmpty,
+                        () => setState(() {
+                              targets[0].hospitali = '';
+                              targets[0].hospitaliId = null;
+                            })),
+                    for (final h in hs)
+                      _radioRow(h, targets[0].hospitali == h, () => setState(() {
+                            targets[0].hospitali = h;
+                            targets[0].hospitaliId =
+                                _hospitalIds[h].isNotEmpty ? _hospitalIds[h] : null;
+                          })),
                   ],
-                ),
-              ),
-            ),
+                ],
+              );
+            }),
           _label('Umefanya kazi kwa miaka mingapi?', req: true),
           _ddField(
             id: 'miaka',
@@ -2067,6 +2181,44 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
           ),
         ],
       );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _title(isEdu ? 'Maeneo ya Lengo' : 'Mkoa Unakotakwa Kwenda',
+            'Unataka kwenda mkoa/wilaya gani?'),
+        for (var k = 0; k < targets.length; k++) _targetCard(k),
+        if (targets.length < 3)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: InkWell(
+              onTap: _addTarget,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(AppIcons.plus, size: 18, color: AppColors.blue),
+                  const SizedBox(width: 6),
+                  Text('Ongeza Mkoa Mwingine',
+                      style:
+                          _ts(13.5, w: FontWeight.w500, c: AppColors.blue)),
+                ],
+              ),
+            ),
+          ),
+        _label('Umefanya kazi kwa miaka mingapi?', req: true),
+        _ddField(
+          id: 'miaka',
+          icon: kMiaka
+              .firstWhere((o) => o.label == miaka,
+                  orElse: () => const Option('', AppIcons.briefcase))
+              .icon,
+          value: miaka,
+          placeholder: 'Chagua miaka ya kazi',
+          bad: showErr && miaka.isEmpty,
+        ),
+      ],
+    );
+  }
 
   Widget _targetCard(int k) {
     final t = targets[k];
@@ -2208,27 +2360,27 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
                     ],
                   ),
                 ),
-              // Endelea — bluu KILA WAKATI (kujaa bluu), na ukubwa mdogo.
+              // Endelea — bluu KILA WAKATI, na NDGO NDIOGO (ukubwa mdogo).
               Opacity(
                 opacity: ok ? 1 : .55,
                 child: _pressable(
-                  radius: 10,
+                  radius: 9,
                   onTap: ok ? () => _go(1) : () => setState(() => showErr = true),
                   color: AppColors.blue,
                   side: BorderSide.none,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 7),
+                        horizontal: last ? 12 : 14, vertical: 5),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(last ? 'Najisajili' : 'Endelea',
                             style:
-                                _ts(13, w: FontWeight.w500, c: Colors.white)),
+                                _ts(12.5, w: FontWeight.w500, c: Colors.white)),
                         if (!last) ...[
                           const SizedBox(width: 5),
                           const Icon(AppIcons.arrowRight,
-                              size: 14, color: Colors.white),
+                              size: 13, color: Colors.white),
                         ],
                       ],
                     ),

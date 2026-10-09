@@ -32,6 +32,29 @@ class LanguageProvider extends ChangeNotifier {
   }
 }
 
+// ── Theme Provider (singleton) ──────────────────────────────────────────────
+/// Inabadilisha DARK/LIGHT theme ya app nzima (admins + users).
+/// MaterialApp ina ListenableBuilder juu yake (`themeLight()` na `darkMode()`).
+class ThemeProvider extends ChangeNotifier {
+  static final ThemeProvider _i = ThemeProvider._();
+  factory ThemeProvider() => _i;
+  ThemeProvider._();
+
+  bool _dark = false;
+  bool get dark => _dark;
+
+  void toggle() {
+    _dark = !_dark;
+    notifyListeners();
+  }
+
+  void setDark(bool d) {
+    if (_dark == d) return;
+    _dark = d;
+    notifyListeners();
+  }
+}
+
 // ── Badge Service (singleton) ─────────────────────────────────────────────────
 /// Kama web unreadStore — counts za unread notifications kwa kila route
 class BadgeService extends ChangeNotifier {

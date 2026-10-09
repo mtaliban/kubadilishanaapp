@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import 'app_drawer.dart' show MenuButtonWithDot;
+import 'app_shell.dart' show ThemeProvider;
 
 /* ============================================================
    UPAU WA JUU
@@ -59,6 +60,10 @@ class AdminTopBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               const Spacer(),
 
+              // Kitufe cha DARK/LIGHT theme — ThemeProvider.toggle()
+              _ThemeButton(c: c),
+              const SizedBox(width: 10),
+
               // Kitufe cha lugha
               _LangButton(lang: lang, c: c, onChanged: onLangChanged),
               const SizedBox(width: 10),
@@ -74,6 +79,41 @@ class AdminTopBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/* ============================================================
+   KITUFE CHA DARK/LIGHT THEME 🌙/☀️
+   ============================================================ */
+class _ThemeButton extends StatelessWidget {
+  final _BarColors c;
+  const _ThemeButton({required this.c});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: ThemeProvider(),
+      builder: (context, _) {
+        final dark = ThemeProvider().dark;
+        return GestureDetector(
+          onTap: ThemeProvider().toggle,
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: c.card,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: c.borderStrong),
+            ),
+            child: Icon(
+              dark ? PhosphorIcons.sun() : PhosphorIcons.moon(),
+              size: 17,
+              color: c.text,
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -35,7 +35,7 @@ import 'screens/user_profile_screen.dart';
 import 'screens/call_history_screen.dart';
 import 'screens/settings_screen.dart';
 import 'app_config.dart';
-import 'widgets/app_shell.dart' show LanguageProvider;
+import 'widgets/app_shell.dart' show LanguageProvider, ThemeProvider;
 
 // "Wilaya yeyote" — lebo maalum ya lengo (regiza: registration_flow_screen)
 const String kWilayaAny = 'Wilaya yeyote';
@@ -170,48 +170,54 @@ class _KubadilishanaAppState extends State<KubadilishanaApp> {
 
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
-      child: MaterialApp(
-        navigatorKey: appNavigatorKey,
-        title: 'Kubadilishana',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        locale: locale,
-        supportedLocales: const [Locale('sw'), Locale('en')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        initialRoute: '/',
-        onGenerateRoute: (settings) {
-          if (settings.name == '/user-profile') {
-            final userId = settings.arguments as String? ?? '';
-            return MaterialPageRoute(
-                builder: (_) => UserProfileScreen(userId: userId));
-          }
-          return null;
-        },
-        routes: {
-          '/': (_) => const SplashScreen(),
-          '/login': (_) => const LoginScreen(),
-          '/register': (_) => const _RegisterFlowAdapter(),
-          '/dashboard': (_) => const DashboardScreen(),
-          '/profile': (_) => const ProfileScreen(),
-          '/donate': (_) => const DonateScreen(),
-          '/feedback': (_) => const FeedbackScreen(),
-          '/notifications': (_) => const NotificationsScreen(),
-          '/announcements': (_) => const AnnouncementsScreen(),
-          '/forgot-password': (_) => const ForgotPasswordScreen(),
-          '/forgot-number': (_) => const SahauNambaScreen(),
-          '/reset-password': (_) => const ResetPasswordScreen(phone: ''),
-          '/admin-login': (_) => const AdminLoginScreen(),
-          '/admin': (_) => const AdminShell(),
-          '/my-matches': (_) => const MyMatchesScreen(),
-          '/call-history': (_) => const CallHistoryScreen(),
-          '/settings': (_) => const SettingsScreen(),
-          '/about': (_) => const _ComingSoon('Kuhusu Sisi'),
-          '/crash-log': (_) => const _CrashLogScreen(),
-        },
+      child: ListenableBuilder(
+        listenable: ThemeProvider(),
+        builder: (context, _) => MaterialApp(
+          navigatorKey: appNavigatorKey,
+          title: 'Kubadilishana',
+          debugShowCheckedModeBanner: false,
+          // DARK/LIGHT: ThemeProvider.toggle() inabadilisha app nzima.
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: ThemeProvider().dark ? ThemeMode.dark : ThemeMode.light,
+          locale: locale,
+          supportedLocales: const [Locale('sw'), Locale('en')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          initialRoute: '/',
+          onGenerateRoute: (settings) {
+            if (settings.name == '/user-profile') {
+              final userId = settings.arguments as String? ?? '';
+              return MaterialPageRoute(
+                  builder: (_) => UserProfileScreen(userId: userId));
+            }
+            return null;
+          },
+          routes: {
+            '/': (_) => const SplashScreen(),
+            '/login': (_) => const LoginScreen(),
+            '/register': (_) => const _RegisterFlowAdapter(),
+            '/dashboard': (_) => const DashboardScreen(),
+            '/profile': (_) => const ProfileScreen(),
+            '/donate': (_) => const DonateScreen(),
+            '/feedback': (_) => const FeedbackScreen(),
+            '/notifications': (_) => const NotificationsScreen(),
+            '/announcements': (_) => const AnnouncementsScreen(),
+            '/forgot-password': (_) => const ForgotPasswordScreen(),
+            '/forgot-number': (_) => const SahauNambaScreen(),
+            '/reset-password': (_) => const ResetPasswordScreen(phone: ''),
+            '/admin-login': (_) => const AdminLoginScreen(),
+            '/admin': (_) => const AdminShell(),
+            '/my-matches': (_) => const MyMatchesScreen(),
+            '/call-history': (_) => const CallHistoryScreen(),
+            '/settings': (_) => const SettingsScreen(),
+            '/about': (_) => const _ComingSoon('Kuhusu Sisi'),
+            '/crash-log': (_) => const _CrashLogScreen(),
+          },
+        ),
       ),
     );
   }
@@ -409,6 +415,23 @@ class _RegisterFlowAdapter extends StatelessWidget {
 
         // Maeneo ya lengo (DestinationInput) — mkoa moja kwa kila target card
         final destinations = <Map<String, dynamic>>[];
+        // WIZARA YA AFYA: mkoa wa lengo + HOSPITALI YA RUFAA ya lengo
+        // (single target, facility = hospitali iliyo-chaguliwa au null).
+        final isAfyaWizara = data.employmentSector == 'wizara_afya';
+        if (isAfyaWizara && data.targets.isNotEmpty && data.targets.first.mkoaId != null) {
+          final t = data.targets.first;
+          destinations.add({
+            'region_id': t.mkoaId,
+            'region_name': t.mkoa,
+            // District ya hospitali ya rufaa inatoka kwenye data ya hospitali —
+            // kwa payload, schema inakubali null (mkoa tu inapita rufaa za mkoa).
+            'district_id': null,
+            'district_name': null,
+            'facility_id': t.hospitaliId,
+            'facility_name': t.hospitali.isNotEmpty ? t.hospitali : null,
+            'notes': null,
+          });
+        } else {
         for (final t in data.targets) {
           if (t.mkoaId == null) continue;
           final anyDistrict = t.wilaya.contains(kWilayaAny);
@@ -446,6 +469,7 @@ class _RegisterFlowAdapter extends StatelessWidget {
             }
           }
         }
+        } // else: non-wizara-afya destinations
 
         final payload = <String, dynamic>{
           'full_name': data.name,

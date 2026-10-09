@@ -33,7 +33,7 @@ import 'screens/my_matches_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/call_history_screen.dart';
 import 'screens/settings_screen.dart';
-import 'widgets/app_shell.dart' show LanguageProvider;
+import 'widgets/app_shell.dart' show LanguageProvider, ThemeProvider;
 
 // "Wilaya yeyote" — lebo maalum ya lengo (regiza: registration_flow_screen)
 const String kWilayaAny = 'Wilaya yeyote';
@@ -146,11 +146,16 @@ class _UserAppState extends State<_UserApp> {
 
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
-      child: MaterialApp(
+      child: ListenableBuilder(
+        listenable: ThemeProvider(),
+        builder: (context, _) => MaterialApp(
         navigatorKey: appNavigatorKey,
         title: 'Kubadilishana',
         debugShowCheckedModeBanner: false,
+        // DARK/LIGHT: ThemeProvider.toggle() inabadilisha app nzima.
         theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeProvider().dark ? ThemeMode.dark : ThemeMode.light,
         locale: locale,
         supportedLocales: const [Locale('sw'), Locale('en')],
         localizationsDelegates: const [
@@ -186,6 +191,7 @@ class _UserAppState extends State<_UserApp> {
           '/about':           (_) => const _ComingSoon('Kuhusu Sisi'),
           // /admin na /admin-login HAZIPO — admin APK pekee ina routes hizo
         },
+        ),
       ),
     );
   }
