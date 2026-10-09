@@ -426,7 +426,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 const SizedBox(width: 12),
                 // Flexible: sparkline inafuata nafasi uliyopo (overflow guard 320px)
                 LayoutBuilder(builder: (_, c) {
-                  final w = (c.maxWidth.isFinite ? c.maxWidth : 128).clamp(60.0, 128.0);
+                  final w = ((c.maxWidth.isFinite ? c.maxWidth : 128).clamp(60.0, 128.0)).toDouble();
                   return CustomPaint(
                     size: Size(w, w * 0.5),
                     painter: _SparklinePainter(d.weeklyNew),
@@ -539,8 +539,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-          spacing: 8,
-          runSpacing: 8,
           children: [
             _chip(TablerIcons.map_2, _mkoa, _mkoa != 'Mkoa wote', () async {
               final v = await _pick('Chagua mkoa', _mkoaOptions, _mkoa);
