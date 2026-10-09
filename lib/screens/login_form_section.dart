@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 const Color _blue = Color(0xFF1E40AF);
 const Color _text = Color(0xFF111827);
@@ -48,13 +49,20 @@ class LoginFormSection extends StatelessWidget {
           height: fieldHeight,
           child: TextField(
             controller: phoneController,
-            keyboardType: TextInputType.phone,
+            // Keyboard ya MANENO (si namba tu) — wanaojulikana kwenye field
+            // hii wanaweza kuingia email (admins). Namba ndizo kawaida, lakini
+            // admin anaweza kuandika email yake hapa hapa; login inajua kutofautisha.
+            keyboardType: TextInputType.text,
             style: const TextStyle(fontSize: 13, color: _text),
             decoration: InputDecoration(
               isDense: true,
-              hintText: '0712345678',
+              hintText: '0712345678 / email yako',
               hintStyle: const TextStyle(fontSize: 13, color: _hint),
-              prefixIcon: const Icon(Icons.phone_outlined, size: 16, color: _blue),
+              prefixIcon: const PhosphorIcon(
+                PhosphorIconsRegular.phone,
+                size: 16,
+                color: _blue,
+              ),
               prefixIconConstraints:
                   const BoxConstraints(minWidth: 34, minHeight: fieldHeight),
               contentPadding:
@@ -108,14 +116,14 @@ class LoginFormSection extends StatelessWidget {
             // kwenye skrini ndogo (overflow guard, kama kwenye LoginScreen ya zamani).
             Flexible(
               child: _LinkButton(
-                icon: Icons.help_outline,
+                icon: PhosphorIconsRegular.key,
                 label: 'Sahau namba?',
                 onTap: onForgot,
               ),
             ),
             Flexible(
               child: _LinkButton(
-                icon: Icons.person_add_alt_1_outlined,
+                icon: PhosphorIconsRegular.userPlus,
                 label: 'Jisajili sasa',
                 onTap: onRegister,
               ),
