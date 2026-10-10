@@ -347,6 +347,166 @@ Widget _iconBox(IconData icon, Color color, Color bg, double size) => Container(
       child: Icon(icon, size: size * 0.62, color: color),
     );
 
+// ═════════════════════════════════════════════════════════════════════════════
+//  _SearchGrid — orodha ya chaguzi katika SAFU MBILI + search juu (hatua Eneo).
+//  Requirements (design ya picha): grid ya columns 2, radio ring + jina, majina
+//  marefu mistari 2; search inachuja papo hapo (case-insensitive + trim); urefu
+//  wa juu ~45% ya skrini (orodha pekee inascroll, search inabaki); "Hakuna
+//  matokeo"; hakuna keyboard ya auto-open; ws na jina sahihi inafunga.
+//
+//  Chaguzi windi zinatakaswa kwa id (Map<name, subtitle?>); majina yanayojirudia
+//  yanaonyesha kata (subtitle kijivu) ili zitofautiane.
+// ═════════════════════════════════════════════════════════════════════════════
+class _SearchGrid extends StatefulWidget {
+  // options: chaguo zote (tayari de-duplicated + panguzo kwa alfabeti);
+  // subtitle: jina la kata kwa majina yanayojirudia (null = hakuna).
+  final List<_GridOpt> options;
+  final String? selected;
+  final void Function(_GridOpt) onPick;
+  final String hint;
+  const _SearchGrid({
+    required this.options,
+    required this.selected,
+    required this.onPick,
+    this.hint = 'Tafuta…',
+  });
+  @override
+  State<_SearchGrid> createState() => _SearchGridState();
+}
+
+class _GridOpt {
+  final String name;
+  final String? sub; // kata / ward (majina yanayojirudia tu)
+  const _GridOpt(this.name, {this.sub});
+}
+
+class _SearchGridState extends State<_SearchGrid> {
+  final _qCtrl = TextEditingController();
+  String _q = '';
+
+  @override
+  void dispose() {
+    _qCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _q.trim().toLowerCase();
+    final list = q.isEmpty
+        ? widget.options
+        : widget.options
+            .where((o) => o.name.toLowerCase().contains(q))
+            .toList();
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.45,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x14000000), blurRadius: 14, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Search — INABAKI juu (siyo kwenye scroll; orodha tu inascroll).
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+            child: SizedBox(
+              height: 36,
+              child: TextField(
+                controller: _qCtrl,
+                keyboardType: TextInputType.visiblePassword, // HAKUNA auto-open
+                onChanged: (v) => setState(() => _q = v),
+                style: _ts(13),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: widget.hint,
+                  hintStyle: _ts(12.5, c: AppColors.lightGray),
+                  prefixIcon: const Icon(AppIcons.search, size: 16, color: AppColors.gray),
+                  prefixIconConstraints: const BoxConstraints(minWidth: 30),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  filled: true,
+                  fillColor: AppColors.faint,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Flexible(
+            child: list.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Text('Hakuna matokeo', style: _ts(12.5, c: AppColors.gray)),
+                  )
+                : GridView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      // Urefu wa kila chaguo 48px (mistari 2) — nafasi ya kutosha
+                      mainAxisExtent: 48,
+                    ),
+                    itemCount: list.length,
+                    itemBuilder: (context, i) {
+                      final o = list[i];
+                      final sel = o.name == widget.selected;
+                      return InkWell(
+                        onTap: () => widget.onPick(o),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 3),
+                                child: _ring(sel),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // Majina marefu: mistari 2, yakatwe kwa "…"
+                                    Text(o.name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: _ts(13,
+                                            w: sel ? FontWeight.w500 : FontWeight.w400,
+                                            c: sel ? AppColors.blue : AppColors.text,
+                                            h: 1.15)),
+                                    // Subtitle ya kata (kwa majina yanayojirudia tu)
+                                    if (o.sub != null && o.sub!.isNotEmpty)
+                                      Text(o.sub!,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: _ts(10.5, c: AppColors.gray)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 Widget _ring(bool on) => on
     ? Container(
         width: 16,
@@ -662,6 +822,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   final Map<int, List<String>> _facilityCache = {};  // districtId -> vituo (majina)
   final Map<String, String> _facilityIdOf = {};      // 'districtId|jina' -> facility_id
   final Map<String, String> _facilityTypes = {};     // 'districtId|jina' -> type
+  final Map<String, String> _facilityWardOf = {};   // 'districtId|jina' -> ward (kata)
   // Hospitali za Wizara ya Afya (regio zote — mkoa hauombwi kwenye UI)
   List<String> _hospitalLive = [];
   bool _hospitalLoading = false;
@@ -869,6 +1030,32 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
     } catch (_) {}
   }
 
+  // ── De-dupe ya shule/kituo: jina linalojirudia 2+ linapata subtitle ya kata
+  //  (ward) ili zitofautiane kwenye grid; nakala za ID zilezile zinaondolewa.
+  //  Orodha hipangwa kwa alfabeti (case-insensitive).
+  // Chaguo moja + subtitle yake ya kata (kwa majina yanayojirudia).
+  _GridOpt _facilitiesSubOf(int? districtId, String name) {
+    final ward = districtId == null
+        ? ''
+        : (_facilityWardOf['$districtId|$name'] ?? '');
+    final isDup = districtId != null &&
+        (_facilityCache[districtId] ?? const []).where((n) => n == name).length > 1;
+    return isDup ? _GridOpt(name, sub: ward) : _GridOpt(name);
+  }
+
+  /// Ondoa nakala za ID zilezile (hakuna jina litakalojitokeza mara mbili).
+  /// Default fallback orodha (kama mkoa haya-loadi) inabaki kama ilivyo.
+  List<String> _dedupeFacilities(int districtId) {
+    final live = _facilityCache[districtId];
+    if (live == null) return cs == '' ? [] : [cs];
+    final byId = <String, String>{}; // id -> jina (nakala za ID zinapotea)
+    for (final n in live) {
+      final id = _facilityIdOf['$districtId|$n'] ?? n;
+      byId[id] = n;
+    }
+    return byId.values.toList();
+  }
+
   Future<void> _ensureFacilities(int districtId) async {
     if (_facilityCache.containsKey(districtId)) return;
     final cat = _deptNameToCode[idara] ?? 'health';
@@ -883,6 +1070,10 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
         final key = '$districtId|$name';
         _facilityIdOf[key] = '${f['id'] ?? f['code'] ?? ''}';
         _facilityTypes[key] = '${f['type'] ?? f['type_category'] ?? ''}';
+        // Kata/ward (kwa majina yanayojirudia — API ina ward kwenye
+        //  schools/health_facilities collections).
+        final ward = '${f['ward'] ?? f['kata'] ?? ''}'.trim();
+        if (ward.isNotEmpty) _facilityWardOf[key] = ward;
       }
       _facilityCache[districtId] = names;
       if (mounted) setState(() {});
@@ -1589,8 +1780,14 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   // Upru: bila search, bila scroll ndani — orodha yote ignaonekana; page
   // ya juu inasogeza. Single-select: ukibonyeza kipengele unachagua + inafunga.
   Widget _selectBlock(String label, String id, String value,
-      List<String> items, void Function(String) onPick) {
+      List<String> items, void Function(String) onPick,
+      {_GridOpt? Function(String)? optOf}) {
     final open = openDd == id;
+    // Chaguzi za grid: options kutoka items (optOf inaleta subtitle za kata); 
+    //  panga kwa alfabeti case-insensitive ("AMANAH..." si mbele ya "Abed...").
+    final opts = <_GridOpt>[
+      for (final it in items) optOf?.call(it) ?? _GridOpt(it),
+    ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1640,32 +1837,16 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
           child: open
               ? Container(
                   margin: const EdgeInsets.only(top: 6, bottom: 4),
-                  padding: const EdgeInsets.all(4),
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: const [
-                      BoxShadow(
-                          color: Color(0x14000000),
-                          blurRadius: 14,
-                          offset: Offset(0, 4)),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (final it in items)
-                        _selectRow(
-                            it, value == it, () {
-                          onPick(it);
-                          // SINGLE-select: ukichagua, panel ina-FUNGA
-                          // (kama Masomo radio widget — mtumiaji haambiwi
-                          // kuscroll au kufunga kitufe).
-                          setState(() => openDd = null);
-                        }),
-                    ],
+                  child: _SearchGrid(
+                    options: opts,
+                    selected: value.isEmpty ? null : value,
+                    hint: 'Tafuta $label…',
+                    onPick: (o) {
+                      onPick(o.name);
+                      // Ukichagua: panel inafunga + jina lionekane kwenye
+                      // kisanduku; search kiwekwe tupu (State ya grid inafuta).
+                      setState(() => openDd = null);
+                    },
                   ),
                 )
               : const SizedBox(width: double.infinity),
@@ -2126,7 +2307,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _title('Eneo la Sasa', 'Mkoa na hospitali unayofanya kazi'),
-          _selectBlock('Mkoa', 'mkoaC', mkoa, mikoaLive, (v) {
+        _selectBlock('Mkoa', 'mkoaC', mkoa, mikoaLive, (v) {
             mkoa = v;
             cs = '';
             _mkoaIdC = _regionIds[v];
@@ -2135,7 +2316,7 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) setState(() {});
             });
-          }),
+          }, optOf: null),
           if (mkoa.isNotEmpty) ...[
             // HOSPITALI RUFAAA za mkoa huo — radio button widget (bila dropdown)
             Padding(
@@ -2163,16 +2344,21 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
                     style: _ts(12.5, c: AppColors.gray)),
               )
             else
-              ...[
-                for (final h in hospitals)
-                  _radioRow(h, cs == h, () => setState(() {
-                        cs = h;
-                        _csIdC = _hospitalIds[h];
-                        _csType = _hospitalTypes[h];
-                        _hospDistrictIdC = _hospitalDistrictIds[h];
-                        _hospDistrictNameC = _hospitalDistrictNames[h];
-                      })),
-              ],
+              _SearchGrid(
+                options: [
+                  for (final h in hospitals)
+                    _GridOpt(h, sub: _hospitalDistrictNames[h]),
+                ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
+                selected: cs.isEmpty ? null : cs,
+                hint: 'Tafuta hospitali…',
+                onPick: (o) => setState(() {
+                      cs = o.name;
+                      _csIdC = _hospitalIds[o.name];
+                      _csType = _hospitalTypes[o.name];
+                      _hospDistrictIdC = _hospitalDistrictIds[o.name];
+                      _hospDistrictNameC = _hospitalDistrictNames[o.name];
+                    }),
+              ),
           ],
         ],
       );
@@ -2218,11 +2404,19 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
             }
           }),
           if (cw.isNotEmpty)
-            _selectBlock(unitName, 'cs', cs, units, (v) {
-              cs = v;
+            Builder(builder: (_) {
               final did = _cwIdC;
-              _csIdC = did != null ? _facilityIdOf['$did|$v'] : null;
-              _csType = did != null ? _facilityTypes['$did|$v'] : null;
+              // Shule/kituo: de-dupe kwa ID (nakala zilezile zinaondolewa),
+              // majina yanayojirudia yanaonyesha kata chini ya jina.
+              final units = <String>[
+                for (final f in did != null ? (_dedupeFacilities(did)) : <String>[])
+                  f,
+              ];
+              return _selectBlock(unitName, 'cs', cs, units, (v) {
+                cs = v;
+                _csIdC = did != null ? _facilityIdOf['$did|$v'] : null;
+                _csType = did != null ? _facilityTypes['$did|$v'] : null;
+              }, optOf: (n) => _facilitiesSubOf(did, n));
             }),
         ],
       ],
