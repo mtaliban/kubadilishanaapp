@@ -445,8 +445,16 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                             Icon(PhosphorIcons.chatCenteredDots(),
                                 color: _kGrey400T(context), size: 44),
                             const SizedBox(height: 12),
-                            Text('Hakuna maoni',
-                                style: GoogleFonts.inter(fontSize: 15, color: _kGreyT(context))),
+                            Text(_searchCtrl.text.trim().isNotEmpty
+                                    ? 'Hakuna maoni yanayolingana na ulichotafuta'
+                                    : _filter == 'Hayajajibiwa'
+                                        ? 'Umejibu maoni yote'
+                                        : _filter == 'Yamejibiwa'
+                                            ? 'Hakuna maoni yaliyojibiwa bado'
+                                            : 'Maoni ya watumiaji yataonekana hapa',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                    fontSize: 13, color: _kGreyT(context))),
                           ]),
                         ),
                       )
