@@ -266,35 +266,40 @@ class AppDrawer extends StatelessWidget {
     return rows;
   }
 
+  // Urefu wa body ya footer (bottom nav): padding (4,10,4,8) + container
+  // 44 + gap 4 + label ≈ 80. SystemInset ya chini inajumlishwa runtime —
+  // simu zote (bila/na gesture bar) zinapata urefu halisi wa footer, hivyo
+  // drawer inafanya kazi vizuri kwenye simu za ukubwa tofauti.
+  static const double kFooterBody = 80;
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
       // Drawer IFUNIKE hamburger: juu ya panel = KILELE CHA hamburger
-      // (topInset + chache kidogo), halafu ishuke chini kutoka hapo.
-      // WRAP-CONTENT: kile kikemia (Column mainAxisSize.min) — inaishia
-      // kwenye "Toka", hakuna nafasi nyeupe wala stretch hadi chini.
+      // (topInset + chache kidogo), halafu inashuka hadi JUU YA FOOTER.
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       child: Padding(
-        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top - 4),
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Material(
-                color: Colors.white,
-                borderRadius: const BorderRadius.horizontal(
-                    right: Radius.circular(14)),
-                clipBehavior: Clip.antiAlias,
-                elevation: 8,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: _drawerChildren(context),
-                ),
-              ),
-            ),
-          ],
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top - 4,
+          // Urefu wa footer (body + system inset) — drawer inaishia juu
+          // yake, icons za chini zinaonekana na kubonyezeka.
+          bottom: kFooterBody + MediaQuery.of(context).padding.bottom,
+        ),
+        // Column moja halisi (height inasimamiwa): Spacer inaingia nafasi
+        // ya pungufu bila kusinyoosha rows — rows zina ukubwa ule ulikuwa nao,
+        // Wasifu + Toka zibandikwe chini ofu (kabla ya footer).
+        child: Material(
+          color: Colors.white,
+          borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(14)),
+          clipBehavior: Clip.antiAlias,
+          elevation: 8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: _drawerChildren(context),
+          ),
         ),
       ),
     );
@@ -318,6 +323,9 @@ class AppDrawer extends StatelessWidget {
         ),
       ),
       const Divider(height: 1, thickness: 0.5, color: kBorder),
+      // Nafasi iliyoongezwa (Spacer): rows za menu hazinyooshwi — Wasifu
+      // wangu + Toka zibandikwe CHINI ya drawer, panel ifikishe footer.
+      const Spacer(),
       _ProfileRow(
         name: userName,
         onTap: () {
