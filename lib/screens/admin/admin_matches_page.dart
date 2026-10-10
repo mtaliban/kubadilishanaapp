@@ -128,33 +128,39 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     if (_loading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
+      return Scaffold(
+        backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF0F7A52)),
+          child: CircularProgressIndicator(
+              color: dark ? const Color(0xFF5FD49A) : const Color(0xFF0F7A52)),
         ),
       );
     }
 
     if (_error != null) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.cloud_off_rounded,
-                  size: 52, color: Color(0xFFCBD5E1)),
+              Icon(Icons.cloud_off_rounded,
+                  size: 52,
+                  color: dark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
               const SizedBox(height: 14),
-              const Text('Imeshindikana kupakia',
+              Text('Imeshindikana kupakia',
                   style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600)),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: dark ? const Color(0xFFF9FAFB) : const Color(0xFF0F172A))),
               const SizedBox(height: 6),
               Text(_error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      color: Color(0xFF5B6475), fontSize: 13)),
+                  style: TextStyle(
+                      color: dark ? const Color(0xFFA8B1C1) : const Color(0xFF5B6475),
+                      fontSize: 13)),
               const SizedBox(height: 18),
               FilledButton.icon(
                 onPressed: _load,
@@ -173,10 +179,10 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
       body: RefreshIndicator(
         onRefresh: _load,
-        color: const Color(0xFF0F7A52),
+        color: dark ? const Color(0xFF5FD49A) : const Color(0xFF0F7A52),
         child: WenzaoView(people: _people, allRegions: _allRegions),
       ),
     );

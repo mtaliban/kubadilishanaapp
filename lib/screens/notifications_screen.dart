@@ -220,7 +220,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _header(int unread) {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
       padding: EdgeInsets.fromLTRB(
           20, MediaQuery.of(context).padding.top + 14, 20, 14),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -345,7 +345,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 width: 20, height: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
                   border: Border.all(color: _kGrey200, width: 1.5),
                 ),
                 child: ClipOval(
@@ -358,7 +358,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         child: Text('ES',
                             style: TextStyle(fontSize: 7,
                                 fontWeight: FontWeight.w800,
-                                color: Colors.white)),
+                                color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white)),
                       ),
                     ),
                   ),

@@ -153,7 +153,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           : Colors.white,
       body: Column(children: [
         Container(
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
           padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 12),
           child: Row(children: [
             GestureDetector(
@@ -223,7 +223,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 40),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: _kGrey200),
                       boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2))],
@@ -342,7 +342,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kGrey200),
         boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
@@ -432,7 +432,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kGrey200),
         boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2))],

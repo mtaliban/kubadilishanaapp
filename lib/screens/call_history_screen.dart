@@ -147,7 +147,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
       body: Column(
         children: [
           Container(
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
             padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 12),
             child: Row(children: [
               GestureDetector(
@@ -177,7 +177,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
           Container(height: 1, color: _kGrey200),
           // Filter row — SingleChildScrollView: font kubwa haikiuki chips
           Container(
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -309,7 +309,7 @@ class _CallCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kGrey200),
         boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2))],

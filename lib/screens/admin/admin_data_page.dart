@@ -31,6 +31,15 @@ const _kGrey100  = Color(0xFFF3F4F6);
 const _kGrey300  = Color(0xFFD1D5DB);
 const _kBgSoft   = Colors.white;
 
+// ── Theme-aware helpers (dark/light) — dark variants zinazosomeka ────────────
+bool _kIsDark(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
+Color _kCardBg(BuildContext c) => _kIsDark(c) ? const Color(0xFF1E293B) : Colors.white;
+Color _kInk(BuildContext c) => _kIsDark(c) ? const Color(0xFFE7ECF8) : _kGrey900;
+Color _kMutedT(BuildContext c) => _kIsDark(c) ? const Color(0xFF9AA8C7) : _kGrey500;
+Color _kBorderT(BuildContext c) => _kIsDark(c) ? const Color(0xFF2A3240) : _kGrey200;
+Color _kBlueT(BuildContext c) => _kIsDark(c) ? const Color(0xFF7AA7FF) : _kBlue;
+Color _kBlueBgT(BuildContext c) => _kIsDark(c) ? const Color(0xFF1C2A44) : _kBlueBg;
+
 class AdminDataPage extends StatefulWidget {
   const AdminDataPage({super.key});
   @override
@@ -493,9 +502,9 @@ class _AdminDataPageState extends State<AdminDataPage>
 
   Widget _tabBar() => Container(
     // Rangi iko ndani ya decoration (Container hairuhusu color + decoration).
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      border: Border(bottom: BorderSide(color: _kGrey200)),
+    decoration: BoxDecoration(
+      color: _kCardBg(context),
+      border: Border(bottom: BorderSide(color: _kIsDark(context) ? const Color(0xFF2A3240) : _kGrey200)),
     ),
     child: TabBar(
       controller: _tabCtrl,
@@ -660,9 +669,9 @@ class _AdminDataPageState extends State<AdminDataPage>
                   (ctx, i) => Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: _kCardBg(context),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: _kGrey200),
+                      border: Border.all(color: _kIsDark(context) ? const Color(0xFF2A3240) : _kGrey200),
                     ),
                     child: _buildItem(type, filtered[i] as Map<String, dynamic>),
                   ),
@@ -706,7 +715,7 @@ class _AdminDataPageState extends State<AdminDataPage>
           prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 16, color: const Color(0xFF334155)),
           prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 0),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: _kIsDark(context) ? const Color(0xFF1E293B) : Colors.white,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
           border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1)),
@@ -864,7 +873,7 @@ class _AdminDataPageState extends State<AdminDataPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: _kIsDark(context) ? const Color(0xFF1E293B) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -888,9 +897,9 @@ class _AdminDataPageState extends State<AdminDataPage>
                     // Nyeupe + border (ilikuwa kijivu #F1F3F6).
                     // (const imeondolewa: Border.all si const factory.)
                     decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: _kCardBg(ctx),
                         shape: BoxShape.circle,
-                        border: Border.all(color: _kGrey200)),
+                        border: Border.all(color: _kIsDark(ctx) ? const Color(0xFF334155) : _kGrey200)),
                     child: Icon(PhosphorIcons.x(), size: 14, color: _kGrey700),
                   ),
                 ),
@@ -909,7 +918,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                   hintText: 'Tafuta...',
                   hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
                   prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: _kGrey400, size: 16),
-                  fillColor: Colors.white, filled: true,
+                  fillColor: _kIsDark(context) ? const Color(0xFF1E293B) : Colors.white, filled: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),

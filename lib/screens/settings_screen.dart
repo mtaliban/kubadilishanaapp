@@ -150,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : Colors.white,
       body: ToastHost(child: Column(children: [
         Container(
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
           padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 12),
           child: Row(children: [
             GestureDetector(
@@ -186,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 10),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: _kGrey200),
               boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
@@ -229,7 +229,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 10),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: _kGrey200),
               boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],

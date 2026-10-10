@@ -41,9 +41,17 @@ import '../../services/websocket_service.dart';
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
 
 // ----------------------------------------------------------------------------
-// Colors (from the approved mockup)
+// Colors (from the approved mockup) — DARK/LIGHT via Theme.of(context).
+// LIGHT mode: rangi zimebaki KAMA WALIVYO (mockup ya WhatsApp).
+// DARK mode: kila rangi ina toleo la giza inasomeka — kupitia _C.of().
 // ----------------------------------------------------------------------------
 class _C {
+  final bool _d;
+  const _C(this._d);
+  static _C of(BuildContext context) =>
+      _C(Theme.of(context).brightness == Brightness.dark);
+
+  // ── PALETA (static const za light — ilibaki kama zilivyo kwa light) ─────
   // Ink/neutral — rangi za herufi.
   static const ink = Color(0xFF141A26);
   static const title = Color(0xFF141A26);
@@ -74,6 +82,66 @@ class _C {
   static const replyBar = Color(0xFFFFFFFF); // bar ya ku-reply (nyeupe)
   static const replyIconBg = Color(0xFFEFF1F3);
   static const chipText = Color(0xFF3B4451);
+
+  // ── PALETA YA GIZA (dark variants zinazosomeka) ───────────────────────
+  static const _inkD = Color(0xFFE7ECF3);
+  static const _titleD = Color(0xFFE7ECF3);
+  static const _mutedD = Color(0xFF8FA0B8);
+  static const _muted2D = Color(0xFF94A5BC);
+  static const _fieldD = Color(0xFF1E293B);
+  static const _lineD = Color(0xFF2C3A4D);
+  static const _borderD = Color(0xFF2A3849);
+  static const _greenD = Color(0xFF34D17B);
+  static const _greenFgD = Color(0xFF86EFAC);
+  static const _greenBgD = Color(0xFF14532D);
+  static const _avatarBgD = Color(0xFF2E3D53);
+  static const _chatBgD = Color(0xFF0E1626); // beige → giza safi (chat)
+  static const _bubbleInD = Color(0xFF1B2941); // bubble mtumiaji (giza)
+  static const _bubbleOutD = Color(0xFF144733); // bubble yako (kijani giza)
+  static const _quoteInD = Color(0x11FFFFFF);
+  static const _quoteOutD = Color(0xFF0F5C46);
+  static const _tickD = Color(0xFF7C93AD);
+  static const _quoteNameD = Color(0xFF4ADE80);
+  static const _sendOffD = Color(0xFF33455C);
+  static const _redD = Color(0xFFF87171);
+  static const _redBgD = Color(0xFF3A1A1C);
+  static const _hintD = Color(0xFF7B8DA5);
+  static const _replyBarD = Color(0xFF182339);
+  static const _replyIconBgD = Color(0xFF243348);
+  static const _chipTextD = Color(0xFFC8D4E4);
+
+  // ── GETTERS (theme-aware) instance getters ─────────────────────────────
+  Color get ink_ => _d ? _inkD : ink;
+  Color get title_ => _d ? _titleD : title;
+  Color get muted_ => _d ? _mutedD : muted;
+  Color get muted2_ => _d ? _muted2D : muted2;
+  Color get field_ => _d ? _fieldD : field;
+  Color get line_ => _d ? _lineD : line;
+  Color get border_ => _d ? _borderD : border;
+  Color get green_ => _d ? _greenD : green;
+  Color get greenFg_ => _d ? _greenFgD : greenFg;
+  Color get greenBg_ => _d ? _greenBgD : greenBg;
+  Color get avatarBg_ => _d ? _avatarBgD : avatarBg;
+  Color get chatBg_ => _d ? _chatBgD : chatBg;
+  Color get bubbleIn_ => _d ? _bubbleInD : bubbleIn;
+  Color get bubbleOut_ => _d ? _bubbleOutD : bubbleOut;
+  Color get quoteIn_ => _d ? _quoteInD : quoteIn;
+  Color get quoteOut_ => _d ? _quoteOutD : quoteOut;
+  Color get tick_ => _d ? _tickD : tick;
+  Color get quoteName_ => _d ? _quoteNameD : quoteName;
+  Color get sendOff_ => _d ? _sendOffD : sendOff;
+  Color get red_ => _d ? _redD : red;
+  Color get redBg_ => _d ? _redBgD : redBg;
+  Color get hint_ => _d ? _hintD : hint;
+  Color get replyBar_ => _d ? _replyBarD : replyBar;
+  Color get replyIconBg_ => _d ? _replyIconBgD : replyIconBg;
+  Color get chipText_ => _d ? _chipTextD : chipText;
+
+  // Uso wa bubble + KADI — light: Nyeupe KAMA AWALI; dark: giza safi.
+  static Color whiteof(BuildContext context) => Theme.of(context).brightness ==
+          Brightness.dark
+      ? const Color(0xFF1B2941)
+      : Colors.white;
 }
 
 // ----------------------------------------------------------------------------
@@ -201,8 +269,9 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = _C.of(context); // paleta halisi (light kama awali / dark mpya)
     return Container(
-      color: Colors.white,
+      color: _C.whiteof(context), // light: Nyeupe kamili; dark: giza
       child: StreamBuilder<List<Conversation>>(
         stream: widget.repo.watchConversations(),
         builder: (context, snap) {
@@ -231,10 +300,10 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
           return ListView(
             padding: const EdgeInsets.only(top: 16, bottom: 24),
             children: [
-              _header(),
-              _search(),
-              _chips(searched.length, waitingCount),
-              if (waiting.isNotEmpty) _waitingRow(waiting),
+              _header(c),
+              _search(c),
+              _chips(c, searched.length, waitingCount),
+              if (waiting.isNotEmpty) _waitingRow(c, waiting),
               if (snap.connectionState == ConnectionState.waiting && all.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(40),
@@ -245,11 +314,11 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                   padding: EdgeInsets.all(30),
                   child: Center(
                     child: Text('Hakuna matokeo',
-                        style: TextStyle(color: _C.muted2, fontSize: 14)),
+                        style: TextStyle(color: c.muted2_, fontSize: 14)),
                   ),
                 )
               else
-                for (final c in shown) _row(c),
+                for (final c2 in shown) _row(c, c2),
             ],
           );
         },
@@ -257,20 +326,20 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
     );
   }
 
-  Widget _header() => Padding(
+  Widget _header(_C c) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
-            const Text('Maoni',
+            Text('Maoni',
                 style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w500,
                     letterSpacing: -.5,
-                    color: _C.title)),
+                    color: c.title_)),
             const SizedBox(width: 10),
-            const Padding(
-              padding: EdgeInsets.only(top: 6),
-              child: CircleAvatar(radius: 4.5, backgroundColor: _C.green),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: CircleAvatar(radius: 4.5, backgroundColor: c.green_),
             ),
             const Spacer(),
             _Press(
@@ -278,30 +347,30 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
               child: Container(
                 width: 42,
                 height: 42,
-                decoration: const BoxDecoration(
-                    color: _C.field, shape: BoxShape.circle),
-                child: const Icon(TablerIcons.checks, size: 20, color: _C.tick),
+                decoration: BoxDecoration(
+                    color: c.field_, shape: BoxShape.circle),
+                child: Icon(TablerIcons.checks, size: 20, color: c.tick_),
               ),
             ),
           ],
         ),
       );
 
-  Widget _search() => Padding(
+  Widget _search(_C c) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         child: SizedBox(
           height: 46,
           child: TextField(
             onChanged: (v) => setState(() => _query = v.trim()),
-            style: const TextStyle(fontSize: 15, color: _C.ink),
+            style: TextStyle(fontSize: 15, color: c.ink_),
             decoration: InputDecoration(
               hintText: 'Tafuta jina, namba au ujumbe',
-              hintStyle: const TextStyle(color: Color(0xFF8A94A6), fontSize: 15),
+              hintStyle: TextStyle(color: c.muted_, fontSize: 15),
               filled: true,
-              fillColor: _C.field,
+              fillColor: c.field_,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               prefixIcon:
-                  const Icon(TablerIcons.search, size: 20, color: _C.muted),
+                  Icon(TablerIcons.search, size: 20, color: c.muted_),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -311,7 +380,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
         ),
       );
 
-  Widget _chips(int total, int waiting) {
+  Widget _chips(_C c, int total, int waiting) {
     Widget chip(_InboxFilter f, String label, int count) {
       final on = _filter == f;
       return GestureDetector(
@@ -320,7 +389,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: on ? _C.greenBg : _C.field,
+            color: on ? c.greenBg_ : c.field_,
             borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
@@ -331,7 +400,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: on ? FontWeight.w600 : FontWeight.w400,
-                      color: on ? _C.greenFg : _C.chipText)),
+                      color: on ? c.greenFg_ : c.chipText_)),
             ],
           ),
         ),
@@ -352,16 +421,16 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
     );
   }
 
-  Widget _waitingRow(List<Conversation> waiting) => Container(
+  Widget _waitingRow(_C cc, List<Conversation> waiting) => Container(
         padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: _C.line)),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: cc.line_)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Wanaosubiri jibu lako',
-                style: TextStyle(fontSize: 13, color: _C.muted2)),
+            Text('Wanaosubiri jibu lako',
+                style: TextStyle(fontSize: 13, color: cc.muted2_)),
             const SizedBox(height: 10),
             SizedBox(
               height: 92,
@@ -385,16 +454,16 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                                 height: 58,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
-                                  color: _C.avatarBg,
+                                  color: cc.avatarBg_,
                                   shape: BoxShape.circle,
                                   border:
-                                      Border.all(color: _C.green, width: 2.5),
+                                      Border.all(color: cc.green_, width: 2.5),
                                 ),
                                 child: Text(_initial(c.name),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.w500,
-                                        color: _C.ink)),
+                                        color: cc.ink_)),
                               ),
                               Positioned(
                                 top: -4,
@@ -407,8 +476,8 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                           Text(_firstName(c.name),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 12.5, color: _C.chipText)),
+                              style: TextStyle(
+                                  fontSize: 12.5, color: cc.chipText_)),
                         ],
                       ),
                     ),
@@ -420,7 +489,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
         ),
       );
 
-  Widget _row(Conversation c) {
+  Widget _row(_C cc, Conversation c) {
     final unread = c.awaiting > 0;
     return InkWell(
       onTap: () => _open(c),
@@ -434,8 +503,8 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
             Expanded(
               child: Container(
                 padding: const EdgeInsets.only(bottom: 12),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: _C.line)),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: cc.line_)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,10 +514,10 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                         child: Text(c.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
-                                color: _C.ink)),
+                                color: cc.ink_)),
                       ),
                       const SizedBox(width: 8),
                       Text(_listTime(c.lastTime),
@@ -456,7 +525,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                               fontSize: 12.5,
                               fontWeight:
                                   unread ? FontWeight.w500 : FontWeight.w400,
-                              color: unread ? _C.green : _C.muted2)),
+                              color: unread ? cc.green_ : cc.muted2_)),
                     ]),
                     const SizedBox(height: 3),
                     Row(children: [
@@ -472,7 +541,7 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                                 fontSize: 14.5,
                                 fontWeight:
                                     unread ? FontWeight.w500 : FontWeight.w400,
-                                color: unread ? _C.ink : _C.muted)),
+                                color: unread ? cc.ink_ : cc.muted_)),
                       ),
                       if (unread) ...[
                         const SizedBox(width: 8),
@@ -717,7 +786,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
     final hasText = _input.text.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: _C.chatBg,
+      backgroundColor: _C.of(context).chatBg_,
       body: SafeArea(
         child: Column(
           children: [
@@ -746,9 +815,9 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: _C.whiteof(context),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: _C.border),
+                                border: Border.all(color: _C.of(context).border_),
                                 boxShadow: const [
                                   BoxShadow(
                                       color: Color(0x1A141A26),
@@ -757,7 +826,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                                 ],
                               ),
                               child: const Icon(TablerIcons.chevron_down,
-                                  size: 22, color: _C.ink),
+                                  size: 22, color: _C.of(context).ink_),
                             ),
                             if (_ctrl.newWhileAway > 0)
                               Positioned(
@@ -784,8 +853,8 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
   // ---- Top bar --------------------------------------------------------------
   Widget _topBar(Conversation c) => Container(
         padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: _C.whiteof(context),
         ),
         child: Row(
           children: [
@@ -802,20 +871,20 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                       style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: _C.ink)),
+                          color: _C.of(context).ink_)),
                   Text(c.phone,
                       style:
-                          const TextStyle(fontSize: 12.5, color: _C.muted2)),
+                          const TextStyle(fontSize: 12.5, color: _C.of(context).muted2_)),
                 ],
               ),
             ),
             _IconBtn(TablerIcons.phone, () => widget.onCall?.call(c.phone)),
             PopupMenuButton<String>(
               icon: const Icon(TablerIcons.dots_vertical,
-                  size: 22, color: _C.ink),
+                  size: 22, color: _C.of(context).ink_),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
-              color: Colors.white,
+              color: _C.whiteof(context),
               onSelected: (v) async {
                 if (v == 'delete') await _confirmDelete(c);
               },
@@ -824,10 +893,10 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(TablerIcons.trash, size: 20, color: _C.red),
+                      Icon(TablerIcons.trash, size: 20, color: _C.of(context).red_),
                       SizedBox(width: 10),
                       Text('Futa mazungumzo',
-                          style: TextStyle(fontSize: 14.5, color: _C.red)),
+                          style: TextStyle(fontSize: 14.5, color: _C.of(context).red_)),
                     ],
                   ),
                 ),
@@ -848,14 +917,14 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
         title: const Text('Futa mazungumzo?',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
         content: Text('Mazungumzo yote na ${c.name} yatafutwa.',
-            style: const TextStyle(fontSize: 14.5, color: _C.muted)),
+            style: const TextStyle(fontSize: 14.5, color: _C.of(context).muted_)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Hapana')),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Futa', style: TextStyle(color: _C.red))),
+              child: const Text('Futa', style: TextStyle(color: _C.of(context).red_))),
         ],
       ),
     );
@@ -894,11 +963,11 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _C.field,
+                  color: _C.of(context).field_,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(_dayLabel(e.day!),
-                    style: const TextStyle(fontSize: 12.5, color: _C.muted)),
+                    style: const TextStyle(fontSize: 12.5, color: _C.of(context).muted_)),
               ),
             ),
             if (_dayLabel(e.day!) == 'Leo') ...[
@@ -906,10 +975,10 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
               const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(TablerIcons.arrow_back_up, size: 14, color: _C.hint),
+                  Icon(TablerIcons.arrow_back_up, size: 14, color: _C.of(context).hint_),
                   SizedBox(width: 5),
                   Text('Telezesha ujumbe kulia ili kuujibu',
-                      style: TextStyle(fontSize: 12, color: _C.hint)),
+                      style: TextStyle(fontSize: 12, color: _C.of(context).hint_)),
                 ],
               ),
             ],
@@ -940,9 +1009,9 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
     return Container(
       margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
       decoration: BoxDecoration(
-        color: _C.replyBar,
+        color: _C.of(context).replyBar_,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _C.border, width: 0.5),
+        border: Border.all(color: _C.of(context).border_, width: 0.5),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -951,7 +1020,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
             Container(
               width: 4,
               decoration: const BoxDecoration(
-                color: _C.green,
+                color: _C.of(context).green_,
                 borderRadius:
                     BorderRadius.only(topLeft: Radius.circular(12)),
               ),
@@ -966,7 +1035,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                         style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: _C.quoteName)),
+                            color: _C.of(context).quoteName_)),
                     Text(r.text,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -980,7 +1049,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
               onTap: () => _ctrl.setReply(null),
               child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Icon(TablerIcons.x, size: 20, color: _C.muted2),
+                child: Icon(TablerIcons.x, size: 20, color: _C.of(context).muted2_),
               ),
             ),
           ],
@@ -992,7 +1061,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
   // Textbox ya kutuma message — kama WhatsApp: emoji kushoto ndani ya
   // uga mweupe, paperclip + camera nje kulia, kitufe cha duara cha kutuma.
   Widget _inputBar(bool hasText) => Container(
-        color: _C.chatBg,
+        color: _C.of(context).chatBg_,
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -1002,14 +1071,14 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                 constraints: const BoxConstraints(minHeight: 46),
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _C.whiteof(context),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: _C.border),
+                  border: Border.all(color: _C.of(context).border_),
                 ),
                 child: Row(
                   children: [
                     const Icon(TablerIcons.mood_smile,
-                        size: 24, color: _C.muted2),
+                        size: 24, color: _C.of(context).muted2_),
                     Expanded(
                       child: TextField(
                         controller: _input,
@@ -1017,7 +1086,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                         minLines: 1,
                         maxLines: 5,
                         textInputAction: TextInputAction.newline,
-                        style: const TextStyle(fontSize: 15.5, color: _C.ink),
+                        style: const TextStyle(fontSize: 15.5, color: _C.of(context).ink_),
                         decoration: const InputDecoration(
                           hintText: 'Andika jibu lako hapa...',
                           hintStyle: TextStyle(
@@ -1034,9 +1103,9 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
               ),
             ),
             const SizedBox(width: 10),
-            const Icon(TablerIcons.paperclip, size: 23, color: _C.muted2),
+            const Icon(TablerIcons.paperclip, size: 23, color: _C.of(context).muted2_),
             const SizedBox(width: 12),
-            const Icon(TablerIcons.camera, size: 24, color: _C.muted2),
+            const Icon(TablerIcons.camera, size: 24, color: _C.of(context).muted2_),
             const SizedBox(width: 10),
             _Press(
               onTap: hasText ? _send : null,
@@ -1045,7 +1114,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: hasText ? _C.green : _C.sendOff,
+                  color: hasText ? _C.of(context).green_ : _C.of(context).sendOff_,
                   shape: BoxShape.circle,
                 ),
                 child:
@@ -1091,7 +1160,7 @@ class _Bubble extends StatelessWidget {
         decoration: BoxDecoration(
           // Kama WhatsApp halisi: incoming NYEUPE, outgoing KIJANI HAFIFU
           // (#D9FDD3) — zote mbili bila border, kivuli kidogo tu.
-          color: out ? _C.bubbleOut : _C.bubbleIn,
+          color: out ? _C.of(context).bubbleOut_ : _C.of(context).bubbleIn_,
           boxShadow: const [
             BoxShadow(
                 color: Color(0x12141414),
@@ -1118,7 +1187,7 @@ class _Bubble extends StatelessWidget {
                     TextSpan(
                         text: m.text,
                         style: const TextStyle(
-                            fontSize: 15.5, height: 1.4, color: _C.ink)),
+                            fontSize: 15.5, height: 1.4, color: _C.of(context).ink_)),
                     WidgetSpan(
                         child: SizedBox(width: out ? 74 : 46, height: 1)),
                   ]),
@@ -1131,7 +1200,7 @@ class _Bubble extends StatelessWidget {
                     children: [
                       Text(time,
                           style: const TextStyle(
-                              fontSize: 11.5, color: _C.muted2)),
+                              fontSize: 11.5, color: _C.of(context).muted2_)),
                       if (out) ...[
                         const SizedBox(width: 3),
                         _Ticks(m.status, size: 16),
@@ -1163,7 +1232,7 @@ class _Bubble extends StatelessWidget {
         decoration: BoxDecoration(
           // Kama picha: quote ndani ya bubble ya kijani ni #C8F3BC (paa zito
           // kuliko bubble #D9FDD3); kwenye bubble nyeupe ni kijivu hafifu.
-          color: out ? _C.quoteOut : _C.quoteIn,
+          color: out ? _C.of(context).quoteOut_ : _C.of(context).quoteIn_,
           borderRadius: BorderRadius.circular(10),
         ),
         child: IntrinsicHeight(
@@ -1173,7 +1242,7 @@ class _Bubble extends StatelessWidget {
               Container(
                 width: 3.5,
                 decoration: BoxDecoration(
-                  color: out ? _C.green : _C.quoteName,
+                  color: out ? _C.of(context).green_ : _C.of(context).quoteName_,
                   borderRadius: const BorderRadius.horizontal(
                       left: Radius.circular(10)),
                 ),
@@ -1189,7 +1258,7 @@ class _Bubble extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w500,
-                              color: out ? _C.greenFg : _C.quoteName)),
+                              color: out ? _C.of(context).greenFg_ : _C.of(context).quoteName_)),
                       Text(r.text,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -1284,9 +1353,9 @@ class _SwipeToReplyState extends State<_SwipeToReply>
                       width: 32,
                       height: 32,
                       decoration: const BoxDecoration(
-                          color: _C.replyIconBg, shape: BoxShape.circle),
+                          color: _C.of(context).replyIconBg_, shape: BoxShape.circle),
                       child: const Icon(TablerIcons.arrow_back_up,
-                          size: 18, color: _C.chipText),
+                          size: 18, color: _C.of(context).chipText_),
                     ),
                   ),
                 ),
@@ -1315,12 +1384,12 @@ class _Avatar extends StatelessWidget {
         height: size,
         alignment: Alignment.center,
         decoration:
-            const BoxDecoration(color: _C.avatarBg, shape: BoxShape.circle),
+            const BoxDecoration(color: _C.of(context).avatarBg_, shape: BoxShape.circle),
         child: Text(_initial(name),
             style: TextStyle(
                 fontSize: fontSize,
                 fontWeight: FontWeight.w500,
-                color: _C.ink)),
+                color: _C.of(context).ink_)),
       );
 }
 
@@ -1336,9 +1405,9 @@ class _CountBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 5),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: _C.green,
+          color: _C.of(context).green_,
           borderRadius: BorderRadius.circular(11),
-          border: border ? Border.all(color: Colors.white, width: 2) : null,
+          border: border ? Border.all(color: _C.whiteof(context), width: 2) : null,
         ),
         child: Text(n > 99 ? '99+' : '$n',
             style: const TextStyle(
@@ -1355,15 +1424,15 @@ class _Ticks extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (status) {
       case MsgStatus.sending:
-        return Icon(TablerIcons.clock, size: size - 2, color: _C.tick);
+        return Icon(TablerIcons.clock, size: size - 2, color: _C.of(context).tick_);
       case MsgStatus.sent:
-        return Icon(TablerIcons.check, size: size, color: _C.tick);
+        return Icon(TablerIcons.check, size: size, color: _C.of(context).tick_);
       case MsgStatus.delivered:
-        return Icon(TablerIcons.checks, size: size, color: _C.tick);
+        return Icon(TablerIcons.checks, size: size, color: _C.of(context).tick_);
       case MsgStatus.read:
-        return Icon(TablerIcons.checks, size: size, color: _C.tickBlue);
+        return Icon(TablerIcons.checks, size: size, color: _C.of(context).tick_Blue);
       case MsgStatus.failed:
-        return Icon(TablerIcons.alert_circle, size: size, color: _C.red);
+        return Icon(TablerIcons.alert_circle, size: size, color: _C.of(context).red_);
     }
   }
 }
@@ -1376,7 +1445,7 @@ class _IconBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) => IconButton(
         onPressed: onTap,
-        icon: Icon(icon, size: 22, color: _C.green),
+        icon: Icon(icon, size: 22, color: _C.of(context).green_),
         splashRadius: 22,
       );
 }

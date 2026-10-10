@@ -93,8 +93,12 @@ class AdminDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       width: 300,
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1E293B)
+          : Colors.white,
+      surfaceTintColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1E293B)
+          : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.horizontal(right: Radius.circular(22)),
       ),
@@ -168,9 +172,15 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 18, 14, 14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: _D.line)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E293B)
+            : Colors.white,
+        border: Border(
+            bottom: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF334155)
+                    : _D.line)),
       ),
       child: Row(children: [
         ClipRRect(
@@ -179,8 +189,13 @@ class _Header extends StatelessWidget {
             width:  kDrawerLogoSize,
             height: kDrawerLogoSize,
             decoration: BoxDecoration(
-              color:        Colors.white,
-              border:       Border.all(color: _D.border),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF0F172A)
+                  : Colors.white,
+              border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF334155)
+                      : _D.border),
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.all(3),
@@ -214,10 +229,15 @@ class _Header extends StatelessWidget {
           ),
         ),
         Material(
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF0F172A)
+              : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: const BorderSide(color: _D.border),
+            side: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF334155)
+                    : _D.border),
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(10),

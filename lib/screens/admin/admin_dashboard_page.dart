@@ -649,7 +649,8 @@ class _State extends State<AdminDashboardPage>
                         ]),
                       ),
                       const SizedBox(width: 8),
-                      Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                      Flexible(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                         if (cadre.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -658,15 +659,20 @@ class _State extends State<AdminDashboardPage>
                             child: Row(mainAxisSize: MainAxisSize.min, children: [
                               const Icon(Icons.menu_book_outlined, size: 10, color: _kBlue),
                               const SizedBox(width: 3),
-                              Text(cadre,
+                              Flexible(child: Text(cadre,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-                                      color: _kBlue, height: 1.5)),
+                                      color: _kBlue, height: 1.5))),
                             ]),
                           ),
                         if (region.isNotEmpty)
                           Text(region,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 11, color: _kGrey500, height: 1.5)),
                       ]),
+                      ),
                     ]),
                   );
                 }).toList(),

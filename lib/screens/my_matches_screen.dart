@@ -29,7 +29,7 @@ const _kYellow700 = Color(0xFFA16207);
 
 
 BoxDecoration _card() => BoxDecoration(
-  color: Colors.white,
+  color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
   borderRadius: BorderRadius.circular(16),
   border: Border.all(color: _kGrey200),
   boxShadow: const [BoxShadow(
@@ -108,7 +108,7 @@ class _MyMatchesScreenState extends State<MyMatchesScreen>
           : Colors.white,
       body: Column(children: [
         Container(
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
           padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 0),
           child: Column(children: [
             Row(children: [
@@ -388,7 +388,7 @@ class _RealMatchesTabState extends State<_RealMatchesTab>
               Container(
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white, border: Border.all(color: _kGrey200),
+                  color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white, border: Border.all(color: _kGrey200),
                   borderRadius: BorderRadius.circular(10)),
                 child: TextField(
                   onChanged: (v) => setState(() => _q = v),
@@ -411,7 +411,7 @@ class _RealMatchesTabState extends State<_RealMatchesTab>
                 Expanded(child: Container(
                   height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.white, border: Border.all(color: _kGrey200),
+                    color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white, border: Border.all(color: _kGrey200),
                     borderRadius: BorderRadius.circular(10)),
                   child: TextField(
                     onChanged: (v) => setState(() => _subQ = v),
@@ -430,7 +430,7 @@ class _RealMatchesTabState extends State<_RealMatchesTab>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white, border: Border.all(color: _kGrey200),
+                    color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white, border: Border.all(color: _kGrey200),
                     borderRadius: BorderRadius.circular(10)),
                   child: Text('${filtered.length}',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _kGrey700)),
@@ -585,7 +585,7 @@ class _UserPill extends StatelessWidget {
             child: Container(width: 10, height: 10,
               decoration: BoxDecoration(
                 color: _kGreen600, shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5)))),
+                border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white, width: 1.5)))),
         ]),
         const SizedBox(width: 10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

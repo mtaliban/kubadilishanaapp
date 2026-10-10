@@ -60,6 +60,70 @@ class _C {
   static const simuFg = Color(0xFF1A3FA8);
   static const smsBg = Color(0xFFFDECC8);
   static const smsFg = Color(0xFF7A4A05);
+
+  // ── DARK/LIGHT: getters zinazotumia Theme.of(context).brightness ────────
+  static bool isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  // ── Dark variants (zinazosomeka kwenye giza) ─────────────────────────
+  static const inkD = Color(0xFFE7ECF8);
+  static const titleD = Color(0xFFEEF2FA);
+  static const mutedD = Color(0xFF9AA8C7);
+  static const muted2D = Color(0xFF95A3C4);
+  static const muted3D = Color(0xFF98A6C8);
+  static const placeholderD = Color(0xFF7B8DA5);
+  static const borderD = Color(0xFF26324F);
+  static const borderSoftD = Color(0xFF232E44);
+  static const boxBgD = Color(0xFF18202F);
+  static const routeBgD = Color(0xFF161E2C);
+  static const chipBgD = Color(0xFF1B2742);
+  static const countBgD = Color(0xFF1B2742);
+  static const avatarBgD = Color(0xFF1E2940);
+  static const avatarBorderD = Color(0xFF2E3D53);
+  static const dashD = Color(0xFF41547E);
+  static const dashSoftD = Color(0xFF33455C);
+  static const iconBoxBorderD = Color(0xFF2A3849);
+  static const iconBoxBgD = Color(0xFF18202F);
+  static const chevBorderD = Color(0xFF2A3849);
+  static const liveBgD = Color(0xFF14532D);    // kijani giza
+  static const liveFgD = Color(0xFF86EFAC);    // mepesa giza
+  static const headIconBgD = Color(0xFF1E2940);
+  static const waBgD = Color(0xFF14532D);
+  static const waFgD = Color(0xFF86EFAC);
+  static const simuBgD = Color(0xFF1C2A44);
+  static const simuFgD = Color(0xFF7AA7FF);
+  static const smsBgD = Color(0xFF3A2C14);
+  static const smsFgD = Color(0xFFFCD34D);
+
+  // ── Getters theme-aware ──────────────────────────────────────────
+  static Color of(BuildContext context, Color light, Color darkDark) =>
+      isDark(context) ? darkDark : light;
+
+  static Color ink_2(BuildContext c) => of(c, ink, inkD);
+  static Color title_2(BuildContext c) => of(c, title, titleD);
+  static Color muted_2(BuildContext c) => of(c, muted, mutedD);
+  static Color muted2_2(BuildContext c) => of(c, muted2, muted2D);
+  static Color muted3_2(BuildContext c) => of(c, muted3, muted3D);
+  static Color border_2(BuildContext c) => of(c, border, borderD);
+  static Color borderSoft_2(BuildContext c) => of(c, borderSoft, borderSoftD);
+  static Color boxBg_2(BuildContext c) => of(c, boxBg, boxBgD);
+  static Color routeBg_2(BuildContext c) => of(c, routeBg, routeBgD);
+  static Color chipBg_2(BuildContext c) => of(c, chipBg, chipBgD);
+  static Color countBg_2(BuildContext c) => of(c, countBg, countBgD);
+  static Color avatarBg_2(BuildContext c) => of(c, avatarBg, avatarBgD);
+  static Color avatarBorder_2(BuildContext c) => of(c, avatarBorder, avatarBorderD);
+  static Color iconBoxBorder_2(BuildContext c) => of(c, iconBoxBorder, iconBoxBorderD);
+  static Color iconBoxBg_2(BuildContext c) => of(c, iconBoxBg, iconBoxBgD);
+  static Color chevBorder_2(BuildContext c) => of(c, chevBorder, chevBorderD);
+  static Color liveBg_2(BuildContext c) => of(c, liveBg, liveBgD);
+  static Color liveFg_2(BuildContext c) => of(c, liveFg, liveFgD);
+  static Color headIconBg_2(BuildContext c) => of(c, headIconBg, headIconBgD);
+  static Color waBg_2(BuildContext c) => of(c, waBg, waBgD);
+  static Color waFg_2(BuildContext c) => of(c, waFg, waFgD);
+  static Color simuBg_2(BuildContext c) => of(c, simuBg, simuBgD);
+  static Color simuFg_2(BuildContext c) => of(c, simuFg, simuFgD);
+  static Color smsBg_2(BuildContext c) => of(c, smsBg, smsBgD);
+  static Color smsFg_2(BuildContext c) => of(c, smsFg, smsFgD);
 }
 
 // ----------------------------------------------------------------------------
@@ -78,15 +142,15 @@ extension CallTypeX on CallType {
         CallType.sms => TablerIcons.message_2,
         CallType.whatsapp => TablerIcons.brand_whatsapp,
       };
-  Color get bg => switch (this) {
-        CallType.simu => _C.simuBg,
-        CallType.sms => _C.smsBg,
-        CallType.whatsapp => _C.waBg,
+  Color bgOf(BuildContext context) => switch (this) {
+        CallType.simu => _C.simuBg_2(context),
+        CallType.sms => _C.smsBg_2(context),
+        CallType.whatsapp => _C.waBg_2(context),
       };
-  Color get fg => switch (this) {
-        CallType.simu => _C.simuFg,
-        CallType.sms => _C.smsFg,
-        CallType.whatsapp => _C.waFg,
+  Color fgOf(BuildContext context) => switch (this) {
+        CallType.simu => _C.simuFg_2(context),
+        CallType.sms => _C.smsFg_2(context),
+        CallType.whatsapp => _C.waFg_2(context),
       };
 
   /// Thamani ya `contact_type` kwenye API ('call' | 'sms' | 'whatsapp').
@@ -321,7 +385,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
             const SizedBox(height: 10),
             const Text(
               'Watumiaji waliowasiliana kwa simu, SMS na WhatsApp.',
-              style: TextStyle(color: _C.muted, fontSize: 14, height: 1.45),
+              style: TextStyle(color: _C.muted_2(context), fontSize: 14, height: 1.45),
             ),
             const SizedBox(height: 12),
             _searchBox(),
@@ -334,7 +398,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
               const Padding(
                 padding: EdgeInsets.all(40),
                 child: Center(
-                    child: CircularProgressIndicator(color: _C.blue)),
+                    child: CircularProgressIndicator(color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
               )
             else if (_error != null) ...[
               Padding(
@@ -342,7 +406,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                 child: Text(_error!,
                     textAlign: TextAlign.center,
                     style:
-                        const TextStyle(color: _C.muted, fontSize: 14)),
+                        const TextStyle(color: _C.muted_2(context), fontSize: 14)),
               ),
               Center(
                 child: OutlinedButton.icon(
@@ -357,7 +421,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                   padding: const EdgeInsets.only(left: 2, bottom: 2),
                   child: Text(
                     'Inaonyesha ${start + 1}–${start + slice.length} kati ya ${view.length}',
-                    style: const TextStyle(color: _C.muted3, fontSize: 14),
+                    style: const TextStyle(color: _C.muted_2(context)3_2(context), fontSize: 14),
                   ),
                 ),
               ..._groupedCards(slice),
@@ -366,7 +430,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                   padding: EdgeInsets.all(24),
                   child: Center(
                     child: Text('Hakuna matokeo',
-                        style: TextStyle(color: _C.muted, fontSize: 14)),
+                        style: TextStyle(color: _C.muted_2(context), fontSize: 14)),
                   ),
                 ),
               if (view.isNotEmpty) _pagination(pages),
@@ -384,23 +448,23 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _C.headIconBg,
+              color: _C.headIconBg_2(context),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(TablerIcons.phone_call, size: 22, color: _C.blue),
+            child: const Icon(TablerIcons.phone_call, size: 22, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
           ),
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
               'Waliopigiana',
               style: TextStyle(
-                  fontSize: 24, fontWeight: FontWeight.w500, color: _C.title),
+                  fontSize: 24, fontWeight: FontWeight.w500, color: _C.title_2(context)),
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: BoxDecoration(
-              color: _C.liveBg,
+              color: _C.liveBg_2(context),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -409,7 +473,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                 CircleAvatar(radius: 4, backgroundColor: _C.liveDot),
                 SizedBox(width: 6),
                 Text('Live',
-                    style: TextStyle(color: _C.liveFg, fontSize: 13)),
+                    style: TextStyle(color: _C.liveFg_2(context), fontSize: 13)),
               ],
             ),
           ),
@@ -422,10 +486,10 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
         child: TextField(
           controller: _search,
           onChanged: _setQuery,
-          style: const TextStyle(fontSize: 15, color: _C.ink),
+          style: const TextStyle(fontSize: 15, color: _C.ink_2(context)),
           decoration: InputDecoration(
             hintText: 'Andika jina, mkoa au idara',
-            hintStyle: const TextStyle(color: _C.placeholder, fontSize: 15),
+            hintStyle: const TextStyle(color: _C.of(context, placeholder, placeholderD), fontSize: 15),
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -442,26 +506,26 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                       width: 28,
                       height: 28,
                       decoration: const BoxDecoration(
-                        color: _C.avatarBg,
+                        color: _C.avatarBg_2(context),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(TablerIcons.x,
-                          size: 16, color: _C.muted),
+                          size: 16, color: _C.muted_2(context)),
                     ),
                   ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Icon(TablerIcons.search, size: 20, color: _C.blue),
+                  child: Icon(TablerIcons.search, size: 20, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                 ),
               ],
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: _C.border, width: 1.5),
+              borderSide: const BorderSide(color: _C.border_2(context), width: 1.5),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: _C.border, width: 1.5),
+              borderSide: const BorderSide(color: _C.border_2(context), width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -480,7 +544,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         const Text('Mfano:',
-            style: TextStyle(color: _C.muted3, fontSize: 13.5)),
+            style: TextStyle(color: _C.muted_2(context)3_2(context), fontSize: 13.5)),
         for (final s in samples)
           GestureDetector(
             onTap: () {
@@ -493,13 +557,13 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
               height: 28,
               padding: const EdgeInsets.only(left: 9, right: 11),
               decoration: BoxDecoration(
-                color: _C.chipBg,
+                color: _C.chipBg_2(context),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(TablerIcons.search, size: 14, color: _C.muted),
+                  const Icon(TablerIcons.search, size: 14, color: _C.muted_2(context)),
                   const SizedBox(width: 6),
                   Text(s,
                       style: const TextStyle(
@@ -541,14 +605,14 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
         padding: const EdgeInsets.only(left: 14, right: 6),
         decoration: BoxDecoration(
           color: on ? _C.blue : Colors.white,
-          border: Border.all(color: on ? _C.blue : _C.border, width: 1.5),
+          border: Border.all(color: on ? _C.blue : _C.border_2(context), width: 1.5),
           borderRadius: BorderRadius.circular(22),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 18, color: on ? Colors.white : _C.ink),
+              Icon(icon, size: 18, color: on ? Colors.white : _C.ink_2(context)),
               const SizedBox(width: 8),
             ],
             Text(
@@ -556,7 +620,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: on ? FontWeight.w500 : FontWeight.w400,
-                color: on ? Colors.white : _C.ink,
+                color: on ? Colors.white : _C.ink_2(context),
               ),
             ),
             const SizedBox(width: 8),
@@ -566,7 +630,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
               padding: const EdgeInsets.symmetric(horizontal: 6),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: on ? Colors.white.withValues(alpha: .25) : _C.countBg,
+                color: on ? Colors.white.withValues(alpha: .25) : _C.countBg_2(context),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Text(
@@ -604,7 +668,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                     style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: _C.ink)),
+                        color: _C.ink_2(context))),
               ),
               if (g.$2.isNotEmpty) ...[
                 const SizedBox(width: 8),
@@ -613,7 +677,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontSize: 13.5, color: _C.muted2)),
+                          fontSize: 13.5, color: _C.muted_2(context)2_2(context))),
                 ),
               ],
             ],
@@ -660,7 +724,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
               child: Text('Ukurasa $_page / $pages',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: _C.muted2, fontSize: 13)),
+                  style: const TextStyle(color: _C.muted_2(context)2_2(context), fontSize: 13)),
             ),
             Flexible(
               child: _pageBtn('Inayofuata', TablerIcons.chevron_right, false,
@@ -673,17 +737,17 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
   Widget _pageBtn(String label, IconData icon, bool iconFirst, VoidCallback? onTap) {
     final enabled = onTap != null;
     final children = <Widget>[
-      if (iconFirst) Icon(icon, size: 15, color: _C.blue),
+      if (iconFirst) Icon(icon, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
       if (iconFirst) const SizedBox(width: 4),
       Flexible(
         child: Text(label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue)),
+                fontSize: 13, fontWeight: FontWeight.w500, color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
       ),
       if (!iconFirst) const SizedBox(width: 4),
-      if (!iconFirst) Icon(icon, size: 15, color: _C.blue),
+      if (!iconFirst) Icon(icon, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
     ];
     return Opacity(
       opacity: enabled ? 1 : .4,
@@ -694,7 +758,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: _C.avatarBorder),
+            border: Border.all(color: _C.avatarBorder_2(context)),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: children),
@@ -726,7 +790,7 @@ class _CallCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: _C.border, width: 1.5),
+        border: Border.all(color: _C.border_2(context), width: 1.5),
         borderRadius: BorderRadius.circular(22),
       ),
       child: Column(
@@ -739,19 +803,19 @@ class _CallCard extends StatelessWidget {
                 height: 36,
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                  color: r.type.bg,
+                  color: r.type.bgOf(context),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(r.type.icon, size: 19, color: r.type.fg),
+                    Icon(r.type.icon, size: 19, color: r.type.fgOf(context)),
                     const SizedBox(width: 7),
                     Text(r.type.label,
                         style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
-                            color: r.type.fg)),
+                            color: r.type.fgOf(context))),
                   ],
                 ),
               ),
@@ -760,14 +824,14 @@ class _CallCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(TablerIcons.clock, size: 19, color: _C.muted),
+                    const Icon(TablerIcons.clock, size: 19, color: _C.muted_2(context)),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(_hm(r.time),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 16, color: _C.muted)),
+                              fontSize: 16, color: _C.muted_2(context))),
                     ),
                   ],
                 ),
@@ -780,7 +844,7 @@ class _CallCard extends StatelessWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: _C.chevBorder),
+                    border: Border.all(color: _C.chevBorder_2(context)),
                     borderRadius: BorderRadius.circular(11),
                   ),
                   child: AnimatedRotation(
@@ -868,21 +932,21 @@ class _CallCard extends StatelessWidget {
                         style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w500,
-                            color: _C.ink)),
+                            color: _C.ink_2(context))),
                   ),
                   Text('${p.idara} · ${p.cheo}',
-                      style: const TextStyle(fontSize: 14.5, color: _C.muted)),
+                      style: const TextStyle(fontSize: 14.5, color: _C.muted_2(context))),
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(TablerIcons.map_pin, size: 15, color: _C.blue),
+                      const Icon(TablerIcons.map_pin, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(p.mkoa,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                fontSize: 14.5, color: _C.blue)),
+                                fontSize: 14.5, color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
                       ),
                     ],
                   ),
@@ -950,15 +1014,15 @@ class _PersonBlock extends StatelessWidget {
               height: 46,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: _C.avatarBg,
+                color: _C.avatarBg_2(context),
                 shape: BoxShape.circle,
-                border: Border.all(color: _C.avatarBorder, width: 1.5),
+                border: Border.all(color: _C.avatarBorder_2(context), width: 1.5),
               ),
               child: Text(person.initials,
                   style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: _C.blue)),
+                      color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -972,14 +1036,14 @@ class _PersonBlock extends StatelessWidget {
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
                           height: 1.2,
-                          color: _C.ink)),
+                          color: _C.ink_2(context))),
                   const SizedBox(height: 5),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(
                       color: filledChip ? _C.blue : Colors.white,
-                      border: Border.all(color: _C.blue),
+                      border: Border.all(color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Text(role,
@@ -999,8 +1063,8 @@ class _PersonBlock extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: _C.routeBg,
-              border: Border.all(color: _C.borderSoft),
+              color: _C.routeBg_2(context),
+              border: Border.all(color: _C.border_2(context)Soft_2(context)),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Row(
@@ -1024,8 +1088,8 @@ class _PersonBlock extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _C.boxBg,
-            border: Border.all(color: _C.borderSoft),
+            color: _C.boxBg_2(context),
+            border: Border.all(color: _C.border_2(context)Soft_2(context)),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Column(
@@ -1033,10 +1097,10 @@ class _PersonBlock extends StatelessWidget {
             children: [
               Row(
                 children: const [
-                  Icon(TablerIcons.phone, size: 16, color: _C.blue),
+                  Icon(TablerIcons.phone, size: 16, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                   SizedBox(width: 6),
                   Text('Namba ya simu',
-                      style: TextStyle(fontSize: 14, color: _C.muted2)),
+                      style: TextStyle(fontSize: 14, color: _C.muted_2(context)2_2(context))),
                 ],
               ),
               const SizedBox(height: 8),
@@ -1049,7 +1113,7 @@ class _PersonBlock extends StatelessWidget {
                         style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w500,
-                            color: _C.ink)),
+                            color: _C.ink_2(context))),
                   ),
                   _Pressable(
                     onTap: () {
@@ -1066,7 +1130,7 @@ class _PersonBlock extends StatelessWidget {
                       height: 40,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        border: Border.all(color: _C.avatarBorder),
+                        border: Border.all(color: _C.avatarBorder_2(context)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(TablerIcons.copy,
@@ -1076,7 +1140,7 @@ class _PersonBlock extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Container(height: 1, color: _C.borderSoft),
+              Container(height: 1, color: _C.border_2(context)Soft_2(context)),
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1103,12 +1167,12 @@ class _PersonBlock extends StatelessWidget {
       Column(
         crossAxisAlignment: align,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: _C.muted2)),
+          Text(label, style: const TextStyle(fontSize: 13, color: _C.muted_2(context)2_2(context))),
           const SizedBox(height: 2),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(TablerIcons.map_pin, size: 17, color: _C.blue),
+              const Icon(TablerIcons.map_pin, size: 17, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
               const SizedBox(width: 4),
               Text(mkoa,
                   maxLines: 1,
@@ -1116,7 +1180,7 @@ class _PersonBlock extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w500,
-                      color: _C.blue)),
+                      color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
             ],
           ),
         ],
@@ -1128,9 +1192,9 @@ class _PersonBlock extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 15, color: _C.blue),
+              Icon(icon, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
               const SizedBox(width: 5),
-              Text(k, style: const TextStyle(fontSize: 14, color: _C.muted2)),
+              Text(k, style: const TextStyle(fontSize: 14, color: _C.muted_2(context)2_2(context))),
             ],
           ),
           const SizedBox(height: 4),
@@ -1138,7 +1202,7 @@ class _PersonBlock extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w500, color: _C.ink)),
+                  fontSize: 18, fontWeight: FontWeight.w500, color: _C.ink_2(context))),
         ],
       );
 }
@@ -1185,9 +1249,9 @@ class _ActionButtons extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: _C.iconBoxBg,
+                  color: _C.iconBoxBg_2(context),
                   shape: BoxShape.circle,
-                  border: Border.all(color: _C.iconBoxBorder),
+                  border: Border.all(color: _C.iconBoxBorder_2(context)),
                 ),
                 child: Icon(actions[i].$1, size: 21, color: Colors.black),
               ),
@@ -1207,9 +1271,9 @@ class _ActionButtons extends StatelessWidget {
               child: Container(
                 height: 40,
                 decoration: BoxDecoration(
-                  color: _C.iconBoxBg,
+                  color: _C.iconBoxBg_2(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _C.iconBoxBorder),
+                  border: Border.all(color: _C.iconBoxBorder_2(context)),
                 ),
                 child: Icon(actions[i].$1, size: 22, color: Colors.black),
               ),
@@ -1305,7 +1369,7 @@ class _DashedArrow extends StatelessWidget {
               child: const SizedBox(height: 2, width: double.infinity),
             ),
           ),
-          const Icon(TablerIcons.arrow_right, size: 20, color: _C.blue),
+          const Icon(TablerIcons.arrow_right, size: 20, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
         ],
       ),
     );

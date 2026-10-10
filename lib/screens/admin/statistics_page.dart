@@ -49,7 +49,56 @@ class _C {
   static const arrow = Color(0xFF8A9BC2);
   static const optBorder = Color(0xFFE1E8F6);
   static const heroTop = Colors.white; // nyeupe kabisa (ilikuwa #F4F7FF)
+
+  // ── DARK/LIGHT: getters zinazotumia Theme.of(context).brightness ────────
+  // LIGHT inabaki kama static const hapo juu; DARK ina variants zinazosomeka.
+  static bool isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  static Color of(BuildContext context, Color light, Color darkDark) =>
+      isDark(context) ? darkDark : light;
+
+  // ── Dark variants (zinazosomeka kwenye giza) ─────────────────────────
+  static const inkD = Color(0xFFE7ECF8);
+  static const titleD = Color(0xFFEEF2FA);
+  static const mutedD = Color(0xFF9AA8C7);
+  static const muted2D = Color(0xFF95A3C4);
+  static const muted3D = Color(0xFF98A6C8);
+  static const borderD = Color(0xFF26324F);
+  static const softD = Color(0xFF1B2438);
+  static const tileBgD = Color(0xFF18202F);
+  static const iconTileD = Color(0xFF1E2940);
+  static const tagBgD = Color(0xFF1B2742);
+  static const barBgD = Color(0xFF1A2232);
+  static const jmBgD = Color(0xFF0F172A); // nyeusi ya giza (kadi mpya)
+  static const heroTopD = Color(0xFF0F172A); // header ya giza
+
+  // ── Getters theme-aware (browser la _C.of kwenye light/dark) ──
+  static Color ink2(BuildContext c) => isDark(c) ? inkD : ink;
+  static Color title2(BuildContext c) => isDark(c) ? titleD : title;
+  static Color mutedA(BuildContext c) => isDark(c) ? mutedD : muted;
+  static Color muted2B(BuildContext c) => isDark(c) ? muted2D : muted2;
+  static Color muted3C(BuildContext c) => isDark(c) ? muted3D : muted3;
+  static Color border2(BuildContext c) => isDark(c) ? borderD : border;
+  static Color soft2(BuildContext c) => isDark(c) ? softD : soft;
+  static Color tileBg2(BuildContext c) => isDark(c) ? tileBgD : tileBg;
+  static Color iconTile2(BuildContext c) => isDark(c) ? iconTileD : iconTile;
+  static Color tagBg2(BuildContext c) => isDark(c) ? tagBgD : tagBg;
+  static Color barBg2(BuildContext c) => isDark(c) ? barBgD : barBg;
+  static Color jmBg2(BuildContext c) => isDark(c) ? jmBgD : jmBg;
+  static Color heroTop2(BuildContext c) => isDark(c) ? heroTopD : heroTop;
+  // Status: green/prod huwa mepesa giza (0xFF14532D bg + 0xFF86EFAC fg kwenye dark)
+  static Color greenBg2(BuildContext c) => isDark(c) ? const Color(0xFF14532D) : greenBg;
+  static Color greenFg2(BuildContext c) => isDark(c) ? const Color(0xFF86EFAC) : greenFg;
+
+  static const blueD = Color(0xFF7AA7FF);       // accent bluu kwenye giza
+  static const orangeD = Color(0xFFFF9A62);     // orange kwenye giza
+  static Color blue2(BuildContext c) => isDark(c) ? blueD : blue;
+  static Color orange2(BuildContext c) => isDark(c) ? orangeD : orange;
+  static Color donut2(BuildContext c) => isDark(c) ? const Color(0xFF41547E) : donutLight;
+  static Color optBorder2(BuildContext c) => isDark(c) ? const Color(0xFF2A3858) : optBorder;
 }
+
 
 // ----------------------------------------------------------------------------
 // Models
@@ -289,20 +338,20 @@ class _StatisticsPageState extends State<StatisticsPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: _C.jmBg2(context),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
         children: [
           _header(),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Takwimu za mfumo mzima: mikoa, idara, kada, michango (real-time).',
-            style: TextStyle(color: _C.muted, fontSize: 14, height: 1.45),
+            style: TextStyle(color: _C.mutedA(context), fontSize: 14, height: 1.45),
           ),
           const SizedBox(height: 14),
           _hero(),
           const SizedBox(height: 10),
-          _tiles(),
+          _tiles(context),
           const SizedBox(height: 12),
           _eventsCard(),
           _filters(),
@@ -320,37 +369,40 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  // ---- Header --------------------------------------------------------------
+  // ---- Header (flexible: kichwa ina-shrink kwenye simu ndogo) --------
   Widget _header() => Row(
         children: [
           Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _C.iconTile,
+              color: _C.iconTile2(context),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(TablerIcons.chart_pie, size: 22, color: _C.blue),
+            child: Icon(TablerIcons.chart_pie, size: 22, color: _C.blue2(context)),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text('Statistics',
                 style: TextStyle(
-                    fontSize: 24, fontWeight: FontWeight.w500, color: _C.title)),
+                    fontSize: 24, fontWeight: FontWeight.w500, color: _C.title2(context))),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            decoration: BoxDecoration(
-              color: _C.greenBg,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(radius: 4, backgroundColor: _C.green),
-                SizedBox(width: 6),
-                Text('Live', style: TextStyle(color: _C.greenFg, fontSize: 13)),
-              ],
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: _C.greenBg2(context),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(radius: 4, backgroundColor: _C.green),
+                  const SizedBox(width: 6),
+                  Text('Live',
+                      style: TextStyle(color: _C.greenFg2(context), fontSize: 13)),
+                ],
+              ),
             ),
           ),
         ],
@@ -361,11 +413,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: _C.border, width: 1.5),
-          gradient: const LinearGradient(
+          border: Border.all(color: _C.border2(context), width: 1.5),
+          gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [_C.heroTop, Colors.white],
+            colors: [_C.heroTop2(context), _C.jmBg2(context)],
             stops: [0, .7],
           ),
         ),
@@ -376,11 +428,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
               children: [
                 CircleAvatar(radius: 4, backgroundColor: _C.blue),
                 SizedBox(width: 7),
-                Text('Watumiaji waliopo',
-                    style: TextStyle(fontSize: 13.5, color: _C.muted)),
-                Spacer(),
+                Expanded(
+                  child: Text('Watumiaji waliopo',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13.5, color: _C.mutedA(context))),
+                ),
                 Text('Siku 7 zilizopita',
-                    style: TextStyle(fontSize: 12.5, color: _C.muted2)),
+                    style: TextStyle(fontSize: 12.5, color: _C.muted2B(context))),
               ],
             ),
             const SizedBox(height: 10),
@@ -392,31 +447,31 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(_fmt(d.totalUsers),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 46,
                               fontWeight: FontWeight.w500,
                               height: 1,
                               letterSpacing: -1,
-                              color: _C.blue)),
+                              color: _C.blue2(context))),
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _C.greenBg,
+                          color: _C.greenBg2(context),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(TablerIcons.trending_up,
-                                size: 15, color: _C.greenFg),
+                            Icon(TablerIcons.trending_up,
+                                size: 15, color: _C.greenFg2(context)),
                             const SizedBox(width: 4),
                             Text('+${d.newThisWeek} wanatumia siku 7',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
-                                    color: _C.greenFg)),
+                                    color: _C.greenFg2(context))),
                           ],
                         ),
                       ),
@@ -439,39 +494,39 @@ class _StatisticsPageState extends State<StatisticsPage> {
       );
 
   // ---- 2x2 stat tiles -------------------------------------------------------
-  Widget _tiles() => Column(
+  Widget _tiles(BuildContext ctx) => Column(
         children: [
           Row(children: [
             Expanded(
-                child: _tile(TablerIcons.transfer, _C.orange, 'Wanaohamia wote',
-                    _fmt(d.totalMovers),
-                    numColor: _C.orange)),
+                child: _tile(ctx, TablerIcons.transfer, _C.orange2(ctx),
+                    'Wanaohamia wote', _fmt(d.totalMovers))),
             const SizedBox(width: 10),
             Expanded(
-                child: _tile(TablerIcons.circle_check, _C.greenFg,
+                child: _tile(ctx, TablerIcons.circle_check, _C.greenFg2(ctx),
                     'Imethibitishwa', _fmt(d.verified))),
           ]),
           const SizedBox(height: 10),
           Row(children: [
             Expanded(
-                child: _tile(TablerIcons.map_2, _C.purple, 'Mikoa yote',
+                child: _tile(ctx, TablerIcons.map_2, _C.purple, 'Mikoa yote',
                     _fmt(d.regionsCount))),
             const SizedBox(width: 10),
             Expanded(
-                child: _tile(TablerIcons.building_community, _C.blue,
+                child: _tile(ctx, TablerIcons.building_community, _C.blue2(ctx),
                     'Wilaya zote', _fmt(d.districtsCount))),
           ]),
         ],
       );
 
-  Widget _tile(IconData icon, Color iconColor, String label, String value,
-          {Color numColor = _C.ink}) =>
+  Widget _tile(BuildContext context, IconData icon, Color iconColor, String label,
+          String value,
+          {Color? numColor}) =>
       Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _C.jmBg2(context),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: _C.border, width: 1.5),
+          border: Border.all(color: _C.border2(context), width: 1.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,7 +537,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
               Flexible(
                 child: Text(label,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, color: _C.muted)),
+                    style: TextStyle(fontSize: 13, color: _C.mutedA(context))),
               ),
             ]),
             const SizedBox(height: 8),
@@ -492,7 +547,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     fontWeight: FontWeight.w500,
                     height: 1.1,
                     letterSpacing: -.5,
-                    color: numColor)),
+                    color: numColor ?? _C.ink2(context))),
           ],
         ),
       );
@@ -518,8 +573,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(d.events[i].text,
-                            style: const TextStyle(
-                                fontSize: 15, height: 1.35, color: _C.ink)),
+                            style: TextStyle(
+                                fontSize: 15, height: 1.35, color: _C.ink2(context))),
                       ),
                       const SizedBox(width: 8),
                       Text(d.events[i].time,
@@ -569,12 +624,12 @@ class _StatisticsPageState extends State<StatisticsPage> {
           decoration: BoxDecoration(
             color: active ? _C.tileBg : Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: active ? _C.blue : _C.border, width: 1.5),
+            border: Border.all(color: active ? _C.blue2(context) : _C.border, width: 1.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 17, color: _C.blue),
+              Icon(icon, size: 17, color: _C.blue2(context)),
               const SizedBox(width: 7),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 170),
@@ -583,7 +638,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: active ? FontWeight.w500 : FontWeight.w400,
-                        color: active ? _C.blue : _C.ink)),
+                        color: active ? _C.blue2(context) : _C.ink)),
               ),
               const SizedBox(width: 7),
               const Icon(TablerIcons.chevron_down, size: 15, color: _C.muted),
@@ -623,10 +678,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     Row(children: [
                       Expanded(
                         child: Text(title,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
-                                color: _C.ink)),
+                                color: _C.ink2(context))),
                       ),
                       GestureDetector(
                         onTap: () => Navigator.pop(ctx),
@@ -639,24 +694,24 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       height: 46,
                       child: TextField(
                         onChanged: (v) => setSheet(() => q = v),
-                        style: const TextStyle(fontSize: 14.5, color: _C.ink),
+                        style: TextStyle(fontSize: 14.5, color: _C.ink2(context)),
                         decoration: InputDecoration(
                           hintText: 'Tafuta...',
                           hintStyle: const TextStyle(
                               color: Color(0xFF8A9BC2), fontSize: 14.5),
                           contentPadding:
                               const EdgeInsets.symmetric(horizontal: 14),
-                          suffixIcon: const Icon(TablerIcons.search,
-                              size: 19, color: _C.blue),
+                          suffixIcon: Icon(TablerIcons.search,
+                              size: 19, color: _C.blue2(context)),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide:
-                                const BorderSide(color: _C.border, width: 1.5),
+                                BorderSide(color: _C.border2(context), width: 1.5),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide:
-                                const BorderSide(color: _C.blue, width: 1.5),
+                                BorderSide(color: _C.blue2(context), width: 1.5),
                           ),
                         ),
                       ),
@@ -679,7 +734,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                 color: on ? _C.tileBg : Colors.white,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                    color: on ? _C.blue : _C.optBorder,
+                                    color: on ? _C.blue2(context) : _C.optBorder2(context),
                                     width: 1.5),
                               ),
                               child: Row(
@@ -688,7 +743,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                     width: 38,
                                     height: 38,
                                     decoration: BoxDecoration(
-                                      color: on ? _C.blue : _C.tileBg,
+                                      color: on ? _C.blue2(context) : _C.tileBg2(context),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(o.icon,
@@ -712,13 +767,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                           Text(o.subtitle,
                                               style: const TextStyle(
                                                   fontSize: 12.5,
-                                                  color: _C.muted2)),
+                                                  color: _C.muted2B(context))),
                                       ],
                                     ),
                                   ),
                                   if (on)
                                     const Icon(TablerIcons.check,
-                                        size: 20, color: _C.blue),
+                                        size: 20, color: _C.blue2(context)),
                                 ],
                               ),
                             ),
@@ -751,7 +806,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             borderRadius: BorderRadius.circular(6),
             child: Container(
               height: 12,
-              color: _C.barBg,
+              color: _C.barBg2(context),
               child: Row(
                 children: [
                   for (var i = 0; i < d.departments.length; i++) ...[
@@ -783,14 +838,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
                           Row(children: [
                             Expanded(
                               child: Text(d.departments[i].name,
-                                  style: const TextStyle(
-                                      fontSize: 15, color: _C.ink)),
+                                  style: TextStyle(
+                                      fontSize: 15, color: _C.ink2(context))),
                             ),
                             Text(_fmt(d.departments[i].count),
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
-                                    color: _C.blue)),
+                                    color: _C.blue2(context))),
                           ]),
                           const SizedBox(height: 7),
                           _Bar(
@@ -800,8 +855,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
                           const SizedBox(height: 4),
                           Text(
                               '${(d.departments[i].count / total * 100).round()}% ya watumiaji',
-                              style: const TextStyle(
-                                  fontSize: 12.5, color: _C.muted2)),
+                              style: TextStyle(
+                                  fontSize: 12.5, color: _C.muted2B(context))),
                         ],
                       ),
                     ),
@@ -824,32 +879,32 @@ class _StatisticsPageState extends State<StatisticsPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: _C.greenBg,
+                color: _C.greenBg2(context),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
                   const CircleAvatar(radius: 6, backgroundColor: _C.green),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text('Hai (active)',
                         style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
-                            color: _C.greenFg)),
+                            color: _C.greenFg2(context))),
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(_fmt(d.activeCount),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
                               height: 1,
-                              color: _C.greenFg)),
+                              color: _C.greenFg2(context))),
                       const SizedBox(height: 3),
                       const Text('100%',
-                          style: TextStyle(fontSize: 12, color: _C.greenFg)),
+                          style: TextStyle(fontSize: 12, color: _C.greenFg2(context))),
                     ],
                   ),
                 ],
@@ -876,10 +931,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
             const SizedBox(width: 8),
             Expanded(
                 child: Text(name,
-                    style: const TextStyle(fontSize: 14, color: _C.ink))),
+                    style: TextStyle(fontSize: 14, color: _C.ink2(context)))),
             Text('${(p * 100).round()}%',
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w500, color: _C.ink)),
+                style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w500, color: _C.ink2(context))),
           ]),
         );
     Widget line(String name, int v, bool first) => _RowDivider(
@@ -889,12 +944,12 @@ class _StatisticsPageState extends State<StatisticsPage> {
             child: Row(children: [
               Expanded(
                   child: Text(name,
-                      style: const TextStyle(fontSize: 15, color: _C.ink))),
+                      style: TextStyle(fontSize: 15, color: _C.ink2(context)))),
               Text(_fmt(v),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: _C.blue)),
+                      color: _C.blue2(context))),
             ]),
           ),
         );
@@ -926,12 +981,12 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(_fmt(total),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
-                                color: _C.ink)),
+                                color: _C.ink2(context))),
                         const Text('Jumla',
-                            style: TextStyle(fontSize: 11, color: _C.muted2)),
+                            style: TextStyle(fontSize: 11, color: _C.muted2B(context))),
                       ],
                     ),
                   ],
@@ -987,30 +1042,30 @@ class _StatisticsPageState extends State<StatisticsPage> {
                             children: [
                               Expanded(
                                 child: Text(d.kada[i].name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 15,
                                         height: 1.3,
-                                        color: _C.ink)),
+                                        color: _C.ink2(context))),
                               ),
                               const SizedBox(width: 10),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(_fmt(d.kada[i].count),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w500,
-                                          color: _C.blue)),
+                                          color: _C.blue2(context))),
                                   Text(
                                       '${(d.kada[i].count / d.totalUsers * 100).toStringAsFixed(1)}%',
-                                      style: const TextStyle(
-                                          fontSize: 12, color: _C.muted2)),
+                                      style: TextStyle(
+                                          fontSize: 12, color: _C.muted2B(context))),
                                 ],
                               ),
                             ],
                           ),
                           const SizedBox(height: 7),
-                          _Bar(fraction: d.kada[i].count / maxC, color: _C.blue),
+                          _Bar(fraction: d.kada[i].count / maxC, color: _C.blue2(context)),
                         ],
                       ),
                     ),
@@ -1084,10 +1139,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       _RankBadge(i + 1),
                       const SizedBox(width: 10),
                       Text(d.flows[i].from,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: _C.ink)),
+                              color: _C.ink2(context))),
                       const SizedBox(width: 8),
                       const Icon(TablerIcons.arrow_right,
                           size: 17, color: _C.arrow),
@@ -1100,10 +1155,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                 color: _C.orange)),
                       ),
                       Text('${d.flows[i].count}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w500,
-                              color: _C.blue)),
+                              color: _C.blue2(context))),
                     ]),
                     const SizedBox(height: 8),
                     Padding(
@@ -1157,7 +1212,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           Center(
             child: Text(
                 'Zimeonyeshwa wilaya ${list.length} kati ya ${d.districtsCount}',
-                style: const TextStyle(fontSize: 13, color: _C.muted2)),
+                style: TextStyle(fontSize: 13, color: _C.muted2B(context))),
           ),
         ],
       ),
@@ -1195,7 +1250,7 @@ class _Card extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: _C.border, width: 1.5),
+          border: Border.all(color: _C.border2(context), width: 1.5),
         ),
         child: child,
       );
@@ -1216,11 +1271,11 @@ class _CardHeader extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(title,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w500,
                       height: 1.25,
-                      color: _C.ink)),
+                      color: _C.ink2(context))),
             ),
             if (tag != null) ...[
               const SizedBox(width: 8),
@@ -1231,7 +1286,7 @@ class _CardHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(tag!,
-                    style: const TextStyle(fontSize: 12.5, color: _C.blue)),
+                    style: TextStyle(fontSize: 12.5, color: _C.blue2(context))),
               ),
             ],
           ],
@@ -1274,7 +1329,7 @@ class _IconTile extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(radius),
         ),
-        child: Icon(icon, size: iconSize, color: _C.blue),
+        child: Icon(icon, size: iconSize, color: _C.blue2(context)),
       );
 }
 
@@ -1306,7 +1361,7 @@ class _RankBadge extends StatelessWidget {
       height: 28,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: top ? _C.blue : _C.tileBg,
+        color: top ? _C.blue2(context) : _C.tileBg,
         borderRadius: BorderRadius.circular(9),
       ),
       child: Text('$n',
@@ -1328,7 +1383,7 @@ class _Bar extends StatelessWidget {
         borderRadius: BorderRadius.circular(3),
         child: Container(
           height: 6,
-          color: _C.barBg,
+          color: _C.barBg2(context),
           alignment: Alignment.centerLeft,
           child: FractionallySizedBox(
             widthFactor: fraction.clamp(0, 1).toDouble(),
@@ -1355,10 +1410,10 @@ class _TotalStrip extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('Jumla',
-                style: TextStyle(fontSize: 14, color: _C.muted)),
+                style: TextStyle(fontSize: 14, color: _C.mutedA(context))),
             Text(value,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w500, color: _C.ink)),
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w500, color: _C.ink2(context))),
           ],
         ),
       );
@@ -1393,7 +1448,7 @@ class _SortBar extends StatelessWidget {
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: on ? FontWeight.w500 : FontWeight.w400,
-                  color: on ? _C.blue : _C.muted)),
+                  color: on ? _C.blue2(context) : _C.muted)),
         ),
       );
     }
@@ -1454,10 +1509,10 @@ class _RankedBarRow extends StatelessWidget {
                 decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
             const SizedBox(width: 6),
             Text('$v',
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500, color: _C.ink)),
+                style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w500, color: _C.ink2(context))),
             Text(' $label',
-                style: const TextStyle(fontSize: 13, color: _C.muted)),
+                style: TextStyle(fontSize: 13, color: _C.mutedA(context))),
           ],
         );
 
@@ -1474,27 +1529,27 @@ class _RankedBarRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(name,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: _C.ink)),
+                          color: _C.ink2(context))),
                   if (subtitle != null)
                     Row(children: [
                       const Icon(TablerIcons.map_pin,
-                          size: 13, color: _C.muted2),
+                          size: 13, color: _C.muted2B(context)),
                       const SizedBox(width: 3),
                       Text(subtitle!,
-                          style: const TextStyle(
-                              fontSize: 12.5, color: _C.muted2)),
+                          style: TextStyle(
+                              fontSize: 12.5, color: _C.muted2B(context))),
                     ]),
                 ],
               ),
             ),
             Text('$total',
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w500, color: _C.ink)),
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w500, color: _C.ink2(context))),
             const Text(' jumla',
-                style: TextStyle(fontSize: 11.5, color: _C.muted2)),
+                style: TextStyle(fontSize: 11.5, color: _C.muted2B(context))),
           ]),
           Padding(
             padding: const EdgeInsets.only(left: 38, top: 8, bottom: 6),
@@ -1505,7 +1560,7 @@ class _RankedBarRow extends StatelessWidget {
                 child: Container(
                   height: 8,
                   width: w,
-                  color: _C.barBg,
+                  color: _C.barBg2(context),
                   alignment: Alignment.centerLeft,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1513,7 +1568,7 @@ class _RankedBarRow extends StatelessWidget {
                       SizedBox(
                           width: w * resident / maxTotal,
                           height: 8,
-                          child: const ColoredBox(color: _C.blue)),
+                          child: ColoredBox(color: _C.blue2(context))),
                       SizedBox(
                           width: w * moving / maxTotal,
                           height: 8,
@@ -2164,7 +2219,7 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
   Widget build(BuildContext context) {
     if (_loading && _data == null) {
       return const Center(
-          child: CircularProgressIndicator(color: _C.blue));
+          child: CircularProgressIndicator(color: _C.blue2(context)));
     }
     if (_error != null && _data == null) {
       return Center(

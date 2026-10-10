@@ -291,7 +291,9 @@ class AppDrawer extends StatelessWidget {
         // ya pungufu bila kusinyoosha rows — rows zina ukubwa ule ulikuwa nao,
         // Wasifu + Toka zibandikwe chini ofu (kabla ya footer).
         child: Material(
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1E293B)
+              : Colors.white, // dark: giza, light: nyeupe (kama awali)
           borderRadius: const BorderRadius.horizontal(
               right: Radius.circular(14)),
           clipBehavior: Clip.antiAlias,
@@ -451,7 +453,11 @@ class _DrawerRow extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.fromLTRB(active ? 15 : 18, 7, 18, 7),
         decoration: BoxDecoration(
-          color: active ? kBlueTint : Colors.white,
+          color: active
+              ? kBlueTint
+              : Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E293B)
+                  : Colors.white,
           border: Border(
             left: BorderSide(
               color: active ? kBlue : Colors.transparent,

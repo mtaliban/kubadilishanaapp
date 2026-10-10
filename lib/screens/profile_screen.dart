@@ -409,7 +409,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         body: SafeArea(
           child: Column(children: [
             Container(
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
               padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
               child: Row(children: [
                 Material(
@@ -485,7 +485,7 @@ class _AdminProfilePageState extends State<_AdminProfilePage> {
         child: Column(children: [
           // Header bar
           Container(
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
             padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
             child: Row(children: [
               Material(
@@ -538,7 +538,7 @@ class _AdminProfilePageState extends State<_AdminProfilePage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: _border),
                         ),
@@ -555,7 +555,7 @@ class _AdminProfilePageState extends State<_AdminProfilePage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: _border),
                         ),
@@ -663,7 +663,7 @@ class _ViewAdmin extends StatelessWidget {
       Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
         ),
@@ -694,7 +694,7 @@ class _ViewAdmin extends StatelessWidget {
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border, width: 0.6)),
+            decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border, width: 0.6)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Text('Mawasiliano', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
               const SizedBox(height: 14),
@@ -837,7 +837,7 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
   InputDecoration _inputDec(IconData? icon) => InputDecoration(
         prefixIcon: icon == null ? null : Icon(icon, size: 20, color: _textMuted),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _border)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _border)),
@@ -857,7 +857,7 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
           ),

@@ -27,6 +27,20 @@ const _kGrey400 = Color(0xFF9CA3AF);
 const _kBorder  = Color(0xFFECEEF1);
 const _kSoft    = Colors.white;
 
+// ── Theme-aware helpers (dark/light) ────────────────────────────────────────
+bool _kIsDark(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
+Color _kInkT(BuildContext c) => _kIsDark(c) ? const Color(0xFFE7ECF8) : _kInk;
+Color _kGreyT(BuildContext c) => _kIsDark(c) ? const Color(0xFF9AA8C7) : _kGrey;
+Color _kGrey400T(BuildContext c) => _kIsDark(c) ? const Color(0xFF7B8DA5) : _kGrey400;
+Color _kBorderT(BuildContext c) => _kIsDark(c) ? const Color(0xFF2A3240) : _kBorder;
+Color _kBlueT(BuildContext c) => _kIsDark(c) ? const Color(0xFF7AA7FF) : _kBlue;
+Color _kBlueBgT(BuildContext c) => _kIsDark(c) ? const Color(0xFF1C2A44) : _kBlueBg;
+Color _kGreenT(BuildContext c) => _kIsDark(c) ? const Color(0xFF5FD49A) : _kGreen;
+Color _kGreenBgT(BuildContext c) => _kIsDark(c) ? const Color(0xFF14532D) : _kGreenBg;
+Color _kOrangeT(BuildContext c) => _kIsDark(c) ? const Color(0xFFFFB380) : _kOrange;
+Color _kOrangeBgT(BuildContext c) => _kIsDark(c) ? const Color(0xFF3A2414) : _kOrangeBg;
+Color _kRedBgT(BuildContext c) => _kIsDark(c) ? const Color(0xFF3A1A1C) : _kRedBg;
+
 const _kPageSize = 5;
 
 String _fmtDate(String iso) {
@@ -168,9 +182,9 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
             children: [
               Container(
                 width: 52, height: 52,
-                decoration: const BoxDecoration(color: _kRedBg, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: _kRedBgT(context), shape: BoxShape.circle),
                 child: Icon(PhosphorIcons.trash(PhosphorIconsStyle.fill),
-                    color: _kRed, size: 26),
+                    color: _kIsDark(context) ? const Color(0xFFF87171) : _kRed, size: 26),
               ),
               const SizedBox(height: 14),
               Text('Futa Maoni',
@@ -178,7 +192,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
               const SizedBox(height: 8),
               Text('Una uhakika unataka kufuta maoni haya?',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(fontSize: 13.5, color: _kGrey)),
+                  style: GoogleFonts.inter(fontSize: 13.5, color: _kGreyT(context))),
               const SizedBox(height: 20),
               Row(children: [
                 Expanded(
@@ -186,11 +200,11 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     onPressed: () => Navigator.pop(ctx, false),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: _kBorder),
+                      side: BorderSide(color: _kBorderT(context)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text('Hapana',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _kInk)),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _kInkT(context))),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -198,7 +212,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(ctx, true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _kRed,
+                      backgroundColor: _kIsDark(context) ? const Color(0xFFF87171) : _kRed,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -267,7 +281,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
           : Colors.white,
       body: RefreshIndicator(
         onRefresh: _load,
-        color: _kBlue,
+        color: _kBlueT(context),
         child: CustomScrollView(
           controller: _scroll,
           physics: const AlwaysScrollableScrollPhysics(),
@@ -281,14 +295,14 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     // ── Title + LIVE (flexible — LIVE badge ina-shrink kwenye simu ndogo) ──
                     Row(children: [
                       Icon(PhosphorIcons.chatCenteredDots(PhosphorIconsStyle.fill),
-                          color: _kBlue, size: 26),
+                          color: _kBlueT(context), size: 26),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text('Maoni na Malalamiko',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
-                                fontSize: 22, fontWeight: FontWeight.w800, color: _kInk)),
+                                fontSize: 22, fontWeight: FontWeight.w800, color: _kInkT(context))),
                       ),
                       const SizedBox(width: 8),
                       Flexible(
@@ -301,12 +315,12 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
                             Container(width: 8, height: 8,
                                 decoration: const BoxDecoration(
-                                    color: _kGreen, shape: BoxShape.circle)),
+                                    color: _kGreenT(context), shape: BoxShape.circle)),
                             const SizedBox(width: 8),
                             Text('LIVE',
                                 maxLines: 1,
                                 style: GoogleFonts.inter(
-                                    fontSize: 12.5, fontWeight: FontWeight.w700, color: _kInk)),
+                                    fontSize: 12.5, fontWeight: FontWeight.w700, color: _kInkT(context))),
                           ]),
                         ),
                       ),
@@ -314,7 +328,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     const SizedBox(height: 6),
                     Text(
                       'Soma maoni ya watumiaji na uwajibu — real-time (maoni mapya yanafika papo hapo).',
-                      style: GoogleFonts.inter(fontSize: 14, color: _kGrey, height: 1.4),
+                      style: GoogleFonts.inter(fontSize: 14, color: _kGreyT(context), height: 1.4),
                     ),
                     const SizedBox(height: 16),
 
@@ -325,9 +339,9 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         _FilterChip(
                           label: 'Yote',
                           count: _all.length,
-                          badgeBg: _kGreenBg,
-                          badgeFg: _kGreen,
-                          badgeBorder: _kGreenBg,
+                          badgeBg: _kGreenBgT(context),
+                          badgeFg: _kGreenT(context),
+                          badgeBorder: _kGreenBgT(context),
                           selected: _filter == 'Yote',
                           onTap: () {
                             setState(() => _filter = 'Yote');
@@ -338,9 +352,9 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         _FilterChip(
                           label: 'Yasiyojibiwa',
                           count: _countUnanswered,
-                          badgeBg: _kRed,
+                          badgeBg: _kIsDark(context) ? const Color(0xFFF87171) : _kRed,
                           badgeFg: Colors.white,
-                          badgeBorder: _kRed,
+                          badgeBorder: _kIsDark(context) ? const Color(0xFFF87171) : _kRed,
                           selected: _filter == 'Hayajajibiwa',
                           onTap: () {
                             setState(() => _filter = 'Hayajajibiwa');
@@ -351,9 +365,9 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         _FilterChip(
                           label: 'Yaliyojibiwa',
                           count: _countAnswered,
-                          badgeBg: _kGreenBg,
-                          badgeFg: _kGreen,
-                          badgeBorder: _kGreenBg,
+                          badgeBg: _kGreenBgT(context),
+                          badgeFg: _kGreenT(context),
+                          badgeBorder: _kGreenBgT(context),
                           selected: _filter == 'Yamejibiwa',
                           onTap: () {
                             setState(() => _filter = 'Yamejibiwa');
@@ -367,12 +381,12 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     // ── Tafuta ──
                     TextField(
                       controller: _searchCtrl,
-                      style: GoogleFonts.inter(fontSize: 14, color: _kInk),
+                      style: GoogleFonts.inter(fontSize: 14, color: _kInkT(context)),
                       decoration: InputDecoration(
                         hintText: 'Tafuta...',
-                        hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400),
+                        hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400T(context)),
                         prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
-                            size: 18, color: _kGrey),
+                            size: 18, color: _kGreyT(context)),
                         filled: true,
                         fillColor: Colors.white,
                         contentPadding:
@@ -380,15 +394,15 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         isDense: true,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(22),
-                          borderSide: const BorderSide(color: _kBorder),
+                          borderSide: BorderSide(color: _kBorderT(context)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(22),
-                          borderSide: const BorderSide(color: _kBorder),
+                          borderSide: BorderSide(color: _kBorderT(context)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(22),
-                          borderSide: const BorderSide(color: _kBlue, width: 1.2),
+                          borderSide: BorderSide(color: _kBlueT(context), width: 1.2),
                         ),
                       ),
                     ),
@@ -400,7 +414,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         margin: const EdgeInsets.only(top: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: _flash!['type'] == 'success' ? _kGreenBg : _kRedBg,
+                          color: _flash!['type'] == 'success' ? _kGreenBgT(context) : _kRedBgT(context),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(children: [
@@ -409,14 +423,14 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                                 ? PhosphorIcons.checkCircle(PhosphorIconsStyle.fill)
                                 : PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
                             size: 15,
-                            color: _flash!['type'] == 'success' ? _kGreen : _kRed,
+                            color: _flash!['type'] == 'success' ? _kGreenT(context) : _kRed,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(_flash!['msg']!,
                                 style: GoogleFonts.inter(
                                     fontSize: 12.5, fontWeight: FontWeight.w600,
-                                    color: _flash!['type'] == 'success' ? _kGreen : _kRed)),
+                                    color: _flash!['type'] == 'success' ? _kGreenT(context) : _kIsDark(context) ? const Color(0xFFF87171) : _kRed)),
                           ),
                         ]),
                       ),
@@ -425,7 +439,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                     if (_loading && _all.isEmpty)
                       const Padding(
                         padding: EdgeInsets.all(48),
-                        child: Center(child: CircularProgressIndicator(color: _kBlue)),
+                        child: Center(child: CircularProgressIndicator(color: _kBlueT(context))),
                       )
                     else if (_error != null)
                       Padding(
@@ -433,14 +447,14 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         child: Center(
                           child: Column(mainAxisSize: MainAxisSize.min, children: [
                             Icon(PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
-                                color: _kRed, size: 44),
+                                color: _kIsDark(context) ? const Color(0xFFF87171) : _kRed, size: 44),
                             const SizedBox(height: 12),
                             ElevatedButton.icon(
                               onPressed: _load,
                               icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
                               label: Text('Jaribu tena', style: GoogleFonts.inter()),
                               style: ElevatedButton.styleFrom(
-                                  backgroundColor: _kBlue, foregroundColor: Colors.white),
+                                  backgroundColor: _kBlueT(context), foregroundColor: Colors.white),
                             ),
                           ]),
                         ),
@@ -451,10 +465,10 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         child: Center(
                           child: Column(mainAxisSize: MainAxisSize.min, children: [
                             Icon(PhosphorIcons.chatCenteredDots(),
-                                color: _kGrey400, size: 44),
+                                color: _kGrey400T(context), size: 44),
                             const SizedBox(height: 12),
                             Text('Hakuna maoni',
-                                style: GoogleFonts.inter(fontSize: 15, color: _kGrey)),
+                                style: GoogleFonts.inter(fontSize: 15, color: _kGreyT(context))),
                           ]),
                         ),
                       )
@@ -543,7 +557,7 @@ class _FilterChip extends StatelessWidget {
           color: selected ? const Color(0xFFF3F4F6) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: selected ? const Color(0xFF6B7280) : _kBorder,
+            color: selected ? Color(0xFF6B7280) : _kBorderT(context),
           ),
         ),
         child: Row(
@@ -553,7 +567,7 @@ class _FilterChip extends StatelessWidget {
                 style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: _kInk)),
+                    color: _kInkT(context))),
             const SizedBox(width: 8),
             Container(
               constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
@@ -641,9 +655,14 @@ class _FeedbackCardState extends State<_FeedbackCard> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E293B)
+            : Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFD1D5DB)),
+        border: Border.all(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF334155)
+                : const Color(0xFFD1D5DB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -655,14 +674,14 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                 width: 22,
                 child: Text('${widget.index}',
                     style: GoogleFonts.inter(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey400)),
+                        fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey400T(context))),
               ),
               Expanded(
                 child: Text(name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                        fontSize: 15, fontWeight: FontWeight.w700, color: _kInk)),
+                        fontSize: 15, fontWeight: FontWeight.w700, color: _kInkT(context))),
               ),
               const SizedBox(width: 8),
               if (phone.isNotEmpty)
@@ -677,7 +696,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                         softWrap: false,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
-                            fontSize: 14, fontWeight: FontWeight.w600, color: _kBlue)),
+                            fontSize: 14, fontWeight: FontWeight.w600, color: _kBlueT(context))),
                   ),
                 ),
             ],
@@ -697,11 +716,16 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                   width: 40,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: _kRedBg,
+                    color: _kRedBgT(context),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFFECACA)),
+                    border: Border.all(
+                      color: _kIsDark(context)
+                          ? const Color(0xFF7F1D1D)
+                          : const Color(0xFFFECACA)),
                   ),
-                  child: Icon(PhosphorIcons.trash(), size: 16, color: _kRed),
+                  child: Icon(PhosphorIcons.trash(),
+                      size: 16,
+                      color: _kIsDark(context) ? const Color(0xFFF87171) : _kRed),
                 ),
               ),
             ],
@@ -711,24 +735,24 @@ class _FeedbackCardState extends State<_FeedbackCard> {
           // ── Kichwa (bold) na ujumbe ──
           Text(title,
               style: GoogleFonts.inter(
-                  fontSize: 15, fontWeight: FontWeight.w700, height: 1.4, color: _kInk)),
+                  fontSize: 15, fontWeight: FontWeight.w700, height: 1.4, color: _kInkT(context))),
           if (body.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(body,
                 style: GoogleFonts.inter(
-                    fontSize: 15, height: 1.5, color: _kGrey)),
+                    fontSize: 15, height: 1.5, color: _kGreyT(context))),
           ],
           const SizedBox(height: 10),
 
           // ── Muda ──
           Row(children: [
-            Icon(PhosphorIcons.clock(), size: 15, color: _kInk),
+            Icon(PhosphorIcons.clock(), size: 15, color: _kInkT(context)),
             const SizedBox(width: 6),
             Flexible(
               child: Text(_fmtDate(createdAt),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(fontSize: 13, color: _kInk)),
+                  style: GoogleFonts.inter(fontSize: 13, color: _kInkT(context))),
             ),
           ]),
 
@@ -739,23 +763,23 @@ class _FeedbackCardState extends State<_FeedbackCard> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
               decoration: BoxDecoration(
-                color: _kBlueBg,
+                color: _kBlueBgT(context),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFBFDBFE)),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
                   Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
-                      size: 14, color: _kBlue),
+                      size: 14, color: _kBlueT(context)),
                   const SizedBox(width: 6),
                   Text('JIBU LAKO',
                       style: GoogleFonts.inter(
                           fontSize: 12, fontWeight: FontWeight.w700,
-                          color: _kBlue, letterSpacing: 0.4)),
+                          color: _kBlueT(context), letterSpacing: 0.4)),
                 ]),
                 const SizedBox(height: 4),
                 Text(reply,
-                    style: GoogleFonts.inter(fontSize: 15, color: _kInk, height: 1.45)),
+                    style: GoogleFonts.inter(fontSize: 15, color: _kInkT(context), height: 1.45)),
               ]),
             ),
           ],
@@ -772,12 +796,12 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                   controller: _ctrl,
                   maxLines: 2,
                   minLines: 1,
-                  style: GoogleFonts.inter(fontSize: 14, color: _kInk),
+                  style: GoogleFonts.inter(fontSize: 14, color: _kInkT(context)),
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => _send(),
                   decoration: InputDecoration(
                     hintText: 'Andika jibu lako...',
-                    hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400),
+                    hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400T(context)),
                     isDense: true,
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -787,7 +811,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _kBlue, width: 1.2),
+                      borderSide: BorderSide(color: _kBlueT(context), width: 1.2),
                     ),
                   ),
                 ),
@@ -800,7 +824,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                   width: 46,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: _sending ? _kGrey400 : _kBlue,
+                    color: _sending ? _kGrey400T(context) : _kBlueT(context),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: _sending
@@ -835,7 +859,7 @@ class _StatusBadge extends StatelessWidget {
     final bd = answered ? const Color(0xFFA7F3D0) : const Color(0xFFFED7AA);
     final label = answered ? 'Yaliyojibiwa' : 'Yasiyojibiwa';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
@@ -846,10 +870,14 @@ class _StatusBadge extends StatelessWidget {
           answered ? Icons.check_circle_outline : Icons.access_time,
           size: 15, color: fg,
         ),
-        const SizedBox(width: 6),
-        Text(label,
-            style: GoogleFonts.inter(
-                fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                  fontSize: 12.5, fontWeight: FontWeight.w700, color: fg)),
+        ),
       ]),
     );
   }
@@ -874,9 +902,9 @@ class _PaginationBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: enabled ? Colors.white : _kSoft,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _kBorder),
+          border: Border.all(color: _kBorderT(context)),
         ),
-        child: Icon(icon, size: 15, color: enabled ? _kInk : _kGrey400),
+        child: Icon(icon, size: 15, color: enabled ? _kInkT(context) : _kGrey400T(context)),
       ),
     );
   }
@@ -897,15 +925,15 @@ class _PaginationNum extends StatelessWidget {
         width: 30, height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? _kBlue : Colors.white,
+          color: active ? _kBlueT(context) : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? _kBlue : _kBorder),
+          border: Border.all(color: active ? _kBlueT(context) : _kBorderT(context)),
         ),
         child: Text('$n',
             style: GoogleFonts.inter(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
-                color: active ? Colors.white : _kInk)),
+                color: active ? Colors.white : _kInkT(context))),
       ),
     );
   }

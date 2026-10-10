@@ -198,7 +198,9 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
             : Colors.white,
         body: Center(
           child: CircularProgressIndicator(
-              color: Color(0xFF1959D6)),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF7AA7FF)
+                  : const Color(0xFF1959D6)),
         ),
       );
     }
@@ -214,7 +216,10 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
             child:
                 Column(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.cloud_off_rounded,
-                  size: 52, color: Color(0xFFCBD5E1)),
+                  size: 52,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Color(0xFF334155)
+                      : Color(0xFFCBD5E1)),
               const SizedBox(height: 14),
               const Text('Imeshindikana kupakia',
                   style: TextStyle(
