@@ -317,8 +317,12 @@ class _State extends State<AdminDashboardPage>
           const Row(children: [
             Icon(Icons.notifications_rounded, size: 15, color: _kGrey900),
             SizedBox(width: 6),
-            Text('Matukio ya Hivi Karibuni',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kGrey900, height: 1.5)),
+            Flexible(
+              child: Text('Matukio ya Hivi Karibuni',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kGrey900, height: 1.5)),
+            ),
           ]),
           const SizedBox(height: 10),
           ..._events.take(6).map((e) {

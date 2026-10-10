@@ -354,11 +354,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) => Container(
                       color: _kBrand,
-                      child: const Center(
+                      child: Center(
                         child: Text('ES',
                             style: TextStyle(fontSize: 7,
                                 fontWeight: FontWeight.w800,
-                                color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white)),
+                                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white)),
                       ),
                     ),
                   ),

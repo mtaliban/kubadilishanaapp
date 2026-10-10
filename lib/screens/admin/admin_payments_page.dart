@@ -215,7 +215,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
             padding: const EdgeInsets.all(32),
             child:
                 Column(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.cloud_off_rounded,
+              Icon(Icons.cloud_off_rounded,
                   size: 52,
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Color(0xFF334155)

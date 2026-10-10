@@ -424,7 +424,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
                 CircleAvatar(radius: 4, backgroundColor: _C.blue),
                 SizedBox(width: 7),
@@ -434,8 +434,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 13.5, color: _C.mutedA(context))),
                 ),
-                Text('Siku 7 zilizopita',
-                    style: TextStyle(fontSize: 12.5, color: _C.muted2B(context))),
+                Flexible(
+                  child: Text('Siku 7 zilizopita',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      style: TextStyle(fontSize: 12.5, color: _C.muted2B(context))),
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -467,11 +472,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
                             Icon(TablerIcons.trending_up,
                                 size: 15, color: _C.greenFg2(context)),
                             const SizedBox(width: 4),
-                            Text('+${d.newThisWeek} wanatumia siku 7',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: _C.greenFg2(context))),
+                            Flexible(
+                              child: Text(
+                                  '+${d.newThisWeek} wanatumia siku 7',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  softWrap: false,
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: _C.greenFg2(context))),
+                            ),
                           ],
                         ),
                       ),
@@ -765,14 +776,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                                     : _C.ink)),
                                         if (o.subtitle.isNotEmpty)
                                           Text(o.subtitle,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                   fontSize: 12.5,
                                                   color: _C.muted2B(context))),
                                       ],
                                     ),
                                   ),
                                   if (on)
-                                    const Icon(TablerIcons.check,
+                                    Icon(TablerIcons.check,
                                         size: 20, color: _C.blue2(context)),
                                 ],
                               ),
@@ -903,7 +914,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                               height: 1,
                               color: _C.greenFg2(context))),
                       const SizedBox(height: 3),
-                      const Text('100%',
+                      Text('100%',
                           style: TextStyle(fontSize: 12, color: _C.greenFg2(context))),
                     ],
                   ),
@@ -985,7 +996,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
                                 color: _C.ink2(context))),
-                        const Text('Jumla',
+                        Text('Jumla',
                             style: TextStyle(fontSize: 11, color: _C.muted2B(context))),
                       ],
                     ),
@@ -1409,7 +1420,7 @@ class _TotalStrip extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Jumla',
+            Text('Jumla',
                 style: TextStyle(fontSize: 14, color: _C.mutedA(context))),
             Text(value,
                 style: TextStyle(
@@ -1535,7 +1546,7 @@ class _RankedBarRow extends StatelessWidget {
                           color: _C.ink2(context))),
                   if (subtitle != null)
                     Row(children: [
-                      const Icon(TablerIcons.map_pin,
+                      Icon(TablerIcons.map_pin,
                           size: 13, color: _C.muted2B(context)),
                       const SizedBox(width: 3),
                       Text(subtitle!,
@@ -1548,7 +1559,7 @@ class _RankedBarRow extends StatelessWidget {
             Text('$total',
                 style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.w500, color: _C.ink2(context))),
-            const Text(' jumla',
+            Text(' jumla',
                 style: TextStyle(fontSize: 11.5, color: _C.muted2B(context))),
           ]),
           Padding(
@@ -2218,7 +2229,7 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading && _data == null) {
-      return const Center(
+      return Center(
           child: CircularProgressIndicator(color: _C.blue2(context)));
     }
     if (_error != null && _data == null) {

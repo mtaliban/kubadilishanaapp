@@ -314,8 +314,9 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                           ),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
                             Container(width: 8, height: 8,
-                                decoration: const BoxDecoration(
-                                    color: _kGreenT(context), shape: BoxShape.circle)),
+                                decoration: BoxDecoration(
+                                    color: _kGreenT(context),
+                                    shape: BoxShape.circle)),
                             const SizedBox(width: 8),
                             Text('LIVE',
                                 maxLines: 1,
@@ -437,7 +438,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
 
                     // ── Loading / Error / Empty / Cards ──
                     if (_loading && _all.isEmpty)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.all(48),
                         child: Center(child: CircularProgressIndicator(color: _kBlueT(context))),
                       )

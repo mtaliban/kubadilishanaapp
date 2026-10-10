@@ -28,8 +28,8 @@ const _kYellow300 = Color(0xFFFDE047);
 const _kYellow700 = Color(0xFFA16207);
 
 
-BoxDecoration _card() => BoxDecoration(
-  color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
+BoxDecoration _cardOf(BuildContext context) => BoxDecoration(
+  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
   borderRadius: BorderRadius.circular(16),
   border: Border.all(color: _kGrey200),
   boxShadow: const [BoxShadow(
@@ -246,7 +246,7 @@ class _MyMatchCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: _card(),
+      decoration: _cardOf(context),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // ── Header ──────────────────────────────────────────────────────────
         Padding(
@@ -476,7 +476,7 @@ class _RealMatchCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: _card(),
+      decoration: _cardOf(context),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // ── Top badge row ────────────────────────────────────────────────
         Padding(

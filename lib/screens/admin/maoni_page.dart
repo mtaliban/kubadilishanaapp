@@ -364,7 +364,7 @@ class _MaoniScreenState extends State<MaoniScreen> {
                                     style: TextStyle(fontSize: 12, color: c.text2)),
                               ),
                               SizedBox(
-                                height: 92,
+                                height: 94,
                                 child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
@@ -451,6 +451,7 @@ class _WaitingItem extends StatelessWidget {
               thread.firstName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              softWrap: false,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: c.text2),
             ),

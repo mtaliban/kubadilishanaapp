@@ -382,8 +382,8 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
           children: [
             _header(),
-            const SizedBox(height: 10),
-            const Text(
+            SizedBox(height: 10),
+            Text(
               'Watumiaji waliowasiliana kwa simu, SMS na WhatsApp.',
               style: TextStyle(color: _C.muted_2(context), fontSize: 14, height: 1.45),
             ),
@@ -393,9 +393,9 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
             _examples(),
             const SizedBox(height: 12),
             _filters(),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             if (_loading)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(40),
                 child: Center(
                     child: CircularProgressIndicator(color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
@@ -406,7 +406,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                 child: Text(_error!,
                     textAlign: TextAlign.center,
                     style:
-                        const TextStyle(color: _C.muted_2(context), fontSize: 14)),
+                        TextStyle(color: _C.muted_2(context), fontSize: 14)),
               ),
               Center(
                 child: OutlinedButton.icon(
@@ -421,12 +421,12 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                   padding: const EdgeInsets.only(left: 2, bottom: 2),
                   child: Text(
                     'Inaonyesha ${start + 1}–${start + slice.length} kati ya ${view.length}',
-                    style: const TextStyle(color: _C.muted_2(context)3_2(context), fontSize: 14),
+                    style: TextStyle(color: _C.muted3_2(context), fontSize: 14),
                   ),
                 ),
               ..._groupedCards(slice),
               if (view.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(24),
                   child: Center(
                     child: Text('Hakuna matokeo',
@@ -451,10 +451,10 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
               color: _C.headIconBg_2(context),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(TablerIcons.phone_call, size: 22, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
+            child: Icon(TablerIcons.phone_call, size: 22, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
           ),
-          const SizedBox(width: 12),
-          const Expanded(
+          SizedBox(width: 12),
+          Expanded(
             child: Text(
               'Waliopigiana',
               style: TextStyle(
@@ -469,7 +469,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 CircleAvatar(radius: 4, backgroundColor: _C.liveDot),
                 SizedBox(width: 6),
                 Text('Live',
@@ -486,10 +486,10 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
         child: TextField(
           controller: _search,
           onChanged: _setQuery,
-          style: const TextStyle(fontSize: 15, color: _C.ink_2(context)),
+          style: TextStyle(fontSize: 15, color: _C.ink_2(context)),
           decoration: InputDecoration(
             hintText: 'Andika jina, mkoa au idara',
-            hintStyle: const TextStyle(color: _C.of(context, placeholder, placeholderD), fontSize: 15),
+            hintStyle: TextStyle(color: _C.of(context, _C.placeholder, _C.placeholderD), fontSize: 15),
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -505,15 +505,15 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                     child: Container(
                       width: 28,
                       height: 28,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: _C.avatarBg_2(context),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(TablerIcons.x,
+                      child: Icon(TablerIcons.x,
                           size: 16, color: _C.muted_2(context)),
                     ),
                   ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Icon(TablerIcons.search, size: 20, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                 ),
@@ -521,11 +521,11 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: _C.border_2(context), width: 1.5),
+              borderSide: BorderSide(color: _C.border_2(context), width: 1.5),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: _C.border_2(context), width: 1.5),
+              borderSide: BorderSide(color: _C.border_2(context), width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -543,8 +543,8 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        const Text('Mfano:',
-            style: TextStyle(color: _C.muted_2(context)3_2(context), fontSize: 13.5)),
+        Text('Mfano:',
+            style: TextStyle(color: _C.muted3_2(context), fontSize: 13.5)),
         for (final s in samples)
           GestureDetector(
             onTap: () {
@@ -563,7 +563,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(TablerIcons.search, size: 14, color: _C.muted_2(context)),
+                  Icon(TablerIcons.search, size: 14, color: _C.muted_2(context)),
                   const SizedBox(width: 6),
                   Text(s,
                       style: const TextStyle(
@@ -665,7 +665,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                 child: Text(g.$1,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: _C.ink_2(context))),
@@ -676,8 +676,8 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
                   child: Text(g.$2,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 13.5, color: _C.muted_2(context)2_2(context))),
+                      style: TextStyle(
+                          fontSize: 13.5, color: _C.muted_2(context))),
                 ),
               ],
             ],
@@ -724,7 +724,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
               child: Text('Ukurasa $_page / $pages',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: _C.muted_2(context)2_2(context), fontSize: 13)),
+                  style: TextStyle(color: _C.muted_2(context), fontSize: 13)),
             ),
             Flexible(
               child: _pageBtn('Inayofuata', TablerIcons.chevron_right, false,
@@ -743,10 +743,10 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
         child: Text(label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w500, color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
       ),
-      if (!iconFirst) const SizedBox(width: 4),
+      if (!iconFirst) SizedBox(width: 4),
       if (!iconFirst) Icon(icon, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
     ];
     return Opacity(
@@ -824,13 +824,13 @@ class _CallCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(TablerIcons.clock, size: 19, color: _C.muted_2(context)),
+                    Icon(TablerIcons.clock, size: 19, color: _C.muted_2(context)),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(_hm(r.time),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 16, color: _C.muted_2(context))),
                     ),
                   ],
@@ -861,7 +861,7 @@ class _CallCard extends StatelessWidget {
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeInOut,
             alignment: Alignment.topCenter,
-            child: open ? _expanded(r) : _collapsed(r),
+            child: open ? _expanded(context, r) : _collapsed(context, r),
           ),
         ],
       ),
@@ -869,17 +869,17 @@ class _CallCard extends StatelessWidget {
   }
 
   // ---- Collapsed: dotted timeline ------------------------------------------
-  Widget _collapsed(CallRecord r) => Padding(
+  Widget _collapsed(BuildContext context, CallRecord r) => Padding(
         padding: const EdgeInsets.only(top: 14),
         child: Column(
           children: [
-            _timelineRow('Mtumaji', r.from, isFirst: true),
-            _timelineRow('Mpokeaji', r.to, isFirst: false),
+            _timelineRow(context, 'Mtumaji', r.from, isFirst: true),
+            _timelineRow(context, 'Mpokeaji', r.to, isFirst: false),
           ],
         ),
       );
 
-  Widget _timelineRow(String role, Participant p, {required bool isFirst}) {
+  Widget _timelineRow(BuildContext context, String role, Participant p, {required bool isFirst}) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -929,23 +929,23 @@ class _CallCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 1),
                     child: Text(p.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w500,
                             color: _C.ink_2(context))),
                   ),
                   Text('${p.idara} · ${p.cheo}',
-                      style: const TextStyle(fontSize: 14.5, color: _C.muted_2(context))),
-                  const SizedBox(height: 2),
+                      style: TextStyle(fontSize: 14.5, color: _C.muted_2(context))),
+                  SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(TablerIcons.map_pin, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
+                      Icon(TablerIcons.map_pin, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(p.mkoa,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 14.5, color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
                       ),
                     ],
@@ -960,7 +960,7 @@ class _CallCard extends StatelessWidget {
   }
 
   // ---- Expanded: Mtumaji block, dashed divider, Mpokeaji block -------------
-  Widget _expanded(CallRecord r) => Padding(
+  Widget _expanded(BuildContext context, CallRecord r) => Padding(
         padding: const EdgeInsets.only(top: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1019,7 +1019,7 @@ class _PersonBlock extends StatelessWidget {
                 border: Border.all(color: _C.avatarBorder_2(context), width: 1.5),
               ),
               child: Text(person.initials,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
@@ -1032,7 +1032,7 @@ class _PersonBlock extends StatelessWidget {
                   Text(person.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
                           height: 1.2,
@@ -1059,48 +1059,48 @@ class _PersonBlock extends StatelessWidget {
 
         // route box (Mtumaji only)
         if (to != null) ...[
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: _C.routeBg_2(context),
-              border: Border.all(color: _C.border_2(context)Soft_2(context)),
+              border: Border.all(color: _C.borderSoft_2(context)),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Row(
               children: [
-                Flexible(child: _routeEnd('Anatoka', person.mkoa, CrossAxisAlignment.start)),
+                Flexible(child: _routeEnd(context, 'Anatoka', person.mkoa, CrossAxisAlignment.start)),
                 const Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(left: 6, right: 6, top: 14),
                     child: _DashedArrow(),
                   ),
                 ),
-                Flexible(child: _routeEnd('Anaenda', to!.mkoa, CrossAxisAlignment.end)),
+                Flexible(child: _routeEnd(context, 'Anaenda', to!.mkoa, CrossAxisAlignment.end)),
               ],
             ),
           ),
         ],
 
         // number box: label, number + copy, divider, Idara / Cheo
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: _C.boxBg_2(context),
-            border: Border.all(color: _C.border_2(context)Soft_2(context)),
+            border: Border.all(color: _C.borderSoft_2(context)),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
+                children: [
                   Icon(TablerIcons.phone, size: 16, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                   SizedBox(width: 6),
                   Text('Namba ya simu',
-                      style: TextStyle(fontSize: 14, color: _C.muted_2(context)2_2(context))),
+                      style: TextStyle(fontSize: 14, color: _C.muted_2(context))),
                 ],
               ),
               const SizedBox(height: 8),
@@ -1110,7 +1110,7 @@ class _PersonBlock extends StatelessWidget {
                     child: Text(person.phonePretty,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w500,
                             color: _C.ink_2(context))),
@@ -1139,17 +1139,17 @@ class _PersonBlock extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Container(height: 1, color: _C.border_2(context)Soft_2(context)),
+              SizedBox(height: 12),
+              Container(height: 1, color: _C.borderSoft_2(context)),
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: _kv(TablerIcons.building, 'Idara', person.idara),
+                    child: _kv(context, TablerIcons.building, 'Idara', person.idara),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(child: _kv(TablerIcons.briefcase, 'Cheo', person.cheo)),
+                  Expanded(child: _kv(context, TablerIcons.briefcase, 'Cheo', person.cheo)),
                 ],
               ),
             ],
@@ -1163,21 +1163,21 @@ class _PersonBlock extends StatelessWidget {
     );
   }
 
-  Widget _routeEnd(String label, String mkoa, CrossAxisAlignment align) =>
+  Widget _routeEnd(BuildContext context, String label, String mkoa, CrossAxisAlignment align) =>
       Column(
         crossAxisAlignment: align,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: _C.muted_2(context)2_2(context))),
-          const SizedBox(height: 2),
+          Text(label, style: TextStyle(fontSize: 13, color: _C.muted_2(context))),
+          SizedBox(height: 2),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(TablerIcons.map_pin, size: 17, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
+              Icon(TablerIcons.map_pin, size: 17, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
               const SizedBox(width: 4),
               Text(mkoa,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w500,
                       color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
@@ -1186,22 +1186,22 @@ class _PersonBlock extends StatelessWidget {
         ],
       );
 
-  Widget _kv(IconData icon, String k, String v) => Column(
+  Widget _kv(BuildContext context, IconData icon, String k, String v) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
-              const SizedBox(width: 5),
-              Text(k, style: const TextStyle(fontSize: 14, color: _C.muted_2(context)2_2(context))),
+              SizedBox(width: 5),
+              Text(k, style: TextStyle(fontSize: 14, color: _C.muted_2(context))),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(v,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w500, color: _C.ink_2(context))),
         ],
       );
@@ -1366,10 +1366,10 @@ class _DashedArrow extends StatelessWidget {
             child: CustomPaint(
               painter: _DashedLinePainter(
                   vertical: false, color: _C.dash, strokeWidth: 2),
-              child: const SizedBox(height: 2, width: double.infinity),
+              child: SizedBox(height: 2, width: double.infinity),
             ),
           ),
-          const Icon(TablerIcons.arrow_right, size: 20, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
+          Icon(TablerIcons.arrow_right, size: 20, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
         ],
       ),
     );

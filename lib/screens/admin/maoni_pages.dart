@@ -137,6 +137,8 @@ class _C {
   Color get replyIconBg_ => _d ? _replyIconBgD : replyIconBg;
   Color get chipText_ => _d ? _chipTextD : chipText;
 
+  Color get tickBlue_ => tickBlue; // (bluu kila mode)
+
   // Uso wa bubble + KADI — light: Nyeupe KAMA AWALI; dark: giza safi.
   static Color whiteof(BuildContext context) => Theme.of(context).brightness ==
           Brightness.dark
@@ -310,8 +312,8 @@ class _MaoniInboxPageState extends State<MaoniInboxPage> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (shown.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(30),
+                Padding(
+                  padding: const EdgeInsets.all(30),
                   child: Center(
                     child: Text('Hakuna matokeo',
                         style: TextStyle(color: c.muted2_, fontSize: 14)),
@@ -825,7 +827,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                                       offset: Offset(0, 2))
                                 ],
                               ),
-                              child: const Icon(TablerIcons.chevron_down,
+                              child: Icon(TablerIcons.chevron_down,
                                   size: 22, color: _C.of(context).ink_),
                             ),
                             if (_ctrl.newWhileAway > 0)
@@ -868,19 +870,19 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                   Text(c.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                           color: _C.of(context).ink_)),
                   Text(c.phone,
                       style:
-                          const TextStyle(fontSize: 12.5, color: _C.of(context).muted2_)),
+                          TextStyle(fontSize: 12.5, color: _C.of(context).muted2_)),
                 ],
               ),
             ),
             _IconBtn(TablerIcons.phone, () => widget.onCall?.call(c.phone)),
             PopupMenuButton<String>(
-              icon: const Icon(TablerIcons.dots_vertical,
+              icon: Icon(TablerIcons.dots_vertical,
                   size: 22, color: _C.of(context).ink_),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
@@ -888,13 +890,14 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
               onSelected: (v) async {
                 if (v == 'delete') await _confirmDelete(c);
               },
-              itemBuilder: (_) => const [
+              itemBuilder: (_) => [
                 PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(TablerIcons.trash, size: 20, color: _C.of(context).red_),
-                      SizedBox(width: 10),
+                      Icon(TablerIcons.trash,
+                          size: 20, color: _C.of(context).red_),
+                      const SizedBox(width: 10),
                       Text('Futa mazungumzo',
                           style: TextStyle(fontSize: 14.5, color: _C.of(context).red_)),
                     ],
@@ -917,14 +920,14 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
         title: const Text('Futa mazungumzo?',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
         content: Text('Mazungumzo yote na ${c.name} yatafutwa.',
-            style: const TextStyle(fontSize: 14.5, color: _C.of(context).muted_)),
+            style: TextStyle(fontSize: 14.5, color: _C.of(context).muted_)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Hapana')),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Futa', style: TextStyle(color: _C.of(context).red_))),
+              child: Text('Futa', style: TextStyle(color: _C.of(context).red_))),
         ],
       ),
     );
@@ -967,12 +970,12 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(_dayLabel(e.day!),
-                    style: const TextStyle(fontSize: 12.5, color: _C.of(context).muted_)),
+                    style: TextStyle(fontSize: 12.5, color: _C.of(context).muted_)),
               ),
             ),
             if (_dayLabel(e.day!) == 'Leo') ...[
               const SizedBox(height: 6),
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(TablerIcons.arrow_back_up, size: 14, color: _C.of(context).hint_),
@@ -1019,7 +1022,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
           children: [
             Container(
               width: 4,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: _C.of(context).green_,
                 borderRadius:
                     BorderRadius.only(topLeft: Radius.circular(12)),
@@ -1032,7 +1035,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(r.fromAdmin ? 'Wewe' : c.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: _C.of(context).quoteName_)),
@@ -1047,7 +1050,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
             ),
             GestureDetector(
               onTap: () => _ctrl.setReply(null),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
                 child: Icon(TablerIcons.x, size: 20, color: _C.of(context).muted2_),
               ),
@@ -1077,7 +1080,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(TablerIcons.mood_smile,
+                    Icon(TablerIcons.mood_smile,
                         size: 24, color: _C.of(context).muted2_),
                     Expanded(
                       child: TextField(
@@ -1086,7 +1089,7 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
                         minLines: 1,
                         maxLines: 5,
                         textInputAction: TextInputAction.newline,
-                        style: const TextStyle(fontSize: 15.5, color: _C.of(context).ink_),
+                        style: TextStyle(fontSize: 15.5, color: _C.of(context).ink_),
                         decoration: const InputDecoration(
                           hintText: 'Andika jibu lako hapa...',
                           hintStyle: TextStyle(
@@ -1103,9 +1106,9 @@ class _MaoniChatPageState extends State<MaoniChatPage> {
               ),
             ),
             const SizedBox(width: 10),
-            const Icon(TablerIcons.paperclip, size: 23, color: _C.of(context).muted2_),
+            Icon(TablerIcons.paperclip, size: 23, color: _C.of(context).muted2_),
             const SizedBox(width: 12),
-            const Icon(TablerIcons.camera, size: 24, color: _C.of(context).muted2_),
+            Icon(TablerIcons.camera, size: 24, color: _C.of(context).muted2_),
             const SizedBox(width: 10),
             _Press(
               onTap: hasText ? _send : null,
@@ -1150,6 +1153,7 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final m = message;
     final out = m.fromAdmin;
+    final _C cc = _C.of(context);
     final maxW = MediaQuery.of(context).size.width * .8;
     final time = _hm(m.time);
 
@@ -1160,7 +1164,7 @@ class _Bubble extends StatelessWidget {
         decoration: BoxDecoration(
           // Kama WhatsApp halisi: incoming NYEUPE, outgoing KIJANI HAFIFU
           // (#D9FDD3) — zote mbili bila border, kivuli kidogo tu.
-          color: out ? _C.of(context).bubbleOut_ : _C.of(context).bubbleIn_,
+          color: out ? cc.bubbleOut_ : cc.bubbleIn_,
           boxShadow: const [
             BoxShadow(
                 color: Color(0x12141414),
@@ -1178,7 +1182,7 @@ class _Bubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (m.replyTo != null) _quote(m.replyTo!, out),
+            if (m.replyTo != null) _quote(m.replyTo!, out, context: context),
             Stack(
               children: [
                 // Reserve room at the end of the last line for the time.
@@ -1186,8 +1190,8 @@ class _Bubble extends StatelessWidget {
                   TextSpan(children: [
                     TextSpan(
                         text: m.text,
-                        style: const TextStyle(
-                            fontSize: 15.5, height: 1.4, color: _C.of(context).ink_)),
+                        style: TextStyle(
+                            fontSize: 15.5, height: 1.4, color: cc.ink_)),
                     WidgetSpan(
                         child: SizedBox(width: out ? 74 : 46, height: 1)),
                   ]),
@@ -1199,8 +1203,8 @@ class _Bubble extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(time,
-                          style: const TextStyle(
-                              fontSize: 11.5, color: _C.of(context).muted2_)),
+                          style: TextStyle(
+                              fontSize: 11.5, color: cc.muted2_)),
                       if (out) ...[
                         const SizedBox(width: 3),
                         _Ticks(m.status, size: 16),
@@ -1227,12 +1231,17 @@ class _Bubble extends StatelessWidget {
     );
   }
 
-  Widget _quote(ReplyRef r, bool out) => Container(
+  Widget _quote(ReplyRef r, bool out, {required BuildContext context}) =>
+      Builder(builder: (context) => _quoteBody(r, out,context));
+
+  Widget _quoteBody(ReplyRef r, bool out, BuildContext context) {
+    final _C cc = _C.of(context);
+    return Container(
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
           // Kama picha: quote ndani ya bubble ya kijani ni #C8F3BC (paa zito
           // kuliko bubble #D9FDD3); kwenye bubble nyeupe ni kijivu hafifu.
-          color: out ? _C.of(context).quoteOut_ : _C.of(context).quoteIn_,
+          color: out ? cc.quoteOut_ : cc.quoteIn_,
           borderRadius: BorderRadius.circular(10),
         ),
         child: IntrinsicHeight(
@@ -1242,7 +1251,7 @@ class _Bubble extends StatelessWidget {
               Container(
                 width: 3.5,
                 decoration: BoxDecoration(
-                  color: out ? _C.of(context).green_ : _C.of(context).quoteName_,
+                  color: out ? cc.green_ : cc.quoteName_,
                   borderRadius: const BorderRadius.horizontal(
                       left: Radius.circular(10)),
                 ),
@@ -1258,20 +1267,20 @@ class _Bubble extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w500,
-                              color: out ? _C.of(context).greenFg_ : _C.of(context).quoteName_)),
+                              color: out ? cc.greenFg_ : cc.quoteName_)),
                       Text(r.text,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 13.5, color: Color(0xFF6A7280))),
+                          style: TextStyle(
+                              fontSize: 13.5, color: cc.muted_)),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-        ),
-      );
+        ),        );
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -1352,9 +1361,9 @@ class _SwipeToReplyState extends State<_SwipeToReply>
                     child: Container(
                       width: 32,
                       height: 32,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                           color: _C.of(context).replyIconBg_, shape: BoxShape.circle),
-                      child: const Icon(TablerIcons.arrow_back_up,
+                      child: Icon(TablerIcons.arrow_back_up,
                           size: 18, color: _C.of(context).chipText_),
                     ),
                   ),
@@ -1384,7 +1393,7 @@ class _Avatar extends StatelessWidget {
         height: size,
         alignment: Alignment.center,
         decoration:
-            const BoxDecoration(color: _C.of(context).avatarBg_, shape: BoxShape.circle),
+            BoxDecoration(color: _C.of(context).avatarBg_, shape: BoxShape.circle),
         child: Text(_initial(name),
             style: TextStyle(
                 fontSize: fontSize,
@@ -1430,7 +1439,7 @@ class _Ticks extends StatelessWidget {
       case MsgStatus.delivered:
         return Icon(TablerIcons.checks, size: size, color: _C.of(context).tick_);
       case MsgStatus.read:
-        return Icon(TablerIcons.checks, size: size, color: _C.of(context).tick_Blue);
+        return Icon(TablerIcons.checks, size: size, color: _C.of(context).tickBlue_);
       case MsgStatus.failed:
         return Icon(TablerIcons.alert_circle, size: size, color: _C.of(context).red_);
     }

@@ -102,14 +102,14 @@ extension TangazoTypeX on TangazoType {
         TangazoType.onyo => MtIcons.warning,
         TangazoType.mafanikio => MtIcons.success,
       };
-  Color get fg => switch (this) {
-        TangazoType.taarifa => _C.blue,
-        TangazoType.onyo => const Color(0xFFB45309),
+  Color fgOf(BuildContext context) => switch (this) {
+        TangazoType.taarifa => _C.of(context, _C.blue, Color(0xFF7AA7FF)),
+        TangazoType.onyo => const Color(0xFFFFB74D),
         TangazoType.mafanikio => _C.of(context, _C.successFg, _C.successFgD),
       };
-  Color get bg => switch (this) {
+  Color bgOf(BuildContext context) => switch (this) {
         TangazoType.taarifa => _C.of(context, _C.accentBg, _C.accentBgD),
-        TangazoType.onyo => const Color(0xFFFEF3C7),
+        TangazoType.onyo => const Color(0xFF3A2C14),
         TangazoType.mafanikio => _C.of(context, _C.successBg, _C.successBgD),
       };
 }
@@ -401,7 +401,7 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
                   children: [
                     Icon(PhosphorIcons.bellRinging(), size: 26, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                     const SizedBox(width: 10),
-                    const Text('Matangazo',
+                    Text('Matangazo',
                         style: TextStyle(
                             fontSize: 28, fontWeight: FontWeight.w500, color: _C.of(context, _C.text, _C.textD))),
                   ],
@@ -485,12 +485,12 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
             alignment: Alignment.center,
             decoration: BoxDecoration(color: _C.of(context, _C.accentBg, _C.accentBgD), shape: BoxShape.circle),
             child: Text('$n',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w500, color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
           ),
           const SizedBox(width: 8),
           Text(text,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14, fontWeight: FontWeight.w500, color: _C.of(context, _C.text, _C.textD))),
           const Spacer(),
           if (trailing != null) trailing,
@@ -529,20 +529,20 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: _type == t ? t.bg : Colors.transparent,
+                        color: _type == t ? t.bgOf(context) : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: _type == t ? t.fg : _C.of(context, _C.borderStrong, _C.borderStrongD), width: 0.8),
+                            color: _type == t ? t.fgOf(context) : _C.of(context, _C.borderStrong, _C.borderStrongD), width: 0.8),
                       ),
                       child: Column(children: [
-                        Icon(t.icon, size: 22, color: _type == t ? t.fg : _C.of(context, _C.text, _C.textD)),
+                        Icon(t.icon, size: 22, color: _type == t ? t.fgOf(context) : _C.of(context, _C.text, _C.textD)),
                         const SizedBox(height: 4),
                         Text(t.label,
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight:
                                     _type == t ? FontWeight.w500 : FontWeight.w400,
-                                color: _type == t ? t.fg : _C.of(context, _C.text, _C.textD))),
+                                color: _type == t ? t.fgOf(context) : _C.of(context, _C.text, _C.textD))),
                       ]),
                     ),
                   ),
@@ -597,7 +597,7 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
                 Icon(MtIcons.groups, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                 const SizedBox(width: 4),
                 Text('${_fmt(_recipients)} watapokea',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w500, color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
               ]),
             ),
@@ -627,7 +627,7 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: _C.of(context, _C.border, _C.borderD), width: 0.5)),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _iconBox(_type.icon, _type.fg, _type.bg),
+              _iconBox(_type.icon, _type.fgOf(context), _type.bgOf(context)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -636,13 +636,13 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
                     children: [
                       Text(_type.label,
                           style: TextStyle(fontSize: 12, color: _C.of(context, _C.muted, _C.mutedD))),
-                      const Text('sasa hivi',
+                      Text('sasa hivi',
                           style: TextStyle(fontSize: 12, color: _C.of(context, _C.muted, _C.mutedD))),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(_title.text.isEmpty ? 'Kichwa cha habari' : _title.text,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w500, color: _C.of(context, _C.text, _C.textD))),
                   const SizedBox(height: 2),
                   Text(_msg.text.isEmpty ? 'Ujumbe wako utaonekana hapa...' : _msg.text,
@@ -827,11 +827,11 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
             Container(
               width: 88,
               height: 88,
-              decoration: BoxDecoration(color: t.bg, shape: BoxShape.circle),
-              child: Icon(PhosphorIcons.bellSlash(), size: 42, color: t.fg),
+              decoration: BoxDecoration(color: t.bgOf(context), shape: BoxShape.circle),
+              child: Icon(PhosphorIcons.bellSlash(), size: 42, color: t.fgOf(context)),
             ),
             const SizedBox(height: 16),
-            const Text('Hakuna matangazo',
+            Text('Hakuna matangazo',
                 style: TextStyle(
                     fontSize: 18, fontWeight: FontWeight.w500, color: _C.of(context, _C.text, _C.textD))),
             const SizedBox(height: 6),
@@ -840,7 +840,7 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
                 style: TextStyle(fontSize: 14, height: 1.5, color: _C.of(context, _C.text2, _C.text2D))),
             const SizedBox(height: 18),
             Material(
-              color: t.bg,
+              color: t.bgOf(context),
               borderRadius: BorderRadius.circular(12),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
@@ -851,11 +851,11 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(MtIcons.plus, size: 18, color: t.fg),
+                    Icon(MtIcons.plus, size: 18, color: t.fgOf(context)),
                     const SizedBox(width: 8),
                     Text('Tunga tangazo',
                         style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500, color: t.fg)),
+                            fontSize: 14, fontWeight: FontWeight.w500, color: t.fgOf(context))),
                   ]),
                 ),
               ),
@@ -873,12 +873,12 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
     return _card(
       child: Column(children: [
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _iconBox(t.type.icon, t.type.fg, t.type.bg),
+          _iconBox(t.type.icon, t.type.fgOf(context), t.type.bgOf(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(t.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w500, color: _C.of(context, _C.text, _C.textD))),
               Padding(
                 padding: const EdgeInsets.only(top: 2, bottom: 6),
@@ -918,12 +918,13 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
               color: ok ? _C.of(context, _C.successFg, _C.successFgD) : _C.blue,
               bg: ok ? _C.of(context, _C.successBg, _C.successBgD) : null,
               label: 'Tuma tena',
-              onTap: () => _resend(t),
-              child: busy
-                  ? const SizedBox(
+              onTap: () => _resend(t),              child: busy
+                  ? SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _C.of(context, _C.blue, const Color(0xFF7AA7FF))),
                     )
                   : ok
                       ? TweenAnimationBuilder<double>(
@@ -932,7 +933,7 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
                           curve: Curves.elasticOut,
                           builder: (_, v, __) => Transform.scale(
                             scale: v,
-                            child: const Icon(MtIcons.check,
+                            child: Icon(MtIcons.check,
                                 size: 22, color: _C.of(context, _C.successFg, _C.successFgD)),
                           ),
                         )
