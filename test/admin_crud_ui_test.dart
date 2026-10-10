@@ -571,8 +571,9 @@ void main() {
       await settle(tester);
 
       expect(routes.bodies['DELETE feedback:fb1'], isNotNull);
-      expect(find.text('Hakuna maoni'), findsOneWidget,
-          reason: 'Orodha imebaki tupu baada ya kufuta');
+      expect(find.textContaining('Maoni ya watumiaji yataonekana'),
+          findsOneWidget,
+          reason: 'Orodha imebaki tupu baada ya kufuta (empty-state message)');
       expectNoError();
       await drain(tester);
     });
