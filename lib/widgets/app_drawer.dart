@@ -278,26 +278,27 @@ class AppDrawer extends StatelessWidget {
     return rows;
   }
 
-  // Urefu wa body ya footer (bottom nav): padding (4,10,4,8) + container
-  // 44 + gap 4 + label ≈ 80. SystemInset ya chini inajumlishwa runtime —
-  // simu zote (bila/na gesture bar) zinapata urefu halisi wa footer, hivyo
-  // drawer inafanya kazi vizuri kwenye simu za ukubwa tofauti.
+  // Urefu wa body ya footer (bottom nav): padding (4,10,4,8) + tile 44 +
+  // gap 4 + label ≈ 80. SystemInset ya chini inajumlishwa runtime.
   static const double kFooterBody = 80;
 
   @override
   Widget build(BuildContext context) {
+    final insets = MediaQuery.of(context).padding;
     return Drawer(
-      // Drawer IFUNIKE hamburger: juu ya panel = KILELE CHA hamburger
-      // (topInset + chache kidogo), halafu inashuka hadi JUU YA FOOTER.
+      // Drawer IFUNIKE hamburger: juu ya panel = KILELE CHA hamburger,
+      // halafu inashuka HADI JUU YA FOOTER (gap ndogo tu — design mpya).
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       child: Padding(
         padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top - 4,
-          // Urefu wa footer (body + system inset) — drawer inaishia juu
-          // yake, icons za chini zinaonekana na kubonyezeka.
-          bottom: kFooterBody + MediaQuery.of(context).padding.bottom,
+          // Namba hasi inaruhusiwa kuwa 0 (simu isiyo na status inset) —
+          // shifted_box assertion ya Flutter inakataza isNonNegative.
+          top: math.max(0.0, insets.top - 4),
+          // FOOTER IKUFIKIE: gap ndogo tu (14px) badala ya kuachanisha
+          // nafasi ndefu juu ya footer — panel inaishia karibu nayo.
+          bottom: math.max(0.0, kFooterBody + insets.bottom - 58),
         ),
         // Column moja halisi (height inasimamiwa): Spacer inaingia nafasi
         // ya pungufu bila kusinyoosha rows — rows zina ukubwa ule ulikuwa nao,
