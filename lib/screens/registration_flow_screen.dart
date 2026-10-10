@@ -690,9 +690,20 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   // Idara (departments) halisi — jina -> category code
   Map<String, String> _deptNameToCode = {};
 
-  //Status ya namba ya simu (API: /auth/check-phone) — imetumiaka au la
-  String? _phoneCheckMsg; // null = bado kucheck / kimepita
+  //Status ya namba ya simu (API: /auth/check-phone):
+  //  null = bado kucheck / kimepita (inapatikana)
+  String _phoneCheckKind = ''; // ''=bado  'format'=si sahihi  'taken'=imetumika  'net'=imeshindwa  'ok'
   bool _phoneChecking = false;
+
+  // ── Ukaguzi wa TZ (dedupe: regex moja kwa simu + WhatsApp) ──
+  // Namba za Tanzania: 0 6/7 + tarakimu 8 (0712345678), au 255/+255 + tarakimu
+  // 9 zinazoanza 6/7. Kataa herufi na alama (+ mwanzoni tu).
+  static final RegExp _tzPhone = RegExp(r'^(?:\+?255|0)[67]\d{8}$');
+  static bool isValidTzPhone(String v) =>
+      _tzPhone.hasMatch(v.replaceAll(RegExp(r'[\s\-]'), ''));
+
+  String? _nameError; // jina maneno mawili
+  String? _waError; // muundo wa WhatsApp
 
   // IDs za current station (kwa API payload)
   int? _mkoaIdC;
@@ -711,46 +722,65 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
       c.addListener(() => setState(() {}));
     }
     phoneC.addListener(_onPhoneChanged);
+    waC.addListener(_onWaChanged);
+    nameC.addListener(_onNameChanged);
     _loadRegions();
     _loadReferenceData();
   }
 
-  // ── Uthibitisho wa namba ya simu (API) — inaitika kila kubadiliko ──
+  // ── Ukaguzi wa namba ya simu — HALI 3 (kama ulivyokuwa zamani) ──
   Timer? _phoneDebounce;
 
   void _onPhoneChanged() {
-    _phoneCheckMsg = null;
-    _phoneDebounce?.cancel();
     final v = phoneC.text.trim();
-    if (v.length < 9) {
-      if (mounted) setState(() {});
-      return;
+    if (isValidTzPhone(v)) {
+      // Muundo OK → uliza server kama imeshatumika (debounce 0.5s)
+      _phoneCheckKind = 'checking';
+      _phoneDebounce?.cancel();
+      _phoneDebounce = Timer(const Duration(milliseconds: 500), _checkPhone);
+    } else {
+      // Muundo si sahihi — hakuna server call, uonyeshe makosa red
+      _phoneCheckKind = (v.isEmpty) ? '' : 'format';
+      _phoneDebounce?.cancel();
     }
-    _phoneDebounce = Timer(const Duration(milliseconds: 700), _checkPhone);
+    if (mounted) setState(() {});
   }
 
   Future<void> _checkPhone() async {
     final v = phoneC.text.trim();
-    if (v.length < 9 || _phoneChecking) return;
+    if (!isValidTzPhone(v) || _phoneChecking) return;
     _phoneChecking = true;
     try {
       final res = await _api.checkPhone(v);
       final d = res.data as Map? ?? {};
-      // API: {available: bool, reason: 'invalid_format'|nig, phone_normalized}
-      final available = d['available'] != false;
+      final available = d['available'] == true;
       final invalid = d['reason'] == 'invalid_format';
       if (mounted) {
-        setState(() => _phoneCheckMsg = invalid
-            ? 'Namba si sahihi — tumia mfano 0712345678'
-            : (!available
-                ? 'Namba hii imetumiwa — ingia au tumia namba nyingine'
-                : null));
+        setState(() => _phoneCheckKind =
+            invalid ? 'format' : (available ? 'ok' : 'taken'));
       }
     } catch (_) {
-      // Silent — API haipatikani: usizuie mtumiaji
+      // Mtandao — muundo sahihi, mtumiaji anaweza kuendelea (usizui kwa siri)
+      if (mounted) setState(() => _phoneCheckKind = 'net');
     } finally {
       _phoneChecking = false;
     }
+  }
+
+  void _onWaChanged() {
+    final v = waC.text.trim();
+    setState(() => _waError =
+        (v.isEmpty || isValidTzPhone(v)) ? null : 'Namba si sahihi ya Tanzania');
+  }
+
+  void _onNameChanged() {
+    final n = nameC.text.trim();
+    setState(() => _nameError = (n.split(RegExp(r'\s+'))
+            .where((w) => w.isNotEmpty)
+            .length >=
+        2)
+        ? null
+        : (n.isEmpty ? null : 'Weka jina la kwanza na la ukoo'));
   }
 
   @override
@@ -957,10 +987,14 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   bool get valid {
     switch (cur) {
       case StepId.taarifa:
-        return nameC.text.trim().isNotEmpty &&
-            phoneC.text.trim().isNotEmpty &&
-            waC.text.trim().isNotEmpty &&
-            _phoneCheckMsg == null; // namba imetumiwa → si valid
+        // Ukaguzi KAMILI: jina (maneno 2), simu (TZ + inapatikana), WhatsApp (TZ).
+        // Ukaguzi wa server kushindwa (net) hauizuie mtumiaji.
+        return _nameError == null &&
+            nameC.text.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length >= 2 &&
+            isValidTzPhone(phoneC.text) &&
+            _phoneCheckKind != 'taken' &&
+            (_phoneCheckKind == 'ok' || _phoneCheckKind == 'net') &&
+            isValidTzPhone(waC.text);
       case StepId.idara:
         return idara.isNotEmpty;
       case StepId.wizara:
@@ -985,7 +1019,15 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
   String get msg {
     switch (cur) {
       case StepId.taarifa:
-        return _phoneCheckMsg ?? 'Jaza taarifa zote ili kuendelea';
+        // Ujumbe unaonyesha kipi KINA tatizo (nt. yote kwa mpangilio)
+        final name = nameC.text.trim();
+        final nameWords = name.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+        if (_nameError != null || nameWords < 2) return 'Weka jina la kwanza na la ukoo';
+        if (!isValidTzPhone(phoneC.text)) return 'Namba ya simu si sahihi ya Tanzania';
+        if (_phoneCheckKind == 'taken') return 'Namba hii Tayari imetumika';
+        if (_phoneCheckKind == 'checking') return 'Tunathibitisha namba...';
+        if (!isValidTzPhone(waC.text)) return 'Namba ya WhatsApp si sahihi ya Tanzania';
+        return 'Jaza taarifa zote ili kuendelea';
       case StepId.idara:
         return 'Chagua idara ili kuendelea';
       case StepId.wizara:
@@ -1348,19 +1390,29 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            // TATIZO 3: kibod kinapo-funguka, insets za chat ni za kupasisha
+            // ScrollView (padding ya chini ya kibod) — mtumiaji anaweza kupasisha
+            // SEHEMU ILIYOANDIKA (InputAdapter haisaikatiza).
+            padding: EdgeInsets.fromLTRB(
+                12, 12, 12, 12 + MediaQuery.of(context).viewInsets.bottom),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               // Maudhui yakae KATI-KATI YA SKRINI (vertical center) yakifiwa
               // muda mfupi kuliko skrini — hasa hatua ya 1 na Idara. Yakikua
               // kuliko skrini, scroll ya kawaida inaendelea bila overflow.
+              // TATIZO 2 (katikati wima + kadi isiyooshwe): Column yenye
+              // MainAxisSize.min (HAIKUWA Expanded) — kadi ina urefu wa
+              // maudhui yake tu; IntrinsicHeight inafunga kundi lote katikati
+              // ya skrini. Ikiwa maudhui yakua kuliko skrini, scroll ya
+              // kawaida inaendelea (IntrinsicHeight inasogeza chini kidogo).
               child: IntrinsicHeight(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     if (!done) _topHeader(),
                     const SizedBox(height: 10),
-                    Expanded(child: Center(child: _card())),
+                    _card(),
                   ],
                 ),
               ),
@@ -1861,47 +1913,70 @@ class _RegistrationFlowScreenState extends State<RegistrationFlowScreen> {
         ),
       );
 
+  // ── Ukaguzi wa step 1 (hali 3 + makosa ya neno/WhatsApp) ──
+  // Simu: [checking] (spinner) [ok] kijani "Inapatikana" [taken/format] nyekundu.
+  // Ukaguzi wa server kushindwa ('net') → jina la maneno hafifu, haiizuie.
+
+  Widget _fieldMsg({String? error, String? hint, bool checking = false, bool ok = false}) {
+    if (error != null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(children: [
+          const Icon(AppIcons.alert, size: 14, color: AppColors.red),
+          const SizedBox(width: 6),
+          Expanded(child: Text(error, style: _ts(12, c: AppColors.red))),
+        ]),
+      );
+    }
+    if (checking) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(children: [
+          const SizedBox(
+              width: 11,
+              height: 11,
+              child: CircularProgressIndicator(strokeWidth: 1.6)),
+          const SizedBox(width: 6),
+          Text('Inakagua…', style: _ts(11.5, c: AppColors.gray)),
+        ]),
+      );
+    }
+    if (ok) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(children: [
+          const Icon(AppIcons.checkCircleFilled, size: 14, color: AppColors.green),
+          const SizedBox(width: 6),
+          Text(hint ?? 'Namba inapatikana', style: _ts(12, c: AppColors.green)),
+        ]),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
   Widget _stepTaarifa() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _title('Jaza taarifa zako', 'Hatua 4 rahisi, chini ya dakika 3.'),
-          _label('Jina kamili'),
+          _title('Jaza Taarifa Zako', 'Hatua 4 rahisi, chini ya dakika 3.'),
+          _label('Jina kamili', req: true),
           _input(AppIcons.user, nameC, 'Jina la kwanza na la ukoo'),
-          _label('Namba ya simu'),
+          if (_nameError != null)
+            _fieldMsg(error: _nameError),
+          _label('Namba ya simu', req: true),
           _input(AppIcons.phone, phoneC, '0712345678'),
-          // Uthibitisho wa namba (API) — ngumu ya kioo chini ya ya simu field
-          if (_phoneCheckMsg != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                children: [
-                  const Icon(AppIcons.alert, size: 14, color: AppColors.red),
-                  const SizedBox(width: 6),
-                  Expanded(
-                      child: Text(_phoneCheckMsg!,
-                          style:
-                              _ts(12, c: AppColors.red))),
-                ],
-              ),
-            )
-          else if (_phoneChecking)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                children: [
-                  const SizedBox(
-                    width: 11,
-                    height: 11,
-                    child: CircularProgressIndicator(strokeWidth: 1.6),
-                  ),
-                  const SizedBox(width: 6),
-                  Text('Tunathibitisha namba...',
-                      style: _ts(11.5, c: AppColors.gray)),
-                ],
-              ),
-            ),
-          _label('Namba ya WhatsApp'),
+          _fieldMsg(
+            checking: _phoneCheckKind == 'checking',
+            ok: _phoneCheckKind == 'ok',
+            hint: _phoneCheckKind == 'ok' ? 'Namba inapatikana' : null,
+            error: _phoneCheckKind == 'format'
+                ? 'Namba si sahihi ya Tanzania'
+                : _phoneCheckKind == 'taken'
+                    ? 'Namba hii tayari imetumika'
+                    : (_phoneCheckKind == 'net' ? 'Imeshindwa kukagua, jaribu tena' : null),
+          ),
+          _label('Namba ya WhatsApp', req: true),
           _input(AppIcons.whatsapp, waC, '0623456789'),
+          _fieldMsg(error: _waError),
         ],
       );
 
