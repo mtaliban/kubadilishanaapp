@@ -358,8 +358,8 @@ void main() {
       expect(find.byIcon(PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill)),
           findsOneWidget,
           reason: 'Admin lazima awe na button ya kujibu maoni');
-      // Na field ya kuandikia jibu
-      expect(find.text('Andika jibu lako...'), findsOneWidget);
+      // Na field ya kuandikia jibu (design mpya: hint ina ellipsis …)
+      expect(find.text('Andika jibu lako…'), findsOneWidget);
     });
 
     testWidgets('Admin anajibu → POST reply inatumwa na status inabadilika',
@@ -398,10 +398,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('JIBU LAKO'), findsOneWidget);
-      // "Yaliyojibiwa" inaonekana mara 2: chip ya kichujio + badge ya kadi.
-      expect(find.text('Yaliyojibiwa'), findsNWidgets(2));
-      expect(find.text('Jibu limehifadhiwa'), findsOneWidget);
+      // Design mpya: quote ya jibu (label 'Jibu lako' kijivu + border bluu).
+      expect(find.text('Jibu lako'), findsOneWidget);
+      // "Yaliyojibiwa" ×2: tab yenye namba + badge ya kadi.
+      expect(find.textContaining('Yaliyojibiwa'), findsNWidgets(2));
+      // Jibu linaonekana 2 mahali (quote + ReplyBox refu ya editing — design
+      // mpya inajaza jibu ndani ya ReplyBox wakati wa edit mode).
+      expect(find.text('Jibu limehifadhiwa'), findsNWidgets(2));
     });
 
     testWidgets('Search inachuja kwa jina/ujumbe', (tester) async {

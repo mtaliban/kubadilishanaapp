@@ -12,20 +12,20 @@ import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
 
-// ─── Rangi (zingatia esstranfer.com/admin) ───────────────────────────────────
-const _kBlue    = Color(0xFF1959D6);
+// ─── Rangi (design ya MaoniPage — kInk #243049 / kAc #1F5FD6 / kLine #E3E7EE) ─┐
+const _kBlue    = Color(0xFF1F5FD6);
 const _kBlueBg  = Color(0xFFEAF0FE);
 const _kGreen   = Color(0xFF16A34A);
 const _kGreenBg = Color(0xFFDCFCE7);
 const _kOrange  = Color(0xFFEA5A0C);
 const _kOrangeBg = Color(0xFFFFF3EB);
-const _kRed     = Color(0xFFDC2626);
-const _kRedBg   = Color(0xFFFCEBEB);
-const _kInk     = Color(0xFF16181D);
-const _kGrey    = Color(0xFF6B7280);
-const _kGrey400 = Color(0xFF9CA3AF);
-const _kBorder  = Color(0xFFECEEF1);
-const _kSoft    = Colors.white;
+const _kRed     = Color(0xFFD92D20);
+const _kRedBg   = Color(0xFFFEECEB);
+const _kInk     = Color(0xFF243049);
+const _kGrey    = Color(0xFF7A8496);
+const _kGrey400 = Color(0xFFB5BCC8);
+const _kBorder  = Color(0xFFE3E7EE);
+const _kSoft    = Color(0xFFE8EFFC); // design mpya: kSoft
 
 // ── Theme-aware helpers (dark/light) ────────────────────────────────────────
 bool _kIsDark(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
@@ -292,118 +292,95 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Title + LIVE (flexible — LIVE badge ina-shrink kwenye simu ndogo) ──
+                    // ── Kichwa: title kubwa 26 + dot ya bluu + 'Live' kulia
+                    // (design mpya ya MaoniPage — dot inabadilisha badge LIVE) ──
                     Row(children: [
-                      Icon(PhosphorIcons.chatCenteredDots(PhosphorIconsStyle.fill),
-                          color: _kBlueT(context), size: 26),
-                      const SizedBox(width: 8),
                       Expanded(
                         child: Text('Maoni na Malalamiko',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
-                                fontSize: 22, fontWeight: FontWeight.w800, color: _kInkT(context))),
+                                fontSize: 26, fontWeight: FontWeight.w600,
+                                color: _kInkT(context), letterSpacing: -0.5)),
                       ),
                       const SizedBox(width: 8),
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      Container(width: 7, height: 7,
                           decoration: BoxDecoration(
-                            color: _kSoft,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Container(width: 8, height: 8,
-                                decoration: BoxDecoration(
-                                    color: _kGreenT(context),
-                                    shape: BoxShape.circle)),
-                            const SizedBox(width: 8),
-                            Text('LIVE',
-                                maxLines: 1,
-                                style: GoogleFonts.inter(
-                                    fontSize: 12.5, fontWeight: FontWeight.w700, color: _kInkT(context))),
-                          ]),
-                        ),
-                      ),
+                              color: _kBlueT(context), shape: BoxShape.circle)),
+                      const SizedBox(width: 6),
+                      Text('Live',
+                          style: GoogleFonts.inter(
+                              fontSize: 12, fontWeight: FontWeight.w600,
+                              color: _kBlueT(context))),
                     ]),
                     const SizedBox(height: 6),
                     Text(
-                      'Soma maoni ya watumiaji na uwajibu — real-time (maoni mapya yanafika papo hapo).',
-                      style: GoogleFonts.inter(fontSize: 14, color: _kGreyT(context), height: 1.4),
+                      _countUnanswered > 0
+                          ? '${_countUnanswered} ${_countUnanswered == 1 ? 'ujumbe unasubiri' : 'jumbe zinasubiri'} jibu lako.'
+                          : 'Soma maoni ya watumiaji na uwajibu.',
+                      style: GoogleFonts.inter(fontSize: 12, color: _kGreyT(context), height: 1.4),
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Vichujio: chips zenye duara za namba (kama picha) ──
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(children: [
-                        _FilterChip(
-                          label: 'Yote',
-                          count: _all.length,
-                          badgeBg: _kGreenBgT(context),
-                          badgeFg: _kGreenT(context),
-                          badgeBorder: _kGreenBgT(context),
-                          selected: _filter == 'Yote',
-                          onTap: () {
-                            setState(() => _filter = 'Yote');
-                            _applyFilter();
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'Yasiyojibiwa',
-                          count: _countUnanswered,
-                          badgeBg: _kIsDark(context) ? const Color(0xFFF87171) : _kRed,
-                          badgeFg: Colors.white,
-                          badgeBorder: _kIsDark(context) ? const Color(0xFFF87171) : _kRed,
-                          selected: _filter == 'Hayajajibiwa',
-                          onTap: () {
-                            setState(() => _filter = 'Hayajajibiwa');
-                            _applyFilter();
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'Yaliyojibiwa',
-                          count: _countAnswered,
-                          badgeBg: _kGreenBgT(context),
-                          badgeFg: _kGreenT(context),
-                          badgeBorder: _kGreenBgT(context),
-                          selected: _filter == 'Yamejibiwa',
-                          onTap: () {
-                            setState(() => _filter = 'Yamejibiwa');
-                            _applyFilter();
-                          },
-                        ),
-                      ]),
+                    // ── TABS ZA MSTARI (design mpya): Yote/Yasiyojibiwa/
+                    // Yaliyojibiwa + underline bluu 2 chini ya selected ──
+                    Container(
+                      decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(color: _kBorderT(context)))),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(children: [
+                          _TabLine(
+                            label: 'Yote ${_all.length}',
+                            selected: _filter == 'Yote',
+                            onTap: () {
+                              setState(() => _filter = 'Yote');
+                              _applyFilter();
+                            },
+                          ),
+                          const SizedBox(width: 16),
+                          _TabLine(
+                            label: 'Yasiyojibiwa $_countUnanswered',
+                            selected: _filter == 'Hayajajibiwa',
+                            onTap: () {
+                              setState(() => _filter = 'Hayajajibiwa');
+                              _applyFilter();
+                            },
+                          ),
+                          const SizedBox(width: 16),
+                          _TabLine(
+                            label: 'Yaliyojibiwa $_countAnswered',
+                            selected: _filter == 'Yamejibiwa',
+                            onTap: () {
+                              setState(() => _filter = 'Yamejibiwa');
+                              _applyFilter();
+                            },
+                          ),
+                          const SizedBox(width: 2),
+                        ]),
+                      ),
                     ),
-                    const SizedBox(height: 10),
 
-                    // ── Tafuta ──
-                    TextField(
-                      controller: _searchCtrl,
-                      style: GoogleFonts.inter(fontSize: 14, color: _kInkT(context)),
-                      decoration: InputDecoration(
-                        hintText: 'Tafuta...',
-                        hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400T(context)),
-                        prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
-                            size: 18, color: _kGreyT(context)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(color: _kBorderT(context)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(color: _kBorderT(context)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(22),
-                          borderSide: BorderSide(color: _kBlueT(context), width: 1.2),
+                    // ── Tafuta: inline + border ya chini (design mpya) ──
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+                      decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(color: _kBorderT(context)))),
+                      child: TextField(
+                        controller: _searchCtrl,
+                        style: GoogleFonts.inter(fontSize: 13, color: _kInkT(context)),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'Tafuta jina, namba au ujumbe',
+                          hintStyle: GoogleFonts.inter(
+                              fontSize: 13, color: _kGrey400T(context)),
+                          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(),
+                              size: 18, color: _kGreyT(context)),
+                          prefixIconConstraints:
+                              const BoxConstraints(minWidth: 28),
+                          isDense: true,
                         ),
                       ),
                     ),
@@ -528,22 +505,14 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   }
 }
 
-// ─── Kidonge cha kichujio + duara la namba (kama picha) ──────────────────────
+// ─── Tab ya mstari (design mpya — underline bluu chini ya selected) ────
 
-class _FilterChip extends StatelessWidget {
+class _TabLine extends StatelessWidget {
   final String label;
-  final int count;
-  final Color badgeBg;
-  final Color badgeFg;
-  final Color badgeBorder;
   final bool selected;
   final VoidCallback onTap;
-  const _FilterChip({
+  const _TabLine({
     required this.label,
-    required this.count,
-    required this.badgeBg,
-    required this.badgeFg,
-    required this.badgeBorder,
     required this.selected,
     required this.onTap,
   });
@@ -552,41 +521,20 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+        padding: const EdgeInsets.only(bottom: 9),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF3F4F6) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: selected ? Color(0xFF6B7280) : _kBorderT(context),
-          ),
+          border: Border(
+              bottom: BorderSide(
+                  color: selected ? _kBlueT(context) : Colors.transparent,
+                  width: 2)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label,
-                style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _kInkT(context))),
-            const SizedBox(width: 8),
-            Container(
-              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: badgeBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: badgeBorder),
-              ),
-              child: Text('$count',
-                  style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: badgeFg)),
-            ),
-          ],
-        ),
+        child: Text(label,
+            style: GoogleFonts.inter(
+                fontSize: 13,
+                color: selected ? _kInkT(context) : _kGreyT(context),
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
       ),
     );
   }
@@ -643,6 +591,13 @@ class _FeedbackCardState extends State<_FeedbackCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Design mpya: ReplyBox ndogo chini ya maudhui hushughulikia editing
+    // (jibu la awali limejaa ndani; "Ghairi" inarudisha) — edit-mode
+    // mahsusi ya kadi nzima IMEONDOGWA. Hakuna kubadilisha API.
+    return _buildCard(context);
+  }
+
+  Widget _buildCard(BuildContext context) {
     if (_editing) return _buildEditBox(context);
     return _buildDefault(context);
   }
@@ -752,198 +707,189 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                 ? const Color(0xFF334155)
                 : const Color(0xFFD1D5DB)),
       ),
-      child: Column(
+      // ── DESIGN MPYA: col ya TAREHE 44 (day 24 / month 11 / time 11) kushoto
+      //  + maudhui yote kulia (jina w600 14, simu 11 kijivu, msg 15 h1.4,
+      //  Jibu lako = quote left-border bluu 2 + Hariri jibu kijivu + ReplyBox) ─
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Mstari 1: namba + jina + simu (kulia, bluu) ──
-          Row(
-            children: [
-              SizedBox(
-                width: 22,
-                child: Text('${widget.index}',
-                    style: GoogleFonts.inter(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: _kGrey400T(context))),
-              ),
-              Expanded(
-                child: Text(name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                        fontSize: 15, fontWeight: FontWeight.w700, color: _kInkT(context))),
-              ),
-              const SizedBox(width: 8),
-              if (phone.isNotEmpty)
-                Flexible(
-                  child: GestureDetector(
-                    onLongPress: () {
-                      Clipboard.setData(ClipboardData(text: phone));
-                      AppToast.success('Namba imenakiliwa');
-                    },
-                    child: Text(phone,
+          // ── TAREHE (day / month / time) ──
+          SizedBox(
+            width: 44,
+            child: Column(children: [
+              Text(_dayOf(createdAt),
+                  style: GoogleFonts.inter(
+                      fontSize: 24, fontWeight: FontWeight.w600,
+                      height: 1, color: _kInkT(context))),
+              const SizedBox(height: 2),
+              Text(_monthOf(createdAt),
+                  style: GoogleFonts.inter(fontSize: 11, color: _kGreyT(context))),
+              const SizedBox(height: 8),
+              Text(_timeOf(createdAt),
+                  style: GoogleFonts.inter(fontSize: 11, color: _kGreyT(context))),
+            ]),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Jina (bold) + namba ya simu (bluu, kulia) ──
+                Row(children: [
+                  Expanded(
+                    child: Text(name,
                         maxLines: 1,
-                        softWrap: false,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
-                            fontSize: 14, fontWeight: FontWeight.w600, color: _kBlueT(context))),
+                            fontSize: 14, fontWeight: FontWeight.w600,
+                            color: _kInkT(context))),
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // ── Mstari 2: hali (kushoto) + kufuta (kulia) ──
-          Row(
-            children: [
-              Flexible(
-                child: _StatusBadge(answered: replied),
-              ),
-              InkWell(
-                onTap: () => widget.onDelete(id),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  width: 40,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: _kRedBgT(context),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _kIsDark(context)
-                          ? const Color(0xFF7F1D1D)
-                          : const Color(0xFFFECACA)),
-                  ),
-                  child: Icon(PhosphorIcons.trash(),
-                      size: 16,
-                      color: _kIsDark(context) ? const Color(0xFFF87171) : _kRed),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // ── Kichwa (bold) na ujumbe ──
-          Text(title,
-              style: GoogleFonts.inter(
-                  fontSize: 15, fontWeight: FontWeight.w700, height: 1.4, color: _kInkT(context))),
-          if (body.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(body,
-                style: GoogleFonts.inter(
-                    fontSize: 15, height: 1.5, color: _kGreyT(context))),
-          ],
-          const SizedBox(height: 10),
-
-          // ── Muda ──
-          Row(children: [
-            Icon(PhosphorIcons.clock(), size: 15, color: _kInkT(context)),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(_fmtDate(createdAt),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(fontSize: 13, color: _kInkT(context))),
-            ),
-          ]),
-
-          // ── JIBU LAKO (kama limejibiwa) ──
-          if (replied) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-              decoration: BoxDecoration(
-                color: _kBlueBgT(context),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
-              ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill),
-                      size: 14, color: _kBlueT(context)),
-                  const SizedBox(width: 6),
-                  Text('JIBU LAKO',
-                      style: GoogleFonts.inter(
-                          fontSize: 12, fontWeight: FontWeight.w700,
-                          color: _kBlueT(context), letterSpacing: 0.4)),
+                  const SizedBox(width: 8),
+                  if (phone.isNotEmpty)
+                    Flexible(
+                      child: GestureDetector(
+                        onLongPress: () {
+                          Clipboard.setData(ClipboardData(text: phone));
+                          AppToast.success('Namba imenakiliwa');
+                        },
+                        child: Text(phone,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                                fontSize: 11, color: _kGreyT(context))),
+                      ),
+                    ),
                 ]),
-                const SizedBox(height: 4),
-                Text(reply,
-                    style: GoogleFonts.inter(fontSize: 15, color: _kInkT(context), height: 1.45)),
+                const SizedBox(height: 1),
+
+                // ── Ujumbe (15 h1.4) ──
+                Text(title,
+                    style: GoogleFonts.inter(
+                        fontSize: 15, height: 1.4, color: _kInkT(context))),
+                if (body.isNotEmpty) ...[
+                  Text(body,
+                      style: GoogleFonts.inter(
+                          fontSize: 15, height: 1.4, color: _kInkT(context))),
+                ],
                 const SizedBox(height: 10),
-                // Hariri jibu (design mpya ya maoni) — inafungua edit box juu
-                // (na "Ghairi" inarudisha hali ya kawaida). Hakuna server call
-                // mpaka admin abonyeze "Hifadhi jibu" (POST /reply kama kawaida).
-                GestureDetector(
-                  onTap: () => setState(() => _editing = true),
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Text('Hariri jibu',
-                        style: GoogleFonts.inter(
-                            fontSize: 12.5, fontWeight: FontWeight.w600,
-                            color: _kIsDark(context) ? const Color(0xFF9AA8C7) : const Color(0xFF5B6679))),
+
+                // ── Jibu lako: quote (label kijivu + text 13, border-kushoto 2 bluu)
+                //  + 'Hariri jibu' kijivu (12) — inafungua edit mode. ──
+                if (replied && !_editing) ...[
+                  Container(
+                    padding: const EdgeInsets.only(left: 10),
+                    decoration: const BoxDecoration(
+                        border: Border(
+                            left: BorderSide(color: _kBlue, width: 2))),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Jibu lako',
+                            style: GoogleFonts.inter(
+                                fontSize: 11, color: _kGreyT(context))),
+                        const SizedBox(height: 2),
+                        Text(reply,
+                            style: GoogleFonts.inter(
+                                fontSize: 13, height: 1.4,
+                                color: _kInkT(context))),
+                      ],
+                    ),
                   ),
+                  const SizedBox(height: 6),
+                  GestureDetector(
+                    onTap: () => setState(() => _editing = true),
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 6),
+                      child: Text('Hariri jibu',
+                          style: TextStyle(
+                              fontSize: 12, color: Color(0xFF5B6679))),
+                    ),
+                  ),
+                ],
+
+                // ── ReplyBox: pill 21 + send duara 34 kAc chini-kulia
+                //  (design mpya) + Ghairi iwapo editing ──
+                ReplyBox(
+                  key: ValueKey('reply-$id'),
+                  initial: reply ?? '',
+                  isEdit: replied,
+                  sending: _sending,
+                  onSend: (text) async {
+                    await widget.onReply(id, text);
+                    if (mounted) setState(() => _editing = false);
+                  },
+                  onCancel: () => setState(() => _editing = false),
                 ),
-              ]),
+
+                // ── Hali + Futa (chini ya maudhui) ──
+                const SizedBox(height: 12),
+                Row(children: [
+                  Flexible(child: _StatusBadge(answered: replied)),
+                  const Spacer(),
+                  InkWell(
+                    onTap: () => widget.onDelete(id),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 40,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: _kRedBgT(context),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _kIsDark(context)
+                              ? const Color(0xFF7F1D1D)
+                              : const Color(0xFFFECACA)),
+                      ),
+                      child: Icon(PhosphorIcons.trash(),
+                          size: 16,
+                          color: _kIsDark(context)
+                              ? const Color(0xFFF87171)
+                              : _kRed),
+                    ),
+                  ),
+                ]),
+              ],
             ),
-          ],
-
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          const SizedBox(height: 12),
-
-          // ── Andika jibu + kitufe cha kutuma (bluu, ikoni tu — kama picha) ──
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _ctrl,
-                  maxLines: 2,
-                  minLines: 1,
-                  style: GoogleFonts.inter(fontSize: 14, color: _kInkT(context)),
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _send(),
-                  decoration: InputDecoration(
-                    hintText: 'Andika jibu lako...',
-                    hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400T(context)),
-                    isDense: true,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: _kBlueT(context), width: 1.2),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: _sending ? null : _send,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  width: 46,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: _sending ? _kGrey400T(context) : _kBlueT(context),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: _sending
-                      ? const Padding(
-                          padding: EdgeInsets.all(11),
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
-                      : Icon(PhosphorIcons.paperPlaneTilt(PhosphorIconsStyle.fill),
-                          size: 19, color: Colors.white),
-                ),
-              ),
-            ],
           ),
         ],
       ),
     );
+  }
+
+  // Siku/mwezi/saa kutoka created_at (ISO) — design mpya: 24 / 11 / 11.
+  String _dayOf(String iso) {
+    if (iso.isEmpty) return '';
+    try {
+      return '${DateTime.parse(iso).toLocal().day}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _monthOf(String iso) {
+    if (iso.isEmpty) return '';
+    try {
+      const months = [
+        'Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun',
+        'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des'
+      ];
+      final m = DateTime.parse(iso).toLocal().month;
+      return m >= 1 && m <= 12 ? months[m - 1] : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _timeOf(String iso) {
+    if (iso.isEmpty) return '';
+    try {
+      final t = DateTime.parse(iso).toLocal();
+      return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
   }
 }
 
@@ -1038,6 +984,140 @@ class _PaginationNum extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: active ? Colors.white : _kInkT(context))),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ReplyBox — design mpya ya MaoniPage: pill refu (radius 21), kinatanuka
+//  maneno yakiongezeka, kitufe cha kutuma duara 34 kAc ndani yake chini-kulia.
+//  Error nyekundu chini; 'Ghairi' (12 kijivu) wakati wa editing.
+//  API: onSend → POST /feedback/admin/:id/reply (kama kawaida).
+// ─────────────────────────────────────────────────────────────────────────────
+class ReplyBox extends StatefulWidget {
+  final String initial;
+  final bool isEdit;
+  final bool sending;
+  final ValueChanged<String> onSend;
+  final VoidCallback onCancel;
+  const ReplyBox({
+    super.key,
+    required this.initial,
+    required this.isEdit,
+    required this.onSend,
+    required this.onCancel,
+    this.sending = false,
+  });
+
+  @override
+  State<ReplyBox> createState() => _ReplyBoxState();
+}
+
+class _ReplyBoxState extends State<ReplyBox> {
+  late final TextEditingController _c =
+      TextEditingController(text: widget.initial);
+  String? error;
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _send() {
+    final v = _c.text.trim();
+    if (v.isEmpty) {
+      setState(() => error = 'Andika jibu kwanza');
+      return;
+    }
+    widget.onSend(v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(21),
+      borderSide: const BorderSide(color: Color(0xFFD3D9E4)),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 2),
+        Stack(
+          children: [
+            TextField(
+              controller: _c,
+              autofocus: widget.isEdit,
+              minLines: 1,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+              onChanged: (_) {
+                if (error != null) setState(() => error = null);
+              },
+              style: GoogleFonts.inter(
+                  fontSize: 14, height: 1.35, color: _kInkT(context)),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: 'Andika jibu lako…',
+                hintStyle: GoogleFonts.inter(
+                    fontSize: 14, color: _kGrey400T(context)),
+                contentPadding: const EdgeInsets.fromLTRB(14, 12, 46, 12),
+                enabledBorder: border,
+                filled: true,
+                fillColor: _kIsDark(context)
+                    ? const Color(0xFF1E293B)
+                    : Colors.white,
+                focusedBorder: border.copyWith(
+                    borderSide: BorderSide(color: _kBlueT(context), width: 1.5)),
+              ),
+            ),
+            Positioned(
+              right: 4,
+              bottom: 4,
+              child: GestureDetector(
+                onTap: widget.sending ? null : _send,
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                      color: widget.sending
+                          ? _kGrey400T(context)
+                          : _kBlueT(context),
+                      shape: BoxShape.circle),
+                  child: widget.sending
+                      ? const Padding(
+                          padding: EdgeInsets.all(9),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : Icon(PhosphorIcons.paperPlaneTilt(
+                          PhosphorIconsStyle.fill),
+                          color: Colors.white,
+                          size: 17),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Text(error!,
+                style: GoogleFonts.inter(
+                    fontSize: 12, color: _kIsDark(context)
+                        ? const Color(0xFFF87171)
+                        : const Color(0xFFB3261E))),
+          ),
+        if (widget.isEdit)
+          GestureDetector(
+            onTap: widget.onCancel,
+            behavior: HitTestBehavior.opaque,
+            child: const Padding(
+              padding: EdgeInsets.fromLTRB(4, 10, 0, 6),
+              child: Text('Ghairi',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF5B6679))),
+            ),
+          ),
+      ],
     );
   }
 }
