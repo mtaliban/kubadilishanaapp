@@ -296,9 +296,11 @@ class AppDrawer extends StatelessWidget {
           // Namba hasi inaruhusiwa kuwa 0 (simu isiyo na status inset) —
           // shifted_box assertion ya Flutter inakataza isNonNegative.
           top: math.max(0.0, insets.top - 4),
-          // FOOTER IKUFIKIE: gap ndogo tu (14px) badala ya kuachanisha
-          // nafasi ndefu juu ya footer — panel inaishia karibu nayo.
-          bottom: math.max(0.0, kFooterBody + insets.bottom - 58),
+          // PANEL ISHE MOJA KWA MOJA JUU YA FOOTER (mizio ya geometry halisi:
+          // footer = SafeArea-chini + Padding(4,10,4,8) + tile 44 + gap 4 +
+          // label ≈ 80 + insets.bottom). Kuipunguza kunafunika footer — Toka
+          // haionyeshwi vizuri chini ya panel. (Imepimwa kwenye 390×844/inset 40.)
+          bottom: kFooterBody + insets.bottom,
         ),
         // Column moja halisi (height inasimamiwa): Spacer inaingia nafasi
         // ya pungufu bila kusinyoosha rows — rows zina ukubwa ule ulikuwa nao,
