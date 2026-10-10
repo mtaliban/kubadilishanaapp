@@ -1,7 +1,6 @@
-// NOTE (Buffy): Mockup ya ukurasa wa "Maoni na malalamiko" (orodha moja kwa moja
-// + ReplyBox) iliyopeswa KAMA ILIVYO (sio sehemu ya app halisi — hiyo ni
-// lib/screens/admin/admin_feedback_page.dart). Demo standalone yenye main() yake.
-// Data hard-coded ya mfano; haipaswi kwa app halisi.
+// code/maoni_page.dart — MaoniPage (orodha + ReplyBox — demo standalone
+// yenye main() yake ya kuonjisha). Data hard-coded ya mfano;
+// badilisha `items` na API yako halisi.
 
 import 'package:flutter/material.dart';
 

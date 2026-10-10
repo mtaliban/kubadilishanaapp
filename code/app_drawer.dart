@@ -1,6 +1,6 @@
-// NOTE (Buffy): Mockup ya AppDrawer ya admin panel ya "Kubadilishana"
-// iliyopeswa kama ilivyo (sio sehemu ya app halisi — hiyo ni lib/widgets/app_drawer.dart).
-// Demo standalone yenye main() yake; haipaswi kwa app halisi.
+// code/app_drawer.dart — AppDrawer (drawer ya menyu ya admin; demo standalone
+// yenye main() yake ya kuonjisha). Schema: HomePage inaonyesha 'selected'.
+// Badilisha main() kama unataka kuunganisha code hii ndani ya app yako.
 
 import 'package:flutter/material.dart';
 
