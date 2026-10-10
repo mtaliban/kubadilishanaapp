@@ -615,6 +615,10 @@ class _FeedbackCardState extends State<_FeedbackCard> {
   final _ctrl = TextEditingController();
   bool _sending = false;
   bool _expanded = false;
+  // Hariri jibu (design mpya): bonyeza "Hariri jibu" → jibu la zamani linaingia
+  // kwenye ReplyBox + "Ghairi" inarudisha hali ya awali. "Hariri" hakubadilishi
+  // kitu kwenye server mpaka kitufe kinabonyezwa (POST /reply kama kawaida).
+  bool _editing = false;
 
   @override
   void dispose() {
@@ -639,6 +643,89 @@ class _FeedbackCardState extends State<_FeedbackCard> {
 
   @override
   Widget build(BuildContext context) {
+    if (_editing) return _buildEditBox(context);
+    return _buildDefault(context);
+  }
+
+  Widget _buildEditBox(BuildContext context) {
+    // Hariri: jibu la awali limeandikwa ndani ya box — badilisha, Tuma kwa
+    // ikoni ile ile (POST /reply inaandika upya jibu server ikituma).
+    final reply = widget.item['reply'] as String? ??
+        widget.item['admin_reply'] as String? ?? '';
+    if (_ctrl.text.isEmpty) _ctrl.text = reply;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E293B)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _kBlueT(context), width: 1.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Hariri jibu',
+            style: GoogleFonts.inter(
+                fontSize: 13, fontWeight: FontWeight.w700, color: _kBlueT(context))),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _ctrl,
+          maxLines: null,
+          minLines: 2,
+          autofocus: true,
+          style: GoogleFonts.inter(fontSize: 14, color: _kInkT(context)),
+          decoration: InputDecoration(
+            hintText: 'Hariri jibu lako...',
+            hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400T(context)),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(21),
+              borderSide: const BorderSide(color: Color(0xFFD3D9E4)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(21),
+              borderSide: BorderSide(color: _kBlueT(context), width: 1.5),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _editing = false;
+                _ctrl.clear();
+              });
+            },
+            child: Text('Ghairi',
+                style: GoogleFonts.inter(
+                    fontSize: 13, fontWeight: FontWeight.w600, color: _kGreyT(context))),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: _sending ? null : _send,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kBlueT(context),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: _sending
+                  ? const SizedBox(
+                      width: 16, height: 16,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const SizedBox.shrink(),
+              label: Text('Hifadhi jibu', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _buildDefault(BuildContext context) {
     final item      = widget.item;
     final id        = item['id']?.toString() ?? '';
     final name      = item['user_name'] as String? ?? item['full_name'] as String? ?? 'Mtumiaji';
@@ -781,6 +868,21 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                 const SizedBox(height: 4),
                 Text(reply,
                     style: GoogleFonts.inter(fontSize: 15, color: _kInkT(context), height: 1.45)),
+                const SizedBox(height: 10),
+                // Hariri jibu (design mpya ya maoni) — inafungua edit box juu
+                // (na "Ghairi" inarudisha hali ya kawaida). Hakuna server call
+                // mpaka admin abonyeze "Hifadhi jibu" (POST /reply kama kawaida).
+                GestureDetector(
+                  onTap: () => setState(() => _editing = true),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Text('Hariri jibu',
+                        style: GoogleFonts.inter(
+                            fontSize: 12.5, fontWeight: FontWeight.w600,
+                            color: _kIsDark(context) ? const Color(0xFF9AA8C7) : const Color(0xFF5B6679))),
+                  ),
+                ),
               ]),
             ),
           ],
