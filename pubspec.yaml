@@ -37,6 +37,11 @@ dependencies:
     path: packages/phosphor_flutter
   tabler_icons_plus: ^3.19.0
   flutter_tabler_icons: 1.43.0
+  # lucide_icons: VENDOR ndani ya repo (packages/lucide_icons) — toleo la
+  # pub.dev (0.257.0) halijengi kwenye Flutter mpya kwa kuwa IconData ni
+  # final class — patched ndani (API ile ile, icons zile zile).
+  lucide_icons:
+    path: packages/lucide_icons
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10
   shimmer: ^3.0.0

@@ -1,36 +1,131 @@
 // maoni_page.dart
-// Ukurasa wa Maoni - muundo wa gazeti (nukuu + jibu linalohaririwa papo hapo).
-// Hakuna AppBar, drawer wala bottom navigation. Weka ndani ya Scaffold yako.
-// Hakuna package za nje: unahitaji flutter/material.dart tu.
+// Ukurasa wa Maoni — NEW DESIGN (Lucide icons, nukuu za serif, Live dot).
+// Design ni MOJA kabisa na maoni_page.dart waliyoishia: rangi, saizi, spacing —
+// kama zilivyo. Data loading (adminListFeedback), reply endpoint
+// (adminReplyFeedback), WebSocket refresh, na badge logic — zimetoka kwenye
+// page ya zamani, hazijabadilika.
+//
+// Muundo wa API ya AdminShell → route 8 (Maoni). Hakuna ScaffoldAppBar
+// wala bottom nav ya maoni — meshing na AdminShell drawer (AppDrawer).
 
-import 'dart:async';import 'dart:math' as math;
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../services/api_service.dart';
 import '../../services/websocket_service.dart';
 import '../../services/admin_badge_service.dart';
-import '../../widgets/app_toast.dart' show friendlyError;
+import '../../widgets/app_toast.dart' show AppToast, friendlyError;
 import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 
-// ---------------------------------------------------------------------------
-// Rangi na mitindo
-// ---------------------------------------------------------------------------
-const Color _ac = Color(0xFF1F5FD6); // bluu ya pekee
-const Color _ink = Color(0xFF2A3550);
-const Color _muted = Color(0xFF8591A3);
-const Color _line = Color(0xFFE8EBF0);
-const Color _lineStrong = Color(0xFFD3D9E4);
-const Color _danger = Color(0xFFD92D20);
-const Color _fieldBg = Color(0xFFF3F6FB);
+// ---------------------------------------------------------------- Rangi
 
-const List<String> _serifFallback = ['Georgia', 'Noto Serif', 'Times New Roman'];
+class _C {
+  static const blue = Color(0xFF1E40AF);
+  static const blueLink = Color(0xFF2563EB);
+  static const blueSoft = Color(0xFFEFF6FF);
+  static const green = Color(0xFF16A34A);
+  static const greenDark = Color(0xFF15803D);
+  static const greenSoft = Color(0xFFF0FDF4);
+  static const red = Color(0xFFDC2626);
+  static const redSoft = Color(0xFFFEF2F2);
+  static const ink = Color(0xFF0F172A);
+  static const body = Color(0xFF1E293B);
+  static const muted = Color(0xFF64748B);
+  static const line = Color(0xFFE5E7EB);
+  static const searchLine = Color(0xFF94A3B8);
+  static const searchIcon = Color(0xFF334155);
+  static const editFill = Color(0xFFF3F6FB);
+  static const disabled = Color(0xFFcbd5e1);
+}
+
+// ---------------------------------------------------------------- Aikoni
+// Aikoni zote ziko hapa pamoja. Kama namespace haipatikani, badilisha tu hapa.
+
+class _AppIcons {
+  static final search = LucideIcons.search;
+  static final inbox = LucideIcons.inbox;
+  static final pending = LucideIcons.clock;
+  static final done = LucideIcons.checkCircle2;
+  static final send = LucideIcons.send;
+  static final reply = LucideIcons.cornerUpLeft;
+  static final prev = LucideIcons.chevronLeft;
+  static final next = LucideIcons.chevronRight;
+}
+
+// ---------------------------------------------------------------- Modeli
+
+class Maoni {
+  Maoni({
+    required this.id,
+    required this.text,
+    required this.name,
+    required this.phone,
+    required this.date,
+    this.reply = '',
+  });
+
+  final int id;
+  final String text;
+  final String name;
+  final String phone;
+  final String date;
+  String reply;
+
+  bool get answered => reply.trim().isNotEmpty;
+}
+
+// ---------------------------------------------------------------- Live dot
+
+class LiveDot extends StatefulWidget {
+  const LiveDot({super.key});
+
+  @override
+  State<LiveDot> createState() => _LiveDotState();
+}
+
+class _LiveDotState extends State<LiveDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _c,
+        builder: (_, __) => Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: _C.green,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: _C.green.withOpacity(0.45 * (1 - _c.value)),
+                spreadRadius: 7 * _c.value,
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+// ---------------------------------------------------------------- Mitindo
+
+const _serifFallback = ['Georgia', 'Noto Serif', 'Times New Roman'];
 
 TextStyle _serif(
   double size, {
-  FontStyle? style,
-  Color color = _ink,
-  double height = 1.45,
+  FontStyle style = FontStyle.normal,
+  Color color = _C.body,
+  double height = 1.5,
 }) =>
     TextStyle(
       fontFamily: 'serif',
@@ -41,661 +136,15 @@ TextStyle _serif(
       height: height,
     );
 
-// ---------------------------------------------------------------------------
-// Model
-// ---------------------------------------------------------------------------
-class Maoni {
-  final int id;
-  final String name;
-  final String phone;
-  final String date; // mfano "9 Okt"
-  final String time; // mfano "07:41"
-  final String message;
-  String reply; // tupu = haijajibiwa
-
-  Maoni({
-    required this.id,
-    required this.name,
-    required this.phone,
-    required this.date,
-    required this.time,
-    required this.message,
-    this.reply = '',
-  });
-
-  bool get replied => reply.trim().isNotEmpty;
-}
-
-enum _Tab { all, unanswered, answered }
-
-// ---------------------------------------------------------------------------
-// Ukurasa
-// ---------------------------------------------------------------------------
-class MaoniPage extends StatefulWidget {
-  /// Orodha ya maoni (badilisha na data kutoka API yako).
-  final List<Maoni> items;
-
-  /// Inaitwa mtumiaji akibonyeza "Tuma". Tupa exception ikishindikana.
-  /// Ukiiacha null, jibu linahifadhiwa kwenye orodha ya ndani tu.
-  final Future<void> Function(Maoni item, String text)? onSendReply;
-
-  /// Inaitwa ukurasa unafunguliwa (kupakia data mpya).
-  final VoidCallback? onRefresh;
-
-  /// True = inaonyesha spinner (data ya kwanza bado inapakiwa).
-  final bool loading;
-
-  /// True = imepata data ya kwanza bila kufanikiwa (kupitia _error non-null
-  /// from the caller).
-  final String? loadError;
-
-  /// Maoni kwa kila ukurasa.
-  final int perPage;
-
-  const MaoniPage({
-    super.key,
-    required this.items,
-    this.onSendReply,
-    this.onRefresh,
-    this.loading = false,
-    this.loadError,
-    this.perPage = 3,
-  });
-
-  @override
-  State<MaoniPage> createState() => _MaoniPageState();
-}
-
-class _MaoniPageState extends State<MaoniPage> {
-  _Tab _tab = _Tab.all;
-  int _page = 1;
-  String _query = '';
-  int? _editingId;
-  String? _error;
-  bool _sending = false;
-
-  final _scroll = ScrollController();
-  final _searchCtrl = TextEditingController();
-  final _searchFocus = FocusNode();
-  final _replyCtrl = TextEditingController();
-  final _replyFocus = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _searchFocus.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    _searchCtrl.dispose();
-    _searchFocus.dispose();
-    _replyCtrl.dispose();
-    _replyFocus.dispose();
-    super.dispose();
-  }
-
-  // ----- data -----
-  List<Maoni> _filtered() {
-    final q = _query.trim().toLowerCase();
-    return widget.items.where((i) {
-      final okTab = _tab == _Tab.all ||
-          (_tab == _Tab.unanswered && !i.replied) ||
-          (_tab == _Tab.answered && i.replied);
-      final okQuery = q.isEmpty ||
-          '${i.name} ${i.phone} ${i.message}'.toLowerCase().contains(q);
-      return okTab && okQuery;
-    }).toList();
-  }
-
-  // ----- vitendo -----
-  void _resetEditing() {
-    _editingId = null;
-    _error = null;
-  }
-
-  void _setTab(_Tab t) => setState(() {
-        _tab = t;
-        _page = 1;
-        _resetEditing();
-      });
-
-  void _setPage(int p, int pages) {
-    if (p < 1 || p > pages) return;
-    setState(() {
-      _page = p;
-      _resetEditing();
-    });
-    if (_scroll.hasClients) {
-      _scroll.animateTo(0,
-          duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-    }
-  }
-
-  void _startEdit(Maoni i) {
-    setState(() {
-      _editingId = i.id;
-      _error = null;
-      _replyCtrl.text = i.reply;
-      _replyCtrl.selection =
-          TextSelection.collapsed(offset: _replyCtrl.text.length);
-    });
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _replyFocus.requestFocus());
-  }
-
-  Future<void> _send(Maoni i) async {
-    final text = _replyCtrl.text.trim();
-    if (text.isEmpty) {
-      setState(() => _error = 'Andika jibu kwanza');
-      return;
-    }
-    setState(() => _sending = true);
-    try {
-      if (widget.onSendReply != null) {
-        await widget.onSendReply!(i, text);
-      }
-      i.reply = text;
-      if (!mounted) return;
-      setState(_resetEditing);
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: const Text('Jibu limetumwa', textAlign: TextAlign.center),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: _ink,
-            duration: const Duration(milliseconds: 1600),
-            shape: const StadiumBorder(),
-            width: 180,
-          ),
-        );
-    } catch (_) {
-      if (mounted) setState(() => _error = 'Imeshindikana kutuma. Jaribu tena.');
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
-  }
-
-  // ----- build -----
-  @override
-  Widget build(BuildContext context) {
-    final filtered = _filtered();
-    final pages =
-        math.max(1, (filtered.length + widget.perPage - 1) ~/ widget.perPage);
-    final page = math.min(math.max(_page, 1), pages);
-    final visible =
-        filtered.skip((page - 1) * widget.perPage).take(widget.perPage).toList();
-
-    return Material(
-      color: Colors.transparent,
-      child: RefreshIndicator(
-        color: _ac,
-        onRefresh: () async => widget.onRefresh?.call(),
-        child: ListView(
-          controller: _scroll,
-          padding: EdgeInsets.zero,
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            _buildHeader(),
-            _buildTabs(),
-            _buildSearch(),
-            if (widget.loading && widget.items.isEmpty)
-              _buildLoading()
-            else if (widget.loadError != null && widget.items.isEmpty)
-              _buildLoadError()
-            else if (filtered.isEmpty)
-              _buildEmpty()
-            else ...[
-              ...visible.map(_buildItem),
-              if (pages > 1) _buildPager(page, pages),
-            ],
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoading() => const Padding(
-        padding: EdgeInsets.all(48),
-        child: Center(
-            child: CircularProgressIndicator(color: Color(0xFF1F5FD6))),
-      );
-
-  Widget _buildLoadError() {
-    return Padding(
-      padding: const EdgeInsets.all(48),
-      child: Column(
-        children: [
-          const Icon(Icons.warning_amber_rounded, size: 40, color: _danger),
-          const SizedBox(height: 12),
-          Text(widget.loadError!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: _muted)),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: widget.onRefresh,
-            icon: const Icon(Icons.refresh, size: 16, color: _ac),
-            label: const Text('Jaribu tena', style: TextStyle(color: _ac)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Row(
-        children: [
-          const Text('Maoni',
-              style: TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.w500, color: _ink)),
-          const Spacer(),
-          Container(
-            width: 7,
-            height: 7,
-            decoration: const BoxDecoration(color: _ac, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 6),
-          const Text('Live', style: TextStyle(fontSize: 13, color: _ac)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabs() {
-    final items = widget.items;
-    final counts = {
-      _Tab.all: items.length,
-      _Tab.unanswered: items.where((i) => !i.replied).length,
-      _Tab.answered: items.where((i) => i.replied).length,
-    };
-    const labels = {
-      _Tab.all: 'Yote',
-      _Tab.unanswered: 'Yasiyojibiwa',
-      _Tab.answered: 'Yaliyojibiwa',
-    };
-    // Rangi za pill: Kijani = yaliyojibiwa, Nyekundu = yasiyojibiwa
-    // (namba bado nyekundu kama ulivyoomba jengine), Wote = kijivu.
-    Color pillFg(_Tab t) => t == _Tab.answered
-        ? const Color(0xFF15803D)
-        : t == _Tab.unanswered
-            ? _danger
-            : _muted;
-    Color pillBg(_Tab t) => t == _Tab.answered
-        ? const Color(0xFFECFDF5)
-        : t == _Tab.unanswered
-            ? const Color(0xFFFEF2F2)
-            : const Color(0xFFF3F4F6);
-
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: _line)),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: _Tab.values.map((t) {
-          final on = _tab == t;
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: InkWell(
-              onTap: () => _setTab(t),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                decoration: BoxDecoration(
-                  // Underline ya bluu bado: tab iliyochaguliwa.
-                  border: Border(
-                    bottom: BorderSide(
-                        color: on ? _ac : Colors.transparent, width: 2),
-                  ),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  // Namba ndani ya pill (kijani/nyekundu/kijivu).
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
-                    height: 18,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: pillBg(t),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Text(
-                      '${counts[t]}',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: pillFg(t)),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    labels[t]!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: on ? _ac : _muted,
-                      fontWeight: on ? FontWeight.w500 : FontWeight.w400,
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-          );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearch() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-      height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      // Border ya box imeondolewa (design) — bluu ya focus pia imeondoka.
-      child: Row(
-        children: [
-          const Icon(Icons.search, size: 18, color: _muted),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _searchCtrl,
-              focusNode: _searchFocus,
-              style: const TextStyle(fontSize: 14, color: _ink),
-              textInputAction: TextInputAction.search,
-              decoration: const InputDecoration.collapsed(
-                hintText: 'Tafuta jina, namba au ujumbe',
-                hintStyle: TextStyle(fontSize: 14, color: _muted),
-              ),
-              onChanged: (v) => setState(() {
-                _query = v;
-                _page = 1;
-                _resetEditing();
-              }),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmpty() {
-    final String msg;
-    if (_query.trim().isNotEmpty) {
-      msg = 'Hakuna maoni yanayolingana na ulichotafuta.';
-    } else if (_tab == _Tab.unanswered) {
-      msg = 'Umejibu maoni yote.';
-    } else if (_tab == _Tab.answered) {
-      msg = 'Hakuna maoni yaliyojibiwa bado.';
-    } else {
-      msg = 'Maoni ya watumiaji yataonekana hapa.';
-    }
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 70, 24, 0),
-      child: Column(
-        children: [
-          const Icon(Icons.speaker_notes_off_outlined, size: 36, color: _muted),
-          const SizedBox(height: 8),
-          const Text('Hakuna maoni hapa',
-              style: TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w500, color: _ink)),
-          const SizedBox(height: 2),
-          Text(msg,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: _muted)),
-        ],
-      ),
-    );
-  }
-
-  // ----- kipengee cha ujumbe (nukuu) -----
-  Widget _buildItem(Maoni i) {
-    final editing = _editingId == i.id;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: _line)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: 22,
-            child: OverflowBox(
-              alignment: Alignment.topLeft,
-              maxHeight: 60,
-              child: Text('\u201C', style: _serif(44, color: _ac, height: 0.9)),
-            ),
-          ),
-          Text(i.message, style: _serif(19)),
-          const SizedBox(height: 8),
-          // Meta ya mtumiaji: inafungwa ndani ya soft-wrap (isiitole kwenye
-          // simu ndogo au font kubwa). Mtiririko/mtiririko wa horizontal
-          // HAIBADILISHI — maandishi na rangi zimebaki kama mockup.
-          Text(
-            '\u2014 ${i.name} \u00B7 ${i.phone} \u00B7 ${i.date}, ${i.time}',
-            style: const TextStyle(fontSize: 12, color: _muted),
-          ),
-          const SizedBox(height: 12),
-          _buildReplyArea(i, editing),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReplyArea(Maoni i, bool editing) {
-    // 1) Anaandika / anahariri
-    if (editing) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _replyCtrl,
-            focusNode: _replyFocus,
-            minLines: 1,
-            maxLines: null,
-            keyboardType: TextInputType.multiline,
-            textCapitalization: TextCapitalization.sentences,
-            style: _serif(17, style: FontStyle.italic),
-            onChanged: (_) {
-              if (_error != null) setState(() => _error = null);
-            },
-            decoration: InputDecoration(
-              hintText: 'Andika jibu lako',
-              hintStyle: _serif(17, style: FontStyle.italic, color: _muted),
-              filled: true,
-              fillColor: _fieldBg,
-              isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: _ac, width: 1.5),
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 20,
-            child: _error == null
-                ? null
-                : Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(_error!,
-                        style: const TextStyle(fontSize: 12, color: _danger)),
-                  ),
-          ),
-          Row(
-            children: [
-              InkWell(
-                onTap: _sending ? null : () => _send(i),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: _sending
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: _ac),
-                        )
-                      : const Text('Tuma',
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: _ac)),
-                ),
-              ),
-              const SizedBox(width: 20),
-              InkWell(
-                onTap: _sending ? null : () => setState(_resetEditing),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child:
-                      Text('Ghairi', style: TextStyle(fontSize: 14, color: _muted)),
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    }
-
-    // 2) Tayari amejibiwa
-    if (i.replied) {
-      return Container(
-        padding: const EdgeInsets.only(left: 12, top: 2, bottom: 2),
-        decoration: const BoxDecoration(
-          border: Border(left: BorderSide(color: _ac, width: 2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Jibu lako', style: TextStyle(fontSize: 11, color: _muted)),
-            Text(i.reply, style: _serif(16, style: FontStyle.italic)),
-            InkWell(
-              onTap: () => _startEdit(i),
-              child: const Padding(
-                padding: EdgeInsets.only(top: 6, bottom: 2),
-                child: Text('Hariri jibu',
-                    style: TextStyle(fontSize: 13, color: _ac)),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // 3) Hajajibiwa
-    return InkWell(
-      onTap: () => _startEdit(i),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(vertical: 2),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon ile ile ya Matangazo (bell-ringing ya Tabler).
-            Icon(TablerIcons.bell_ringing, size: 16, color: _ac),
-            SizedBox(width: 6),
-            Text('Andika jibu', style: TextStyle(fontSize: 14, color: _ac)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ----- kurasa -----
-  Widget _buildPager(int page, int pages) {
-    // Pager: chevron mbili tu (Previous/Next) — hakuna namba za kurasa.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 18, 10, 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _PageButton(
-            icon: Icons.chevron_left,
-            disabled: page == 1,
-            onTap: () => _setPage(page - 1, pages),
-          ),
-          const SizedBox(width: 6),
-          _PageButton(
-            icon: Icons.chevron_right,
-            disabled: page == pages,
-            onTap: () => _setPage(page + 1, pages),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PageButton extends StatelessWidget {
-  final String? label;
-  final IconData? icon;
-  final bool active;
-  final bool disabled;
-  final VoidCallback onTap;
-
-  const _PageButton({
-    this.label,
-    this.icon,
-    this.active = false,
-    this.disabled = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: disabled ? 0.35 : 1,
-      child: InkResponse(
-        onTap: disabled ? null : onTap,
-        radius: 20,
-        child: Container(
-          width: 34,
-          height: 34,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: active ? _ac : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: icon != null
-              ? Icon(icon, size: 20, color: _ink)
-              : Text(
-                  label!,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: active ? FontWeight.w500 : FontWeight.w400,
-                    color: active ? Colors.white : _ink,
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// INTEGRATION LAYER — data halisi ya backend kwenye page MOJA hii.
-// (Hii HAIBADILISHI UI hapo juu — inaunganisha MaoniPage na API: GET
-// /feedback/admin/all + POST /feedback/admin/:id/reply + WS live + badge
-// Decrement kama admin anapofanikiwa kujibu.)
-// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------- Modeli & mapping
 
 const _monthsShort = [
   'Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun',
-  'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des'
+  'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des',
 ];
 
-DateTime _parseIso(dynamic iso, [DateTime? fallback]) {
-  final s = iso?.toString() ?? '';
+DateTime _parseIso(dynamic v, {DateTime? fallback}) {
+  final s = v?.toString() ?? '';
   if (s.isEmpty) return fallback ?? DateTime.now();
   try {
     return DateTime.parse(s).toLocal();
@@ -704,14 +153,15 @@ DateTime _parseIso(dynamic iso, [DateTime? fallback]) {
   }
 }
 
-/// Ramani ya item ya API → Maoni ya mockup (id int-ish string hash).
+/// Ramani ya item ya API → Maoni (id int-ish, jina/simu/tarehe jformatted).
 Maoni _maoniFromFeedback(Map<String, dynamic> m, int fallbackId) {
   final idStr = (m['id'] ?? m['_id'] ?? fallbackId).toString();
   final idFallback = int.tryParse(idStr) ?? fallbackId;
   final phone = (m['user_phone'] ?? m['phone'] ?? '').toString();
   final nameRaw = (m['user_name'] ?? m['full_name'] ?? '').toString();
-  final name =
-      nameRaw.isNotEmpty && !nameRaw.startsWith('+') ? nameRaw : (phone.isNotEmpty ? phone : 'Mtumiaji');
+  final name = nameRaw.isNotEmpty && !nameRaw.startsWith('+')
+      ? nameRaw
+      : (phone.isNotEmpty ? phone : 'Mtumiaji');
   final created = _parseIso(m['created_at']);
   final subject = (m['subject'] ?? '').toString().trim();
   final message = (m['message'] ?? '').toString().trim();
@@ -721,20 +171,519 @@ Maoni _maoniFromFeedback(Map<String, dynamic> m, int fallbackId) {
   ].join('\n');
   final reply = (m['admin_reply'] ?? m['reply'] ?? '').toString().trim();
 
+  // Tarehe iko katika mfano "11 Okt, 06:57" kama picha.
+  final hh = created.hour.toString().padLeft(2, '0');
+  final mm = created.minute.toString().padLeft(2, '0');
+  final date = '${created.day} ${_monthsShort[created.month - 1]}, $hh:$mm';
+
   return Maoni(
     id: idFallback,
     name: name,
     phone: phone,
-    date: '${created.day} ${_monthsShort[created.month - 1]}',
-    time:
-        '${created.hour.toString().padLeft(2, '0')}:${created.minute.toString().padLeft(2, '0')}',
-    message: userText.isEmpty ? '(tupu)' : userText,
+    date: date,
+    text: userText.isEmpty ? '(tupu)' : userText,
     reply: reply,
   );
 }
 
-/// Ukurasa wa Maoni kwenye AdminShell — data halisi ya API ndani ya page
-/// MOJA ya mockup (HUJAHAMISHA textbox: unajibu pale pale chini ya nukuu).
+// ---------------------------------------------------------------- Ukurasa
+
+enum _Tab { yote, hayajibiwa, yamejibiwa }
+
+class MaoniPage extends StatefulWidget {
+  const MaoniPage({
+    super.key,
+    this.initialItems,
+    this.onSendReply,
+    this.pageSize = 5,
+  });
+
+  final List<Maoni>? initialItems;
+  final Future<void> Function(Maoni maoni, String reply)? onSendReply;
+  final int pageSize;
+
+  @override
+  State<MaoniPage> createState() => _MaoniPageState();
+}
+
+class _MaoniPageState extends State<MaoniPage> {
+  late final List<Maoni> _items = widget.initialItems ?? const <Maoni>[];
+  final _scroll = ScrollController();
+  final _replyCtrl = TextEditingController();
+
+  _Tab _tab = _Tab.yote;
+  String _query = '';
+  int _page = 1;
+  Maoni? _editing;
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    _replyCtrl.dispose();
+    super.dispose();
+  }
+
+  // ----- data
+
+  int get _answered => _items.where((m) => m.answered).length;
+  int get _pending => _items.length - _answered;
+
+  List<Maoni> get _filtered {
+    final q = _query.toLowerCase().trim();
+    return _items.where((m) {
+      if (_tab == _Tab.hayajibiwa && m.answered) return false;
+      if (_tab == _Tab.yamejibiwa && !m.answered) return false;
+      if (q.isEmpty) return true;
+      return '${m.name} ${m.phone} ${m.text}'.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  int _pagesOf(int total) => total == 0 ? 1 : (total / widget.pageSize).ceil();
+
+  // ----- actions
+
+  void _setTab(_Tab t) => setState(() {
+        _tab = t;
+        _page = 1;
+        _editing = null;
+      });
+
+  void _goToPage(int p) {
+    setState(() {
+      _page = p;
+      _editing = null;
+    });
+    if (_scroll.hasClients) {
+      _scroll.animateTo(0,
+          duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    }
+  }
+
+  void _startEdit(Maoni m) {
+    _replyCtrl.text = m.reply;
+    setState(() => _editing = m);
+  }
+
+  Future<void> _send(Maoni m) async {
+    final text = _replyCtrl.text.trim();
+    setState(() {
+      m.reply = text;
+      _editing = null;
+    });
+    try {
+      await widget.onSendReply?.call(m, text);
+      if (mounted) AppToast.success('Jibu limetumwa');
+    } catch (e) {
+      // Jibu halikuhifadhiwa — rudisha kwenye "Hayajibiwa" na uonyeshe kosa.
+      if (mounted) {
+        setState(() {
+          m.reply = '';
+          _editing = m;
+        });
+        AppToast.error(friendlyError(e));
+      }
+    }
+  }
+
+  // ----- build
+
+  @override
+  Widget build(BuildContext context) {
+    final all = _filtered;
+    final pages = _pagesOf(all.length);
+    final page = _page > pages ? pages : _page;
+    final start = (page - 1) * widget.pageSize;
+    final shown = all.skip(start).take(widget.pageSize).toList();
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: CustomScrollView(
+        controller: _scroll,
+        slivers: [
+          SliverToBoxAdapter(child: _header()),
+          if (shown.isEmpty)
+            SliverToBoxAdapter(child: _empty())
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) => _tile(shown[i]),
+                  childCount: shown.length,
+                ),
+              ),
+            ),
+          SliverToBoxAdapter(child: _pagination(page, pages)),
+        ],
+      ),
+    );
+  }
+
+  // ----- kichwa, vichupo, utafutaji
+
+  Widget _header() => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: const [
+                Text('Maoni',
+                    style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w500,
+                        color: _C.ink)),
+                SizedBox(width: 12),
+                LiveDot(),
+                SizedBox(width: 8),
+                Text('Live',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: _C.greenDark)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _tabs(),
+            _search(),
+          ],
+        ),
+      );
+
+  Widget _tabs() => Container(
+        decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: _C.line))),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _tabItem(_Tab.yote, 'Yote', _AppIcons.inbox, _items.length,
+                  _C.blueSoft, _C.blue, _C.blue),
+              const SizedBox(width: 16),
+              _tabItem(_Tab.hayajibiwa, 'Hayajibiwa', _AppIcons.pending,
+                  _pending, _C.redSoft, _C.red, _C.red),
+              const SizedBox(width: 16),
+              _tabItem(_Tab.yamejibiwa, 'Yamejibiwa', _AppIcons.done,
+                  _answered, _C.greenSoft, _C.greenDark, _C.green),
+            ],
+          ),
+        ),
+      );
+
+  Widget _tabItem(_Tab t, String label, IconData icon, int count,
+      Color badgeBg, Color badgeFg, Color iconColor) {
+    final on = _tab == t;
+    return InkWell(
+      onTap: () => _setTab(t),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(
+          border: Border(
+              bottom: BorderSide(
+                  color: on ? _C.blue : Colors.transparent, width: 2.5)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon,
+                size: 17,
+                color: t == _Tab.yote ? (on ? _C.blue : _C.muted) : iconColor),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: on ? FontWeight.w500 : FontWeight.w400,
+                color: on ? _C.blue : _C.muted,
+              ),
+            ),
+            const SizedBox(width: 6),
+            _badge(count, badgeBg, badgeFg),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Namba ndani ya duara. Hayajibiwa inabaki nyekundu hata ikiwa 0.
+  Widget _badge(int n, Color bg, Color fg) => Container(
+        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+            color: bg,
+            shape: n < 100 ? BoxShape.circle : BoxShape.rectangle,
+            borderRadius:
+                n < 100 ? null : BorderRadius.circular(11)),
+        child: Text('$n',
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w500, color: fg)),
+      );
+
+  Widget _search() => TextField(
+        onChanged: (v) => setState(() {
+          _query = v;
+          _page = 1;
+        }),
+        style: const TextStyle(fontSize: 15, color: _C.ink),
+        decoration: InputDecoration(
+          hintText: 'Tafuta jina, namba au ujumbe',
+          hintStyle: const TextStyle(color: Color(0xFF475569), fontSize: 15),
+          prefixIcon:
+              Icon(_AppIcons.search, size: 20, color: _C.searchIcon),
+          prefixIconConstraints: const BoxConstraints(minWidth: 30),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          enabledBorder:
+              const UnderlineInputBorder(borderSide: BorderSide(color: _C.searchLine)),
+          focusedBorder:
+              const UnderlineInputBorder(borderSide: BorderSide(color: _C.blue, width: 1.5)),
+        ),
+      );
+
+  // ----- ujumbe
+
+  Widget _empty() => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 44),
+        child: Column(
+          children: [
+            Icon(_AppIcons.done, size: 30, color: _C.green),
+            const SizedBox(height: 8),
+            Text(
+              _tab == _Tab.hayajibiwa
+                  ? 'Hakuna maoni yasiyojibiwa'
+                  : 'Hakuna maoni hapa',
+              style: const TextStyle(fontSize: 14, color: _C.muted),
+            ),
+          ],
+        ),
+      );
+
+  Widget _tile(Maoni m) {
+    final editing = identical(_editing, m);
+    return Container(
+      padding: const EdgeInsets.only(top: 14, bottom: 16),
+      decoration:
+          const BoxDecoration(border: Border(bottom: BorderSide(color: _C.line))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                height: 22,
+                child:
+                    Text('\u201C', style: _serif(30, color: _C.blueLink, height: 1)),
+              ),
+              _status(m.answered),
+            ],
+          ),
+          Text(m.text, style: _serif(17)),
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 10),
+            child: Text(
+              '\u2014 ${m.name} \u00B7 ${m.phone} \u00B7 ${m.date}',
+              style: const TextStyle(fontSize: 12, color: _C.muted),
+            ),
+          ),
+          if (editing)
+            _editor(m)
+          else if (m.answered)
+            _replyBlock(m)
+          else
+            _replyButton(m),
+        ],
+      ),
+    );
+  }
+
+  Widget _status(bool answered) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(answered ? _AppIcons.done : _AppIcons.pending,
+              size: 16, color: answered ? _C.green : _C.red),
+          const SizedBox(width: 5),
+          Text(
+            answered ? 'Imejibiwa' : 'Haijajibiwa',
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: answered ? _C.greenDark : _C.red),
+          ),
+        ],
+      );
+
+  // Jibu lililopo: mstari wa bluu kushoto + "Hariri jibu"
+  Widget _replyBlock(Maoni m) => Container(
+        padding: const EdgeInsets.only(left: 12),
+        decoration: const BoxDecoration(
+            border: Border(left: BorderSide(color: _C.blueLink, width: 3))),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Jibu lako',
+                style: TextStyle(fontSize: 12, color: _C.muted)),
+            Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 6),
+              child: Text(m.reply,
+                  style: _serif(15, style: FontStyle.italic, color: _C.ink)),
+            ),
+            InkWell(
+              onTap: () => _startEdit(m),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: Text('Hariri jibu',
+                    style: TextStyle(fontSize: 13, color: _C.blueLink)),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  // Kitufe cha Jibu: duara la bluu lenye mshale + neno "Jibu"
+  Widget _replyButton(Maoni m) => InkWell(
+        onTap: () => _startEdit(m),
+        borderRadius: BorderRadius.circular(24),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: _C.blue,
+              child: Icon(_AppIcons.reply, size: 20, color: Colors.white),
+            ),
+            const SizedBox(width: 10),
+            Text('Jibu',
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: _C.blue)),
+            const SizedBox(width: 8),
+          ],
+        ),
+      );
+
+  // Kisanduku cha kuandika jibu + Tuma (aikoni ya kutuma) + Ghairi
+  Widget _editor(Maoni m) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _replyCtrl,
+            autofocus: true,
+            minLines: 3,
+            maxLines: 6,
+            style: _serif(16, style: FontStyle.italic, color: _C.ink, height: 1.4),
+            decoration: const InputDecoration(
+              hintText: 'Andika jibu lako...',
+              filled: true,
+              fillColor: _C.editFill,
+              contentPadding: EdgeInsets.all(12),
+              border: UnderlineInputBorder(
+                  borderSide: BorderSide(color: _C.blueLink, width: 2)),
+              enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: _C.blueLink, width: 2)),
+              focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: _C.blueLink, width: 2)),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              InkWell(
+                onTap: () => _send(m),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    children: [
+                      Icon(_AppIcons.send, size: 19, color: _C.blue),
+                      SizedBox(width: 6),
+                      Text('Tuma',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: _C.blue)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 18),
+              InkWell(
+                onTap: () => setState(() => _editing = null),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  child:
+                      Text('Ghairi', style: TextStyle(fontSize: 14, color: _C.muted)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+
+  // ----- kurasa: mshale wa nyuma, namba 1 2 3 ..., mshale wa mbele
+
+  Widget _pagination(int page, int pages) {
+    if (pages <= 1) return const SizedBox(height: 16);
+    final canPrev = page > 1;
+    final canNext = page < pages;
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: _C.line))),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          InkWell(
+            onTap: canPrev ? () => _goToPage(page - 1) : null,
+            customBorder: const CircleBorder(),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Icon(_AppIcons.prev,
+                  size: 22, color: canPrev ? _C.ink : _C.disabled),
+            ),
+          ),
+          for (var p = 1; p <= pages; p++)
+            InkWell(
+              onTap: () => _goToPage(p),
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: p == page ? _C.blue : Colors.transparent),
+                child: Text(
+                  '$p',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: p == page ? FontWeight.w500 : FontWeight.w400,
+                    color: p == page ? Colors.white : const Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ),
+          InkWell(
+            onTap: canNext ? () => _goToPage(page + 1) : null,
+            customBorder: const CircleBorder(),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Icon(_AppIcons.next,
+                  size: 22, color: canNext ? _C.ink : _C.disabled),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// INTEGRATION LAYER — AdminShell route 8 (Maoni): PAGE MOJA ya design mpya
+// na data halisi ya API. Loading state + error state + pull-to-refresh
+// zimehifadhiwa kama page ya zamani.
+// ============================================================================
+
 class AdminMaoniPage extends StatefulWidget {
   const AdminMaoniPage({super.key});
 
@@ -783,7 +732,9 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
       final list = data is List
           ? data
           : (data is Map
-              ? (data['items'] as List? ?? data['results'] as List? ?? [])
+              ? (data['items'] as List? ??
+                  data['results'] as List? ??
+                  [])
               : <dynamic>[]);
       final items = <Maoni>[];
       for (final it in list) {
@@ -814,10 +765,10 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
     try {
       await ApiService().adminReplyFeedback(apiId, text);
       if (!mounted) return;
-      // Badge ya Maoni inaisha TU baada ya kujibu (clearOnAction).
+      // Badge ya Maoni inapungua TU baada ya kujibu (clearOnAction).
       BadgeController.instance.decrement(NavItem.maoni);
       AdminBadgeService().refresh();
-      // Pakia upya list ya nyuma ya pazia — data halisi itaingia.
+      // Pakia upya — data halisi itaingia (nyuma kwa pazia).
       unawaited(_load());
     } catch (_) {
       rethrow; // MaoniPage inaonyesha kosa la ndani
@@ -826,11 +777,42 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading && _items.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: const Center(child: CircularProgressIndicator(color: _C.blue)),
+      );
+    }
+    if (_loadError != null && _items.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(_AppIcons.pending, size: 40, color: _C.red),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  _loadError!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 13, color: _C.muted),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton.icon(
+                onPressed: _load,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Jaribu tena'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return MaoniPage(
-      items: _items,
-      loading: _loading,
-      loadError: _loadError,
-      onRefresh: _load,
+      initialItems: _items,
       onSendReply: _sendReply,
     );
   }

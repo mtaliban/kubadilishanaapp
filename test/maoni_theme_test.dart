@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:kubadilishanaapp/screens/admin/maoni_page.dart';
+import 'package:kubadilishanaapp/widgets/app_toast.dart' show ToastHost;
 
 bool _isBlueDominant(Color c) => c.b > c.r + 40 && c.b > c.g + 40;
 
@@ -22,8 +23,8 @@ List<BoxDecoration> _boxDecorations(WidgetTester tester) {
 }
 
 Maoni _m(int id, String name, String phone, String msg, {String reply = ''}) =>
-    Maoni(id: id, name: name, phone: phone, date: '9 Okt', time: '07:41',
-        message: msg, reply: reply);
+    Maoni(id: id, name: name, phone: phone, date: '9 Okt, 07:41',
+        text: msg, reply: reply);
 
 Future<void> _pump(WidgetTester tester, List<Maoni> items) async {
   await tester.pumpWidget(MaterialApp(
@@ -31,10 +32,10 @@ Future<void> _pump(WidgetTester tester, List<Maoni> items) async {
     theme: ThemeData(useMaterial3: true, colorSchemeSeed: const Color(0xFF1F5FD6)),
     home: Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(child: MaoniPage(items: items)),
+      body: SafeArea(child: MaoniPage(initialItems: items)),
     ),
   ));
-  await tester.pumpAndSettle();
+  await tester.pump(const Duration(milliseconds: 400));
 }
 
 void main() {
@@ -49,14 +50,14 @@ void main() {
     // ziko ndani ya Container tofauti: marudio ni 2 kwa kila label label + count.)
     expect(find.text('Maoni'), findsOneWidget);
     expect(find.text('Live'), findsOneWidget);
-    // Pills: Yote=2 (kijivu), Yasiyojibiwa=2 (nyekundu) — kwenye viewport ndogo
+    // Pills: Yote=2 (bluu), Hayajibiwa=2 (nyekundu) — kwenye viewport ndogo
     // ya test Moja inaweza kuwa nje ya screen, hivyo tunakagua inayoonekana.
     final twoCount = tester.widgetList<Text>(find.text('2')).length;
-    expect(twoCount, greaterThanOrEqualTo(1)); // Yote=2 na Yasiyojibiwa=2
-    // =1 (nyekundu) + Yaliyojibiwa=1 (kijani) — zote mbili zinaonekana.
+    expect(twoCount, greaterThanOrEqualTo(1)); // Yote=2 na Hayajibiwa=2
+    // =1 (nyekundu) + Yamejibiwa=1 (kijani) — zote mbili zinaonekana.
     expect(find.text('1'), findsNWidgets(2));
-    expect(find.textContaining('Yasiyojibiwa'), findsOneWidget);
-    expect(find.textContaining('Yaliyojibiwa'), findsOneWidget);
+    expect(find.textContaining('Hayajibiwa'), findsOneWidget);
+    expect(find.textContaining('Yamejibiwa'), findsOneWidget);
 
     // Hakuna bluu kali ya opaque non-accent kwenye Containers (accents ndogo
     // zinaruhusiwa: _ac = 0xFF1F5FD6).
@@ -84,8 +85,8 @@ void main() {
 
     // Bonyeza "Andika jibu" → TextField ya jibu inatokea PALE PALE
     // (kwenye page ile ile, chini ya nukuu) pamoja na Tuma/Ghairi.
-    await tester.tap(find.text('Andika jibu'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.text('Jibu'));
+    await tester.pump(const Duration(milliseconds: 400));
 
     // 2 TextFields: [0] search (juu), [1] reply PALE PALE chini ya nukuu.
     expect(find.byType(TextField), findsNWidgets(2));
@@ -105,28 +106,34 @@ void main() {
       home: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: MaoniPage(
-            items: [_m(1, 'Neema J.', '+255783172900', 'Hii ni maoni ya kupima')],
-            onSendReply: (item, text) async {
-              sentItem = item;
-              sentText = text;
-            },
+          child: ToastHost(
+            child: MaoniPage(
+              initialItems: [
+                _m(1, 'Neema J.', '+255783172900', 'Hii ni maoni ya kupima')
+              ],
+              onSendReply: (item, text) async {
+                sentItem = item;
+                sentText = text;
+              },
+            ),
           ),
         ),
       ),
     ));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 400));
 
-    await tester.tap(find.text('Andika jibu'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.text('Jibu'));
+    await tester.pump(const Duration(milliseconds: 400));
     // Reply TextField NI ya pili (search iko juu).
     final textFields = find.byType(TextField);
     await tester.enterText(textFields.last, 'Jibu la haraka');
     await tester.tap(find.text('Tuma'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(sentText, 'Jibu la haraka');
-    expect(sentItem!.replied, isTrue);
+    expect(sentItem!.answered, isTrue);
+    // Toast ina Timer ya kutoa (3s) — pump hadi ife ili test isife na pending timer.
+    await tester.pump(const Duration(seconds: 4));
     // Quote ya "Jibu lako" + Hariri jibu.
     expect(find.text('Jibu lako'), findsOneWidget);
     expect(find.text('Hariri jibu'), findsOneWidget);
