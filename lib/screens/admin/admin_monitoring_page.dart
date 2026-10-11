@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
-const _kBlueBg  = Color(0xFFEFF6FF);
+const _kBlueBg = Color(0xFFEFF6FF);
 const _kGreen   = Color(0xFF16A34A);
 const _kAmber   = Color(0xFFD97706);
 const _kRed     = Color(0xFFDC2626);
@@ -71,8 +72,8 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       body: Column(
         children: [
           Padding(
@@ -82,49 +83,49 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
                 Container(
                   width: 44, height: 44,
                   decoration: BoxDecoration(
-                    color: _kBlueBg,
+                    color: Ad.blueSoft(context),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.monitor_heart_outlined, color: _kBlue, size: 22),
+                  child: Icon(Icons.monitor_heart_outlined, color: _kBlue, size: 22),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Moni', maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Ad.ink(context))),
                       Text('Matukio ya mfumo', maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 12, color: _kGrey500)),
+                          style: TextStyle(fontSize: 12, color: Ad.muted(context))),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.refresh, color: _kBlue),
+                  icon: Icon(Icons.refresh, color: _kBlue),
                   onPressed: _load,
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, color: _kGrey200),
+          Divider(height: 1, color: Ad.border(context)),
           if (_loading && _events.isEmpty)
-            const Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
+            Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
           else if (_error != null)
             Expanded(
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, color: _kRed, size: 48),
-                    const SizedBox(height: 12),
-                    Text('Kosa la kupakia', style: TextStyle(color: _kGrey500)),
-                    const SizedBox(height: 16),
+                    Icon(Icons.error_outline, color: _kRed, size: 48),
+                    SizedBox(height: 12),
+                    Text('Kosa la kupakia', style: TextStyle(color: Ad.muted(context))),
+                    SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Jaribu tena'),
+                      icon: Icon(Icons.refresh),
+                      label: Text('Jaribu tena'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white,
+                        backgroundColor: _kBlue, foregroundColor: Ad.card(context),
                       ),
                     ),
                   ],
@@ -137,9 +138,9 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.info_outline, color: _kGrey500, size: 48),
-                    const SizedBox(height: 12),
-                    Text('Hakuna matukio', style: TextStyle(color: _kGrey500)),
+                    Icon(Icons.info_outline, color: Ad.muted(context), size: 48),
+                    SizedBox(height: 12),
+                    Text('Hakuna matukio', style: TextStyle(color: Ad.muted(context))),
                   ],
                 ),
               ),
@@ -152,7 +153,7 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   itemCount: _events.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, __) => SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final e = asMap(_events[i]);
                     final type = e['event_type'] as String? ?? e['type'] as String? ?? '';
@@ -161,8 +162,8 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: _kGrey200),
+                        color: Ad.card(context),
+                        border: Border.all(color: Ad.border(context)),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -181,11 +182,11 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(desc,
-                                    style: TextStyle(fontSize: 13, color: _kGrey700)),
+                                    style: TextStyle(fontSize: 13, color: Ad.inkStrong(context))),
                                 if (ts.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
+                                  SizedBox(height: 4),
                                   Text(ts,
-                                      style: TextStyle(fontSize: 11, color: _kGrey500)),
+                                      style: TextStyle(fontSize: 11, color: Ad.muted(context))),
                                 ],
                               ],
                             ),

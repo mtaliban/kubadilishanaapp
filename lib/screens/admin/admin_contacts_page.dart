@@ -12,6 +12,7 @@
 // Data halisi: GET /messages/admin/contacts (ApiService.getContactActivity)
 // ============================================================================
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
@@ -22,7 +23,7 @@ const _kInk     = Color(0xFF0F172A);
 const _kMuted   = Color(0xFF64748B);
 const _kLine    = Color(0xFFE2E8F0);
 const _kSoft    = Color(0xFFF1F5F9);
-const _kBlueBg  = Color(0xFFEFF6FF);
+const _kBlueBg = Color(0xFFEFF6FF);
 const _kGreenBg = Color(0xFFDCFCE7);
 
 const _kStep = 25;
@@ -210,8 +211,8 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) => _DetailSheet(e: e, sw: sw, onCopy: _copy),
@@ -299,7 +300,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                     ? null
                     : IconButton(
                         tooltip: 'Futa',
-                        icon: const Icon(Icons.close_rounded),
+                        icon: Icon(Icons.close_rounded),
                         onPressed: () => setState(() {
                           _searchCtrl.clear();
                           _query = '';
@@ -307,14 +308,14 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                         }),
                       ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Ad.card(context),
                 contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _kLine)),
+                    borderSide: BorderSide(color: Ad.border(context))),
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _kLine)),
+                    borderSide: BorderSide(color: Ad.border(context))),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(color: _kPrimary, width: 1.6)),
@@ -395,9 +396,9 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
         showCheckmark: false,
         selectedColor: c,
         backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF0F172A)
-            : Colors.white,
-        side: BorderSide(color: selected ? c : _kLine),
+            ? Color(0xFF0F172A)
+            : Ad.card(context),
+        side: BorderSide(color: selected ? c : Ad.border(context)),
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         labelStyle: TextStyle(
@@ -421,7 +422,7 @@ class _StatusChip extends StatelessWidget {
       duration: const Duration(milliseconds: 250),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: online ? _kGreenBg : _kSoft,
+        color: online ? _kGreenBg : Ad.tile(context),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -474,7 +475,7 @@ class _InteractionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = e['contact_type'] as String? ?? 'call';
     return Material(
-      color: Colors.white,
+      color: Ad.card(context),
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
@@ -483,7 +484,7 @@ class _InteractionCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: _kLine),
+            border: Border.all(color: Ad.border(context)),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
@@ -559,7 +560,7 @@ class _PersonBlock extends StatelessWidget {
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         CircleAvatar(
           radius: 22,
-          backgroundColor: recipient ? const Color(0xFFDBEAFE) : _kSoft,
+          backgroundColor: recipient ? Color(0xFFDBEAFE) : Ad.tile(context),
           child: Text(_initials(name),
               style: TextStyle(
                   fontWeight: FontWeight.w800,
@@ -612,9 +613,9 @@ class _ErrorState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Ad.card(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _kLine),
+        border: Border.all(color: Ad.border(context)),
       ),
       child: Column(children: [
         const Icon(Icons.cloud_off_rounded, size: 40, color: Color(0xFFCBD5E1)),
@@ -646,9 +647,9 @@ class _EmptyState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Ad.card(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _kLine),
+        border: Border.all(color: Ad.border(context)),
       ),
       child: Column(children: [
         const Icon(Icons.search_off_rounded, size: 40, color: Color(0xFFCBD5E1)),
@@ -686,7 +687,7 @@ class _DetailSheet extends StatelessWidget {
             child: Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(color: _kLine, borderRadius: BorderRadius.circular(2))),
+                decoration: BoxDecoration(color: Ad.border(context), borderRadius: BorderRadius.circular(2))),
           ),
           const SizedBox(height: 16),
           Row(children: [

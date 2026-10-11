@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
 
 const _kBlue    = Color(0xFF1E40AF);
-const _kBlueBg  = Color(0xFFEFF6FF);
+const _kBlueBg = Color(0xFFEFF6FF);
 const _kGreen   = Color(0xFF16A34A);
 const _kGreenBg = Color(0xFFDCFCE7);
 const _kRed     = Color(0xFFDC2626);
@@ -98,8 +99,8 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       body: Column(
         children: [
           Padding(
@@ -108,7 +109,7 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
               children: [
                 Container(
                   width: 44, height: 44,
-                  decoration: BoxDecoration(color: _kBlueBg, borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: Ad.blueSoft(context), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.lock_reset, color: _kBlue, size: 22),
                 ),
                 const SizedBox(width: 12),
@@ -122,11 +123,11 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
                       Text('Manenosiri',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kGrey900)),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Ad.ink(context))),
                       Text('Maombi ya kubadilisha nywila',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 12, color: _kGrey500)),
+                          style: TextStyle(fontSize: 12, color: Ad.muted(context))),
                     ],
                   ),
                 ),
@@ -136,26 +137,26 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: _kGrey100,
+              color: Ad.tile(context),
               borderRadius: BorderRadius.circular(10),
             ),
             child: TabBar(
               controller: _tabCtrl,
               indicator: BoxDecoration(
-                color: Colors.white,
+                color: Ad.card(context),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               indicatorPadding: const EdgeInsets.all(3),
               labelColor: _kBlue,
-              unselectedLabelColor: _kGrey500,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              unselectedLabelColor: Ad.muted(context),
+              labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               tabs: _labels.map((l) => Tab(text: l)).toList(),
             ),
           ),
-          const SizedBox(height: 8),
-          const Divider(height: 1, color: _kGrey200),
+          SizedBox(height: 8),
+          Divider(height: 1, color: Ad.border(context)),
           Expanded(
             child: TabBarView(
               controller: _tabCtrl,
@@ -168,14 +169,14 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, color: _kRed, size: 48),
-                        const SizedBox(height: 12),
+                        Icon(Icons.error_outline, color: _kRed, size: 48),
+                        SizedBox(height: 12),
                         ElevatedButton.icon(
                           onPressed: () { _cache.remove(status); _load(status); },
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Jaribu tena'),
+                          icon: Icon(Icons.refresh),
+                          label: Text('Jaribu tena'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _kBlue, foregroundColor: Colors.white,
+                            backgroundColor: _kBlue, foregroundColor: Ad.card(context),
                           ),
                         ),
                       ],
@@ -188,9 +189,9 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.lock_outline, color: _kGrey500, size: 48),
-                        const SizedBox(height: 12),
-                        Text('Hakuna maombi', style: TextStyle(color: _kGrey500)),
+                        Icon(Icons.lock_outline, color: Ad.muted(context), size: 48),
+                        SizedBox(height: 12),
+                        Text('Hakuna maombi', style: TextStyle(color: Ad.muted(context))),
                       ],
                     ),
                   );
@@ -215,29 +216,29 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
                       return Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: _kGrey200),
+                          color: Ad.card(context),
+                          border: Border.all(color: Ad.border(context)),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
                             CircleAvatar(
                               radius: 22,
-                              backgroundColor: _kBlueBg,
+                              backgroundColor: Ad.blueSoft(context),
                               child: Text(initials,
                                   style: TextStyle(color: _kBlue, fontWeight: FontWeight.bold, fontSize: 15)),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(name,
-                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _kGrey900)),
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Ad.ink(context))),
                                   if (phone.isNotEmpty)
                                     Text(phone, style: TextStyle(fontSize: 12, color: _kBlue)),
                                   if (createdAt.isNotEmpty)
-                                    Text(createdAt, style: TextStyle(fontSize: 11, color: _kGrey500)),
+                                    Text(createdAt, style: TextStyle(fontSize: 11, color: Ad.muted(context))),
                                 ],
                               ),
                             ),

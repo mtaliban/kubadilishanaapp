@@ -22,6 +22,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -600,8 +601,8 @@ class _RejectSheetState extends State<_RejectSheet> {
               focusedBorder: b(c.blue, 1.5),
             ),
           ),
-          const SizedBox(height: 14),
-          Row(children: [Expanded(child: SizedBox(height: 38, child: OutlinedButton(onPressed: () => Navigator.pop(context), style: OutlinedButton.styleFrom(foregroundColor: c.ink, side: BorderSide(color: c.borderStrong), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontSize: 13)), child: const Text('Ghairi')))), const SizedBox(width: 8), Expanded(child: SizedBox(height: 38, child: FilledButton(onPressed: _reason.isEmpty ? null : () => Navigator.pop(context, _reason), style: FilledButton.styleFrom(backgroundColor: c.redFill, foregroundColor: Colors.white, disabledBackgroundColor: c.redFill.withValues(alpha: .35), disabledForegroundColor: Colors.white70, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), child: const Text('Kataa'))))]),
+          SizedBox(height: 14),
+          Row(children: [Expanded(child: SizedBox(height: 38, child: OutlinedButton(onPressed: () => Navigator.pop(context), style: OutlinedButton.styleFrom(foregroundColor: c.ink, side: BorderSide(color: c.borderStrong), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: TextStyle(fontSize: 13)), child: Text('Ghairi')))), SizedBox(width: 8), Expanded(child: SizedBox(height: 38, child: FilledButton(onPressed: _reason.isEmpty ? null : () => Navigator.pop(context, _reason), style: FilledButton.styleFrom(backgroundColor: c.redFill, foregroundColor: Ad.card(context), disabledBackgroundColor: c.redFill.withValues(alpha: .35), disabledForegroundColor: Colors.white70, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), child: Text('Kataa'))))]),
         ]),
       ),
     );
@@ -1142,7 +1143,7 @@ class _StepRow extends StatelessWidget {
           width: 16,
           height: 16,
           decoration: BoxDecoration(color: step.fill, shape: BoxShape.circle),
-          child: Icon(step.icon, size: 10, color: Colors.white),
+          child: Icon(step.icon, size: 10, color: Ad.card(context)),
         ),
     };
 
@@ -1227,7 +1228,7 @@ class _PulseDotState extends State<_PulseDot>
               ),
             ],
           ),
-          child: Icon(widget.icon, size: 10, color: Colors.white),
+          child: Icon(widget.icon, size: 10, color: Ad.card(context)),
         ),
       );
 }
@@ -1275,7 +1276,7 @@ class _StatusAvatar extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: c.card, width: 2),
               ),
-              child: Icon(icon, size: 11, color: Colors.white),
+              child: Icon(icon, size: 11, color: Ad.card(context)),
             ),
           ),
         ]),

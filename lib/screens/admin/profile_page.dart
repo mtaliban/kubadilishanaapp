@@ -10,14 +10,15 @@
 // =====================================================================
 
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 
 // Rangi za design mpya (kama mockup — badilisha hapa tu)
-const Color _kBlue = Color(0xFF2563EB); // bluu kuu (nodes, Hifadhi, mistari)
-const Color _kBlueSoft = Color(0xFFE8F0FE); // bluu hafifu (avatar, round btns)
-const Color _kBlueBorder = Color(0xFFBFD4F8); // mpaka wa bluu hafifu
-const Color _kText = Color(0xFF111827);
-const Color _kTextMuted = Color(0xFF6B7280);
-const Color _kFieldBorder = Color(0xFFD1D5DB);
+Color _kBlue = Color(0xFF2563EB); // bluu kuu (nodes, Hifadhi, mistari)
+Color _kBlueSoft = Color(0xFFE8F0FE); // bluu hafifu (avatar, round btns)
+Color _kBlueBorder = Color(0xFFBFD4F8); // mpaka wa bluu hafifu
+Color _kText = Color(0xFF111827);
+Color _kTextMuted = Color(0xFF6B7280);
+Color _kFieldBorder = Color(0xFFD1D5DB);
 const Color _kFieldBgDark = Color(0xFF1E293B);
 const Color _kTextDark = Color(0xFFE7ECF8);
 const Color _kTextMutedDark = Color(0xFF9AA8C7);
@@ -142,8 +143,8 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final text = dark ? _kTextDark : _kText;
-    final muted = dark ? _kTextMutedDark : _kTextMuted;
+    final text = dark ? _kTextDark : Ad.ink(context);
+    final muted = dark ? _kTextMutedDark : Ad.muted(context);
 
     final items = <_TimelineData>[
       _TimelineData(
@@ -187,7 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
     ];
 
     return Scaffold(
-      backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: dark ? Color(0xFF0F172A) : Ad.card(context),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
@@ -279,16 +280,16 @@ class _ProfilePageState extends State<ProfilePage> {
           height: 72,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: _kBlueSoft,
+            color: Ad.blueSoft(context),
             shape: BoxShape.circle,
-            border: Border.all(color: _kBlueBorder, width: 1.5),
+            border: Border.all(color: Ad.borderStrong(context), width: 1.5),
           ),
           child: Text(
             _p.initials,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w500,
-              color: _kBlue,
+              color: Ad.blue(context),
             ),
           ),
         ),
@@ -306,7 +307,7 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 2),
         Text(
           _p.role,
-          style: const TextStyle(fontSize: 13, color: _kBlue),
+          style: TextStyle(fontSize: 13, color: Ad.blue(context)),
         ),
       ],
     );
@@ -386,15 +387,15 @@ class _TimelineItem extends StatelessWidget {
                 Container(
                   width: 24,
                   height: 24,
-                  decoration: const BoxDecoration(
-                    color: _kBlue,
+                  decoration: BoxDecoration(
+                    color: Ad.blue(context),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(data.icon, size: 14, color: Colors.white),
+                  child: Icon(data.icon, size: 14, color: Ad.card(context)),
                 ),
                 if (!isLast)
                   Expanded(
-                    child: Container(width: 1.5, color: _kBlueBorder),
+                    child: Container(width: 1.5, color: Ad.borderStrong(context)),
                   ),
               ],
             ),
@@ -410,7 +411,7 @@ class _TimelineItem extends StatelessWidget {
                     data.label,
                     style: TextStyle(
                         fontSize: 12,
-                        color: dark ? _kTextMutedDark : _kTextMuted),
+                        color: dark ? _kTextMutedDark : Ad.muted(context)),
                   ),
                   SizedBox(height: editing ? 4 : 0),
                   // Simu na email zinakataza edit hapa (locked fields).
@@ -424,7 +425,7 @@ class _TimelineItem extends StatelessWidget {
                             autofocus: data.autofocus,
                             style: TextStyle(
                               fontSize: data.fieldFontSize,
-                              color: dark ? _kTextDark : _kText,
+                              color: dark ? _kTextDark : Ad.ink(context),
                             ),
                             decoration: InputDecoration(
                               isDense: true,
@@ -433,18 +434,18 @@ class _TimelineItem extends StatelessWidget {
                                 vertical: 12,
                               ),
                               filled: true,
-                              fillColor: dark ? _kFieldBgDark : Colors.white,
+                              fillColor: dark ? _kFieldBgDark : Ad.card(context),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: _kFieldBorder,
+                                borderSide: BorderSide(
+                                  color: Ad.borderStrong(context),
                                   width: 0.8,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: _kBlue,
+                                borderSide: BorderSide(
+                                  color: Ad.blue(context),
                                   width: 1.5,
                                 ),
                               ),
@@ -471,17 +472,17 @@ class _RoundIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: _kBlueSoft,
-      shape: const CircleBorder(
-        side: BorderSide(color: _kBlueBorder, width: 0.8),
+      color: Ad.blueSoft(context),
+      shape: CircleBorder(
+        side: BorderSide(color: Ad.borderStrong(context), width: 0.8),
       ),
       child: InkWell(
-        customBorder: const CircleBorder(),
+        customBorder: CircleBorder(),
         onTap: onTap,
         child: SizedBox(
           width: 36,
           height: 36,
-          child: Icon(icon, size: 17, color: _kBlue),
+          child: Icon(icon, size: 17, color: Ad.blue(context)),
         ),
       ),
     );
@@ -505,14 +506,14 @@ class _SmallPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = filled ? Colors.white : _kText;
+    final fg = filled ? Colors.white : Ad.ink(context);
 
     return Material(
-      color: filled ? _kBlue : Colors.transparent,
+      color: filled ? Ad.blue(context) : Colors.transparent,
       shape: StadiumBorder(
         side: filled
             ? BorderSide.none
-            : const BorderSide(color: Color(0xFF9CA3AF), width: 0.8),
+            : BorderSide(color: Ad.muted2(context), width: 0.8),
       ),
       child: InkWell(
         customBorder: const StadiumBorder(),
@@ -524,12 +525,12 @@ class _SmallPillButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (loading)
-                const SizedBox(
+                SizedBox(
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: Ad.card(context),
                   ),
                 )
               else
