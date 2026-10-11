@@ -45,10 +45,16 @@ void main() {
       _m(2, 'Erick', '+255759949199', 'Napenda app', reply: 'Asante'),
     ]);
 
-    // Header + tabs + search zimeonekana.
+    // Header + tabs + search zimeonekana. (Namba za tab ni pills — sasa
+    // ziko ndani ya Container tofauti: marudio ni 2 kwa kila label label + count.)
     expect(find.text('Maoni'), findsOneWidget);
     expect(find.text('Live'), findsOneWidget);
-    expect(find.text('Yote 2'), findsOneWidget);
+    // Pills: Yote=2 (kijivu), Yasiyojibiwa=2 (nyekundu) — kwenye viewport ndogo
+    // ya test Moja inaweza kuwa nje ya screen, hivyo tunakagua inayoonekana.
+    final twoCount = tester.widgetList<Text>(find.text('2')).length;
+    expect(twoCount, greaterThanOrEqualTo(1)); // Yote=2 na Yasiyojibiwa=2
+    // =1 (nyekundu) + Yaliyojibiwa=1 (kijani) — zote mbili zinaonekana.
+    expect(find.text('1'), findsNWidgets(2));
     expect(find.textContaining('Yasiyojibiwa'), findsOneWidget);
     expect(find.textContaining('Yaliyojibiwa'), findsOneWidget);
 

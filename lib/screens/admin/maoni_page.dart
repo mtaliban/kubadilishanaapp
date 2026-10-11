@@ -3,10 +3,9 @@
 // Hakuna AppBar, drawer wala bottom navigation. Weka ndani ya Scaffold yako.
 // Hakuna package za nje: unahitaji flutter/material.dart tu.
 
-import 'dart:async';
-import 'dart:math' as math;
-
+import 'dart:async';import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
 import '../../services/api_service.dart';
 import '../../services/websocket_service.dart';
@@ -319,6 +318,18 @@ class _MaoniPageState extends State<MaoniPage> {
       _Tab.unanswered: 'Yasiyojibiwa',
       _Tab.answered: 'Yaliyojibiwa',
     };
+    // Rangi za pill: Kijani = yaliyojibiwa, Nyekundu = yasiyojibiwa
+    // (namba bado nyekundu kama ulivyoomba jengine), Wote = kijivu.
+    Color pillFg(_Tab t) => t == _Tab.answered
+        ? const Color(0xFF15803D)
+        : t == _Tab.unanswered
+            ? _danger
+            : _muted;
+    Color pillBg(_Tab t) => t == _Tab.answered
+        ? const Color(0xFFECFDF5)
+        : t == _Tab.unanswered
+            ? const Color(0xFFFEF2F2)
+            : const Color(0xFFF3F4F6);
 
     return Container(
       margin: const EdgeInsets.only(top: 10),
@@ -332,25 +343,48 @@ class _MaoniPageState extends State<MaoniPage> {
           children: _Tab.values.map((t) {
           final on = _tab == t;
           return Padding(
-            padding: const EdgeInsets.only(right: 18),
+            padding: const EdgeInsets.only(right: 12),
             child: InkWell(
               onTap: () => _setTab(t),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: BoxDecoration(
+                  // Underline ya bluu bado: tab iliyochaguliwa.
                   border: Border(
                     bottom: BorderSide(
                         color: on ? _ac : Colors.transparent, width: 2),
                   ),
                 ),
-                child: Text(
-                  '${labels[t]} ${counts[t]}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: on ? _ac : _muted,
-                    fontWeight: on ? FontWeight.w500 : FontWeight.w400,
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  // Namba ndani ya pill (kijani/nyekundu/kijivu).
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+                    height: 18,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: pillBg(t),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Text(
+                      '${counts[t]}',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: pillFg(t)),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  Text(
+                    labels[t]!,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: on ? _ac : _muted,
+                      fontWeight: on ? FontWeight.w500 : FontWeight.w400,
+                    ),
+                  ),
+                ]),
               ),
             ),
           );
@@ -365,12 +399,7 @@ class _MaoniPageState extends State<MaoniPage> {
       margin: const EdgeInsets.fromLTRB(20, 14, 20, 4),
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: _searchFocus.hasFocus ? _ac : _lineStrong,
-        ),
-      ),
+      // Border ya box imeondolewa (design) — bluu ya focus pia imeondoka.
       child: Row(
         children: [
           const Icon(Icons.search, size: 18, color: _muted),
@@ -572,7 +601,8 @@ class _MaoniPageState extends State<MaoniPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.edit_outlined, size: 16, color: _ac),
+            // Icon ile ile ya Matangazo (bell-ringing ya Tabler).
+            Icon(TablerIcons.bell_ringing, size: 16, color: _ac),
             SizedBox(width: 6),
             Text('Andika jibu', style: TextStyle(fontSize: 14, color: _ac)),
           ],
@@ -583,25 +613,18 @@ class _MaoniPageState extends State<MaoniPage> {
 
   // ----- kurasa -----
   Widget _buildPager(int page, int pages) {
+    // Pager: chevron mbili tu (Previous/Next) — hakuna namba za kurasa.
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 18, 10, 0),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 6,
-        runSpacing: 6,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _PageButton(
             icon: Icons.chevron_left,
             disabled: page == 1,
             onTap: () => _setPage(page - 1, pages),
           ),
-          for (int k = 1; k <= pages; k++)
-            _PageButton(
-              label: '$k',
-              active: k == page,
-              onTap: () => _setPage(k, pages),
-            ),
+          const SizedBox(width: 6),
           _PageButton(
             icon: Icons.chevron_right,
             disabled: page == pages,
