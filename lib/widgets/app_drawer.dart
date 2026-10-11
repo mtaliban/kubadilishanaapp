@@ -284,42 +284,47 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final insets = MediaQuery.of(context).padding;
-    return Drawer(
-      // Drawer IFUNIKE hamburger: juu ya panel = KILELE CHA hamburger,
-      // halafu inashuka HADI JUU YA FOOTER (gap ndogo tu — design mpya).
-      backgroundColor: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      child: Padding(
-        padding: EdgeInsets.only(
-          // Namba hasi inaruhusiwa kuwa 0 (simu isiyo na status inset) —
-          // shifted_box assertion ya Flutter inakataza isNonNegative.
-          top: math.max(0.0, insets.top - 4),
-          // PANEL ISHE MOJA KWA MOJA JUU YA FOOTER (mizio ya geometry halisi:
-          // footer = SafeArea-chini + Padding(4,10,4,8) + tile 44 + gap 4 +
-          // label ≈ 80 + insets.bottom). Kuipunguza kunafunika footer — Toka
-          // haionyeshwi vizuri chini ya panel. (Imepimwa kwenye 390×844/inset 40.)
-          bottom: kFooterBody + insets.bottom,
-        ),
-        // Column moja halisi (height inasimamiwa): Spacer inaingia nafasi
-        // ya pungufu bila kusinyoosha rows — rows zina ukubwa ule ulikuwa nao,
-        // Wasifu + Toka zibandikwe chini ofu (kabla ya footer).
-        child: Material(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF1E293B)
-              : Colors.white, // dark: giza, light: nyeupe (kama awali)
-          // DESIGN MPYA: radius ya kona za kulia 24 (kama design yako)
-          borderRadius: const BorderRadius.horizontal(
-              right: Radius.circular(24)),
-          clipBehavior: Clip.antiAlias,
-          elevation: 8,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: _drawerChildren(context),
+    final mq = MediaQuery.of(context);
+    final insets = mq.padding;
+    // Font-latch (mockup): font kubwa ya mfumo isiweze kuvunja drawer —
+    // textScaler inabandikwa ≤ 1.0 tu ndani ya drawer, nje haibadiliki.
+    return MediaQuery(
+      data: mq.copyWith(textScaler: mq.textScaler.clamp(maxScaleFactor: 1.0)),
+      child: Drawer(    // Drawer IFUNIKE hamburger: juu ya panel = KILELE CHA hamburger,
+          // halafu inashuka HADI JUU YA FOOTER (gap ndogo tu — design mpya).
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          child: Padding(
+            padding: EdgeInsets.only(
+              // Namba hasi inaruhusiwa kuwa 0 (simu isiyo na status inset) —
+              // shifted_box assertion ya Flutter inakataza isNonNegative.
+              top: math.max(0.0, insets.top - 4),
+              // PANEL ISHE MOJA KWA MOJA JUU YA FOOTER (mizio ya geometry halisi:
+              // footer = SafeArea-chini + Padding(4,10,4,8) + tile 44 + gap 4 +
+              // label ≈ 80 + insets.bottom). Kuipunguza kunafunika footer — Toka
+              // haionyeshwi vizuri chini ya panel. (Imepimwa kwenye 390×844/inset 40.)
+              bottom: kFooterBody + insets.bottom,
+            ),
+            // Column moja halisi (height inasimamiwa): Spacer inaingia nafasi
+            // ya pungufu bila kusinyoosha rows — rows zina ukubwa ule ulikuwa nao,
+            // Wasifu + Toka zibandikwe chini ofu (kabla ya footer).
+            child: Material(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E293B)
+                  : Colors.white, // dark: giza, light: nyeupe (kama awali)
+              // DESIGN MPYA: radius ya kona za kulia 24 (kama design yako)
+              borderRadius: const BorderRadius.horizontal(
+                  right: Radius.circular(24)),
+              clipBehavior: Clip.antiAlias,
+              elevation: 8,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: _drawerChildren(context),
+              ),
+            ),
           ),
         ),
-      ),
     );
   }
 
@@ -332,18 +337,23 @@ class AppDrawer extends StatelessWidget {
         onClose: () => Navigator.of(context).pop(),
       ),
       const Divider(height: 1, thickness: 0.5, color: kBorder),
-      ListenableBuilder(
-        listenable: BadgeController.instance,
-        builder: (context, _) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: _drawerRows(context),
+      // Orodha INATELEZA (kama mockup): font kubwa ya mfumo au screen fupi
+      // isiivunje drawer — rows zote zibaki na ukubwa wao, zinasogezwa.
+      Expanded(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: ListenableBuilder(
+            listenable: BadgeController.instance,
+            builder: (context, _) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: _drawerRows(context),
+            ),
+          ),
         ),
       ),
       const Divider(height: 1, thickness: 0.5, color: kBorder),
-      // Nafasi iliyoongezwa (Spacer): rows za menu hazinyooshwi — Wasifu
-      // wangu + Toka zibandikwe CHINI ya drawer, panel ifikishe footer.
-      const Spacer(),
+      // Wasifu wangu + Toka zimefungwa chini (vihavitiki kamwe) — kama mockup.
       _ProfileRow(
         name: userName,
         onTap: () {
