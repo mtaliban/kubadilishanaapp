@@ -18,7 +18,6 @@ import '../../services/api_service.dart';
 import '../../widgets/app_toast.dart';
 
 const _kPrimary = Color(0xFF1E40AF);
-const _kBg      = Colors.white;
 const _kInk     = Color(0xFF0F172A);
 const _kMuted   = Color(0xFF64748B);
 const _kLine    = Color(0xFFE2E8F0);
@@ -251,7 +250,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
     }
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: Ad.card(context),
       body: RefreshIndicator(
         onRefresh: _load,
         color: _kPrimary,
@@ -554,7 +553,7 @@ class _PersonBlock extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: recipient ? _kBlueBg : _kBg,
+        color: recipient ? _kBlueBg : Ad.card(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -700,7 +699,7 @@ class _DetailSheet extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 16),
-          _contact(
+          _contact(context,
             'Mtumaji',
             name: e['from_full_name'] as String? ?? '—',
             sector: _catLabel(e['from_category'] as String?),
@@ -709,7 +708,7 @@ class _DetailSheet extends StatelessWidget {
             phone: e['from_phone'] as String? ?? '',
           ),
           const SizedBox(height: 12),
-          _contact(
+          _contact(context,
             'Mpokeaji',
             name: e['to_full_name'] as String? ?? '—',
             sector: _catLabel(e['to_category'] as String?),
@@ -722,7 +721,7 @@ class _DetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _contact(String label,
+  Widget _contact(BuildContext context, String label,
       {required String name,
       required String sector,
       required String role,
@@ -735,7 +734,7 @@ class _DetailSheet extends StatelessWidget {
     ].join(' · ');
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: _kBg, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(color: Ad.card(context), borderRadius: BorderRadius.circular(18)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label,
             style: const TextStyle(
