@@ -12,7 +12,7 @@ import '../../services/api_service.dart';
 import '../../services/websocket_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_toast.dart' show friendlyError;
-import '../../services/admin_badge_service.dart';
+import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 
 // ---------------------------------------------------------------------------
 // Rangi na mitindo
@@ -791,8 +791,8 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
     try {
       await ApiService().adminReplyFeedback(apiId, text);
       if (!mounted) return;
-      // Badge ya Maoni inaisha TU baada ya kujibu.
-      AdminBadgeService().clearFeedback();
+      // Badge ya Maoni inaisha TU baada ya kujibu (clearOnAction).
+      BadgeController.instance.decrement(NavItem.maoni);
       AdminBadgeService().refresh();
       // Pakia upya list ya nyuma ya pazia — data halisi itaingia.
       unawaited(_load());

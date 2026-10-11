@@ -33,7 +33,7 @@ import '../../services/network_service.dart';
 import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
-import '../../services/admin_badge_service.dart';
+import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
 
 // ───────────────────────── RANGI ─────────────────────────
@@ -1494,7 +1494,7 @@ class _DotsPainter extends CustomPainter {
 //            inafanya kazi ndani ya app tu (bila kupiga API); refresh inarejesha
 //            hali halisi ya server.
 //   OFFLINE→ NetworkService().isOffline → OfflineQueue (kama ukurasa wa zamani)
-//   BADGE  → AdminBadgeService().refresh() + clearPayments()
+//   BADGE  → AdminBadgeService().refresh() + BadgeController.decrement(NavItem.malipo)
 //            (badge ya malipo inaisha TU baada ya hatua — kama ilivyo)
 //   UKURASA→ upagaji wa upande wa app (12 kwa ukurasa).
 // ============================================================================
@@ -1594,7 +1594,7 @@ class ApiMalipoController extends MalipoController {
     notifyListeners();
     // Badge ya Malipo inaisha TU baada ya hatua (kama ukurasa wa zamani).
     AdminBadgeService().refresh();
-    AdminBadgeService().clearPayments();
+    BadgeController.instance.decrement(NavItem.malipo);
   }
 
   @override

@@ -1,55 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import '../services/admin_badge_service.dart';
+
+import 'app_drawer.dart' show MenuButtonWithDot;
 import 'app_shell.dart' show ThemeProvider;
-
-/* ============================================================
-   KITUFE CHA MENYU — dot nyekundu (hakuna namba) ikiwa kuna badge ya ukurasa
-   usio kwenye bottom bar (Wenzao, Match za kweli, Waliopigiana).
-   ============================================================ */
-class _MenuButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  const _MenuButton({this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: AdminBadgeService(),
-      builder: (context, _) {
-        final b = AdminBadgeService();
-        final dot = b.matches > 0 || b.contacts > 0 || b.announcements > 0;
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: onPressed ??
-                  () => Scaffold.maybeOf(context)?.openDrawer(),
-            ),
-            if (dot)
-              Positioned(
-                top: 10,
-                right: 10,
-                child: IgnorePointer(
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD92D20),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color: Theme.of(context).colorScheme.surface,
-                          width: 2),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
 
 /* ============================================================
    UPAU WA JUU
@@ -102,7 +55,9 @@ class AdminTopBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               // Kitufe cha menyu — dot nyekundu (hakuna namba) ikiwa kuna badge
               // ya ukurasa usio kwenye bottom bar (Wenzao/Match/Waliopigiana)
-              _MenuButton(onPressed: onMenu),
+              MenuButtonWithDot(
+                onPressed: onMenu ?? () => Scaffold.maybeOf(context)?.openDrawer(),
+              ),
               const Spacer(),
 
               // Kitufe cha DARK/LIGHT theme — kipekee mahali pa lugha iliyokuwa

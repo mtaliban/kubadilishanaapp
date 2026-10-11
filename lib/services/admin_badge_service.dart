@@ -7,8 +7,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
-// (badge za drawer mpya: AppDrawer ina badge za const kwenye sections —
-//  namba halisi za server zinazoendelea kuja hapa chini kwenda footer + hamburger dot)
+import '../widgets/app_drawer.dart' show BadgeController, NavItem;
 import 'websocket_service.dart';
 
 class AdminBadgeService extends ChangeNotifier {
@@ -148,8 +147,23 @@ class AdminBadgeService extends ChangeNotifier {
     } catch (_) {}
   }
 
-  // ── Footer/hamburger-dot zinazingua AdminBadgeService yenyewe ──────────
-  // Drawer mpya (AppDrawer) ina badge za const kwenye sections zake.
+  // ── Bridge → BadgeController (drawer mpya: AppDrawer + hamburger dot) ──────
+  // Kila mabadiliko ya namba (poll ya sekunde 45, WS events, clear*, reset)
+  // yanamwagika kwenye BadgeController mara moja — drawer na dot ya hamburger
+  // zinabaki live bila wiring ya ziada. Matangazo/Data/Takwimu haziwekwi
+  // (BadgeRule.none kwenye design mpya — hazionyeshi badge).
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    BadgeController.instance.setCounts({
+      NavItem.watumiaji:    users,
+      NavItem.wenzao:       matches,
+      NavItem.matchZaKweli: matches,
+      NavItem.waliopigiana: contacts,
+      NavItem.malipo:       payments,
+      NavItem.maoni:        feedback,
+    });
+  }
 
   // ── Private helpers ───────────────────────────────────────────────────────
 

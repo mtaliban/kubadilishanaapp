@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
-import '../../services/admin_badge_service.dart';
+import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 import '../../widgets/app_toast.dart';
 import '../../services/network_service.dart';
 import '../../services/offline_queue.dart';
@@ -256,7 +256,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
       _showFlash('success', 'Jibu limetumwa kwa mtumiaji');
       AdminBadgeService().refresh();
       // Badge ya Maoni ni "pending" — inaisha TU baada ya kujibu (siyo kufungua ukurasa)
-      AdminBadgeService().clearFeedback();
+      BadgeController.instance.decrement(NavItem.maoni);
       _load();
     } catch (e) {
       if (!mounted) return;
