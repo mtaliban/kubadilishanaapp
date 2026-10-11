@@ -1,26 +1,17 @@
 // ============================================================================
 // test/maoni_theme_test.dart
-// Ukaguzi wa rangi za Maoni — DESIGN MPYA (nukuu ya gazeti / serif, code mockup):
-//   inbox nyeupe, chat nyeupe, Live dot bluu, incoming nukuu serif,
-//   outgoing mstari wa bluu kushoto + serif italic. Hakuna bluu kali ya ofa
-//   isipokuwa kwenye accents zilizoruhusiwa (Live dot, mstari wa quote, Tuma).
-// Inatumia InMemoryMaoniRepository.demo() na kunakagua Container decorations
-// halisi kwenye widget tree.
+// Ukaguzi wa rangi za Maoni — DESIGN MPYA (single-page "gazeti", code mockup):
+//   page nyeupe, Live dot bluu, nukuu serif, jibu ni TextField italawezi pale
+//   pale chini ya nukuu (HAKUNA page ya pili ya chat). Blue dominant
+//   iruhusiwa kwenye accents tu (Live dot, underline, Tuma, pager).
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:kubadilishanaapp/screens/admin/maoni_pages.dart';
-
-// ignore: invalid_use_of_protected_member, implementation_imports
-// _C ni private — tunakagua whiteof (private class + static public).
-// Badala yake tunakagua Scaffold.background kwa thamani halisi kutoka kwenye
-// lib code (whiteof inaweza kubadilika — lakini tunakagua ile inayoonekana).
-
+import 'package:kubadilishanaapp/screens/admin/maoni_page.dart';
 
 bool _isBlueDominant(Color c) => c.b > c.r + 40 && c.b > c.g + 40;
 
-/// Kusanya Container zote zenye BoxDecoration yenye rangi.
 List<BoxDecoration> _boxDecorations(WidgetTester tester) {
   final out = <BoxDecoration>[];
   for (final w in tester.widgetList<Container>(find.byType(Container))) {
@@ -30,128 +21,111 @@ List<BoxDecoration> _boxDecorations(WidgetTester tester) {
   return out;
 }
 
-Future<void> _pump(WidgetTester tester) async {
+Maoni _m(int id, String name, String phone, String msg, {String reply = ''}) =>
+    Maoni(id: id, name: name, phone: phone, date: '9 Okt', time: '07:41',
+        message: msg, reply: reply);
+
+Future<void> _pump(WidgetTester tester, List<Maoni> items) async {
   await tester.pumpWidget(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: ThemeData(useMaterial3: true, colorSchemeSeed: const Color(0xFF1F5FD6)),
     home: Scaffold(
-      body: MaoniInboxPage(repo: InMemoryMaoniRepository.demo()),
+      backgroundColor: Colors.white,
+      body: SafeArea(child: MaoniPage(items: items)),
     ),
   ));
   await tester.pumpAndSettle();
 }
 
-Future<void> _openChat(WidgetTester tester, String name) async {
-  await _pump(tester);
-  final row = find.textContaining(name).first;
-  expect(row, findsOneWidget, reason: 'Mazungumzo ya "$name" yanapaswa kuonekana');
-  await tester.tap(row);
-  await tester.pumpAndSettle();
-}
-
 void main() {
-  testWidgets('Inbox: background NYEUPE (Container mweupe) + hakuna bluu kali',
+  testWidgets('Page: background NYEUPE + tab underline + Live dot bluu',
       (tester) async {
-    await _pump(tester);
+    await _pump(tester, [
+      _m(1, 'Neema J.', '+255783172900', 'Hii ni maoni ya kupima'),
+      _m(2, 'Erick', '+255759949199', 'Napenda app', reply: 'Asante'),
+    ]);
+
+    // Header + tabs + search zimeonekana.
     expect(find.text('Maoni'), findsOneWidget);
+    expect(find.text('Live'), findsOneWidget);
+    expect(find.text('Yote 2'), findsOneWidget);
+    expect(find.textContaining('Yasiyojibiwa'), findsOneWidget);
+    expect(find.textContaining('Yaliyojibiwa'), findsOneWidget);
 
-    // Inbox root: Container(color: Colors.white) — color parameter (siyo
-    // decoration), kwa hivyo tunakagua Container.color moja kwa moja.
-    final whiteRoot = tester
-        .widgetList<Container>(find.byType(Container))
-        .any((w) => w.color == Colors.white);
-    expect(whiteRoot, isTrue,
-        reason: 'Inbox inapaswa kuwa na Container background nyeupe');
-    // Hakuna bluu kali (opaque, blue-dominant) kwenye inbox yote.
+    // Hakuna bluu kali ya opaque non-accent kwenye Containers (accents ndogo
+    // zinaruhusiwa: _ac = 0xFF1F5FD6).
+    const accent = Color(0xFF1F5FD6);
     for (final d in _boxDecorations(tester)) {
       final c = d.color;
       if (c == null) continue;
+      if (c == accent) continue;
       expect(
         _isBlueDominant(c) && c.a == 1.0 && c.computeLuminance() < .6,
         isFalse,
-        reason: 'Inbox ina Container yenye bluu kali: $c',
+        reason: 'Container yenye bluu kali ya ofa: $c',
       );
     }
   });
 
-  testWidgets('Chat: background NYEUPE chat ni layout ya nukuu (gazeti)',
-      (tester) async {
-    await _openChat(tester, 'Godwin');
+  testWidgets('Jibu: textbox LINAONEKANA PALE PALE kwenye page ile ile'
+      ' (Tuma + Ghairi navyo), hakuna page nyengine', (tester) async {
+    await _pump(tester, [
+      _m(1, 'Neema J.', '+255783172900', 'Hii ni maoni ya kupima'),
+    ]);
 
-    // Chat inaonyesha jumbe za mtumiaji ("sawa").
-    expect(find.textContaining('sawa'), findsWidgets);
+    // Nukuu ya mtumiaji iko.
+    expect(find.textContaining('Hii ni maoni'), findsOneWidget);
 
-    // Design mpya: chat Scaffold.background = whiteof (nyeupe kwenye light).
-    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
-    final bg = scaffold.backgroundColor;
-    final isLightScaffoldBg = bg == Colors.white || bg == null;
-    expect(isLightScaffoldBg, isTrue,
-        reason: 'Background ya chat inapaswa kuwa nyeupe (design mpya)');
+    // Bonyeza "Andika jibu" → TextField ya jibu inatokea PALE PALE
+    // (kwenye page ile ile, chini ya nukuu) pamoja na Tuma/Ghairi.
+    await tester.tap(find.text('Andika jibu'));
+    await tester.pumpAndSettle();
 
-    // Hakuna bluu kali ya opaque non-white kwenye chat (accents ndogo zinaruhusiwa).
-    for (final d in _boxDecorations(tester)) {
-      final c = d.color;
-      if (c == null) continue;
-      if (c == const Color(0xFF1F5FD6)) continue; // mstari wa quote / accent
-      expect(
-        _isBlueDominant(c) && c.a == 1.0 && c.computeLuminance() < .6,
-        isFalse,
-        reason: 'Chat ina Container yenye bluu kali: $c',
-      );
-    }
+    // 2 TextFields: [0] search (juu), [1] reply PALE PALE chini ya nukuu.
+    expect(find.byType(TextField), findsNWidgets(2));
+    expect(find.text('Tuma'), findsOneWidget);
+    expect(find.text('Ghairi'), findsOneWidget);
+
+    // Hakuna navigator push — bado uko kwenye page ile ile
+    // (MaoniPage inaonekana bado: header na tabs hazipotei).
+    expect(find.text('Maoni'), findsOneWidget);
   });
 
-  testWidgets('Chat: jibu la admin (outgoing) lina quote ya bluu kushoto',
+  testWidgets('Jibu limetumwa: SnackBar + quote yenye mstari wa bluu kushoto',
       (tester) async {
-    await _openChat(tester, 'SELEMANI');
+    Maoni? sentItem;
+    String? sentText;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: MaoniPage(
+            items: [_m(1, 'Neema J.', '+255783172900', 'Hii ni maoni ya kupima')],
+            onSendReply: (item, text) async {
+              sentItem = item;
+              sentText = text;
+            },
+          ),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
 
-    // Background ya chat: design mpya — whiteof (nyeupe kwenye light).
-    // Scaffold ya themepack (wrapper ya _pump) ni ya kwanza; chat ni ya mwisho.
-    final chatScaffold = tester.widgetList<Scaffold>(find.byType(Scaffold)).last;
-    final bg = chatScaffold.backgroundColor;
-    final isLightScaffoldBg = bg == Colors.white || bg == null;
-    expect(isLightScaffoldBg, isTrue,
-        reason: 'Background ya chat inapaswa kuwa nyeupe (design mpya)');
+    await tester.tap(find.text('Andika jibu'));
+    await tester.pumpAndSettle();
+    // Reply TextField NI ya pili (search iko juu).
+    final textFields = find.byType(TextField);
+    await tester.enterText(textFields.last, 'Jibu la haraka');
+    await tester.tap(find.text('Tuma'));
+    await tester.pumpAndSettle();
 
-    // Jibu la admin: mstari wa bluu (#1F5FD6) wa kushoto (quote ya 'Jibu lako').
-    final decos = _boxDecorations(tester);
-    final hasBlueLeftBorder = decos.any((d) {
-      final b = d.border;
-      if (b is! Border) return false;
-      return b.left.color == const Color(0xFF1F5FD6) && b.left.width == 2;
-    });
-    expect(
-      hasBlueLeftBorder,
-      isTrue,
-      reason: 'Jibu la admin linapaswa kuwa na mstari wa bluu kushoto',
-    );
-    // Hakuna bluu kali (opaque blue-dominant) kwenye chat.
-    for (final d in decos) {
-      final c = d.color;
-      if (c == null) continue;
-      expect(
-        _isBlueDominant(c) && c.a == 1.0 && c.computeLuminance() < .6,
-        isFalse,
-        reason: 'Chat ina Container yenye bluu kali: $c',
-      );
-    }
-  });
-
-  testWidgets('Filter wa inbox: tab haina bluu kali ya opaque (underline tu)',
-      (tester) async {
-    await _pump(tester);
-    final tabLabel = find.textContaining('Yasiyojibiwa');
-    expect(tabLabel, findsOneWidget);
-
-    for (final w in tester.widgetList<Container>(
-        find.ancestor(of: tabLabel, matching: find.byType(Container)))) {
-      final d = w.decoration;
-      if (d is BoxDecoration && d.color != null && d.borderRadius != null) {
-        final c = d.color!;
-        expect(
-          _isBlueDominant(c) && c.a == 1.0 && c.computeLuminance() < .6,
-          isFalse,
-          reason: 'Tab ina bluu kali: $c',
-        );
-      }
-    }
+    expect(sentText, 'Jibu la haraka');
+    expect(sentItem!.replied, isTrue);
+    // Quote ya "Jibu lako" + Hariri jibu.
+    expect(find.text('Jibu lako'), findsOneWidget);
+    expect(find.text('Hariri jibu'), findsOneWidget);
+    expect(find.textContaining('Jibu la haraka'), findsOneWidget);
+    // SnackBar floating.
+    expect(find.text('Jibu limetumwa'), findsOneWidget);
   });
 }

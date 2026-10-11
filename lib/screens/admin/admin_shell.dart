@@ -18,7 +18,7 @@ import 'admin_data_page.dart';
 import 'matangazo_screen.dart';
 import 'malipo_screen.dart';
 import 'waliopigiana_page.dart';
-import 'maoni_pages.dart' show AdminMaoniPage;
+import 'maoni_page.dart' show AdminMaoniPage;
 import 'statistics_page.dart';
 import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';

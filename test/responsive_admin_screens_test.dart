@@ -105,7 +105,18 @@ void main() {
   });
 
   testWidgets('MaoniPage', (tester) async {
-    await check(tester, (_) => const MaoniPage(), label: 'MaoniPage');
+    await check(
+        tester,
+        (_) => MaoniPage(items: [
+              Maoni(
+                  id: 1,
+                  name: 'Test User',
+                  phone: '+255700000000',
+                  date: '9 Okt',
+                  time: '07:41',
+                  message: 'Hii ni maoni ya kupima'),
+            ]),
+        label: 'MaoniPage');
   });
 
   testWidgets('AdminReportsPage', (tester) async {
