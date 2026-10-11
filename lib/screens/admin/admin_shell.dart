@@ -6,7 +6,7 @@ import '../../services/admin_badge_service.dart';
 import '../../widgets/app_shell.dart' show LanguageProvider;
 import '../../services/app_navigator.dart' show adminPageNotifier;
 import '../../widgets/admin_top_bar.dart';
-import '../../widgets/app_drawer.dart' show AppDrawer, CountBadge, NavItem;
+import '../../widgets/app_drawer.dart' show AppDrawer;
 import '../../widgets/app_toast.dart';
 import '../../widgets/network_banner.dart';
 import '../../widgets/queue_banner.dart';
@@ -26,14 +26,13 @@ import 'profile_screen.dart';
 
 // ─── Footer (bottom nav) — mockup ya admin_panel.dart ──────────────────────
 
-// (index ya shell, jina fupi la footer, NavItem ya icon). Final (siyo const):
-// NavItem.xxx.icon ni instance field ya enum — haiwezi kwenye const expression.
-final _footerSpecs = <(int, String, NavItem)>[
-  (9, 'Takwimu',   NavItem.takwimu),
-  (1, 'Watumiaji', NavItem.watumiaji),
-  (2, 'Wenzao',    NavItem.wenzao),
-  (6, 'Malipo',    NavItem.malipo),
-  (8, 'Maoni',     NavItem.maoni),
+// (index ya shell, jina fupi la footer, icon). Final (siyo const).
+final _footerSpecs = <(int, String, IconData)>[
+  (9, 'Takwimu',   Icons.pie_chart_outline),
+  (1, 'Watumiaji', Icons.groups_outlined),
+  (2, 'Wenzao',    Icons.link),
+  (6, 'Malipo',    Icons.paid_outlined),
+  (8, 'Maoni',     Icons.chat_outlined),
 ];
 
 // ── DARK FOOTER (ThemeProvider.toggle) — inafuata ThemeMode ya Material app
@@ -95,7 +94,25 @@ class _FooterTile extends StatelessWidget {
                 Positioned(
                   top: -6,
                   right: -6,
-                  child: CountBadge(count: badgeCount),
+                  child: Container(
+                    height: 20,
+                    constraints: const BoxConstraints(minWidth: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD92D20),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Text(
+                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          height: 1),
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -114,31 +131,31 @@ class _FooterTile extends StatelessWidget {
   }
 }
 
-// ─── Nav index ↔ NavItem (AppDrawer) mapping ───────────────────────────────
+// ─── Nav label (AppDrawer) ↔ index mapping ────────────────────────────────
 
-// Mapping kati ya NavItem (AppDrawer) na int index (pages)
+// Mapping kati ya lebo (AppDrawer — jina la kikundi) na int index (pages)
 const _navItemToIndex = {
-  NavItem.takwimu:      9,
-  NavItem.watumiaji:    1,
-  NavItem.wenzao:       2,
-  NavItem.matchZaKweli: 3,
-  NavItem.matangazo:    5,
-  NavItem.waliopigiana: 7,
-  NavItem.maoni:        8,
-  NavItem.malipo:       6,
-  NavItem.data:         4,
+  'Takwimu':             9,
+  'Watumiaji':           1,
+  'Waliopata wenzao':    2,
+  'Match za kweli':      3,
+  'Matangazo':           5,
+  'Waliopigiana':        7,
+  'Maoni na malalamiko': 8,
+  'Malipo':              6,
+  'Data':                4,
 };
 
-const _indexToNavItem = {
-  9: NavItem.takwimu,
-  1: NavItem.watumiaji,
-  2: NavItem.wenzao,
-  3: NavItem.matchZaKweli,
-  5: NavItem.matangazo,
-  7: NavItem.waliopigiana,
-  8: NavItem.maoni,
-  6: NavItem.malipo,
-  4: NavItem.data,
+const _indexToItemLabel = {
+  9: 'Takwimu',
+  1: 'Watumiaji',
+  2: 'Waliopata wenzao',
+  3: 'Match za kweli',
+  5: 'Matangazo',
+  7: 'Waliopigiana',
+  8: 'Maoni na malalamiko',
+  6: 'Malipo',
+  4: 'Data',
 };
 
 // ─── AdminShell ───────────────────────────────────────────────────────────────
@@ -260,8 +277,7 @@ class _AdminShellState extends State<AdminShell> {
         onLangChanged: (l) => LanguageProvider().setLang(l),
         onAvatarTap: null,
       ),
-      // Drawer mpya (AppDrawer) — inasikiliza BadgeController yenyewe; namba
-      // zinamwagika live kupitia bridge ya AdminBadgeService.notifyListeners.
+      // Drawer mpya (AppDrawer) — code ya mockup kama ilivyo.
       drawer: AppDrawer(
         logo: ClipRRect(
           borderRadius: BorderRadius.circular(8),
@@ -279,13 +295,13 @@ class _AdminShellState extends State<AdminShell> {
           ),
         ),
         userName: name,
-        current: _indexToNavItem[_idx] ?? NavItem.takwimu,
-        onSelect: (item) {
-          if (item == NavItem.wasifu) {
+        selected: _indexToItemLabel[_idx] ?? 'Takwimu',
+        onSelect: (label) {
+          if (label == 'Wasifu wangu') {
             _openProfile(); // Wasifu wangu — page inapushwa, siyo tab ya shell
             return;
           }
-          _go(_navItemToIndex[item] ?? 9);
+          _go(_navItemToIndex[label] ?? 9);
         },
         onLogout: _logout,
       ),
@@ -337,7 +353,7 @@ class _AdminShellState extends State<AdminShell> {
                     listenable: _badges,
                     builder: (context, _) => _FooterTile(
                       label: label,
-                      icon: nav.icon,
+                      icon: nav,
                       active: _idx == index,
                       badgeCount: _badgeForIndex(index),
                       onTap: () => _go(index),

@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
-import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
+import '../../services/admin_badge_service.dart';
 import '../../services/network_service.dart';
 import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
@@ -154,7 +154,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       if (!mounted) return;
       AdminBadgeService().refresh();
       // Badge ya Malipo ni "pending" — inaisha TU baada ya hatua (siyo kufungua ukurasa)
-      BadgeController.instance.decrement(NavItem.malipo);
+      AdminBadgeService().clearPayments();
       AppToast.success('Malipo yamethibitishwa');
       await _load();
     } catch (e) {
@@ -178,7 +178,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       if (!mounted) return;
       AdminBadgeService().refresh();
       // Badge ya Malipo ni "pending" — inaisha TU baada ya hatua (siyo kufungua ukurasa)
-      BadgeController.instance.decrement(NavItem.malipo);
+      AdminBadgeService().clearPayments();
       AppToast.warning('Malipo yamekataliwa');
       await _load();
     } catch (e) {
