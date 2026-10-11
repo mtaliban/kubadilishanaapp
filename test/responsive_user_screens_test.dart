@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:kubadilishanaapp/screens/login_screen.dart';
 import 'package:kubadilishanaapp/screens/register_screen.dart';
+import 'package:kubadilishanaapp/screens/register_screen.dart' as reg;
+import 'package:kubadilishanaapp/screens/register_repo.dart';
 import 'package:kubadilishanaapp/screens/forgot_password_screen.dart';
 import 'package:kubadilishanaapp/screens/forgot_number_screen.dart';
 import 'package:kubadilishanaapp/screens/reset_password_screen.dart';
@@ -53,7 +55,7 @@ void main() {
     });
 
     testWidgets('RegisterScreen', (tester) async {
-      await check(tester, (_) => const RegisterScreen(),
+      await check(tester, (_) => RegistrationFlowPage(repository: _FakeRepo()),
           loggedIn: false, label: 'RegisterScreen');
     }, skip: false);
 
@@ -121,4 +123,33 @@ void main() {
           label: 'MyMatchesScreen');
     });
   });
+}
+
+// Fake repo — test ya responsive haitaki network; orodha ndogo ya demo.
+class _FakeRepo implements reg.RegistrationRepository {
+  @override
+  Future<bool> isPhoneAvailable(String phone) async => true;
+  @override
+  Future<List<reg.RegOption>> regions() async =>
+      [const reg.RegOption(id: '1', label: 'Dar Es Salaam')];
+  @override
+  Future<List<reg.RegOption>> districts(reg.RegOption region) async =>
+      [const reg.RegOption(id: '2', label: 'Ilala Mc')];
+  @override
+  Future<List<reg.RegOption>> schools(reg.RegOption district) async =>
+      [const reg.RegOption(id: '3', label: 'Vivandani Primary School')];
+  @override
+  Future<List<reg.RegOption>> facilities(reg.RegOption district) async =>
+      [const reg.RegOption(id: '4', label: 'Amana Hospital')];
+  @override
+  Future<List<reg.RegOption>> referralHospitals(reg.RegOption region) async =>
+      [const reg.RegOption(id: '5', label: 'Muhimbili')];
+  @override
+  Future<List<reg.RegOption>> cadres() async =>
+      [const reg.RegOption(id: 'co', label: 'Clinical Officer')];
+  @override
+  Future<List<reg.RegOption>> subjects(reg.EduLevel level) async =>
+      [const reg.RegOption(id: 'eng', label: 'English')];
+  @override
+  Future<void> submit(reg.RegistrationData data) async {}
 }

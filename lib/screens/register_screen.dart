@@ -1,2238 +1,2044 @@
-import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../services/api_service.dart';
-import '../services/app_cache.dart';
-import '../widgets/app_toast.dart';
-import '../widgets/select_sheet.dart';
-import '../utils/safe_cast.dart';
 
-const _kBlue = Color(0xFF1E40AF);
-const _kGrey300 = Color(0xFFD1D5DB);
-const _kGrey500 = Color(0xFF6B7280);
-const _kGrey700 = Color(0xFF374151);
-const _kGrey900 = Color(0xFF111827);
-const _kRed500 = Color(0xFFDC2626); // brand-red
-const _kGreen600 = Color(0xFF16A34A);
-
-InputDecoration _inputDec({String? hint, Color borderColor = _kGrey300, Widget? suffix}) =>
-    InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-      enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: borderColor)),
-      focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: _kBlue, width: 2)),
-      contentPadding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-      filled: true,
-      fillColor: Colors.white,
-      isDense: true,
-      suffixIcon: suffix,
-      suffixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 0),
-    );
-
-InputDecoration _dropDec({String? hint}) => InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-      enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: _kGrey300)),
-      contentPadding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-      filled: true,
-      fillColor: Colors.white,
-      isDense: true,
-    );
-
-ButtonStyle _btnPrimary() => ElevatedButton.styleFrom(
-      backgroundColor: _kBlue,
-      foregroundColor: Colors.white,
-      disabledBackgroundColor: const Color(0xFF1E40AF).withValues(alpha: 0.75), // stays blue, not grey
-      disabledForegroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      elevation: 0,
-    );
-
-// btn-outline — web: border-brand-grey-300 text-brand-grey-700 px-3 py-1 text-[11px] font-bold rounded-md
-ButtonStyle _btnOutline() => OutlinedButton.styleFrom(
-      side: const BorderSide(color: _kGrey300), // border-brand-grey-300 = #D1D5DB
-      foregroundColor: _kGrey700,               // text-brand-grey-700 = #374151
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-    );
-
-// Loading row — web: Loader2(spin,20px) mr-2(8px) "Inapakia..." text-sm text-grey-400
-Widget _loadingRow({double verticalPad = 32}) => Padding(
-      padding: EdgeInsets.symmetric(vertical: verticalPad),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: const [
-        SizedBox(width: 14, height: 14,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF9CA3AF))),
-        SizedBox(width: 8),
-        Text('Inapakia...', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
-      ]),
-    );
-
-IconData _deptIcon(String code) {
-  switch (code) {
-    case 'health': return TablerIcons.first_aid_kit;
-    case 'education': return TablerIcons.school;
-    case 'service': return TablerIcons.briefcase_2;
-    default: return TablerIcons.plant;
-  }
+// ============================================================================
+// RANGI (badilisha hapa tu kama unataka bluu nyingine)
+// ============================================================================
+class _C {
+  static const blue = Color(0xFF1E40AF);
+  static const blueSoft = Color(0xFFEFF3FF);
+  static const blueBorder = Color(0xFFBFD0F5);
+  static const text = Color(0xFF111827);
+  static const textSec = Color(0xFF6B7280);
+  static const textMuted = Color(0xFF9CA3AF);
+  static const border = Color(0xFFE5E7EB);
+  static const borderStrong = Color(0xFFD1D5DB);
+  static const borderStronger = Color(0xFF9CA3AF);
+  static const danger = Color(0xFFDC2626);
+  static const success = Color(0xFF16A34A);
+  static const successSoft = Color(0xFFDCFCE7);
+  static const surface = Color(0xFFF3F4F6);
 }
 
-Color _deptBg(String _) => Colors.white;
+// ============================================================================
+// ICONS: zote ziko sehemu moja. Kila mstari una jina la icon ya Tabler
+// iliyotumika kwenye mockup. Ukitumia package ya Tabler, badilisha hapa tu.
+// ============================================================================
+class RegIcons {
+  RegIcons._();
+  static const IconData back = Icons.arrow_back; // arrow-left
+  static const IconData next = Icons.arrow_forward; // arrow-right
+  static const IconData edit = Icons.edit_outlined; // pencil
+  static const IconData add = Icons.add; // plus
+  static const IconData search = Icons.search; // search
+  static const IconData chevronUp = Icons.keyboard_arrow_up; // chevron-up
+  static const IconData chevronDown = Icons.keyboard_arrow_down; // chevron-down
+  static const IconData ok = Icons.check_circle; // circle-check
+  static const IconData bad = Icons.cancel; // circle-x
+  static const IconData check = Icons.check; // check
+  static const IconData name = Icons.account_box_outlined; // user-square-rounded
+  static const IconData phone = Icons.phone_outlined; // phone
+  static const IconData whatsapp = Icons.chat_outlined; // brand-whatsapp
+  static const IconData afya = Icons.medical_services_outlined; // stethoscope
+  static const IconData elimu = Icons.school_outlined; // school
+  static const IconData kilimo = Icons.grass; // wheat
+  static const IconData umma = Icons.apartment_outlined; // building-community
+  static const IconData wizaraAfya = Icons.account_balance_outlined; // building-bank
+  static const IconData tamisemi = Icons.apartment_outlined; // building-community
+  static const IconData msingi = Icons.widgets_outlined; // blocks
+  static const IconData sekondari = Icons.functions; // math-function
+  static const IconData cheo = Icons.medical_services_outlined; // stethoscope
+  static const IconData mkoa = Icons.location_on_outlined; // map-pin
+  static const IconData wilaya = Icons.business_outlined; // building
+  static const IconData shule = Icons.school_outlined; // school
+  static const IconData kituo = Icons.local_hospital_outlined; // building-hospital
+  static const IconData mwaka1 = Icons.calendar_today_outlined; // calendar
+  static const IconData miaka2 = Icons.date_range_outlined; // calendar-stats
+  static const IconData miaka3 = Icons.military_tech_outlined; // medal
+  static const IconData register = Icons.person_add_alt_1_outlined; // user-plus
+  static const IconData route = Icons.alt_route; // route
+}
 
-Color _deptFg(String _) => const Color(0xFF1B4F9C);
-
-// _PickItem — data ya kila chaguo kwenye _IconPickerSheet
-class _PickItem {
-  final String value;
+// ============================================================================
+// MODELS
+// ============================================================================
+class RegOption {
+  final String id;
   final String label;
-  final IconData icon;
-  final Color iconBg;
-  final Color iconFg;
-  const _PickItem({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.iconBg,
-    required this.iconFg,
-  });
+  final String? subtitle;
+  const RegOption({required this.id, required this.label, this.subtitle});
+
+  @override
+  bool operator ==(Object other) => other is RegOption && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+
+  Map<String, dynamic> toJson() => {'id': id, 'label': label};
 }
 
-// _IconPickerSheet — bottom sheet ya kisasa na icons za Phosphor
-class _IconPickerSheet extends StatelessWidget {
-  final String title;
-  final List<_PickItem> items;
-  final String? selected;
-  const _IconPickerSheet({
+enum EduLevel { msingi, sekondari }
+
+class RegTargetData {
+  final RegOption region;
+  final bool anyDistrict;
+  final List<RegOption> districts;
+  final RegOption? facility;
+  const RegTargetData({
+    required this.region,
+    required this.anyDistrict,
+    required this.districts,
+    this.facility,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'region': region.toJson(),
+        'anyDistrict': anyDistrict,
+        'districts': districts.map((d) => d.toJson()).toList(),
+        'facility': facility?.toJson(),
+      };
+}
+
+class RegistrationData {
+  final String name;
+  final String phone;
+  final String whatsapp;
+  final String idara; // Afya, Elimu, Kilimo na ufugaji, Watumishi wa Umma
+  final String? wizara; // Wizara ya Afya au TAMISEMI (Afya tu)
+  final RegOption? cheo; // Afya tu
+  final EduLevel? level; // si Afya
+  final List<RegOption> subjects; // si Afya
+  final RegOption region;
+  final RegOption? district; // si Wizara ya Afya
+  final RegOption? school; // Elimu na zingine
+  final RegOption? facility; // Afya, TAMISEMI
+  final RegOption? hospital; // Wizara ya Afya
+  final List<RegTargetData> targets;
+  final RegOption? targetHospital; // Wizara ya Afya, hiari
+  final String years; // Mwaka 1, Miaka 2, Miaka 3+
+
+  const RegistrationData({
+    required this.name,
+    required this.phone,
+    required this.whatsapp,
+    required this.idara,
+    this.wizara,
+    this.cheo,
+    this.level,
+    this.subjects = const [],
+    required this.region,
+    this.district,
+    this.school,
+    this.facility,
+    this.hospital,
+    required this.targets,
+    this.targetHospital,
+    required this.years,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'phone': phone,
+        'whatsapp': whatsapp,
+        'idara': idara,
+        'wizara': wizara,
+        'cheo': cheo?.toJson(),
+        'level': level?.name,
+        'subjects': subjects.map((s) => s.toJson()).toList(),
+        'region': region.toJson(),
+        'district': district?.toJson(),
+        'school': school?.toJson(),
+        'facility': facility?.toJson(),
+        'hospital': hospital?.toJson(),
+        'targets': targets.map((t) => t.toJson()).toList(),
+        'targetHospital': targetHospital?.toJson(),
+        'years': years,
+      };
+}
+
+// ============================================================================
+// REPOSITORY: hapa ndipo unaunganisha API zako.
+// Tengeneza class inayotelekeza interface hii na uipitishe kwenye
+// RegistrationFlowPage. Mfano wa data uko kwenye
+// mock_registration_repository.dart
+// ============================================================================
+abstract class RegistrationRepository {
+  Future<bool> isPhoneAvailable(String phone);
+  Future<List<RegOption>> regions();
+  Future<List<RegOption>> districts(RegOption region);
+  Future<List<RegOption>> schools(RegOption district);
+  Future<List<RegOption>> facilities(RegOption district);
+  Future<List<RegOption>> referralHospitals(RegOption region);
+  Future<List<RegOption>> cadres();
+  Future<List<RegOption>> subjects(EduLevel level);
+  Future<void> submit(RegistrationData data);
+}
+
+// ============================================================================
+// PAGE
+// ============================================================================
+enum _PhoneStatus { idle, checking, available, taken }
+
+class _Target {
+  RegOption? region;
+  List<RegOption> districts = [];
+  bool anyDistrict = false;
+  RegOption? facility;
+}
+
+class RegistrationFlowPage extends StatefulWidget {
+  final RegistrationRepository repository;
+  final VoidCallback? onLoginTap;
+  final ValueChanged<RegistrationData>? onFinished;
+
+  const RegistrationFlowPage({
     super.key,
-    required this.title,
-    required this.items,
-    this.selected,
+    required this.repository,
+    this.onLoginTap,
+    this.onFinished,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36, height: 4,
-                decoration: BoxDecoration(
-                    color: _kGrey300, borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(title,
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700, color: _kGrey900)),
-            const SizedBox(height: 12),
-            for (int i = 0; i < items.length; i++) ...[
-              if (i > 0) const SizedBox(height: 8),
-              _row(context, items[i]),
-            ],
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _row(BuildContext context, _PickItem item) {
-    final isSel = selected == item.value;
-    return InkWell(
-      onTap: () => Navigator.pop(context, item.value),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-        decoration: BoxDecoration(
-          color: isSel ? const Color(0xFFEFF6FF) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(children: [
-          Container(
-            width: 34, height: 34,
-            decoration: BoxDecoration(
-              color: isSel ? const Color(0xFFDBEAFE) : Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: isSel ? null : Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: Icon(item.icon, size: 22,
-                color: const Color(0xFF1B4F9C)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(item.label,
-                style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: isSel ? FontWeight.w600 : FontWeight.w400,
-                    color: isSel ? _kBlue : _kGrey700)),
-          ),
-          if (isSel)
-            Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
-                size: 16, color: _kBlue),
-        ]),
-      ),
-    );
-  }
+  State<RegistrationFlowPage> createState() => _RegistrationFlowPageState();
 }
 
-// ── Kada picker — bottom sheet yenye icons tofauti kwa kila ngazi ────────────
-class _KadaPickerSheet extends StatefulWidget {
-  final List<dynamic> cadres;
-  final String? selected;
-  final String? category;
-  const _KadaPickerSheet({required this.cadres, this.selected, this.category});
-  @override
-  State<_KadaPickerSheet> createState() => _KadaPickerSheetState();
-}
+class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
+  static const _idaraItems = <_Item>[
+    _Item('Afya', RegIcons.afya),
+    _Item('Elimu', RegIcons.elimu),
+    _Item('Kilimo na ufugaji', RegIcons.kilimo),
+    _Item('Watumishi wa Umma', RegIcons.umma),
+  ];
+  static const _wizaraItems = <_Item>[
+    _Item('Wizara ya Afya', RegIcons.wizaraAfya),
+    _Item('TAMISEMI', RegIcons.tamisemi),
+  ];
+  static const _yearsItems = <_Item>[
+    _Item('Mwaka 1', RegIcons.mwaka1),
+    _Item('Miaka 2', RegIcons.miaka2),
+    _Item('Miaka 3+', RegIcons.miaka3),
+  ];
+  static const _noHospital = RegOption(id: '__none__', label: 'Bila Hospitali (Hiari)');
 
-class _KadaPickerSheetState extends State<_KadaPickerSheet> {
-  String _q = '';
-  final _ctrl = TextEditingController();
+  RegistrationRepository get _repo => widget.repository;
 
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  List<dynamic> get _filtered {
-    if (_q.trim().isEmpty) return widget.cadres;
-    final q = _q.trim().toLowerCase();
-    return widget.cadres.where((c) {
-      final n = '${c['display_name'] ?? c['name'] ?? c['code']}'.toLowerCase();
-      return n.contains(q);
-    }).toList();
-  }
-
-  IconData _icon(String? level) {
-    if (level == 'Primary') return TablerIcons.book;
-    if (level == 'Secondary') return TablerIcons.microscope;
-    switch (widget.category) {
-      case 'health': return TablerIcons.first_aid_kit;
-      case 'service': return TablerIcons.briefcase_2;
-      default: return TablerIcons.plant;
-    }
-  }
-
-  Color _fg(String? level, bool sel) {
-    if (sel) return _kBlue;
-    if (level == 'Primary') return const Color(0xFF16A34A);
-    if (level == 'Secondary') return const Color(0xFF7C3AED);
-    switch (widget.category) {
-      case 'health': return const Color(0xFF1B4F9C);
-      case 'service': return const Color(0xFF1B4F9C);
-      default: return const Color(0xFF1B4F9C);
-    }
-  }
-
-  Color _bg(String? level, bool sel) {
-    if (sel) return const Color(0xFFDBEAFE);
-    return Colors.white;
-  }
-
-  String _levelName(String? level) {
-    if (level == 'Primary') return 'Elimu Msingi';
-    if (level == 'Secondary') return 'Elimu Sekondari';
-    return level ?? '';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final list = _filtered;
-    return DraggableScrollableSheet(
-      initialChildSize: 0.40,
-      minChildSize: 0.30,
-      maxChildSize: 0.94,
-      expand: false,
-      builder: (_, scrollCtrl) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(children: [
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 4),
-            width: 40, height: 4,
-            decoration: BoxDecoration(
-                color: _kGrey300, borderRadius: BorderRadius.circular(2)),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 12, 10),
-            child: Row(children: [
-              const Expanded(
-                child: Text('Chagua Kada',
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700, color: _kGrey900)),
-              ),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 30, height: 30,
-                  decoration: const BoxDecoration(
-                      color: Color(0xFFF3F4F6), shape: BoxShape.circle),
-                  child: Icon(PhosphorIcons.x(), size: 15, color: _kGrey500),
-                ),
-              ),
-            ]),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            child: TextField(
-              controller: _ctrl,
-              decoration: InputDecoration(
-                hintText: 'Tafuta kada...',
-                isDense: true,
-                filled: true,
-                fillColor: Colors.white,
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.only(left: 10, right: 8),
-                  child: Icon(PhosphorIcons.magnifyingGlass(),
-                      size: 16, color: _kGrey500),
-                ),
-                prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: _kGrey300)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: _kBlue, width: 1.5)),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: _kGrey300)),
-              ),
-              style: const TextStyle(fontSize: 13),
-              onChanged: (v) => setState(() => _q = v),
-            ),
-          ),
-          Expanded(
-            child: list.isEmpty
-                ? const Center(
-                    child: Text('Hakuna kilichopatikana',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
-                  )
-                : ListView.builder(
-                    controller: scrollCtrl,
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    itemCount: list.length,
-                    itemBuilder: (_, i) {
-                      final c = list[i];
-                      final code = '${c['code']}';
-                      final name =
-                          '${c['display_name'] ?? c['name'] ?? code}';
-                      final level = c['level'] as String?;
-                      final isSel = widget.selected == code;
-                      return GestureDetector(
-                        onTap: () => Navigator.pop(context, code),
-                        behavior: HitTestBehavior.opaque,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 2),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSel
-                                ? const Color(0xFFEFF6FF)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(children: [
-                            Container(
-                              width: 34, height: 34,
-                              decoration: BoxDecoration(
-                                color: _bg(level, isSel),
-                                borderRadius: BorderRadius.circular(8),
-                                border: isSel ? null : Border.all(color: const Color(0xFFE5E7EB)),
-                              ),
-                              child: Icon(_icon(level), size: 22,
-                                  color: _fg(level, false)),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(name,
-                                      style: TextStyle(
-                                          fontSize: 13.5,
-                                          fontWeight: isSel
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                          color: isSel ? _kBlue : _kGrey900)),
-                                  if (level != null && level.isNotEmpty) ...[
-                                    const SizedBox(height: 1),
-                                    Text(_levelName(level),
-                                        style: TextStyle(
-                                            fontSize: 11,
-                                            color: _fg(level, false))),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            if (isSel) ...[
-                              const SizedBox(width: 8),
-                              Icon(
-                                  PhosphorIcons.checkCircle(
-                                      PhosphorIconsStyle.fill),
-                                  size: 16,
-                                  color: _kBlue),
-                            ],
-                          ]),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-// FieldLabel — web: icon size=14 brand-blue + gap-1.5(6px) + label text-sm font-semibold grey-700
-Widget _fieldLabel(IconData icon, String label) => Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(children: [
-        Icon(icon, size: 14, color: _kBlue),
-        const SizedBox(width: 6), // gap-1.5=6px
-        Expanded(
-          child: Text(label,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-        ),
-      ]),
-    );
-
-// FieldError — web: AlertCircle size=12 + text-xs text-red mt-1
-Widget _fieldError(String msg) => Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(PhosphorIcons.warningCircle(), size: 12, color: _kRed500),
-        const SizedBox(width: 4),
-        Expanded(child: Text(msg, style: const TextStyle(fontSize: 12, color: _kRed500))),
-      ]),
-    );
-
-// Button row — web mobile: flex-col-reverse (primary on top, back below), both full-width, gap-2, pt-3
-Widget _btnRow({required VoidCallback onBack, required VoidCallback onNext,
-    String nextLabel = 'Endelea →', bool nextEnabled = true, bool loading = false}) =>
-    Padding(
-      padding: const EdgeInsets.only(top: 12), // pt-3
-      child: Column(children: [
-        SizedBox(
-          width: double.infinity,
-          height: 28,
-          child: ElevatedButton(
-            onPressed: (nextEnabled && !loading) ? onNext : null,
-            style: _btnPrimary(),
-            child: loading
-                ? const Row(mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(width: 12, height: 12,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-                      SizedBox(width: 8),
-                      Text('Ninajisajili...'),
-                    ])
-                : Text(nextLabel),
-          ),
-        ),
-        const SizedBox(height: 8), // gap-2
-        SizedBox(
-          width: double.infinity,
-          height: 28,
-          child: OutlinedButton(
-            onPressed: loading ? null : onBack,
-            style: _btnOutline(),
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(TablerIcons.arrow_left, size: 14),
-              SizedBox(width: 6),
-              Text('Rudi'),
-            ]),
-          ),
-        ),
-      ]),
-    );
-
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
-  @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
-}
-
-class _RegisterScreenState extends State<RegisterScreen> {
   int _step = 0;
+  bool _finished = false;
+  bool _submitting = false;
   String? _error;
+  String? _open; // dropdown iliyo wazi
+  String? _edit; // orodha inayobadilishwa
 
-  final Map<String, dynamic> _data = {
-    'desired_destinations': <Map<String, dynamic>>[],
-    'subjects': <String>[],
-  };
-
-  void _next(Map<String, dynamic> partial) {
-    setState(() { _data.addAll(partial); _step++; _error = null; });
-  }
-
-  void _back() {
-    if (_step > 0) setState(() { _step--; _error = null; });
-  }
-
-  bool get _isHealth => (_data['category'] ?? '') == 'health';
-  int get _totalSteps => _isHealth ? 6 : 5;
-
-  String _stepTitle(int n) {
-    const health = ['Taarifa', 'Idara', 'Wizara', 'Kada', 'Eneo', 'Maeneo'];
-    const edu = ['Taarifa', 'Idara', 'Kada', 'Eneo', 'Maeneo'];
-    return _isHealth ? health[n] : edu[n];
-  }
-
-  Future<void> _submit(Map<String, dynamic> finalPartial) async {
-    _data.addAll(finalPartial);
-    final auth = context.read<AuthProvider>();
-    final ok = await auth.register(_data);
-    if (!mounted) return;
-    if (ok) {
-      _showSuccessToast();
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    } else if (auth.error != null) {
-      setState(() => _error = auth.error!);
-    }
-  }
-
-  void _showSuccessToast() => AppToast.success('Umejisajili kikamilifu');
-
-  @override
-  Widget build(BuildContext context) {
-    final steps = List.generate(_totalSteps, (i) => _stepTitle(i));
-
-    return ToastHost(
-      child: Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            // Back button — web: inline-flex items-center gap-1.5 text-sm font-medium text-grey-600 mb-4
-            GestureDetector(
-              onTap: () => Navigator.canPop(context) ? Navigator.pop(context) : null,
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(PhosphorIcons.arrowLeft(), size: 16, color: const Color(0xFF4B5563)), // text-brand-grey-600
-                const SizedBox(width: 6), // gap-1.5=6px
-                const Text('Rudi',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF4B5563))), // text-brand-grey-600
-              ]),
-            ),
-            const SizedBox(height: 16), // mb-4=16px
-
-            // Badge — web: bg-brand-blue-50 rounded-full text-xs font-semibold text-brand-blue mb-2
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFDBEAFE)),
-                ),
-                child: const Text('Usajili',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kBlue)),
-              ),
-            ),
-            const SizedBox(height: 8), // mb-2=8px
-            // Title — web: text-2xl font-bold text-grey-900
-            const Center(
-              child: Text('Jaza Taarifa Zako',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _kGrey900)),
-            ),
-            const SizedBox(height: 4), // mt-1=4px
-            // Subtitle — web: text-grey-500
-            const Center(
-              child: Text('Hatua 4 rahisi. Utamaliza chini ya dakika 3.',
-                  style: TextStyle(fontSize: 14, color: _kGrey500)),
-            ),
-            const SizedBox(height: 24), // mb-6=24px
-
-            _StepBar(currentStep: _step, steps: steps),
-
-            // Global error — web: bg-red-50 border-red-100 AlertCircle(18) rounded-xl p-3.5 gap-2.5 mb-4
-            if (_error != null) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(14), // p-3.5=14px
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFEE2E2)),
-                ),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Icon(PhosphorIcons.warningCircle(), size: 18, color: const Color(0xFFDC2626)),
-                  const SizedBox(width: 10), // gap-2.5=10px
-                  Expanded(
-                    child: Text(_error!,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFFDC2626))),
-                  ),
-                ]),
-              ),
-              const SizedBox(height: 16), // mb-4
-            ] else
-              const SizedBox(height: 16),
-
-            // Step card — web: .card p-4
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFF3F4F6)),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4)),
-                ],
-              ),
-              child: _buildStep(),
-            ),
-
-            // Login link — web: text-sm text-grey-500 mt-6
-            const SizedBox(height: 24), // mt-6=24px
-            Center(
-              child: GestureDetector(
-                onTap: () => Navigator.pushReplacementNamed(context, '/login'),
-                child: Text.rich(TextSpan(
-                  text: 'Una akaunti tayari? ',
-                  style: const TextStyle(fontSize: 14, color: _kGrey500),
-                  children: [
-                    TextSpan(
-                      text: 'Ingia hapa',
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600, color: _kBlue),
-                    ),
-                  ],
-                )),
-              ),
-            ),
-          ]),
-        ),
-      ),
-    ));
-  }
-
-  Widget _buildStep() {
-    if (_step == 0) return _Step1Identity(onNext: _next);
-    if (_step == 1) return _Step2Idara(initial: _data, onBack: _back, onNext: _next);
-    if (_isHealth) {
-      if (_step == 2) return _Step3Wizara(initial: _data, onBack: _back, onNext: _next);
-      if (_step == 3) return _Step4Kada(initial: _data, onBack: _back, onNext: _next);
-      if (_step == 4) return _Step5Station(initial: _data, onBack: _back, onNext: _next);
-      if (_step == 5) return _Step6Destinations(initial: _data, onBack: _back, onSubmit: _submit);
-    } else {
-      if (_step == 2) return _Step4Kada(initial: _data, onBack: _back, onNext: _next);
-      if (_step == 3) return _Step5Station(initial: _data, onBack: _back, onNext: _next);
-      if (_step == 4) return _Step6Destinations(initial: _data, onBack: _back, onSubmit: _submit);
-    }
-    return const SizedBox();
-  }
-}
-
-// ── Step bar — web: w-9 h-9=36px circles border-2, connector h-1 ─────────────
-class _StepBar extends StatelessWidget {
-  final int currentStep;
-  final List<String> steps;
-  const _StepBar({required this.currentStep, required this.steps});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24), // mb-6=24px
-      child: Row(
-        children: List.generate(steps.length, (i) {
-          final done = i < currentStep;
-          final active = i == currentStep;
-          return Expanded(
-            child: Row(children: [
-              // Left connector — blue if step i-1 is done (i <= currentStep)
-              if (i > 0)
-                Expanded(
-                    child: Container(
-                        height: 4,
-                        color: i <= currentStep ? _kBlue : const Color(0xFFE5E7EB))),
-              Column(mainAxisSize: MainAxisSize.min, children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: active || done ? _kBlue : Colors.white,
-                    border: Border.all(
-                        color: active || done ? _kBlue : const Color(0xFFD1D5DB), width: 2),
-                  ),
-                  // web: always shows number {s.n}, font-bold text-sm=14px
-                  child: Center(
-                    child: Text('${i + 1}',
-                        style: TextStyle(
-                            color: (active || done) ? Colors.white : _kGrey500,
-                            fontSize: 14, // text-sm=14px
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  width: 56,
-                  child: Text(steps[i],
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.visible,
-                      softWrap: false,
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-                          color: active ? _kGrey900 : _kGrey500)),
-                ),
-              ]),
-              // Right connector — blue if step i is done
-              if (i < steps.length - 1)
-                Expanded(
-                    child: Container(
-                        height: 4,
-                        color: done ? _kBlue : const Color(0xFFE5E7EB))),
-            ]),
-          );
-        }),
-      ),
-    );
-  }
-}
-
-// ── STEP 1: Taarifa Binafsi ──────────────────────────────────────────────────
-class _Step1Identity extends StatefulWidget {
-  final void Function(Map<String, dynamic>) onNext;
-  const _Step1Identity({required this.onNext});
-  @override
-  State<_Step1Identity> createState() => _Step1IdentityState();
-}
-
-class _Step1IdentityState extends State<_Step1Identity> {
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  final _altCtrl = TextEditingController();
-  final Map<String, String> _errors = {};
-  String _phoneStatus = 'idle'; // idle | checking | available | taken
-  String _altStatus = 'idle';
-  Timer? _phoneTimer;
-  Timer? _altTimer;
+  final _waCtrl = TextEditingController();
+  _PhoneStatus _phoneStatus = _PhoneStatus.idle;
+  _PhoneStatus _waStatus = _PhoneStatus.idle;
+  int _phoneReq = 0;
+  int _waReq = 0;
+
+  String? _idara;
+  String? _wizara;
+  RegOption? _cheo;
+  EduLevel _level = EduLevel.sekondari;
+  List<RegOption> _subjects = [];
+  RegOption? _region;
+  RegOption? _district;
+  RegOption? _school;
+  RegOption? _facility;
+  RegOption? _hospital;
+  List<_Target> _targets = [_Target()];
+  RegOption? _targetHospital;
+  String? _years;
+
+  bool get _isAfya => _idara == 'Afya';
+  bool get _isWA => _isAfya && _wizara == 'Wizara ya Afya';
+
+  List<String> get _steps => _isAfya
+      ? const ['Taarifa', 'Idara', 'Wizara', 'Kada', 'Eneo', 'Maeneo']
+      : const ['Taarifa', 'Idara', 'Kada', 'Eneo', 'Maeneo'];
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
-    _altCtrl.dispose();
-    _phoneTimer?.cancel();
-    _altTimer?.cancel();
+    _waCtrl.dispose();
     super.dispose();
   }
 
-  bool _validPhone(String v) =>
-      RegExp(r'^(\+?255|0)\d{9}$').hasMatch(v.replaceAll(RegExp(r'[\s\-]'), ''));
-
-  void _onPhoneChanged(String v) {
-    _phoneTimer?.cancel();
-    setState(() => _phoneStatus = 'idle');
-    if (!_validPhone(v)) return;
-    setState(() => _phoneStatus = 'checking');
-    _phoneTimer = Timer(const Duration(milliseconds: 500), () async {
-      try {
-        final res = await ApiService().checkPhone(v.trim());
-        final available = res.data['available'] == true;
-        if (mounted) setState(() => _phoneStatus = available ? 'available' : 'taken');
-      } catch (_) {
-        if (mounted) setState(() => _phoneStatus = 'idle');
-      }
-    });
-  }
-
-  void _onAltChanged(String v) {
-    _altTimer?.cancel();
-    setState(() => _altStatus = 'idle');
-    if (!_validPhone(v)) return;
-    setState(() => _altStatus = 'checking');
-    _altTimer = Timer(const Duration(milliseconds: 500), () async {
-      try {
-        final res = await ApiService().checkPhone(v.trim());
-        final available = res.data['available'] == true;
-        if (mounted) setState(() => _altStatus = available ? 'available' : 'taken');
-      } catch (_) {
-        if (mounted) setState(() => _altStatus = 'idle');
-      }
-    });
-  }
-
-  bool _validate() {
-    _errors.clear();
-    if (_nameCtrl.text.trim().length < 3) _errors['name'] = 'Jina lazima liwe na herufi 3 au zaidi';
-    if (!_validPhone(_phoneCtrl.text)) {
-      _errors['phone'] = 'Namba ya simu si sahihi (mfano: 0712345678)';
-    } else if (_phoneStatus == 'taken') {
-      _errors['phone'] = 'Namba hii tayari inatumiwa';
-    }
-    if (_altCtrl.text.isEmpty) {
-      _errors['alt'] = 'Namba ya WhatsApp inahitajika';
-    } else if (!_validPhone(_altCtrl.text)) {
-      _errors['alt'] = 'Namba ya WhatsApp si sahihi';
-    } else if (_altStatus == 'taken') {
-      _errors['alt'] = 'Namba hii tayari inatumiwa';
-    }
-    setState(() {});
-    return _errors.isEmpty;
-  }
-
-  // Status icon — web: Loader2 spin | CheckCircle2 green | AlertCircle red
-  Widget _statusIcon(String status) {
-    if (status == 'checking') {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8),
-        child: SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF9CA3AF))),
-      );
-    }
-    if (status == 'available') {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Icon(PhosphorIcons.checkCircle(), size: 14, color: const Color(0xFF22C55E)),
-      );
-    }
-    if (status == 'taken') {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Icon(PhosphorIcons.warningCircle(), size: 14, color: _kRed500),
-      );
-    }
-    return const SizedBox();
-  }
-
-  // Border color based on status
-  Color _borderColor(String status) {
-    if (status == 'taken') return _kRed500;
-    if (status == 'available') return const Color(0xFF22C55E);
-    return _kGrey300;
-  }
-
-  // Status message below input — web: font-medium(w500) gap-1(4px) size=11
-  List<Widget> _statusWidgets(String status, String availableMsg, String takenMsg) {
-    if (status == 'available') {
-      return [Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Row(children: [
-          Icon(PhosphorIcons.checkCircle(), size: 11, color: _kGreen600),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(availableMsg,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _kGreen600)),
-          ),
-        ]),
-      )];
-    }
-    if (status == 'taken') {
-      return [Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Row(children: [
-          Icon(PhosphorIcons.warningCircle(), size: 11, color: _kRed500),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(takenMsg,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _kRed500)),
-          ),
-        ]),
-      )];
-    }
-    return [];
-  }
-
+  // --------------------------------------------------------------------------
+  // BUILD
+  // --------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const Text('Taarifa Binafsi',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _kGrey900)),
-      const SizedBox(height: 16),
-
-      // Full name
-      const Padding(
-        padding: EdgeInsets.only(bottom: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(TablerIcons.user, size: 20, color: Color(0xFF1B4F9C)),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text('Jina Kamili *',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-            ),
-          ],
-        ),
-      ),
-      TextField(
-        controller: _nameCtrl,
-        style: const TextStyle(fontSize: 12),
-        decoration: _inputDec(hint: 'Jina la kwanza na la ukoo'),
-        onChanged: (_) => setState(() => _errors.remove('name')),
-      ),
-      if (_errors['name'] != null) _fieldError(_errors['name']!),
-      const SizedBox(height: 14),
-
-      // Phone primary
-      const Padding(
-        padding: EdgeInsets.only(bottom: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(TablerIcons.phone_call, size: 20, color: Color(0xFF1B4F9C)),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text('Namba ya Simu *',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-            ),
-          ],
-        ),
-      ),
-      TextField(
-        controller: _phoneCtrl,
-        keyboardType: TextInputType.phone,
-        style: const TextStyle(fontSize: 12),
-        decoration: _inputDec(
-          hint: '0712345678',
-          borderColor: _borderColor(_phoneStatus),
-          suffix: _statusIcon(_phoneStatus),
-        ),
-        onChanged: (v) {
-          setState(() => _errors.remove('phone'));
-          _onPhoneChanged(v);
-        },
-      ),
-      if (_errors['phone'] != null) _fieldError(_errors['phone']!),
-      ..._statusWidgets(_phoneStatus, 'Namba hii ipo huru', 'Namba hii tayari inatumiwa'),
-      const SizedBox(height: 14),
-
-      // WhatsApp
-      const Padding(
-        padding: EdgeInsets.only(bottom: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(TablerIcons.brand_whatsapp, size: 20, color: Color(0xFF1B4F9C)),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text('Namba ya WhatsApp *',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-            ),
-          ],
-        ),
-      ),
-      TextField(
-        controller: _altCtrl,
-        keyboardType: TextInputType.phone,
-        style: const TextStyle(fontSize: 12),
-        decoration: _inputDec(
-          hint: '0623456789',
-          borderColor: _borderColor(_altStatus),
-          suffix: _statusIcon(_altStatus),
-        ),
-        onChanged: (v) {
-          setState(() => _errors.remove('alt'));
-          _onAltChanged(v);
-        },
-      ),
-      if (_errors['alt'] != null) _fieldError(_errors['alt']!),
-      ..._statusWidgets(_altStatus, 'Namba hii ipo huru', 'Namba hii tayari inatumiwa'),
-      const SizedBox(height: 24),
-
-      // Button — web: flex justify-end, btn-primary "Endelea →"
-      Align(
-        alignment: Alignment.centerRight,
-        child: SizedBox(
-          height: 28, // py-1+text-[11px]+py-1=28px
-          child: ElevatedButton(
-            onPressed: () {
-              if (_validate()) {
-                widget.onNext({
-                  'full_name': _nameCtrl.text.trim(),
-                  'phone_primary': _phoneCtrl.text.trim(),
-                  'phone_alt': _altCtrl.text.trim(),
-                });
-              }
-            },
-            style: _btnPrimary(),
-            child: const Text('Endelea →'),
-          ),
-        ),
-      ),
-    ]);
-  }
-}
-
-// ── STEP 2: Idara ─────────────────────────────────────────────────────────────
-class _Step2Idara extends StatefulWidget {
-  final Map<String, dynamic> initial;
-  final VoidCallback onBack;
-  final void Function(Map<String, dynamic>) onNext;
-  const _Step2Idara({required this.initial, required this.onBack, required this.onNext});
-  @override
-  State<_Step2Idara> createState() => _Step2IdaraState();
-}
-
-class _Step2IdaraState extends State<_Step2Idara> {
-  List<dynamic> _departments = [];
-  bool _loading = true;
-  String _selected = '';
-  String? _error;
-
-  @override
-  int _cacheRev = 0;
-  late final VoidCallback _cacheListener;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = widget.initial['category'] ?? '';
-    _cacheRev = AppCache().revision;
-    _cacheListener = () {
-      if (AppCache().revision != _cacheRev && mounted) {
-        _cacheRev = AppCache().revision;
-        _load();
-      }
-    };
-    AppCache().addListener(_cacheListener);
-    _load();
-  }
-
-  @override
-  void dispose() {
-    AppCache().removeListener(_cacheListener);
-    super.dispose();
-  }
-
-  Future<void> _load() async {
-    try {
-      final res = await ApiService().getDepartments();
-      final list =
-          (res.data as List?)?.where((d) => d['status'] != 'disabled').toList() ?? [];
-      if (mounted) setState(() { _departments = list; _loading = false; });
-    } catch (_) {
-      if (mounted) setState(() { _loading = false; _error = 'Imeshindikana kupata idara'; });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const Text('Idara',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _kGrey900)),
-      const SizedBox(height: 4),
-      const Text('Unafanya kazi katika idara gani?',
-          style: TextStyle(fontSize: 14, color: _kGrey500)),
-      const SizedBox(height: 16),
-
-      if (_loading)
-        Center(child: _loadingRow(verticalPad: 32))
-      else if (_error != null)
-        _ErrorBox(_error!)
-      else ...[
-        const Text('Chagua Idara *',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 28,
-          child: SelectField(
-            leading: Icon(
-              _selected.isEmpty ? TablerIcons.apps : _deptIcon(_selected),
-              size: 14, color: const Color(0xFF1B4F9C),
-            ),
-            hint: 'Chagua idara yako',
-            value: _selected.isEmpty
-                ? null
-                : '${_departments.cast<dynamic>().firstWhere(
-                      (d) => '${d['code']}' == _selected, orElse: () => null)?['name'] ?? _selected}',
-            onTap: () async {
-              final result = await showModalBottomSheet<String>(
-                context: context,
-                backgroundColor: Colors.transparent,
-                builder: (_) => _IconPickerSheet(
-                  title: 'Chagua Idara',
-                  selected: _selected.isEmpty ? null : _selected,
-                  items: [
-                    for (final d in _departments)
-                      _PickItem(
-                        value: '${d['code']}',
-                        label: '${d['name'] ?? d['code']}',
-                        icon: _deptIcon('${d['code']}'),
-                        iconBg: _deptBg('${d['code']}'),
-                        iconFg: _deptFg('${d['code']}'),
-                      ),
-                  ],
-                ),
-              );
-              if (result != null) setState(() => _selected = result);
-            },
-          ),
-        ),
-      ],
-
-      _btnRow(
-        onBack: widget.onBack,
-        onNext: () => widget.onNext({'category': _selected}),
-        nextEnabled: _selected.isNotEmpty,
-      ),
-    ]);
-  }
-}
-
-// ── STEP 3: Wizara (health only) ─────────────────────────────────────────────
-class _Step3Wizara extends StatefulWidget {
-  final Map<String, dynamic> initial;
-  final VoidCallback onBack;
-  final void Function(Map<String, dynamic>) onNext;
-  const _Step3Wizara({required this.initial, required this.onBack, required this.onNext});
-  @override
-  State<_Step3Wizara> createState() => _Step3WizaraState();
-}
-
-class _Step3WizaraState extends State<_Step3Wizara> {
-  String _sector = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _sector = widget.initial['employment_sector'] ?? '';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const Text('Wizara',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _kGrey900)),
-      const SizedBox(height: 4),
-      const Text('Je, unafanya kazi chini ya taasisi gani?',
-          style: TextStyle(fontSize: 14, color: _kGrey500)),
-      const SizedBox(height: 16),
-      const Text('Chagua Wizara *',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-      const SizedBox(height: 8),
-      SelectField(
-        icon: _sector == 'wizara_afya'
-            ? TablerIcons.first_aid_kit
-            : _sector == 'tamisemi'
-                ? TablerIcons.briefcase_2
-                : TablerIcons.apps,
-        hint: 'Chagua wizara',
-        value: _sector == 'wizara_afya'
-            ? 'Wizara ya Afya'
-            : _sector == 'tamisemi'
-                ? 'TAMISEMI'
-                : null,
-        onTap: () async {
-          final result = await showModalBottomSheet<String>(
-            context: context,
-            backgroundColor: Colors.transparent,
-            builder: (_) => _IconPickerSheet(
-              title: 'Chagua Wizara',
-              selected: _sector.isEmpty ? null : _sector,
-              items: [
-                _PickItem(
-                  value: 'wizara_afya',
-                  label: 'Wizara ya Afya',
-                  icon: TablerIcons.first_aid_kit,
-                  iconBg: Colors.white,
-                  iconFg: const Color(0xFF1B4F9C),
-                ),
-                _PickItem(
-                  value: 'tamisemi',
-                  label: 'TAMISEMI',
-                  icon: TablerIcons.briefcase_2,
-                  iconBg: Colors.white,
-                  iconFg: const Color(0xFF1B4F9C),
-                ),
-              ],
-            ),
-          );
-          if (result != null) setState(() => _sector = result);
-        },
-      ),
-
-      _btnRow(
-        onBack: widget.onBack,
-        onNext: () => widget.onNext({'employment_sector': _sector}),
-        nextEnabled: _sector.isNotEmpty,
-      ),
-    ]);
-  }
-}
-
-// ── STEP 4: Kada ─────────────────────────────────────────────────────────────
-class _Step4Kada extends StatefulWidget {
-  final Map<String, dynamic> initial;
-  final VoidCallback onBack;
-  final void Function(Map<String, dynamic>) onNext;
-  const _Step4Kada({required this.initial, required this.onBack, required this.onNext});
-  @override
-  State<_Step4Kada> createState() => _Step4KadaState();
-}
-
-class _Step4KadaState extends State<_Step4Kada> {
-  List<dynamic> _cadres = [];
-  List<dynamic> _subjects = [];
-  bool _loading = true;
-  bool _loadingSubjects = false;
-  String _cadreCode = '';
-  List<String> _selectedSubjects = [];
-  String? _error;
-
-  @override
-  int _cacheRev = 0;
-  late final VoidCallback _cacheListener;
-
-  @override
-  void initState() {
-    super.initState();
-    _cadreCode = widget.initial['cadre_code'] ?? '';
-    _selectedSubjects = List<String>.from(widget.initial['subjects'] ?? []);
-    _cacheRev = AppCache().revision;
-    _cacheListener = () {
-      if (AppCache().revision != _cacheRev && mounted) {
-        _cacheRev = AppCache().revision;
-        _loadCadres();
-      }
-    };
-    AppCache().addListener(_cacheListener);
-    _loadCadres();
-  }
-
-  @override
-  void dispose() {
-    AppCache().removeListener(_cacheListener);
-    super.dispose();
-  }
-
-  Future<void> _loadCadres() async {
-    try {
-      final cat = widget.initial['category'] as String?;
-      final sector = widget.initial['employment_sector'] as String?;
-      final res = await ApiService().getCadres(category: cat);
-      var list = res.data as List? ?? [];
-      if (sector != null && sector.isNotEmpty) {
-        list = list.where((c) {
-          final cs = c['employment_sector'];
-          return cs == null || cs == sector;
-        }).toList();
-      }
-      if (mounted) setState(() { _cadres = list; _loading = false; });
-      if (_cadreCode.isNotEmpty) _onCadreChanged(_cadreCode);
-    } catch (_) {
-      if (mounted) setState(() { _loading = false; _error = 'Imeshindikana kupata orodha ya kada'; });
-    }
-  }
-
-  void _onCadreChanged(String code) {
-    setState(() { _cadreCode = code; _subjects = []; _selectedSubjects = []; });
-    final cadre = _cadres.firstWhere((c) => c['code'] == code, orElse: () => null);
-    if (cadre == null) return;
-    final level = cadre['level'] as String?;
-    if (level == 'Primary' || level == 'Secondary') _loadSubjects(level!);
-  }
-
-  Future<void> _loadSubjects(String level) async {
-    setState(() => _loadingSubjects = true);
-    try {
-      final res = await ApiService().getSubjects(level: level);
-      if (mounted) setState(() => _subjects = res.data as List? ?? []);
-    } catch (_) {}
-    if (mounted) setState(() => _loadingSubjects = false);
-  }
-
-  bool get _needsSubjects => _subjects.isNotEmpty;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const Text('Kada',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _kGrey900)),
-      const SizedBox(height: 16),
-
-      if (_loading)
-        Center(child: _loadingRow())
-      else if (_cadres.isEmpty) ...[
-        // Idara haijawekwa kada bado (k.m. Kilimo na Ufugaji) — mtu anaendelea
-        // bila kuchagua kada. Backend inaruhusu, na matching inamlinganisha na
-        // wenzake WOTE wa idara hii (kada tupu = wote wa idara hiyo).
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFFBEB), // amber-50
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFFDE68A)), // amber-200
-          ),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Icon(Icons.info_outline, size: 16, color: Color(0xFFB45309)),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text(
-                'Idara hii haijawekwa kada bado — unaweza kuendelea bila kuchagua kada. Utapatanishwa na wenzako wote wa idara hii.',
-                style: TextStyle(fontSize: 12, height: 1.45, color: Color(0xFF92400E)),
-              ),
-            ),
-          ]),
-        ),
-      ] else ...[
-        _fieldLabel(TablerIcons.id, 'Kada *'),
-        SelectField(
-          hint: 'Chagua kada yako',
-          value: _cadreCode.isEmpty ? null : _cadres.cast<dynamic>()
-              .firstWhere((c) => c['code'] == _cadreCode, orElse: () => null)?['display_name'] as String? ?? _cadreCode,
-          onTap: () async {
-            final result = await showModalBottomSheet<String>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => _KadaPickerSheet(
-                cadres: _cadres,
-                selected: _cadreCode.isEmpty ? null : _cadreCode,
-                category: widget.initial['category'] as String?,
-              ),
-            );
-            if (result != null) _onCadreChanged(result);
-          },
-        ),
-      ],
-
-      // Subjects — web: styled rows with border/bg, checkbox + emoji + name
-      if (_needsSubjects) ...[
-        const SizedBox(height: 16),
-        Row(children: [
-          // web: label class + flex items-center gap-1.5
-          const Text('Masomo', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-          const Text(' *', style: TextStyle(fontSize: 12, color: _kRed500)),
-          const SizedBox(width: 6),
-          const Text('(lazima somo 2)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF))),
-        ]),
-        const SizedBox(height: 6), // mb-1.5=6px
-        // "Chagua somo unalofundisha" — web: text-xs text-grey-500 mb-2
-        const Text('Chagua somo unalofundisha',
-            style: TextStyle(fontSize: 12, color: _kGrey500)),
-        const SizedBox(height: 8), // mb-2=8px
-        if (_loadingSubjects)
-          Center(child: _loadingRow(verticalPad: 24)) // py-6
-        else
-          Column(
-            children: _subjects.map((s) {
-              final code = s['code'] as String;
-              final name = s['name'] as String;
-              final selected = _selectedSubjects.contains(code);
-              final disabled = !selected && _selectedSubjects.length >= 2;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 4), // space-y-1=4px
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: disabled
-                      ? null
-                      : () => setState(() {
-                            if (selected) { _selectedSubjects.remove(code); }
-                            else { _selectedSubjects.add(code); }
-                          }),
-                  child: Opacity(
-                    opacity: disabled ? 0.5 : 1.0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // px-3 py-2
-                      decoration: BoxDecoration(
-                        color: selected ? const Color(0xFFEFF6FF) : Colors.white, // bg-brand-blue-50 or white
-                        borderRadius: BorderRadius.circular(8), // rounded-lg
-                        border: Border.all(color: selected ? _kBlue : const Color(0xFFE5E7EB)),
-                      ),
-                      child: Row(children: [
-                        SizedBox(
-                          width: 16, height: 16,
-                          child: IgnorePointer(
-                            // IgnorePointer so only GestureDetector above fires (prevents double-toggle)
-                            child: Checkbox(
-                              value: selected,
-                              onChanged: (_) {},
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              activeColor: _kBlue,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10), // gap-2.5=10px
-                        Expanded(
-                          child: Text(name, // no emoji — web has no emoji
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                                  color: selected ? _kBlue : _kGrey700)),
-                        ),
-                      ]),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, cons) {
+            final minH = math.max(0.0, cons.maxHeight - 42);
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: minH),
+                child: Align(
+                  // Hatua ya kwanza iko katikati ya screen, zingine zinaanzia juu
+                  alignment: (_step == 0 && !_finished)
+                      ? Alignment.center
+                      : Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 560),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _header(),
+                        const SizedBox(height: 14),
+                        _card(),
+                      ],
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-        // Counter — web: BookOpen(12) gap-2(8px) "Umepata: N somoi" text-xs(12) green-600 mt-2(8px)
-        if (_selectedSubjects.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8), // mt-2=8px
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.menu_book, size: 12, color: _kGreen600), // BookOpen
-              const SizedBox(width: 8), // gap-2=8px
-              Text(
-                'Umepata: ${_selectedSubjects.length} somo${_selectedSubjects.length > 1 ? 'i' : ''}',
-                style: const TextStyle(fontSize: 12, color: _kGreen600),
               ),
-            ]),
-          ),
-      ],
-
-      if (_error != null) ...[
-        const SizedBox(height: 12),
-        _ErrorBox(_error!),
-      ],
-
-      _btnRow(
-        onBack: widget.onBack,
-        onNext: () {
-          // Kada inahitajika TU kama idara ina kada. Idara mpya (Kilimo, Mifugo)
-          // inaweza kuwa haijawekwa kada — mtu anaendelea bila kada.
-          if (_cadres.isNotEmpty && _cadreCode.isEmpty) { setState(() => _error = 'Chagua kada'); return; }
-          if (_needsSubjects && _selectedSubjects.length < 2) {
-            setState(() => _error = 'Chagua masomo 2 — ni lazima kabisa');
-            return;
-          }
-          setState(() => _error = null);
-          final _cl = _cadres.cast<dynamic>()
-              .firstWhere((c) => c['code'] == _cadreCode, orElse: () => null)?['level'] as String?;
-          widget.onNext({'cadre_code': _cadreCode, 'subjects': _selectedSubjects, 'cadre_level': _cl});
-        },
-        nextEnabled: _loading ? false : (_cadres.isNotEmpty ? _cadreCode.isNotEmpty : true),
-      ),
-    ]);
-  }
-}
-
-// ── STEP 5: Eneo la Sasa ──────────────────────────────────────────────────────
-class _Step5Station extends StatefulWidget {
-  final Map<String, dynamic> initial;
-  final VoidCallback onBack;
-  final void Function(Map<String, dynamic>) onNext;
-  const _Step5Station({required this.initial, required this.onBack, required this.onNext});
-  @override
-  State<_Step5Station> createState() => _Step5StationState();
-}
-
-class _Step5StationState extends State<_Step5Station> {
-  List<dynamic> _regions = [];
-  List<dynamic> _districts = [];
-  List<dynamic> _facilities = [];
-  int? _regionId;
-  int? _districtId;
-  String? _facilityId;
-  bool _loadingRegions = true;
-  bool _loadingDistricts = false;
-  bool _loadingFacilities = false;
-  String? _error;
-
-  bool get _isWizara =>
-      widget.initial['category'] == 'health' &&
-      widget.initial['employment_sector'] == 'wizara_afya';
-
-  int _cacheRev = 0;
-  late final VoidCallback _cacheListener;
-
-  @override
-  void initState() {
-    super.initState();
-    final cs = asMap(widget.initial['current_station']);
-    _regionId = cs['region_id'] as int?;
-    _districtId = cs['district_id'] as int?;
-    _facilityId = cs['facility_id'] as String?;
-    _cacheRev = AppCache().revision;
-    _cacheListener = () {
-      // LIVE: admin ameongeza mkoa/wilaya/kituo wakati hapa → pakia upya
-      // PAPO HAPO (silent — selection zinadumu, hakuna kuzunguka).
-      if (AppCache().revision != _cacheRev && mounted) {
-        _cacheRev = AppCache().revision;
-        _loadRegions();
-      }
-    };
-    AppCache().addListener(_cacheListener);
-    _loadRegions();
-  }
-
-  @override
-  void dispose() {
-    AppCache().removeListener(_cacheListener);
-    super.dispose();
-  }
-
-  Future<void> _loadRegions() async {
-    try {
-      final res = await ApiService().getRegions();
-      if (mounted) setState(() { _regions = res.data as List? ?? []; _loadingRegions = false; });
-      if (_regionId != null) _onRegionChanged(_regionId!);
-    } catch (_) {
-      if (mounted) setState(() { _loadingRegions = false; _error = 'Imeshindikana kupata mikoa'; });
-    }
-  }
-
-  Future<void> _onRegionChanged(int rid) async {
-    setState(() {
-      _regionId = rid;
-      _districtId = null;
-      _facilityId = null;
-      _districts = [];
-      _facilities = [];
-    });
-    if (_isWizara) {
-      setState(() => _loadingFacilities = true);
-      try {
-        final res = await ApiService()
-            .getFacilitiesByRegion(rid, category: 'health', employmentSector: 'wizara_afya');
-        if (mounted) setState(() => _facilities = res.data as List? ?? []);
-      } catch (_) {}
-      if (mounted) setState(() => _loadingFacilities = false);
-    } else {
-      setState(() => _loadingDistricts = true);
-      try {
-        final res = await ApiService().getDistricts(rid);
-        if (mounted) setState(() => _districts = res.data as List? ?? []);
-      } catch (_) {}
-      if (mounted) setState(() => _loadingDistricts = false);
-    }
-  }
-
-  Future<void> _onDistrictChanged(int did) async {
-    setState(() { _districtId = did; _facilityId = null; _facilities = []; _loadingFacilities = true; });
-    try {
-      final cat = widget.initial['category'] as String? ?? 'health';
-      final res = await ApiService().getFacilities(did, category: cat);
-      if (mounted) setState(() => _facilities = res.data as List? ?? []);
-    } catch (_) {}
-    if (mounted) setState(() => _loadingFacilities = false);
-  }
-
-  void _submit() {
-    if (_regionId == null) { setState(() => _error = 'Chagua Mkoa'); return; }
-    if (_isWizara && _facilityId == null) { setState(() => _error = 'Chagua Hospitali'); return; }
-    if (!_isWizara && _districtId == null) { setState(() => _error = 'Chagua Wilaya'); return; }
-
-    final region = _regions.firstWhere((r) => r['id'] == _regionId, orElse: () => {});
-    final district = _districts.firstWhere((d) => d['id'] == _districtId, orElse: () => null);
-    final facility = _facilityId != null
-        ? _facilities.firstWhere(
-            (f) => '${f['id'] ?? f['code']}' == _facilityId, orElse: () => null)
-        : null;
-
-    widget.onNext({
-      'current_station': {
-        'region_id': _regionId,
-        'region_name': region['name'],
-        'district_id': district?['id'],
-        'district_name': district?['name'],
-        'facility_id': _facilityId,
-        'facility_name': facility?['name'],
-        'facility_type': facility?['type'] ?? facility?['type_category'],
-      },
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const Text('Eneo la Sasa',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _kGrey900)),
-      const SizedBox(height: 16),
-
-      if (_error != null) ...[
-        _ErrorBox(_error!),
-        const SizedBox(height: 12),
-      ],
-
-      if (_loadingRegions)
-        Center(child: _loadingRow())
-      else ...[
-        const Text('Mkoa *',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-        const SizedBox(height: 6),
-        SelectField(
-          leading: const Icon(TablerIcons.map_pin, size: 14, color: Color(0xFF1B4F9C)),
-          hint: 'Chagua Mkoa',
-          value: _regionId == null ? null : _regions.cast<dynamic>()
-              .firstWhere((r) => r['id'] == _regionId, orElse: () => null)?['name'] as String?,
-          onTap: () async {
-            final items = _regions.map((r) => (
-              value: r['id'] as int,
-              label: r['name'] as String,
-              subtitle: null,
-            )).toList();
-            final result = await showSelectSheet<int>(
-              context, title: 'Chagua Mkoa', items: items, selected: _regionId,
-              searchable: true, itemIcon: TablerIcons.map_pin,
             );
-            if (result != null) _onRegionChanged(result);
           },
         ),
+      ),
+    );
+  }
 
-        if (_isWizara && _regionId != null) ...[
-          const SizedBox(height: 14),
-          const Text('Hospitali ya Rufaa *',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-          const SizedBox(height: 6),
-          if (_loadingFacilities)
-            Center(child: _loadingRow(verticalPad: 8))
-          else
-            SelectField(
-              leading: const Icon(TablerIcons.first_aid_kit, size: 14, color: Color(0xFF1B4F9C)),
-              hint: 'Chagua Hospitali ya Rufaa',
-              value: _facilityId == null ? null : (_facilities.cast<dynamic>()
-                  .firstWhere((f) => '${f['id'] ?? f['code']}' == _facilityId, orElse: () => null)?['name'] as String?),
-              onTap: () async {
-                final items = _facilities.map((f) => (
-                  value: '${f['id'] ?? f['code']}' as String,
-                  label: '${f['name']}',
-                  subtitle: f['type'] != null ? '${f['type']}' : null,
-                )).toList();
-                final result = await showSelectSheet<String>(
-                  context, title: 'Chagua Hospitali ya Rufaa', items: items,
-                  selected: _facilityId, searchable: true,
-                  itemIcon: TablerIcons.first_aid_kit,
-                );
-                if (result != null) setState(() => _facilityId = result);
-              },
-            ),
-        ],
-
-        if (!_isWizara && _regionId != null) ...[
-          const SizedBox(height: 14),
-          const Text('Wilaya *',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-          const SizedBox(height: 6),
-          if (_loadingDistricts)
-            Center(child: _loadingRow(verticalPad: 8))
-          else
-            SelectField(
-              leading: const Icon(TablerIcons.building, size: 14, color: Color(0xFF1B4F9C)),
-              hint: 'Chagua Wilaya',
-              value: _districtId == null ? null : _districts.cast<dynamic>()
-                  .firstWhere((d) => d['id'] == _districtId, orElse: () => null)?['name'] as String?,
-              onTap: () async {
-                final items = _districts.map((d) => (
-                  value: d['id'] as int,
-                  label: d['name'] as String,
-                  subtitle: null,
-                )).toList();
-                final result = await showSelectSheet<int>(
-                  context, title: 'Chagua Wilaya', items: items, selected: _districtId,
-                  searchable: true, itemIcon: TablerIcons.building,
-                );
-                if (result != null) _onDistrictChanged(result);
-              },
-            ),
-        ],
-
-        if (!_isWizara && _districtId != null && _facilities.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          Text(
-            widget.initial['category'] == 'health'
-                ? 'Hospitali/Kituo (hiari)'
-                : 'Shule (hiari)',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700),
+  Widget _header() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          decoration: BoxDecoration(
+            color: _C.blueSoft,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: _C.blueBorder, width: 0.5),
           ),
-          const SizedBox(height: 6),
-          if (_loadingFacilities)
-            Center(child: _loadingRow(verticalPad: 8))
-          else
-            SelectField(
-              leading: Icon(
-                widget.initial['category'] == 'health'
-                    ? TablerIcons.first_aid_kit
-                    : (widget.initial['cadre_level'] == 'Secondary'
-                        ? TablerIcons.microscope
-                        : TablerIcons.book),
-                size: 14, color: const Color(0xFF1B4F9C),
-              ),
-              hint: widget.initial['category'] == 'health'
-                  ? 'Chagua Hospitali/Kituo (hiari)'
-                  : 'Chagua Shule (hiari)',
-              value: _facilityId == null ? null : _facilities.cast<dynamic>()
-                  .firstWhere((f) => '${f['id'] ?? f['code']}' == _facilityId, orElse: () => null)?['name'] as String?,
-              onTap: () async {
-                final isHealth = widget.initial['category'] == 'health';
-                final listIcon = isHealth ? TablerIcons.first_aid_kit
-                    : (widget.initial['cadre_level'] == 'Secondary'
-                        ? TablerIcons.microscope
-                        : TablerIcons.book);
-                final items = [
-                  (value: null as String?, label: 'Bila Kituo (Hiari)', subtitle: null),
-                  ..._facilities.map((f) => (
-                    value: '${f['id'] ?? f['code']}' as String?,
-                    label: '${f['name']}',
-                    subtitle: f['type'] != null ? '${f['type']}' : null,
-                  )),
-                ];
-                final result = await showSelectSheet<String?>(
-                  context,
-                  title: isHealth ? 'Chagua Kituo' : 'Chagua Shule',
-                  items: items, selected: _facilityId, searchable: true,
-                  itemIcon: listIcon,
-                );
-                if (result != null || result == null) setState(() => _facilityId = result);
-              },
-            ),
-        ],
+          child: const Text(
+            'Usajili',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _C.blue),
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          'Jaza Taarifa Zako',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500, color: _C.text),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'Hatua chache rahisi. Utamaliza chini ya dakika 3.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13, color: _C.textSec),
+        ),
       ],
-
-      _btnRow(onBack: widget.onBack, onNext: _submit),
-    ]);
-  }
-}
-
-// ── STEP 6: Maeneo ya Lengo ───────────────────────────────────────────────────
-class _DestEntry {
-  int? regionId;
-  String regionName = '';
-  List<int> selectedDistricts = [];
-  String? facilityId;
-  String? facilityName;
-}
-
-class _Step6Destinations extends StatefulWidget {
-  final Map<String, dynamic> initial;
-  final VoidCallback onBack;
-  final Future<void> Function(Map<String, dynamic>) onSubmit;
-  const _Step6Destinations(
-      {required this.initial, required this.onBack, required this.onSubmit});
-  @override
-  State<_Step6Destinations> createState() => _Step6DestinationsState();
-}
-
-class _Step6DestinationsState extends State<_Step6Destinations> {
-  final List<_DestEntry> _dests = [_DestEntry()];
-  List<dynamic> _regions = [];
-  final Map<int, List<dynamic>> _regionDistricts = {};
-  final Map<int, List<dynamic>> _regionFacilities = {};
-  final Map<int, bool> _regionFacLoading = {}; // loading per region (Wizara ya Afya)
-  final Map<int, List<dynamic>> _districtFacilities = {};
-  String _years = '';
-  bool _submitting = false;
-  String? _error;
-
-  bool get _isWizara =>
-      widget.initial['category'] == 'health' &&
-      widget.initial['employment_sector'] == 'wizara_afya';
-
-  String get _category => widget.initial['category'] as String? ?? 'health';
-
-  int _cacheRev = 0;
-  late final VoidCallback _cacheListener;
-
-  @override
-  void initState() {
-    super.initState();
-    _cacheRev = AppCache().revision;
-    _cacheListener = () {
-      if (AppCache().revision != _cacheRev && mounted) {
-        _cacheRev = AppCache().revision;
-        _loadRegions();
-      }
-    };
-    AppCache().addListener(_cacheListener);
-    _loadRegions();
+    );
   }
 
-  @override
-  void dispose() {
-    AppCache().removeListener(_cacheListener);
-    super.dispose();
+  Widget _card() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _C.border, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: _finished
+            ? _doneChildren()
+            : [_progress(), ..._stepBody(), _footer()],
+      ),
+    );
   }
 
-  Future<void> _loadRegions() async {
-    try {
-      final res = await ApiService().getRegions();
-      if (mounted) setState(() => _regions = res.data as List? ?? []);
-    } catch (_) {}
+  // --------------------------------------------------------------------------
+  // PROGRESS
+  // --------------------------------------------------------------------------
+  Widget _progress() {
+    final steps = _steps;
+    final total = steps.length;
+    final n = _step + 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Flexible(
+              child: Text(
+                steps[_step],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Flexible(child: Text('Hatua $n ya $total', style: const TextStyle(fontSize: 13, color: _C.textSec))),
+            const Spacer(),
+            Text(
+              '${(n * 100 / total).round()}%',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (int i = 0; i < total; i++) ...[
+              if (i > 0) const SizedBox(width: 6),
+              Expanded(
+                child: Container(
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: i < n ? _C.blue : _C.border,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 5),
+        Row(
+          children: [
+            for (int i = 0; i < total; i++) ...[
+              if (i > 0) const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  steps[i],
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: i == _step ? FontWeight.w500 : FontWeight.w400,
+                    color: i == _step ? _C.blue : _C.textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
   }
 
-  Future<void> _ensureDistricts(int rid) async {
-    if (_regionDistricts.containsKey(rid)) return;
-    try {
-      final res = await ApiService().getDistricts(rid);
-      if (mounted) setState(() => _regionDistricts[rid] = res.data as List? ?? []);
-    } catch (_) {}
-  }
-
-  Future<void> _ensureRegionFacilities(int rid) async {
-    if (_regionFacilities.containsKey(rid)) return;
-    if (mounted) setState(() => _regionFacLoading[rid] = true);
-    try {
-      final res = await ApiService()
-          .getFacilitiesByRegion(rid, category: 'health', employmentSector: 'wizara_afya');
-      if (mounted) setState(() => _regionFacilities[rid] = res.data as List? ?? []);
-    } catch (_) {
-      if (mounted) setState(() => _regionFacilities[rid] = []);
-    } finally {
-      if (mounted) setState(() => _regionFacLoading[rid] = false);
+  // --------------------------------------------------------------------------
+  // STEPS
+  // --------------------------------------------------------------------------
+  List<Widget> _stepBody() {
+    switch (_steps[_step]) {
+      case 'Taarifa':
+        return _taarifaStep();
+      case 'Idara':
+        return _idaraStep();
+      case 'Wizara':
+        return _wizaraStep();
+      case 'Kada':
+        return _kadaStep();
+      case 'Eneo':
+        return _eneoStep();
+      default:
+        return _maeneoStep();
     }
   }
 
-  Future<void> _ensureDistrictFacilities(int did) async {
-    if (_districtFacilities.containsKey(did)) return;
+  // ---- 1. Taarifa -----------------------------------------------------------
+  List<Widget> _taarifaStep() {
+    return [
+      const _Head('Taarifa Zako', 'Tuanze na taarifa zako za msingi.'),
+      _label('Jina kamili'),
+      _UnderlineField(
+        icon: RegIcons.name,
+        hint: 'Andika jina lako',
+        controller: _nameCtrl,
+        keyboardType: TextInputType.name,
+        capitalization: TextCapitalization.words,
+      ),
+      _label('Namba ya simu'),
+      _UnderlineField(
+        icon: RegIcons.phone,
+        hint: '07xxxxxxxx',
+        controller: _phoneCtrl,
+        keyboardType: TextInputType.phone,
+        onChanged: (v) => _checkPhone(v, false),
+      ),
+      _PhoneStatusRow(status: _phoneStatus),
+      _label('Namba ya WhatsApp'),
+      _UnderlineField(
+        icon: RegIcons.whatsapp,
+        hint: '07xxxxxxxx',
+        controller: _waCtrl,
+        keyboardType: TextInputType.phone,
+        onChanged: (v) => _checkPhone(v, true),
+      ),
+      _PhoneStatusRow(status: _waStatus),
+    ];
+  }
+
+  Future<void> _checkPhone(String v, bool wa) async {
+    final digits = v.replaceAll(RegExp(r'\D'), '');
+    final id = wa ? ++_waReq : ++_phoneReq;
+    if (digits.length < 10) {
+      setState(() {
+        if (wa) {
+          _waStatus = _PhoneStatus.idle;
+        } else {
+          _phoneStatus = _PhoneStatus.idle;
+        }
+      });
+      return;
+    }
+    setState(() {
+      if (wa) {
+        _waStatus = _PhoneStatus.checking;
+      } else {
+        _phoneStatus = _PhoneStatus.checking;
+      }
+    });
+    bool available;
     try {
-      final res = await ApiService().getFacilities(did, category: _category);
-      if (mounted) setState(() => _districtFacilities[did] = res.data as List? ?? []);
-    } catch (_) {}
+      available = await _repo.isPhoneAvailable(v.trim());
+    } catch (_) {
+      available = true;
+    }
+    if (!mounted) return;
+    if ((wa ? _waReq : _phoneReq) != id) return;
+    setState(() {
+      final s = available ? _PhoneStatus.available : _PhoneStatus.taken;
+      if (wa) {
+        _waStatus = s;
+      } else {
+        _phoneStatus = s;
+      }
+    });
   }
 
-  void _onRegionChanged(int destIdx, int? rid) {
-    setState(() {
-      _dests[destIdx].regionId = rid;
-      _dests[destIdx].regionName = rid != null
-          ? (_regions.firstWhere((r) => r['id'] == rid, orElse: () => {})['name'] ?? '') as String
-          : '';
-      _dests[destIdx].selectedDistricts = [];
-      _dests[destIdx].facilityId = null;
-      _dests[destIdx].facilityName = null;
-    });
-    if (rid == null) return;
-    if (_isWizara) { _ensureRegionFacilities(rid); }
-    else { _ensureDistricts(rid); }
+  // ---- 2. Idara -------------------------------------------------------------
+  List<Widget> _idaraStep() {
+    return [
+      const _Head('Idara', 'Unafanya kazi katika idara gani?'),
+      _ChoiceCards(
+        items: _idaraItems,
+        selected: _idara,
+        onTap: (i) => _pickIdara(_idaraItems[i].label),
+      ),
+    ];
   }
 
-  void _toggleDistrict(int destIdx, int did) {
+  void _pickIdara(String v) {
     setState(() {
-      final d = _dests[destIdx];
-      if (d.selectedDistricts.contains(did)) { d.selectedDistricts.remove(did); }
-      else { d.selectedDistricts.add(did); }
+      if (v != _idara) {
+        _wizara = null;
+        _cheo = null;
+        _level = EduLevel.sekondari;
+        _subjects = [];
+        _region = null;
+        _district = null;
+        _school = null;
+        _facility = null;
+        _hospital = null;
+        _targets = [_Target()];
+        _targetHospital = null;
+        _years = null;
+      }
+      _idara = v;
+      _error = null;
     });
-    _ensureDistrictFacilities(did);
+  }
+
+  // ---- 3. Wizara (Afya tu) --------------------------------------------------
+  List<Widget> _wizaraStep() {
+    return [
+      const _Head('Wizara', 'Je, unafanya kazi chini ya taasisi gani?'),
+      _ChoiceCards(
+        items: _wizaraItems,
+        selected: _wizara,
+        onTap: (i) {
+          final v = _wizaraItems[i].label;
+          setState(() {
+            if (v != _wizara) {
+              _region = null;
+              _district = null;
+              _school = null;
+              _facility = null;
+              _hospital = null;
+              _targets = [_Target()];
+              _targetHospital = null;
+            }
+            _wizara = v;
+            _error = null;
+          });
+        },
+      ),
+    ];
+  }
+
+  // ---- 4. Kada --------------------------------------------------------------
+  List<Widget> _kadaStep() {
+    if (_isAfya) {
+      return [
+        const _Head('Kada / Cheo Chako', 'Chagua kada au cheo chako cha kazi.'),
+        _choose(
+          id: 'cheo',
+          label: 'Cheo',
+          icon: RegIcons.cheo,
+          value: _cheo,
+          loadKey: 'cadres',
+          load: () => _repo.cadres(),
+          onPick: (o) => _cheo = o,
+        ),
+      ];
+    }
+    final sek = _level == EduLevel.sekondari;
+    return [
+      const _Head('Kada', null),
+      const SizedBox(height: 10),
+      _Segmented(
+        leftLabel: 'Msingi',
+        leftIcon: RegIcons.msingi,
+        rightLabel: 'Sekondari',
+        rightIcon: RegIcons.sekondari,
+        rightSelected: sek,
+        onChanged: (right) {
+          setState(() {
+            final nl = right ? EduLevel.sekondari : EduLevel.msingi;
+            if (nl != _level) {
+              _level = nl;
+              _subjects = [];
+            }
+            _error = null;
+          });
+        },
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'Masomo ya ${sek ? 'Sekondari' : 'Msingi'}',
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.text),
+              ),
+              const TextSpan(text: ' *', style: TextStyle(fontSize: 15, color: _C.danger)),
+              const TextSpan(
+                text: ' (lazima somo 2)',
+                style: TextStyle(fontSize: 12, color: _C.textMuted),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const Padding(
+        padding: EdgeInsets.only(top: 2),
+        child: Text('Chagua somo unalofundisha', style: TextStyle(fontSize: 13, color: _C.textSec)),
+      ),
+      const SizedBox(height: 6),
+      _Async(
+        key: ValueKey('subjects-${_level.name}'),
+        load: () => _repo.subjects(_level),
+        builder: (opts) => _TwoCol(
+          children: [
+            for (final o in opts)
+              _OptionRow(
+                label: o.label,
+                selected: _subjects.contains(o),
+                onTap: () {
+                  setState(() {
+                    if (_subjects.contains(o)) {
+                      _subjects.remove(o);
+                      _error = null;
+                    } else if (_subjects.length < 2) {
+                      _subjects.add(o);
+                      _error = null;
+                    } else {
+                      _error = 'Unaweza kuchagua masomo 2 tu.';
+                    }
+                  });
+                },
+              ),
+          ],
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Text(
+          'Umepata: ${_subjects.length} somo',
+          style: const TextStyle(fontSize: 12, color: _C.textSec),
+        ),
+      ),
+    ];
+  }
+
+  // ---- 5. Eneo la sasa ------------------------------------------------------
+  List<Widget> _eneoStep() {
+    final list = <Widget>[];
+    if (_isWA) {
+      list.add(const _Head('Eneo la Sasa', 'Mkoa na hospitali unayofanya kazi.'));
+      list.add(_regionChooser());
+      if (_region != null && _edit != 'mkoa') {
+        final r = _region!;
+        list.add(_choose(
+          id: 'hosp',
+          label: 'Hospitali ya rufaa za mkoa',
+          sub: 'Chagua hospitali unayofanya kazi',
+          icon: RegIcons.kituo,
+          value: _hospital,
+          loadKey: 'hosp-${r.id}',
+          load: () => _repo.referralHospitals(r),
+          onPick: (o) => _hospital = o,
+        ));
+      }
+      return list;
+    }
+    list.add(const _Head('Eneo la Sasa', 'Unafanya kazi wapi sasa?'));
+    list.add(_regionChooser());
+    if (_region != null && _edit != 'mkoa') {
+      final r = _region!;
+      list.add(_choose(
+        id: 'wilaya',
+        label: 'Wilaya',
+        sub: 'Chagua wilaya',
+        icon: RegIcons.wilaya,
+        value: _district,
+        loadKey: 'dist-${r.id}',
+        load: () => _repo.districts(r),
+        onPick: (o) {
+          if (o != _district) {
+            _school = null;
+            _facility = null;
+          }
+          _district = o;
+        },
+      ));
+      if (_district != null && _edit != 'wilaya') {
+        final d = _district!;
+        if (_isAfya) {
+          list.add(_dropdown(
+            id: 'kituo',
+            label: 'Kituo',
+            icon: RegIcons.kituo,
+            value: _facility,
+            placeholder: 'Chagua Kituo',
+            loadKey: 'fac-${d.id}',
+            load: () => _repo.facilities(d),
+            onPick: (o) => _facility = o,
+          ));
+        } else {
+          list.add(_dropdown(
+            id: 'shule',
+            label: 'Shule',
+            icon: RegIcons.shule,
+            value: _school,
+            placeholder: 'Chagua Shule',
+            loadKey: 'sch-${d.id}',
+            load: () => _repo.schools(d),
+            onPick: (o) => _school = o,
+          ));
+        }
+      }
+    }
+    return list;
+  }
+
+  Widget _regionChooser() {
+    return _choose(
+      id: 'mkoa',
+      label: 'Mkoa',
+      sub: 'Chagua mkoa unaofanyia kazi',
+      icon: RegIcons.mkoa,
+      value: _region,
+      loadKey: 'regions',
+      load: () => _repo.regions(),
+      onPick: (o) {
+        if (o != _region) {
+          _district = null;
+          _school = null;
+          _facility = null;
+          _hospital = null;
+        }
+        _region = o;
+      },
+    );
+  }
+
+  // ---- 6. Maeneo ya lengo ---------------------------------------------------
+  List<Widget> _maeneoStep() {
+    final list = <Widget>[
+      _Head(
+        'Maeneo ya Lengo',
+        _isWA ? 'Unataka kwenda mkoa gani?' : 'Unataka kwenda mkoa/wilaya gani?',
+      ),
+    ];
+
+    if (_isWA) {
+      final t0 = _targets[0];
+      list.add(_choose(
+        id: 'tm0',
+        label: 'Mkoa wa Lengo',
+        sub: 'Chagua mkoa unaotaka kwenda',
+        icon: RegIcons.mkoa,
+        value: t0.region,
+        loadKey: 'regions',
+        load: () => _repo.regions(),
+        onPick: (o) {
+          if (o != t0.region) _targetHospital = null;
+          t0.region = o;
+        },
+      ));
+      if (t0.region != null && _edit != 'tm0') {
+        final r = t0.region!;
+        list.add(_label('Hospitali ya rufaa ya mkoa', required: false, size: 15));
+        list.add(const Padding(
+          padding: EdgeInsets.only(top: 2),
+          child: Text(
+            'Chagua hospitali unayotaka, au endelea bila',
+            style: TextStyle(fontSize: 13, color: _C.textSec),
+          ),
+        ));
+        list.add(_Async(
+          key: ValueKey('lh-${r.id}'),
+          load: () => _repo.referralHospitals(r),
+          builder: (opts) => _PickList(
+            options: [_noHospital, ...opts],
+            selectedId: _targetHospital?.id ?? _noHospital.id,
+            hint: 'hospitali',
+            onPick: (o) => setState(() {
+              _targetHospital = o.id == _noHospital.id ? null : o;
+            }),
+          ),
+        ));
+      }
+    } else {
+      for (int i = 0; i < _targets.length; i++) {
+        list.add(_targetCard(i));
+      }
+      if (_targets.length < 3) {
+        list.add(InkWell(
+          onTap: () => setState(() => _targets.add(_Target())),
+          child: const Padding(
+            padding: EdgeInsets.only(top: 14),
+            child: Row(
+              children: [
+                Icon(RegIcons.add, size: 18, color: _C.blue),
+                SizedBox(width: 8),
+                Text(
+                  'Ongeza Mkoa Mwingine',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.blue),
+                ),
+              ],
+            ),
+          ),
+        ));
+      }
+    }
+
+    list.add(const Padding(
+      padding: EdgeInsets.only(top: 18),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: 'Umefanya kazi kwa miaka mingapi?',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.text),
+            ),
+            TextSpan(text: ' *', style: TextStyle(fontSize: 15, color: _C.danger)),
+          ],
+        ),
+      ),
+    ));
+    list.add(const Padding(
+      padding: EdgeInsets.only(top: 2),
+      child: Text('Chagua miaka ya kazi', style: TextStyle(fontSize: 13, color: _C.textSec)),
+    ));
+    list.add(_ChoiceCards(
+      items: _yearsItems,
+      selected: _years,
+      onTap: (i) => setState(() {
+        _years = _yearsItems[i].label;
+        _error = null;
+      }),
+    ));
+    return list;
+  }
+
+  Widget _targetCard(int i) {
+    final t = _targets[i];
+    final id = 'tm$i';
+    final children = <Widget>[
+      Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Text(
+          'Mkoa wa Lengo ${i + 1}',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.blue),
+        ),
+      ),
+      _choose(
+        id: id,
+        label: 'Mkoa wa Lengo',
+        sub: 'Chagua mkoa unaotaka kwenda',
+        icon: RegIcons.mkoa,
+        value: t.region,
+        loadKey: 'regions',
+        load: () => _repo.regions(),
+        onPick: (o) {
+          if (o != t.region) {
+            t.districts = [];
+            t.anyDistrict = false;
+            t.facility = null;
+          }
+          t.region = o;
+        },
+      ),
+    ];
+
+    if (t.region != null && _edit != id) {
+      final r = t.region!;
+      children.add(const Padding(
+        padding: EdgeInsets.only(top: 14),
+        child: Text('Wilaya za lengo', style: TextStyle(fontSize: 12, color: _C.textSec)),
+      ));
+      children.add(const SizedBox(height: 2));
+      children.add(_Async(
+        key: ValueKey('tdist-${r.id}'),
+        load: () => _repo.districts(r),
+        builder: (opts) => _TwoCol(
+          children: [
+            _OptionRow(
+              label: 'Wilaya yeyote',
+              selected: t.anyDistrict,
+              minHeight: 44,
+              onTap: () => setState(() {
+                t.anyDistrict = !t.anyDistrict;
+                if (t.anyDistrict) t.districts = [];
+                t.facility = null;
+                _error = null;
+              }),
+            ),
+            for (final d in opts)
+              _OptionRow(
+                label: d.label,
+                selected: t.districts.contains(d),
+                minHeight: 44,
+                onTap: () => setState(() {
+                  t.anyDistrict = false;
+                  if (t.districts.contains(d)) {
+                    t.districts.remove(d);
+                  } else {
+                    t.districts.add(d);
+                  }
+                  t.facility = null;
+                  _error = null;
+                }),
+              ),
+          ],
+        ),
+      ));
+
+      Future<List<RegOption>> loadFacilityOptions(bool schools) async {
+        final d = t.districts.isNotEmpty ? t.districts.first : (await _repo.districts(r)).first;
+        return schools ? _repo.schools(d) : _repo.facilities(d);
+      }
+
+      final firstKey = t.districts.isNotEmpty ? t.districts.first.id : 'any';
+      if (_isAfya) {
+        children.add(_dropdown(
+          id: 'tk$i',
+          label: 'Kituo',
+          icon: RegIcons.kituo,
+          value: t.facility,
+          placeholder: 'Bila Kituo',
+          loadKey: 'tfac-${r.id}-$firstKey',
+          load: () => loadFacilityOptions(false),
+          onPick: (o) => t.facility = o,
+        ));
+      } else {
+        children.add(_dropdown(
+          id: 'tk$i',
+          label: 'Shule',
+          icon: RegIcons.shule,
+          value: t.facility,
+          placeholder: 'Bila Shule',
+          loadKey: 'tsch-${r.id}-$firstKey',
+          load: () => loadFacilityOptions(true),
+          onPick: (o) => t.facility = o,
+        ));
+      }
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.fromLTRB(14, 6, 14, 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.borderStrong, width: 0.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // REUSABLE BUILDERS (orodha iliyo wazi, muhtasari, dropdown)
+  // --------------------------------------------------------------------------
+  Widget _label(String t, {bool required = true, double size = 14}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: t,
+              style: TextStyle(fontSize: size, fontWeight: FontWeight.w500, color: _C.text),
+            ),
+            if (required)
+              TextSpan(text: ' *', style: TextStyle(fontSize: size, color: _C.danger))
+            else
+              const TextSpan(text: ' (Hiari)', style: TextStyle(fontSize: 12, color: _C.textMuted)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Orodha inafunguka moja kwa moja. Ukichagua inajifunga kuwa muhtasari
+  /// (na "Badilisha"), kisha orodha inayofuata inafunguka yenyewe.
+  Widget _choose({
+    required String id,
+    required String label,
+    String? sub,
+    required IconData icon,
+    required RegOption? value,
+    required Object loadKey,
+    required Future<List<RegOption>> Function() load,
+    required void Function(RegOption) onPick,
+  }) {
+    if (value == null || _edit == id) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _label(label, size: 15),
+          if (sub != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(sub, style: const TextStyle(fontSize: 13, color: _C.textSec)),
+            ),
+          _Async(
+            key: ValueKey('$id-$loadKey'),
+            load: load,
+            builder: (opts) => _PickList(
+              options: opts,
+              selectedId: value?.id,
+              hint: label,
+              onPick: (o) => setState(() {
+                onPick(o);
+                _edit = null;
+                _open = null;
+                _error = null;
+              }),
+            ),
+          ),
+        ],
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12, color: _C.textSec)),
+          InkWell(
+            onTap: () => setState(() {
+              _edit = id;
+              _open = null;
+            }),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _C.borderStrong, width: 0.5)),
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, size: 20, color: _C.blue),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      value.label,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.text),
+                    ),
+                  ),
+                  const Icon(RegIcons.edit, size: 15, color: _C.blue),
+                  const SizedBox(width: 4),
+                  const Text('Badilisha', style: TextStyle(fontSize: 13, color: _C.blue)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Dropdown ya hiari (Shule, Kituo). Inafunguka ukibonyeza.
+  Widget _dropdown({
+    required String id,
+    required String label,
+    required IconData icon,
+    required RegOption? value,
+    required String placeholder,
+    required Object loadKey,
+    required Future<List<RegOption>> Function() load,
+    required void Function(RegOption) onPick,
+  }) {
+    final open = _open == id;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label(label, required: false),
+        InkWell(
+          onTap: () => setState(() => _open = open ? null : id),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: _C.borderStrong, width: 2)),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: _C.blue),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    value?.label ?? placeholder,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: value == null ? _C.textMuted : _C.text,
+                    ),
+                  ),
+                ),
+                Icon(open ? RegIcons.chevronUp : RegIcons.chevronDown, size: 20, color: _C.blue),
+              ],
+            ),
+          ),
+        ),
+        if (open)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _C.borderStrong, width: 0.5),
+            ),
+            child: _Async(
+              key: ValueKey('$id-$loadKey'),
+              load: load,
+              builder: (opts) => _PickList(
+                options: opts,
+                selectedId: value?.id,
+                hint: label,
+                onPick: (o) => setState(() {
+                  onPick(o);
+                  _open = null;
+                  _error = null;
+                }),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // FOOTER
+  // --------------------------------------------------------------------------
+  Widget _footer() {
+    final last = _step == _steps.length - 1;
+    final Widget left = _step == 0
+        ? InkWell(
+            onTap: widget.onLoginTap,
+            child: const Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: 'Una akaunti? ', style: TextStyle(fontSize: 14, color: _C.textSec)),
+                  TextSpan(
+                    text: 'Ingia',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _C.blue),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : InkWell(
+            onTap: _goBack,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(RegIcons.back, size: 18, color: _C.blue),
+                  SizedBox(width: 6),
+                  Text('Rudi', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.blue)),
+                ],
+              ),
+            ),
+          );
+
+    final Widget right = last
+        ? Material(
+            color: _C.blue,
+            shape: const StadiumBorder(),
+            child: InkWell(
+              customBorder: const StadiumBorder(),
+              onTap: _submitting ? null : _goNext,
+              child: SizedBox(
+                height: 34,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_submitting)
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      else
+                        const Icon(RegIcons.register, size: 16, color: Colors.white),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Najisajili',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          )
+        : InkWell(
+            onTap: _goNext,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Endelea', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.blue)),
+                  SizedBox(width: 6),
+                  Icon(RegIcons.next, size: 18, color: _C.blue),
+                ],
+              ),
+            ),
+          );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(_error!, style: const TextStyle(fontSize: 13, color: _C.danger)),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 42),
+            // Wrap: footer isiivunje kwenye simu ndogo — Rudi/Endelea zinapishagulia.
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 6,
+              children: [left, right],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _goBack() {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _error = null;
+      _open = null;
+      _edit = null;
+      if (_step > 0) _step--;
+    });
+  }
+
+  Future<void> _goNext() async {
+    FocusScope.of(context).unfocus();
+    final err = _validate();
+    if (err != null) {
+      setState(() => _error = err);
+      return;
+    }
+    if (_step < _steps.length - 1) {
+      setState(() {
+        _error = null;
+        _open = null;
+        _edit = null;
+        _step++;
+      });
+      return;
+    }
+    await _submit();
+  }
+
+  String? _validate() {
+    final key = _steps[_step];
+    final p = _phoneCtrl.text.replaceAll(RegExp(r'\D'), '');
+    final w = _waCtrl.text.replaceAll(RegExp(r'\D'), '');
+    switch (key) {
+      case 'Taarifa':
+        if (_nameCtrl.text.trim().isEmpty) return 'Andika jina lako kamili.';
+        if (p.length < 10 || _phoneStatus == _PhoneStatus.taken) {
+          return 'Weka namba ya simu isiyotumika.';
+        }
+        if (w.length < 10 || _waStatus == _PhoneStatus.taken) {
+          return 'Weka namba ya WhatsApp isiyotumika.';
+        }
+        if (_phoneStatus == _PhoneStatus.checking || _waStatus == _PhoneStatus.checking) {
+          return 'Subiri, tunakagua namba.';
+        }
+        return null;
+      case 'Idara':
+        return _idara == null ? 'Chagua idara.' : null;
+      case 'Wizara':
+        return _wizara == null ? 'Chagua wizara.' : null;
+      case 'Kada':
+        if (_isAfya) return _cheo == null ? 'Chagua kada au cheo chako.' : null;
+        return _subjects.length != 2 ? 'Chagua masomo 2 kamili.' : null;
+      case 'Eneo':
+        if (_isWA) return (_region == null || _hospital == null) ? 'Chagua mkoa na hospitali.' : null;
+        return (_region == null || _district == null) ? 'Chagua mkoa na wilaya.' : null;
+      default:
+        if (_isWA) {
+          if (_targets[0].region == null) return 'Chagua mkoa wa lengo.';
+        } else {
+          for (final t in _targets) {
+            if (t.region == null || (!t.anyDistrict && t.districts.isEmpty)) {
+              return 'Chagua mkoa wa lengo na wilaya angalau moja.';
+            }
+          }
+        }
+        return _years == null ? 'Chagua miaka ya kazi.' : null;
+    }
+  }
+
+  RegistrationData _buildData() {
+    return RegistrationData(
+      name: _nameCtrl.text.trim(),
+      phone: _phoneCtrl.text.trim(),
+      whatsapp: _waCtrl.text.trim(),
+      idara: _idara!,
+      wizara: _isAfya ? _wizara : null,
+      cheo: _isAfya ? _cheo : null,
+      level: _isAfya ? null : _level,
+      subjects: _isAfya ? const [] : List.of(_subjects),
+      region: _region!,
+      district: _isWA ? null : _district,
+      school: _isAfya ? null : _school,
+      facility: _isAfya && !_isWA ? _facility : null,
+      hospital: _isWA ? _hospital : null,
+      targets: [
+        for (final t in _targets)
+          if (t.region != null)
+            RegTargetData(
+              region: t.region!,
+              anyDistrict: t.anyDistrict,
+              districts: List.of(t.districts),
+              facility: t.facility,
+            ),
+      ],
+      targetHospital: _isWA ? _targetHospital : null,
+      years: _years!,
+    );
   }
 
   Future<void> _submit() async {
-    final validDests = _dests.where((d) => d.regionId != null).toList();
-    if (validDests.isEmpty) { setState(() => _error = 'Ongeza angalau mkoa mmoja'); return; }
-    if (_years.isEmpty) { setState(() => _error = 'Chagua miaka ya kazi'); return; }
-
-    final destinations = <Map<String, dynamic>>[];
-    for (final d in validDests) {
-      final rid = d.regionId!;
-      if (_isWizara) {
-        if (d.facilityId == null) {
-          setState(() => _error = 'Chagua hospitali kwa mkoa ${d.regionName}');
-          return;
-        }
-        final facList = _regionFacilities[rid] ?? [];
-        final fac = facList.firstWhere(
-            (f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null);
-        destinations.add({
-          'region_id': rid,
-          'region_name': d.regionName,
-          'district_id': fac?['district_id'],
-          'district_name': fac?['district'],
-          'facility_id': d.facilityId,
-          'facility_name': fac?['name'],
-          'notes': null,
-        });
-      } else {
-        final districts = d.selectedDistricts;
-        if (districts.isEmpty) {
-          destinations.add({
-            'region_id': rid,
-            'region_name': d.regionName,
-            'district_id': null,
-            'district_name': null,
-            'facility_id': d.facilityId,
-            'facility_name': d.facilityName,
-            'notes': null,
-          });
-        } else {
-          for (final did in districts) {
-            final distList = _regionDistricts[rid] ?? [];
-            final dist = distList.firstWhere((x) => x['id'] == did, orElse: () => null);
-            final facList = _districtFacilities[did] ?? [];
-            final fac = d.facilityId != null
-                ? facList.firstWhere(
-                    (f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null)
-                : null;
-            destinations.add({
-              'region_id': rid,
-              'region_name': d.regionName,
-              'district_id': did,
-              'district_name': dist?['name'],
-              'facility_id': d.facilityId,
-              'facility_name': fac?['name'],
-              'notes': null,
-            });
-          }
-        }
-      }
-    }
-
-    setState(() { _submitting = true; _error = null; });
-    await widget.onSubmit({
-      'desired_destinations': destinations,
-      'years_of_service': int.tryParse(_years),
+    setState(() {
+      _submitting = true;
+      _error = null;
     });
-    if (mounted) setState(() => _submitting = false);
+    try {
+      final data = _buildData();
+      await _repo.submit(data);
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _finished = true;
+      });
+      widget.onFinished?.call(data);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error = 'Imeshindikana kujisajili. Jaribu tena.';
+      });
+    }
   }
+
+  // --------------------------------------------------------------------------
+  // DONE
+  // --------------------------------------------------------------------------
+  List<Widget> _doneChildren() {
+    final lines = <MapEntry<IconData, String>>[
+      MapEntry(RegIcons.name, _nameCtrl.text.trim()),
+      MapEntry(RegIcons.phone, _phoneCtrl.text.trim()),
+    ];
+    if (_isAfya) {
+      lines.add(MapEntry(RegIcons.afya, 'Afya, $_wizara: ${_cheo?.label ?? ''}'));
+    } else {
+      lines.add(MapEntry(
+        RegIcons.elimu,
+        '$_idara, ${_level == EduLevel.sekondari ? 'Sekondari' : 'Msingi'}: ${_subjects.map((s) => s.label).join(', ')}',
+      ));
+    }
+    if (_isWA) {
+      lines.add(MapEntry(RegIcons.mkoa, '${_region?.label}, ${_hospital?.label}'));
+    } else {
+      final extra = [
+        if (_school != null) _school!.label,
+        if (_facility != null) _facility!.label,
+      ].join(', ');
+      lines.add(MapEntry(
+        RegIcons.mkoa,
+        '${_region?.label}, ${_district?.label}${extra.isEmpty ? '' : ', $extra'}',
+      ));
+    }
+    if (_isWA) {
+      final th = _targetHospital == null ? '' : ', ${_targetHospital!.label}';
+      lines.add(MapEntry(RegIcons.route, '${_targets[0].region?.label}$th'));
+    } else {
+      lines.add(MapEntry(
+        RegIcons.route,
+        _targets.where((t) => t.region != null).map((t) {
+          final d = t.anyDistrict ? 'Wilaya yeyote' : t.districts.map((x) => x.label).join(', ');
+          return '${t.region!.label} ($d)${t.facility == null ? '' : ', ${t.facility!.label}'}';
+        }).join(' | '),
+      ));
+    }
+    lines.add(MapEntry(RegIcons.miaka3, _years ?? ''));
+
+    return [
+      const SizedBox(height: 10),
+      Center(
+        child: Container(
+          width: 64,
+          height: 64,
+          decoration: const BoxDecoration(color: _C.successSoft, shape: BoxShape.circle),
+          child: const Icon(RegIcons.check, size: 34, color: _C.success),
+        ),
+      ),
+      const SizedBox(height: 14),
+      const Center(
+        child: Text(
+          'Umefanikiwa kujisajili',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: _C.text),
+        ),
+      ),
+      const SizedBox(height: 2),
+      const Center(
+        child: Text(
+          'Karibu. Taarifa zako zimehifadhiwa.',
+          style: TextStyle(fontSize: 13, color: _C.textSec),
+        ),
+      ),
+      const SizedBox(height: 16),
+      Container(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: _C.border, width: 0.5)),
+        ),
+        child: Column(
+          children: [
+            for (final l in lines)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: _C.border, width: 0.5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(l.key, size: 18, color: _C.blue),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l.value,
+                        style: const TextStyle(fontSize: 14, height: 1.4, color: _C.text),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 16),
+      InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: _restart,
+        child: Container(
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _C.borderStronger, width: 0.5),
+          ),
+          child: const Text(
+            'Anza upya',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.text),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  void _restart() {
+    setState(() {
+      _step = 0;
+      _finished = false;
+      _error = null;
+      _open = null;
+      _edit = null;
+      _nameCtrl.clear();
+      _phoneCtrl.clear();
+      _waCtrl.clear();
+      _phoneStatus = _PhoneStatus.idle;
+      _waStatus = _PhoneStatus.idle;
+      _idara = null;
+      _wizara = null;
+      _cheo = null;
+      _level = EduLevel.sekondari;
+      _subjects = [];
+      _region = null;
+      _district = null;
+      _school = null;
+      _facility = null;
+      _hospital = null;
+      _targets = [_Target()];
+      _targetHospital = null;
+      _years = null;
+    });
+  }
+}
+
+// ============================================================================
+// WIDGETS ZA KUTUMIA TENA
+// ============================================================================
+class _Item {
+  final String label;
+  final IconData icon;
+  const _Item(this.label, this.icon);
+}
+
+class _Head extends StatelessWidget {
+  final String title;
+  final String? sub;
+  const _Head(this.title, this.sub);
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const Text('Maeneo ya Lengo',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _kGrey900)),
-      const SizedBox(height: 4),
-      const Text('Unataka kwenda mkoa/wilaya gani?',
-          style: TextStyle(fontSize: 14, color: _kGrey500)),
-      const SizedBox(height: 16),
-
-      if (_error != null) ...[
-        _ErrorBox(_error!),
-        const SizedBox(height: 12),
-      ],
-
-      ...List.generate(_dests.length, (i) => _buildDestCard(i)),
-
-      // "Ongeza Mkoa Mwingine" — web: Plus(16) gap-1.5(6px) text-sm font-semibold text-brand-blue
-      GestureDetector(
-        onTap: () => setState(() => _dests.add(_DestEntry())),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(mainAxisSize: MainAxisSize.min, children: const [
-            Icon(Icons.add, size: 16, color: _kBlue),
-            SizedBox(width: 6), // gap-1.5=6px
-            Text('Ongeza Mkoa Mwingine',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kBlue)),
-          ]),
-        ),
-      ),
-
-      // Years of service — web: pt-2=8px label then select
-      const SizedBox(height: 8), // pt-2=8px
-      const Text('Umefanya kazi kwa miaka mingapi? *',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-      const SizedBox(height: 6),
-      SelectField(
-        leading: Icon(
-          _years == '1' ? TablerIcons.circle_number_1
-            : _years == '2' ? TablerIcons.circle_number_2
-            : _years == '3' ? TablerIcons.circle_number_3
-            : TablerIcons.circle_number_1,
-          size: 14,
-          color: const Color(0xFF1B4F9C),
-        ),
-        hint: 'Chagua miaka ya kazi',
-        value: _years.isEmpty ? null : (_years == '3' ? '3+ (miaka 3 au zaidi)' : _years),
-        onTap: () async {
-          final items = [
-            (value: '1', label: '1 mwaka', subtitle: null),
-            (value: '2', label: '2 miaka', subtitle: null),
-            (value: '3', label: '3+ (miaka 3 au zaidi)', subtitle: null),
-          ];
-          final result = await showSelectSheet<String>(
-            context, title: 'Miaka ya Kazi', items: items, selected: _years.isEmpty ? null : _years,
-            itemIconBuilder: (v) => v == '1' ? TablerIcons.circle_number_1
-                : v == '2' ? TablerIcons.circle_number_2
-                : TablerIcons.circle_number_3,
-          );
-          if (result != null) setState(() => _years = result);
-        },
-      ),
-
-      _btnRow(
-        onBack: widget.onBack,
-        onNext: _submit,
-        nextLabel: 'Najisajili',
-        loading: _submitting,
-      ),
-    ]);
-  }
-
-  Widget _buildDestCard(int i) {
-    final d = _dests[i];
-    final rid = d.regionId;
-    final isLoading = rid != null && (_regionFacLoading[rid] == true);
-
-    // TAMISEMI: collect facilities from selected districts (or empty if none selected)
-    final selectedDids = d.selectedDistricts;
-    final seen = <String>{};
-    final tamisemiFacs = selectedDids
-        .expand((did) => _districtFacilities[did] ?? [])
-        .where((f) => seen.add('${f['id'] ?? f['code']}'))
-        .toList();
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12), // p-3=12px
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Header — web: text-[11px] font-bold text-brand-blue flex items-center gap-1
-        Row(children: [
-          const Icon(Icons.keyboard_arrow_down, size: 12, color: _kBlue),
-          const SizedBox(width: 4), // gap-1=4px
-          Expanded(
-            child: Text('Mkoa wa Lengo ${i + 1}',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _kBlue)),
+    return Padding(
+      padding: const EdgeInsets.only(top: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: _C.text),
           ),
-          if (_dests.length > 1)
-            GestureDetector(
-              onTap: () => setState(() => _dests.removeAt(i)),
-              child: const Padding(
-                padding: EdgeInsets.all(4),
-                child: Icon(Icons.delete_outline, size: 14, color: Color(0xFFDC2626)),
-              ),
-            ),
-        ]),
-        const SizedBox(height: 12),
-
-        // Region select
-        SelectField(
-          leading: const Icon(TablerIcons.map_pin, size: 14, color: Color(0xFF1B4F9C)),
-          hint: '— Chagua Mkoa wa Lengo —',
-          value: rid == null ? null : _regions.cast<dynamic>()
-              .firstWhere((r) => r['id'] == rid, orElse: () => null)?['name'] as String?,
-          onTap: () async {
-            final items = _regions.map((r) => (
-              value: r['id'] as int,
-              label: r['name'] as String,
-              subtitle: null,
-            )).toList();
-            final result = await showSelectSheet<int>(
-              context, title: 'Chagua Mkoa wa Lengo', items: items, selected: rid,
-              searchable: true, itemIcon: TablerIcons.map_pin,
-            );
-            if (result != null) _onRegionChanged(i, result);
-          },
-        ),
-
-        // ── Wizara ya Afya: Hospitali ya Rufaa ──
-        if (_isWizara && rid != null) ...[
-          const SizedBox(height: 12),
-          if (isLoading)
-            // web: <div className="input text-sm text-brand-grey-400">Inapakia hospitali...</div>
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: _kGrey300),
-              ),
-              child: const Text('Inapakia hospitali...',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
-            )
-          else
-            SelectField(
-              leading: const Icon(TablerIcons.first_aid_kit, size: 14, color: Color(0xFF1B4F9C)),
-              hint: 'Chagua Hospitali ya Rufaa',
-              value: d.facilityId == null ? null : (_regionFacilities[rid!] ?? []).cast<dynamic>()
-                  .firstWhere((f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null)?['name'] as String?,
-              onTap: () async {
-                final facList = _regionFacilities[rid!] ?? [];
-                final items = facList.map((f) => (
-                  value: '${f['id'] ?? f['code']}' as String,
-                  label: '${f['name']}',
-                  subtitle: f['type'] != null ? '${f['type']}' : null,
-                )).toList();
-                final result = await showSelectSheet<String>(
-                  context, title: 'Chagua Hospitali ya Rufaa', items: items,
-                  selected: d.facilityId, searchable: true,
-                  itemIcon: TablerIcons.first_aid_kit,
-                );
-                if (result != null) setState(() {
-                  d.facilityId = result;
-                  final fac = facList.firstWhere((f) => '${f['id'] ?? f['code']}' == result, orElse: () => null);
-                  d.facilityName = fac?['name'] as String?;
-                });
-              },
+          if (sub != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(sub!, style: const TextStyle(fontSize: 13, color: _C.textSec)),
             ),
         ],
-
-        // ── TAMISEMI/Elimu: Wilaya checkboxes + Kituo ──
-        if (!_isWizara && rid != null) ...[
-          const SizedBox(height: 12),
-          // web: text-[10px] font-bold text-brand-grey-500 uppercase
-          const Text('WILAYA ZA LENGO',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kGrey500)),
-          const SizedBox(height: 6),
-          // Wilaya checkboxes — web: bg-white rounded-lg p-2 border-brand-grey-200 space-y-1.5
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: Column(children: [
-              _DistCheckbox(
-                label: 'Wilaya yeyote',
-                bold: true,
-                checked: d.selectedDistricts.isEmpty,
-                onChanged: (_) => setState(() {
-                  d.selectedDistricts = [];
-                  d.facilityId = null;
-                  d.facilityName = null;
-                }),
-              ),
-              ...(_regionDistricts[rid] ?? []).map((dist) {
-                final did = dist['id'] as int;
-                return _DistCheckbox(
-                  label: dist['name'] as String,
-                  checked: d.selectedDistricts.contains(did),
-                  onChanged: (_) => _toggleDistrict(i, did),
-                );
-              }),
-            ]),
-          ),
-          const SizedBox(height: 8),
-          // Kituo / Shule select (hiari)
-          SelectField(
-            leading: Icon(
-              _category == 'health'
-                  ? TablerIcons.first_aid_kit
-                  : (widget.initial['cadre_level'] == 'Secondary'
-                      ? TablerIcons.microscope
-                      : TablerIcons.book),
-              size: 14, color: const Color(0xFF1B4F9C),
-            ),
-            hint: _category == 'health'
-                ? 'Chagua Hospitali/Kituo (hiari)'
-                : 'Chagua Shule (hiari)',
-            value: d.facilityId == null ? null : tamisemiFacs.cast<dynamic>()
-                .firstWhere((f) => '${f['id'] ?? f['code']}' == d.facilityId, orElse: () => null)?['name'] as String?,
-            onTap: () async {
-              final listIcon = _category == 'health' ? TablerIcons.first_aid_kit
-                  : (widget.initial['cadre_level'] == 'Secondary'
-                      ? TablerIcons.microscope
-                      : TablerIcons.book);
-              final items = [
-                (value: null as String?, label: 'Bila Kituo (Hiari)', subtitle: null),
-                ...tamisemiFacs.map((f) => (
-                  value: '${f['id'] ?? f['code']}' as String?,
-                  label: '${f['name']}',
-                  subtitle: f['type'] != null ? '${f['type']}' : null,
-                )),
-              ];
-              final result = await showSelectSheet<String?>(
-                context,
-                title: _category == 'health' ? 'Chagua Kituo' : 'Chagua Shule',
-                items: items, selected: d.facilityId, searchable: true,
-                itemIcon: listIcon,
-              );
-              setState(() {
-                d.facilityId = result;
-                if (result != null) {
-                  final fac = tamisemiFacs.firstWhere((f) => '${f['id'] ?? f['code']}' == result, orElse: () => null);
-                  d.facilityName = fac?['name'] as String?;
-                } else {
-                  d.facilityName = null;
-                }
-              });
-            },
-          ),
-        ],
-      ]),
+      ),
     );
   }
 }
 
-class _DistCheckbox extends StatelessWidget {
+class _Dot extends StatelessWidget {
+  final bool on;
+  const _Dot(this.on);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: on ? _C.blue : _C.borderStronger, width: on ? 5 : 2),
+      ),
+    );
+  }
+}
+
+class _OptionRow extends StatelessWidget {
   final String label;
-  final bool checked;
-  final bool bold;
-  final ValueChanged<bool?> onChanged;
-  const _DistCheckbox({
+  final String? subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+  final double minHeight;
+
+  const _OptionRow({
     required this.label,
-    required this.checked,
-    required this.onChanged,
-    this.bold = false,
+    required this.selected,
+    required this.onTap,
+    this.subtitle,
+    this.minHeight = 46,
   });
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => onChanged(!checked),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3), // space-y-1.5
-        child: Row(children: [
-          SizedBox(
-            width: 14, height: 14, // w-3.5 h-3.5=14px
-            child: IgnorePointer(
-              child: Checkbox(
-                value: checked,
-                onChanged: (_) {},
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                activeColor: _kBlue,
+      onTap: onTap,
+      child: Container(
+        constraints: BoxConstraints(minHeight: minHeight),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: _C.border, width: 0.5)),
+        ),
+        child: Row(
+          children: [
+            _Dot(selected),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.3,
+                      color: selected ? _C.blue : _C.text,
+                      fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                    ),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      style: const TextStyle(fontSize: 12, height: 1.3, color: _C.textSec),
+                    ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(width: 8), // gap-2=8px
-          Text(label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
-                color: bold ? _kGrey700 : const Color(0xFF4B5563), // grey-700 vs grey-600
-              )),
-        ]),
+          ],
+        ),
       ),
     );
   }
 }
 
-// Step-level inline error — web: bg-red-50 border-red-100 AlertCircle(16) p-3(12px) gap-2(8px) text-sm(14) font-medium rounded-xl
-class _ErrorBox extends StatelessWidget {
-  final String message;
-  const _ErrorBox(this.message);
+/// Orodha ya nguzo mbili, kama Masomo.
+class _TwoCol extends StatelessWidget {
+  final List<Widget> children;
+  const _TwoCol({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (int i = 0; i < children.length; i += 2)
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: children[i]),
+                const SizedBox(width: 20),
+                Expanded(child: i + 1 < children.length ? children[i + 1] : const SizedBox()),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Orodha yenye kutafuta (ikiwa chaguo ni zaidi ya 12) na nguzo mbili.
+class _PickList extends StatefulWidget {
+  final List<RegOption> options;
+  final String? selectedId;
+  final String hint;
+  final ValueChanged<RegOption> onPick;
+
+  const _PickList({
+    required this.options,
+    required this.selectedId,
+    required this.hint,
+    required this.onPick,
+  });
+
+  @override
+  State<_PickList> createState() => _PickListState();
+}
+
+class _PickListState extends State<_PickList> {
+  String _q = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _q.trim().toLowerCase();
+    final shown = q.isEmpty
+        ? widget.options
+        : widget.options.where((o) => o.label.toLowerCase().contains(q)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 6),
+        if (widget.options.length > 12)
+          Container(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: _C.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _C.borderStrong, width: 0.5),
+            ),
+            child: Row(
+              children: [
+                const Icon(RegIcons.search, size: 16, color: _C.textSec),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    onChanged: (v) => setState(() => _q = v),
+                    style: const TextStyle(fontSize: 13, color: _C.text),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: false,
+                      hintText: 'Tafuta ${widget.hint}...',
+                      hintStyle: const TextStyle(fontSize: 13, color: _C.textMuted),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 4),
+        if (shown.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 18),
+            child: Center(
+              child: Text('Hakuna kilichopatikana.', style: TextStyle(fontSize: 13, color: _C.textSec)),
+            ),
+          )
+        else
+          _TwoCol(
+            children: [
+              for (final o in shown)
+                _OptionRow(
+                  label: o.label,
+                  subtitle: o.subtitle,
+                  selected: o.id == widget.selectedId,
+                  onTap: () => widget.onPick(o),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+/// Inapakia orodha kutoka API na kuonyesha spinner au kosa.
+class _Async extends StatefulWidget {
+  final Future<List<RegOption>> Function() load;
+  final Widget Function(List<RegOption>) builder;
+
+  const _Async({super.key, required this.load, required this.builder});
+
+  @override
+  State<_Async> createState() => _AsyncState();
+}
+
+class _AsyncState extends State<_Async> {
+  late Future<List<RegOption>> _f;
+
+  @override
+  void initState() {
+    super.initState();
+    _f = widget.load();
+  }
+
+  void _retry() => setState(() => _f = widget.load());
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<RegOption>>(
+      future: _f,
+      builder: (context, snap) {
+        if (snap.hasError) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: InkWell(
+                onTap: _retry,
+                child: const Text(
+                  'Imeshindikana kupakia. Bonyeza kujaribu tena.',
+                  style: TextStyle(fontSize: 13, color: _C.danger),
+                ),
+              ),
+            ),
+          );
+        }
+        if (!snap.hasData) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 22),
+            child: Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2, color: _C.blue),
+              ),
+            ),
+          );
+        }
+        return widget.builder(snap.data!);
+      },
+    );
+  }
+}
+
+class _ChoiceCards extends StatelessWidget {
+  final List<_Item> items;
+  final String? selected;
+  final ValueChanged<int> onTap;
+
+  const _ChoiceCards({required this.items, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        children: [
+          for (int i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            _card(i),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _card(int i) {
+    final item = items[i];
+    final on = selected == item.label;
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => onTap(i),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: on ? _C.blue : _C.borderStrong, width: on ? 1.5 : 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _C.blueSoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(item.icon, size: 22, color: _C.blue),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(item.label, style: const TextStyle(fontSize: 15, color: _C.text)),
+            ),
+            _Dot(on),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Segmented extends StatelessWidget {
+  final String leftLabel;
+  final IconData leftIcon;
+  final String rightLabel;
+  final IconData rightIcon;
+  final bool rightSelected;
+  final ValueChanged<bool> onChanged; // true = kulia
+
+  const _Segmented({
+    required this.leftLabel,
+    required this.leftIcon,
+    required this.rightLabel,
+    required this.rightIcon,
+    required this.rightSelected,
+    required this.onChanged,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12), // p-3=12px
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2), // bg-red-50
-        borderRadius: BorderRadius.circular(12), // rounded-xl
-        border: Border.all(color: const Color(0xFFFEE2E2)), // border-red-100
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Icon(Icons.error_outline, size: 16, color: Color(0xFFDC2626)), // size=16
-        const SizedBox(width: 8), // gap-2=8px
-        Expanded(
-          child: Text(message,
-              style: const TextStyle(
-                  fontSize: 14, // text-sm
-                  fontWeight: FontWeight.w500, // font-medium
-                  color: Color(0xFFDC2626))),
+      child: Row(
+        children: [
+          Expanded(child: _seg(leftLabel, leftIcon, !rightSelected, () => onChanged(false))),
+          const SizedBox(width: 4),
+          Expanded(child: _seg(rightLabel, rightIcon, rightSelected, () => onChanged(true))),
+        ],
+      ),
+    );
+  }
+
+  Widget _seg(String label, IconData icon, bool on, VoidCallback tap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(11),
+      onTap: tap,
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: on ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: on ? _C.blueBorder : Colors.transparent, width: 0.5),
         ),
-      ]),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: on ? _C.blue : _C.textSec),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: on ? FontWeight.w500 : FontWeight.w400,
+                color: on ? _C.blue : _C.textSec,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UnderlineField extends StatelessWidget {
+  final IconData icon;
+  final String hint;
+  final TextEditingController controller;
+  final TextInputType keyboardType;
+  final TextCapitalization capitalization;
+  final ValueChanged<String>? onChanged;
+
+  const _UnderlineField({
+    required this.icon,
+    required this.hint,
+    required this.controller,
+    required this.keyboardType,
+    this.capitalization = TextCapitalization.none,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: _C.borderStrong, width: 2)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: _C.blue),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              textCapitalization: capitalization,
+              onChanged: onChanged,
+              style: const TextStyle(fontSize: 15, color: _C.text),
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                hintText: hint,
+                hintStyle: const TextStyle(fontSize: 15, color: _C.textMuted),
+                contentPadding: const EdgeInsets.symmetric(vertical: 6),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhoneStatusRow extends StatelessWidget {
+  final _PhoneStatus status;
+  const _PhoneStatusRow({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget? child;
+    switch (status) {
+      case _PhoneStatus.available:
+        child = const Row(
+          children: [
+            Icon(RegIcons.ok, size: 16, color: _C.success),
+            SizedBox(width: 6),
+            Text('Namba inapatikana', style: TextStyle(fontSize: 12, color: _C.success)),
+          ],
+        );
+        break;
+      case _PhoneStatus.taken:
+        child = const Row(
+          children: [
+            Icon(RegIcons.bad, size: 16, color: _C.danger),
+            SizedBox(width: 6),
+            Text('Namba hii tayari inatumiwa', style: TextStyle(fontSize: 12, color: _C.danger)),
+          ],
+        );
+        break;
+      case _PhoneStatus.checking:
+        child = const Row(
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2, color: _C.textSec),
+            ),
+            SizedBox(width: 6),
+            Text('Inakagua...', style: TextStyle(fontSize: 12, color: _C.textSec)),
+          ],
+        );
+        break;
+      case _PhoneStatus.idle:
+        child = null;
+        break;
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: SizedBox(height: 18, child: child),
     );
   }
 }

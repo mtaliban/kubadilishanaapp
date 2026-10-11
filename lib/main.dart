@@ -16,9 +16,7 @@ import 'services/offline_queue.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/registration_flow_screen.dart'
-    show RegistrationFlowScreen, TargetArea, kNoSchool;
+import 'screens/register_flow_entry.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/donate_screen.dart';
@@ -202,7 +200,7 @@ class _KubadilishanaAppState extends State<KubadilishanaApp> {
           routes: {
             '/': (_) => const SplashScreen(),
             '/login': (_) => const LoginScreen(),
-            '/register': (_) => const _RegisterFlowAdapter(),
+            '/register': (_) => const RegisterFlowEntry(),
             '/dashboard': (_) => const DashboardScreen(),
             '/profile': (_) => const ProfileScreen(),
             '/donate': (_) => const DonateScreen(),
@@ -368,6 +366,20 @@ class _ErrorWidget extends StatelessWidget {
   }
 }
 
+class _ComingSoon extends StatelessWidget {
+  final String title;
+  const _ComingSoon(this.title);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: const Center(
+          child: Text('Inaendelea kuundwa...',
+              style: TextStyle(color: AppColors.textSecondary))),
+    );
+  }
+}
+
 class _CrashLogScreen extends StatelessWidget {
   const _CrashLogScreen();
   @override
@@ -387,132 +399,6 @@ class _CrashLogScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ── Adapter: RegistrationFlowScreen → /auth/register ────────────────────────
-// Inapokea RegistrationData kutoka skrini mpya, inaigeuza payload ya backend
-// (RegisterRequest: full_name/phone_primary/phone_alt + category/cadre_code/
-// subjects + current_station + desired_destinations + years_of_service).
-class _RegisterFlowAdapter extends StatelessWidget {
-  const _RegisterFlowAdapter();
-
-  @override
-  Widget build(BuildContext context) {
-    return RegistrationFlowScreen(
-      onLogin: () => Navigator.pushReplacementNamed(context, '/login'),
-      onSubmit: (data) async {
-        final auth = context.read<AuthProvider>();
-
-        // Eneo la sasa (StationInput) — kutoka IDs halisi za dropdown
-        final station = <String, dynamic>{
-          'region_id': data.mkoaId,
-          'region_name': data.mkoa,
-          'district_id': data.wilayaId,
-          'district_name': data.wilaya,
-          'facility_id': data.kituoId,
-          'facility_name': data.kituo,
-          'facility_type': data.kituoType,
-        };
-
-        // Maeneo ya lengo (DestinationInput) — mkoa moja kwa kila target card
-        final destinations = <Map<String, dynamic>>[];
-        // WIZARA YA AFYA: mkoa wa lengo + HOSPITALI YA RUFAA ya lengo
-        // (single target, facility = hospitali iliyo-chaguliwa au null).
-        final isAfyaWizara = data.employmentSector == 'wizara_afya';
-        if (isAfyaWizara && data.targets.isNotEmpty && data.targets.first.mkoaId != null) {
-          final t = data.targets.first;
-          destinations.add({
-            'region_id': t.mkoaId,
-            'region_name': t.mkoa,
-            // District ya hospitali ya rufaa inatoka kwenye data ya hospitali —
-            // kwa payload, schema inakubali null (mkoa tu inapita rufaa za mkoa).
-            'district_id': null,
-            'district_name': null,
-            'facility_id': t.hospitaliId,
-            'facility_name': t.hospitali.isNotEmpty ? t.hospitali : null,
-            'notes': null,
-          });
-        } else {
-        for (final t in data.targets) {
-          if (t.mkoaId == null) continue;
-          final anyDistrict = t.wilaya.contains(kWilayaAny);
-          if (anyDistrict || t.wilayaIds.isEmpty) {
-            // "Wilaya yeyote" — mkoa tu, bila wilaya maalum
-            destinations.add({
-              'region_id': t.mkoaId,
-              'region_name': t.mkoa,
-              'district_id': null,
-              'district_name': null,
-              'facility_id': t.shuleIds.isEmpty ? null : t.shuleIds.values.first,
-              'facility_name': t.shule.contains(kWilayaAny)
-                  ? null
-                  : (t.shule.isEmpty || t.shule.first == kNoSchool)
-                      ? null
-                      : t.shule.first,
-              'notes': null,
-            });
-          } else {
-            // Wilaya zilizochaguliwa — entry moja kwa kila wilaya
-            for (final w in t.wilaya) {
-              if (w == kWilayaAny) continue;
-              destinations.add({
-                'region_id': t.mkoaId,
-                'region_name': t.mkoa,
-                'district_id': _districtIdOf(t, w),
-                'district_name': w,
-                'facility_id': t.shuleIds.isEmpty ? null : t.shuleIds.values.first,
-                'facility_name':
-                    (t.shule.isEmpty || t.shule.first == kNoSchool)
-                        ? null
-                        : t.shule.first,
-                'notes': null,
-              });
-            }
-          }
-        }
-        } // else: non-wizara-afya destinations
-
-        final payload = <String, dynamic>{
-          'full_name': data.name,
-          'phone_primary': data.phone,
-          'phone_alt': data.whatsapp,
-          'category': data.categoryCode ?? 'education',
-          if (data.employmentSector != null) 'employment_sector': data.employmentSector,
-          'cadre_code': data.cadreCode ?? '',
-          'subjects': data.subjectCodes,
-          'years_of_service': data.yearsOfService,
-          'current_station': station,
-          'desired_destinations': destinations,
-        };
-
-        final ok = await auth.register(payload);
-        if (!context.mounted) return;
-        if (ok) {
-          Navigator.pushReplacementNamed(context, '/dashboard');
-        }
-      },
-    );
-  }
-
-  static int? _districtIdOf(TargetArea t, String wName) {
-    final i = t.wilaya.indexOf(wName);
-    if (i < 0 || i >= t.wilayaIds.length) return null;
-    return t.wilayaIds[i];
-  }
-}
-
-class _ComingSoon extends StatelessWidget {
-  final String title;
-  const _ComingSoon(this.title);
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: const Center(
-          child: Text('Inaendelea kuundwa...',
-              style: TextStyle(color: AppColors.textSecondary))),
     );
   }
 }
