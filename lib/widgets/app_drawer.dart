@@ -278,10 +278,6 @@ class AppDrawer extends StatelessWidget {
     return rows;
   }
 
-  // Urefu wa body ya footer (bottom nav): padding (4,10,4,8) + tile 44 +
-  // gap 4 + label ≈ 80. SystemInset ya chini inajumlishwa runtime.
-  static const double kFooterBody = 80;
-
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
@@ -290,8 +286,8 @@ class AppDrawer extends StatelessWidget {
     // textScaler inabandikwa ≤ 1.0 tu ndani ya drawer, nje haibadiliki.
     return MediaQuery(
       data: mq.copyWith(textScaler: mq.textScaler.clamp(maxScaleFactor: 1.0)),
-      child: Drawer(    // Drawer IFUNIKE hamburger: juu ya panel = KILELE CHA hamburger,
-          // halafu inashuka HADI JUU YA FOOTER (gap ndogo tu — design mpya).
+      child: Drawer(    // Drawer ishere MPAKA CHINI KABISA ya skrini — ifunike
+          // footer ya chini (bottom nav) kikamilifu.
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
@@ -300,11 +296,9 @@ class AppDrawer extends StatelessWidget {
               // Namba hasi inaruhusiwa kuwa 0 (simu isiyo na status inset) —
               // shifted_box assertion ya Flutter inakataza isNonNegative.
               top: math.max(0.0, insets.top - 4),
-              // PANEL ISHE MOJA KWA MOJA JUU YA FOOTER (mizio ya geometry halisi:
-              // footer = SafeArea-chini + Padding(4,10,4,8) + tile 44 + gap 4 +
-              // label ≈ 80 + insets.bottom). Kuipunguza kunafunika footer — Toka
-              // haionyeshwi vizuri chini ya panel. (Imepimwa kwenye 390×844/inset 40.)
-              bottom: kFooterBody + insets.bottom,
+              // CHINI KABISA: hakuna padding ya chini — panel inashuka mpaka
+              // mwanzo wa skrini (inafunika footer ya bottom nav).
+              bottom: 0,
             ),
             // Column moja halisi (height inasimamiwa): Spacer inaingia nafasi
             // ya pungufu bila kusinyoosha rows — rows zina ukubwa ule ulikuwa nao,
