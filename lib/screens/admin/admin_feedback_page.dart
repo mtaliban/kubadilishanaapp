@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -172,8 +173,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
       context: context,
       builder: (ctx) => Dialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF0F172A)
-            : Colors.white,
+            ? Color(0xFF0F172A)
+            : Ad.card(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -207,13 +208,13 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _kInkT(context))),
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(ctx, true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _kIsDark(context) ? const Color(0xFFF87171) : _kRed,
-                      foregroundColor: Colors.white,
+                      backgroundColor: _kIsDark(context) ? Color(0xFFF87171) : _kRed,
+                      foregroundColor: Ad.card(context),
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -277,8 +278,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       body: RefreshIndicator(
         onRefresh: _load,
         color: _kBlueT(context),
@@ -425,14 +426,14 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         child: Center(
                           child: Column(mainAxisSize: MainAxisSize.min, children: [
                             Icon(PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
-                                color: _kIsDark(context) ? const Color(0xFFF87171) : _kRed, size: 44),
-                            const SizedBox(height: 12),
+                                color: _kIsDark(context) ? Color(0xFFF87171) : _kRed, size: 44),
+                            SizedBox(height: 12),
                             ElevatedButton.icon(
                               onPressed: _load,
                               icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
                               label: Text('Jaribu tena', style: GoogleFonts.inter()),
                               style: ElevatedButton.styleFrom(
-                                  backgroundColor: _kBlueT(context), foregroundColor: Colors.white),
+                                  backgroundColor: _kBlueT(context), foregroundColor: Ad.card(context)),
                             ),
                           ]),
                         ),
@@ -620,8 +621,8 @@ class _FeedbackCardState extends State<_FeedbackCard> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1E293B)
-            : Colors.white,
+            ? Color(0xFF1E293B)
+            : Ad.card(context),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: _kBlueT(context), width: 1.5),
       ),
@@ -640,7 +641,7 @@ class _FeedbackCardState extends State<_FeedbackCard> {
             hintText: 'Hariri jibu lako...',
             hintStyle: GoogleFonts.inter(fontSize: 14, color: _kGrey400T(context)),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Ad.card(context),
             contentPadding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(21),
@@ -665,20 +666,20 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                 style: GoogleFonts.inter(
                     fontSize: 13, fontWeight: FontWeight.w600, color: _kGreyT(context))),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: ElevatedButton.icon(
               onPressed: _sending ? null : _send,
               style: ElevatedButton.styleFrom(
                 backgroundColor: _kBlueT(context),
-                foregroundColor: Colors.white,
+                foregroundColor: Ad.card(context),
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               icon: _sending
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16, height: 16,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      child: CircularProgressIndicator(color: Ad.card(context), strokeWidth: 2))
                   : const SizedBox.shrink(),
               label: Text('Hifadhi jibu', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
             ),
@@ -707,8 +708,8 @@ class _FeedbackCardState extends State<_FeedbackCard> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1E293B)
-            : Colors.white,
+            ? Color(0xFF1E293B)
+            : Ad.card(context),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
             color: Theme.of(context).brightness == Brightness.dark
@@ -982,7 +983,7 @@ class _PaginationNum extends StatelessWidget {
         width: 30, height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? _kBlueT(context) : Colors.white,
+          color: active ? _kBlueT(context) : Ad.card(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: active ? _kBlueT(context) : _kBorderT(context)),
         ),
@@ -1073,8 +1074,8 @@ class _ReplyBoxState extends State<ReplyBox> {
                 enabledBorder: border,
                 filled: true,
                 fillColor: _kIsDark(context)
-                    ? const Color(0xFF1E293B)
-                    : Colors.white,
+                    ? Color(0xFF1E293B)
+                    : Ad.card(context),
                 focusedBorder: border.copyWith(
                     borderSide: BorderSide(color: _kBlueT(context), width: 1.5)),
               ),
@@ -1093,13 +1094,13 @@ class _ReplyBoxState extends State<ReplyBox> {
                           : _kBlueT(context),
                       shape: BoxShape.circle),
                   child: widget.sending
-                      ? const Padding(
+                      ? Padding(
                           padding: EdgeInsets.all(9),
                           child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
+                              color: Ad.card(context), strokeWidth: 2))
                       : Icon(PhosphorIcons.paperPlaneTilt(
                           PhosphorIconsStyle.fill),
-                          color: Colors.white,
+                          color: Ad.card(context),
                           size: 17),
                 ),
               ),

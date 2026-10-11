@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -139,8 +140,8 @@ class _State extends State<AdminUsersPage> {
       useSafeArea: true,
       showDragHandle: true,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => _FiltersSheet(parent: this),
@@ -396,8 +397,8 @@ class _State extends State<AdminUsersPage> {
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
       content: Text(body),
@@ -460,8 +461,8 @@ class _State extends State<AdminUsersPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => StatefulBuilder(
@@ -617,12 +618,12 @@ class _State extends State<AdminUsersPage> {
                 }
               },
               icon: busy
-                  ? const SizedBox(width: 16, height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? SizedBox(width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Ad.card(context)))
                   : Icon(PhosphorIcons.fileXls(PhosphorIconsStyle.fill), size: 18),
-              label: const Text('Chagua Faili la Excel', style: TextStyle(fontWeight: FontWeight.w700)),
+              label: Text('Chagua Faili la Excel', style: TextStyle(fontWeight: FontWeight.w700)),
               style: ElevatedButton.styleFrom(
-                  backgroundColor: _blue, foregroundColor: Colors.white,
+                  backgroundColor: _blue, foregroundColor: Ad.card(context),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
             )),
@@ -860,12 +861,12 @@ class _State extends State<AdminUsersPage> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: _blue, foregroundColor: Colors.white,
+                      backgroundColor: _blue, foregroundColor: Ad.card(context),
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                   child: saving
-                      ? const SizedBox(width: 18, height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? SizedBox(width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Ad.card(context)))
                       : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                           Icon(PhosphorIcons.userPlus(), size: 16),
                           const SizedBox(width: 6),
@@ -985,12 +986,12 @@ class _State extends State<AdminUsersPage> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: _blue, foregroundColor: Colors.white,
+                      backgroundColor: _blue, foregroundColor: Ad.card(context),
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                   child: saving
-                      ? const SizedBox(width: 18, height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? SizedBox(width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Ad.card(context)))
                       : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                           Icon(PhosphorIcons.floppyDisk(), size: 16),
                           const SizedBox(width: 6),
@@ -1061,12 +1062,12 @@ class _State extends State<AdminUsersPage> {
                   }
                 },
                 icon: saving
-                    ? const SizedBox(width: 16, height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? SizedBox(width: 16, height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Ad.card(context)))
                     : Icon(PhosphorIcons.shieldCheck(PhosphorIconsStyle.fill), size: 16),
-                label: const Text('Ongeza Admin', style: TextStyle(fontWeight: FontWeight.w700)),
+                label: Text('Ongeza Admin', style: TextStyle(fontWeight: FontWeight.w700)),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: _blue, foregroundColor: Colors.white,
+                    backgroundColor: _blue, foregroundColor: Ad.card(context),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
               )),
@@ -1166,15 +1167,15 @@ class _State extends State<AdminUsersPage> {
                     foregroundColor: _g700, side: const BorderSide(color: _g200),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                child: const Text('Funga'),
+                child: Text('Funga'),
               )),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(child: ElevatedButton.icon(
                 onPressed: () { Navigator.pop(context); _showEdit(u); },
                 icon: Icon(PhosphorIcons.pencilSimple(), size: 16),
-                label: const Text('Hariri', style: TextStyle(fontWeight: FontWeight.w700)),
+                label: Text('Hariri', style: TextStyle(fontWeight: FontWeight.w700)),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: _blue, foregroundColor: Colors.white,
+                    backgroundColor: _blue, foregroundColor: Ad.card(context),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
               )),
@@ -1191,16 +1192,16 @@ class _State extends State<AdminUsersPage> {
         Container(width: 44, height: 44,
             decoration: BoxDecoration(color: _blueBg, borderRadius: BorderRadius.circular(14)),
             child: Icon(icon, color: _blue, size: 22)),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _g900)),
-          if (sub != null) Text(sub, style: const TextStyle(fontSize: 12.5, color: _g500)),
+          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _g900)),
+          if (sub != null) Text(sub, style: TextStyle(fontSize: 12.5, color: _g500)),
         ])),
         GestureDetector(
           onTap: () => Navigator.pop(ctx),
           child: Container(width: 34, height: 34,
               decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Ad.card(context),
                   shape: BoxShape.circle,
                   border: Border.all(color: _g200)),
               child: Icon(PhosphorIcons.x(), size: 15, color: _g700)),
@@ -1217,11 +1218,11 @@ class _State extends State<AdminUsersPage> {
       {IconData? icon, TextInputType keyboard = TextInputType.text, bool obscure = false}) =>
       TextField(
         controller: ctrl, keyboardType: keyboard, obscureText: obscure,
-        style: const TextStyle(fontSize: 14, color: _g900),
+        style: TextStyle(fontSize: 14, color: _g900),
         decoration: InputDecoration(
-          hintText: hint, hintStyle: const TextStyle(color: _g400, fontSize: 13.5),
+          hintText: hint, hintStyle: TextStyle(color: _g400, fontSize: 13.5),
           prefixIcon: icon != null ? Icon(icon, size: 17, color: _g400) : null,
-          fillColor: Colors.white, filled: true,
+          fillColor: Ad.card(context), filled: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: _g200)),
@@ -1238,7 +1239,7 @@ class _State extends State<AdminUsersPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
-            color: active ? _blueBg : Colors.white,
+            color: active ? _blueBg : Ad.card(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: active ? _blue : _g200, width: active ? 1.4 : 1),
           ),
@@ -1255,7 +1256,7 @@ class _State extends State<AdminUsersPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
-          color: active ? _blueBg : Colors.white,
+          color: active ? _blueBg : Ad.card(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: active ? _blue : _g200, width: active ? 1.4 : 1),
         ),
@@ -1303,7 +1304,7 @@ class _State extends State<AdminUsersPage> {
           child: Container(
             padding: _kInputPad,
             decoration: BoxDecoration(
-              color: active ? _blueBg : Colors.white,
+              color: active ? _blueBg : Ad.card(context),
               border: Border.all(
                   color: active ? _blue : _g300,
                   width: active ? 1.5 : 1.0),
@@ -1416,15 +1417,15 @@ class _State extends State<AdminUsersPage> {
                     Icon(PhosphorIcons.wifiHigh(), color: _g400, size: 44),
                     const SizedBox(height: 12),
                     Text(_error!,
-                        style: const TextStyle(color: _g500, fontSize: 12),
+                        style: TextStyle(color: _g500, fontSize: 12),
                         textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     ElevatedButton.icon(
                       onPressed: _load,
                       icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
-                      label: const Text('Jaribu tena'),
+                      label: Text('Jaribu tena'),
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: _blue, foregroundColor: Colors.white),
+                          backgroundColor: _blue, foregroundColor: Ad.card(context)),
                     ),
                   ])),
                 )
@@ -1553,7 +1554,7 @@ class _State extends State<AdminUsersPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: sel ? _blue : Colors.white,
+              color: sel ? _blue : Ad.card(context),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: sel ? _blue : _cardBorder),
             ),
@@ -1579,7 +1580,7 @@ class _State extends State<AdminUsersPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: _activeFilterCount > 0 ? _blueBg : Colors.white,
+                color: _activeFilterCount > 0 ? _blueBg : Ad.card(context),
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: _activeFilterCount > 0 ? _blue : _cardBorder),
               ),
@@ -1591,12 +1592,12 @@ class _State extends State<AdminUsersPage> {
                     color: _activeFilterCount > 0 ? _blue : _g700,
                     fontWeight: FontWeight.w700, fontSize: 12.5)),
                 if (_activeFilterCount > 0) ...[
-                  const SizedBox(width: 7),
+                  SizedBox(width: 7),
                   Container(
                     width: 18, height: 18, alignment: Alignment.center,
                     decoration: BoxDecoration(color: _blue, shape: BoxShape.circle),
-                    child: Text('$_activeFilterCount', style: const TextStyle(
-                        fontSize: 10.5, fontWeight: FontWeight.w800, color: Colors.white)),
+                    child: Text('$_activeFilterCount', style: TextStyle(
+                        fontSize: 10.5, fontWeight: FontWeight.w800, color: Ad.card(context))),
                   ),
                 ],
               ]),
@@ -1635,7 +1636,7 @@ class _State extends State<AdminUsersPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Ad.card(context),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: _cardBorder),
               ),
@@ -1660,13 +1661,13 @@ class _State extends State<AdminUsersPage> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           GestureDetector(
             onTap: _openFiltersSheet,
             child: Container(
               width: 42, height: 42,
               decoration: BoxDecoration(
-                color: _activeFilterCount > 0 ? _blueBg : Colors.white,
+                color: _activeFilterCount > 0 ? _blueBg : Ad.card(context),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                     color: _activeFilterCount > 0 ? _blue : _cardBorder),
@@ -1675,14 +1676,14 @@ class _State extends State<AdminUsersPage> {
                   color: _activeFilterCount > 0 ? _blue : _g500, size: 17),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           // Menyu ya admin (⋮) — Ongeza / Import / Ongeza Admin
           GestureDetector(
             onTap: _showAdminMenu,
             child: Container(
               width: 42, height: 42,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Ad.card(context),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: _cardBorder),
               ),
@@ -1699,8 +1700,8 @@ class _State extends State<AdminUsersPage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
@@ -1747,18 +1748,18 @@ class _State extends State<AdminUsersPage> {
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
             decoration: BoxDecoration(
-              color: active ? (activeBg ?? _blue) : Colors.white,
+              color: active ? (activeBg ?? _blue) : Ad.card(context),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: active ? (activeBg ?? _blue) : _cardBorder),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               if (icon != null) ...[
-                Icon(icon, size: 12, color: active ? (activeFg ?? Colors.white) : _g500),
-                const SizedBox(width: 5),
+                Icon(icon, size: 12, color: active ? (activeFg ?? Ad.card(context)) : _g500),
+                SizedBox(width: 5),
               ],
               Text(label,
                   style: TextStyle(
-                      color: active ? (activeFg ?? Colors.white) : _g600,
+                      color: active ? (activeFg ?? Ad.card(context)) : _g600,
                       fontWeight: FontWeight.w700,
                       fontSize: 12.5)),
             ]),
@@ -1855,10 +1856,10 @@ class _State extends State<AdminUsersPage> {
 
   // ── Bulk bar — bodi ya chini (inabaki wakati unascroll) ────────────────────
   Widget _buildBulkBar() {
-    if (_selected.isEmpty) return const SizedBox.shrink();
+    if (_selected.isEmpty) return SizedBox.shrink();
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Ad.card(context),
         border: Border(top: BorderSide(color: _cardBorder)),
       ),
       child: SafeArea(
@@ -1966,7 +1967,7 @@ class _UserCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: selected ? _blueBg : Colors.white,
+            color: selected ? _blueBg : Ad.card(context),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
                 color: selected ? _blue : _cardBorder,
@@ -1994,9 +1995,9 @@ class _UserCard extends StatelessWidget {
                         child: Container(
                           width: 12, height: 12,
                           decoration: BoxDecoration(
-                            color: isActive ? const Color(0xFF16A34A) : _red,
+                            color: isActive ? Color(0xFF16A34A) : _red,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(color: Ad.card(context), width: 2),
                           ),
                         ),
                       ),
@@ -2107,8 +2108,8 @@ class _UserCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
@@ -2418,7 +2419,7 @@ class _FiltersSheetState extends State<_FiltersSheet> {
               child: ElevatedButton(
                 onPressed: _applyAndClose,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: _blue, foregroundColor: Colors.white,
+                    backgroundColor: _blue, foregroundColor: Ad.card(context),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                 child: Text(
@@ -2594,7 +2595,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Ad.card(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: _cardBorder),
         ),

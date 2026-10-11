@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -53,12 +54,12 @@ Widget v2SectionHeader(String title, IconData icon) {
 }
 
 /// Field decoration ya pamoja (nyeupe, border ya kijivu)
-InputDecoration v2FieldDec(String hint, {Widget? prefixIcon}) => InputDecoration(
+InputDecoration v2FieldDec(BuildContext context, String hint, {Widget? prefixIcon}) => InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontSize: 13.5, color: v2TextMuted),
+      hintStyle: TextStyle(fontSize: 13.5, color: v2TextMuted),
       prefixIcon: prefixIcon,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Ad.card(context),
       contentPadding:
           const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       border: OutlineInputBorder(
@@ -106,10 +107,10 @@ class _V2PickerScreenState extends State<V2PickerScreen> {
         widget.options.where((o) => o.name.toLowerCase().contains(q)).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Ad.card(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: Ad.card(context),
+        surfaceTintColor: Ad.card(context),
         elevation: 0,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(widget.title,
@@ -125,7 +126,7 @@ class _V2PickerScreenState extends State<V2PickerScreen> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: TextField(
             onChanged: (v) => setState(() => _q = v),
-            decoration: v2FieldDec(
+            decoration: v2FieldDec(context,
               'Tafuta ${widget.title.toLowerCase()}...',
               prefixIcon: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -799,10 +800,10 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         );
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: v2TextMuted, fontSize: 14),
+      hintStyle: TextStyle(color: v2TextMuted, fontSize: 14),
       isDense: true,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Ad.card(context),
       contentPadding:
           const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       prefixIcon: Padding(
@@ -851,8 +852,8 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                 value: value,
                 onChanged: onChange,
                 activeTrackColor: v2Accent,
-                inactiveTrackColor: const Color(0xFFCFD5DF),
-                thumbColor: const WidgetStatePropertyAll(Colors.white),
+                inactiveTrackColor: Color(0xFFCFD5DF),
+                thumbColor: WidgetStatePropertyAll(Ad.card(context)),
                 trackOutlineColor:
                     const WidgetStatePropertyAll(Colors.transparent),
               ),
@@ -879,7 +880,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           decoration: BoxDecoration(
               border: Border.all(color: v2Border),
               borderRadius: BorderRadius.circular(11),
-              color: Colors.white),
+              color: Ad.card(context)),
           child: Row(children: [
             Icon(icon, size: 16, color: v2TextSecondary),
             const SizedBox(width: 10),
@@ -900,7 +901,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Ad.card(context),
       body: SafeArea(
         child: Column(children: [
           _buildWizardHeader(),
@@ -919,8 +920,8 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
   Widget _buildWizardHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 8, 14, 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Ad.card(context),
         border: Border(bottom: BorderSide(color: v2Border)),
       ),
       child: Column(children: [
@@ -970,8 +971,8 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     final isLast = _step == 2;
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 10, 14, 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Ad.card(context),
         border: Border(top: BorderSide(color: v2Border)),
       ),
       child: Row(children: [
@@ -992,19 +993,19 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
             onPressed: _saving ? null : _next,
             style: FilledButton.styleFrom(
               backgroundColor: v2Accent,
-              foregroundColor: Colors.white,
+              foregroundColor: Ad.card(context),
               padding: const EdgeInsets.symmetric(horizontal: 18),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
-              textStyle: const TextStyle(
+              textStyle: TextStyle(
                   fontSize: 14, fontWeight: FontWeight.w600),
             ),
             child: _saving
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
+                        strokeWidth: 2, color: Ad.card(context)))
                 : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: isLast
@@ -1276,11 +1277,11 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
 
       _secHdr('Anapotaka kwenda', PhosphorIcons.flag(),
           trailing: _kwenda.isNotEmpty ? '${_kwenda.length} mikoa' : null),
-      const SizedBox(height: 8),
+      SizedBox(height: 8),
       Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Ad.card(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: v2Border),
         ),
@@ -1342,10 +1343,10 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
       ),
 
       _secHdr('Hali ya akaunti', PhosphorIcons.gearSix()),
-      const SizedBox(height: 8),
+      SizedBox(height: 8),
       Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Ad.card(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: v2Border),
         ),
@@ -1372,15 +1373,15 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? v2Accent : Colors.white,
+          color: selected ? v2Accent : Ad.card(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-              color: selected ? v2Accent : const Color(0xFFCFD5DF),
+              color: selected ? v2Accent : Color(0xFFCFD5DF),
               width: selected ? 1.5 : 1.0),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           if (selected) ...[
-            Icon(PhosphorIcons.check(), size: 13, color: Colors.white),
+            Icon(PhosphorIcons.check(), size: 13, color: Ad.card(context)),
             const SizedBox(width: 4),
           ],
           Text(label,
@@ -1448,7 +1449,7 @@ class _V2IdaraCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _color;
     return Material(
-      color: selected ? color.withValues(alpha: 0.09) : Colors.white,
+      color: selected ? color.withValues(alpha: 0.09) : Ad.card(context),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -1621,10 +1622,10 @@ class V2UserDetailScreen extends StatelessWidget {
         waDigits.startsWith('0') ? '255${waDigits.substring(1)}' : waDigits;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Ad.card(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: Ad.card(context),
+        surfaceTintColor: Ad.card(context),
         elevation: 0,
         title: const Text('Taarifa za Mtumiaji',
             style: TextStyle(
@@ -1669,12 +1670,12 @@ class V2UserDetailScreen extends StatelessWidget {
               Container(
                 width: 62,
                 height: 62,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                     color: v2Accent, shape: BoxShape.circle),
                 alignment: Alignment.center,
                 child: Text(init,
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: Ad.card(context),
                         fontSize: 24,
                         fontWeight: FontWeight.w700)),
               ),
@@ -1711,7 +1712,7 @@ class V2UserDetailScreen extends StatelessWidget {
               spacing: 22,
               runSpacing: 10,
               children: [
-                _quick(
+                _quick(context,
                     PhosphorIcons.phoneCall(),
                     'Piga',
                     v2Accent,
@@ -1719,14 +1720,14 @@ class V2UserDetailScreen extends StatelessWidget {
                         ? null
                         : () => v2Launch(
                             'tel:+${phone.replaceAll(RegExp(r'\D'), '')}')),
-                _quick(
+                _quick(context,
                     PhosphorIcons.whatsappLogo(),
                     'WhatsApp',
                     v2Success,
                     wa.isEmpty
                         ? null
                         : () => v2Launch('https://wa.me/$waIntl')),
-                _quick(
+                _quick(context,
                     isActive
                         ? PhosphorIcons.prohibit()
                         : PhosphorIcons.checkCircle(),
@@ -1780,11 +1781,11 @@ class V2UserDetailScreen extends StatelessWidget {
     }
   }
 
-  Widget _quick(IconData icon, String label, Color color, VoidCallback? onTap) {
+  Widget _quick(BuildContext context, IconData icon, String label, Color color, VoidCallback? onTap) {
     final chip = V2IconChip(
         icon: icon,
         color: onTap == null ? v2TextMuted : color,
-        background: Colors.white,
+        background: Ad.card(context),
         size: 40,
         onTap: onTap);
     return Column(children: [
@@ -1887,12 +1888,12 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Ad.card(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Ad.card(context),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Ongeza Admin',
+        title: Text('Ongeza Admin',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -1900,8 +1901,8 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: Ad.card(context),
           border: Border(top: BorderSide(color: v2Border)),
         ),
         child: SafeArea(
@@ -1913,17 +1914,17 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
               onPressed: _saving ? null : _hifadhi,
               style: ElevatedButton.styleFrom(
                   backgroundColor: v2Accent,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Ad.card(context),
                   disabledBackgroundColor: v2Accent.withValues(alpha: .55),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(13))),
               icon: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 15,
                       height: 15,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
+                          strokeWidth: 2, color: Ad.card(context)))
                   : Icon(PhosphorIcons.floppyDisk(), size: 16),
               label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
                   style: const TextStyle(
@@ -2006,7 +2007,7 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
       keyboardType: keyboard,
       obscureText: obscure,
       validator: validator,
-      decoration: v2FieldDec(hint,
+      decoration: v2FieldDec(context, hint,
           prefixIcon: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Icon(icon, size: 16, color: v2TextMuted),
@@ -2086,10 +2087,10 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
   Widget build(BuildContext context) {
     return ToastHost(
       child: Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Ad.card(context),
       appBar: AppBar(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
+          backgroundColor: Ad.card(context),
+          surfaceTintColor: Ad.card(context),
           elevation: 0,
           title: const Text('Import Watumiaji',
               style: TextStyle(
@@ -2203,24 +2204,24 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                             fontSize: 11, color: v2TextSecondary, height: 1.5)),
                   ]),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _busy ? null : _import,
                 style: ElevatedButton.styleFrom(
                     backgroundColor: v2Accent,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Ad.card(context),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 11),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
                 icon: _busy
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
+                            strokeWidth: 2, color: Ad.card(context)))
                     : Icon(PhosphorIcons.uploadSimple(), size: 17),
                 label: Text(
                     _busy ? 'Inapakia...' : 'Chagua Faili la Excel',
@@ -2243,7 +2244,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                     style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             if (_result != null)
               SizedBox(
                 width: double.infinity,
@@ -2251,7 +2252,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: v2Success,
-                      foregroundColor: Colors.white,
+                      foregroundColor: Ad.card(context),
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(
@@ -2267,7 +2268,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
   Widget _stat(String label, int n, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-            color: Colors.white, borderRadius: BorderRadius.circular(8)),
+            color: Ad.card(context), borderRadius: BorderRadius.circular(8)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Text('$n',
               style: TextStyle(

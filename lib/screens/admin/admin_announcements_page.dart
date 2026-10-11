@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
@@ -575,8 +576,8 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -690,7 +691,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: sel ? a.color : Colors.white,
+          color: sel ? a.color : Ad.card(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: sel ? a.color : _cBorder, width: 1.4),
         ),
@@ -767,16 +768,16 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
             child: Text(label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w600, color: _cText)),
           ),
           Switch(
             value: value,
             onChanged: onChanged,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            activeColor: Colors.white,
+            activeColor: Ad.card(context),
             activeTrackColor: _cPrimary,
-            inactiveThumbColor: Colors.white,
+            inactiveThumbColor: Ad.card(context),
             inactiveTrackColor: const Color(0xFFC9D8F0),
             trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
           ),
@@ -1066,13 +1067,13 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                   height: 56,
                   child: Center(
                     child: _sending
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.north_east,
-                            color: Colors.white, size: 24),
+                                strokeWidth: 2, color: Ad.card(context)))
+                        : Icon(Icons.north_east,
+                            color: Ad.card(context), size: 24),
                   ),
                 ),
               ),
@@ -1130,14 +1131,14 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
           const SizedBox(height: 12),
           Text(_loadError!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: _cSub, fontSize: 13)),
-          const SizedBox(height: 12),
+              style: TextStyle(color: _cSub, fontSize: 13)),
+          SizedBox(height: 12),
           FilledButton.icon(
             onPressed: _load,
-            icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Jaribu tena'),
+            icon: Icon(Icons.refresh, size: 16),
+            label: Text('Jaribu tena'),
             style: FilledButton.styleFrom(
-                backgroundColor: _cPrimary, foregroundColor: Colors.white),
+                backgroundColor: _cPrimary, foregroundColor: Ad.card(context)),
           ),
         ]),
       );
@@ -1218,7 +1219,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
           padding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: sel ? _cPrimary : Colors.white,
+            color: sel ? _cPrimary : Ad.card(context),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
                 color: sel ? _cPrimary : _cBorder, width: 1.4),
@@ -1340,16 +1341,16 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
                       ),
                       child: Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Text('Futa tangazo?',
                                 style: TextStyle(
                                     color: _cRed,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13.5)),
                           ),
-                          _miniBtn('Ndiyo', _cRed, Colors.white, () => _futa(t)),
-                          const SizedBox(width: 8),
-                          _miniBtn('Hapana', Colors.white, _cText,
+                          _miniBtn('Ndiyo', _cRed, Ad.card(context), () => _futa(t)),
+                          SizedBox(width: 8),
+                          _miniBtn('Hapana', Ad.card(context), _cText,
                               () => setState(() => _confirmId = null)),
                         ],
                       ),
@@ -1492,11 +1493,11 @@ class _Step extends StatelessWidget {
                   width: 28,
                   height: 28,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                       color: _cPrimary, shape: BoxShape.circle),
                   child: Text('$n',
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: Ad.card(context),
                           fontWeight: FontWeight.w800,
                           fontSize: 13)),
                 ),
