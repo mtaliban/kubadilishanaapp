@@ -7,12 +7,33 @@ import '../widgets/app_toast.dart';
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
 const _kBlue200 = Color(0xFFBFDBFE);
+
+// ── DARK MODE variants ──
+const _kGrey900D = Color(0xFFE7ECF8);
+const _kGrey700D = Color(0xFFB4BFD6);
+const _kGrey500D = Color(0xFF9AA8C7);
+const _kGrey400D = Color(0xFF8B99B4);
+const _kGrey200D = Color(0xFF2A3240);
+const _kGrey100D = Color(0xFF18202F);
+const _kBlueBgD  = Color(0xFF0F172A);
+const _kBlue50D  = Color(0xFF1C2A44);
+// ── LIGHT consts (zimerefutwa hapa — LESO ziwe existed baada ya script ya awali) ─◆
 const _kGrey900 = Color(0xFF111827);
 const _kGrey700 = Color(0xFF374151);
 const _kGrey500 = Color(0xFF6B7280);
 const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kGrey100 = Color(0xFFF3F4F6);
+Color _kOf(BuildContext c, Color light, Color dark) =>
+    Theme.of(c).brightness == Brightness.dark ? dark : light;
+Color _kGrey900Of(BuildContext c) => _kOf(c, _kGrey900, _kGrey900D);
+Color _kGrey700Of(BuildContext c) => _kOf(c, _kGrey700, _kGrey700D);
+Color _kGrey500Of(BuildContext c) => _kOf(c, _kGrey500, _kGrey500D);
+Color _kGrey400Of(BuildContext c) => _kOf(c, _kGrey400, _kGrey400D);
+Color _kGrey200Of(BuildContext c) => _kOf(c, _kGrey200, _kGrey200D);
+Color _kGrey100Of(BuildContext c) => _kOf(c, _kGrey100, _kGrey100D);
+Color _kBgOf(BuildContext c)      => _kOf(c, Colors.white, _kBlueBgD);
+Color _kBlue50Of(BuildContext c)  => _kOf(c, _kBlue50, _kBlue50D);
 const _kGreen50 = Color(0xFFF0FDF4);
 const _kGreen200 = Color(0xFFBBF7D0);
 const _kGreenDk = Color(0xFF16A34A);
@@ -61,37 +82,37 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final name = _user?['full_name']?.toString() ?? 'Mtumiaji';
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _kBgOf(context),
       body: Column(children: [
         Container(
-          color: Colors.white,
+          color: _kBgOf(context),
           padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 12, 16, 12),
           child: Row(children: [
             GestureDetector(
               onTap: () => Navigator.maybePop(context),
               child: Container(
                 width: 38, height: 38,
-                decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _kGrey700)),
+                decoration: BoxDecoration(color: _kGrey100Of(context), borderRadius: BorderRadius.circular(10)),
+                child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _kGrey700Of(context))),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Container(
               width: 40, height: 40,
               decoration: BoxDecoration(
-                color: _kBlue50,
+                color: _kBlue50Of(context),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: _kBlue.withValues(alpha: 0.2))),
-              child: const Icon(Icons.person_outline_rounded, size: 20, color: _kBlue)),
-            const SizedBox(width: 12),
+              child: Icon(Icons.person_outline_rounded, size: 20, color: _kBlue)),
+            SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(_loading ? 'Wasifu' : name,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900)),
-              const Text('Taarifa za mtumiaji',
-                  style: TextStyle(fontSize: 12, color: _kGrey500)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900Of(context))),
+              Text('Taarifa za mtumiaji',
+                  style: TextStyle(fontSize: 12, color: _kGrey500Of(context))),
             ])),
           ]),
         ),
-        Container(height: 1, color: _kGrey200),
+        Container(height: 1, color: _kGrey200Of(context)),
         Expanded(child: _loading
             ? const Center(child: CircularProgressIndicator(color: _kBlue))
             : _error != null
@@ -106,12 +127,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             borderRadius: BorderRadius.circular(16)),
                           child: const Center(child: Icon(Icons.error_outline, size: 26, color: Color(0xFFDC2626))),
                         ),
-                        const SizedBox(height: 14),
-                        const Text('Hitilafu ya kupakia wasifu',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700)),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 14),
+                        Text('Hitilafu ya kupakia wasifu',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700Of(context))),
+                        SizedBox(height: 4),
                         Text(_error!,
-                            style: const TextStyle(fontSize: 11, color: _kGrey400),
+                            style: TextStyle(fontSize: 11, color: _kGrey400Of(context)),
                             textAlign: TextAlign.center),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
@@ -166,7 +187,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     width: 80, height: 80,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _kBlue50,
+                      color: _kBlue50Of(context),
                       border: Border.all(color: _kBlue200, width: 2)),
                     child: Center(child: Text(initials,
                       style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: _kBlue))),
@@ -178,9 +199,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         color: _kGreenDk, shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2)))),
                 ]),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(fullName,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kGrey900)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kGrey900Of(context))),
                 const SizedBox(height: 6),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   if (isVerified) Container(
@@ -253,8 +274,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               if (station.isEmpty ||
                   (station['region_name'] == null &&
                       station['district_name'] == null))
-                const Text('Hakuna taarifa za kituo',
-                    style: TextStyle(color: _kGrey400, fontSize: 13)),
+                Text('Hakuna taarifa za kituo',
+                    style: TextStyle(color: _kGrey400Of(context), fontSize: 13)),
             ],
           ),
           const SizedBox(height: 12),
@@ -265,8 +286,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             icon: Icons.map_outlined,
             children: [
               if (destinations.isEmpty)
-                const Text('Hakuna maeneo yaliyochaguliwa',
-                    style: TextStyle(color: _kGrey400, fontSize: 13))
+                Text('Hakuna maeneo yaliyochaguliwa',
+                    style: TextStyle(color: _kGrey400Of(context), fontSize: 13))
               else
                 Wrap(
                   spacing: 6,
@@ -278,7 +299,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: _kBlue50,
+                        color: _kBlue50Of(context),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(color: _kBlue200)),
                       child: Text(regionName,
@@ -302,11 +323,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   children: subjects.map((s) => Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: _kGrey100,
+                      color: _kGrey100Of(context),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: _kGrey200)),
+                      border: Border.all(color: _kGrey200Of(context))),
                     child: Text(s.toString(),
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kGrey700)),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kGrey700Of(context))),
                   )).toList(),
                 ),
               ],
@@ -340,26 +361,26 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kGrey200),
+        border: Border.all(color: _kGrey200Of(context)),
         boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Container(
             width: 30, height: 30,
-            decoration: BoxDecoration(color: _kBlue50, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: _kBlue50Of(context), borderRadius: BorderRadius.circular(8)),
             child: Center(child: Icon(icon, size: 15, color: _kBlue)),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Text(title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900)),
+                style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900Of(context))),
           ),
         ]),
-        Container(margin: const EdgeInsets.symmetric(vertical: 12), height: 1, color: _kGrey200),
+        Container(margin: const EdgeInsets.symmetric(vertical: 12), height: 1, color: _kGrey200Of(context)),
         ...children,
       ]),
     );
@@ -384,12 +405,12 @@ class _InfoRow extends StatelessWidget {
           child: Text(label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  fontSize: 12, color: _kGrey400, fontWeight: FontWeight.w500)),
+              style: TextStyle(
+                  fontSize: 12, color: _kGrey400Of(context), fontWeight: FontWeight.w500)),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Expanded(
-          child: Text(value, style: const TextStyle(fontSize: 13, color: _kGrey700, fontWeight: FontWeight.w600)),
+          child: Text(value, style: TextStyle(fontSize: 13, color: _kGrey700Of(context), fontWeight: FontWeight.w600)),
         ),
       ]),
     );

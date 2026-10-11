@@ -35,20 +35,20 @@ String _deptDisplayName(String code) {
 }
 
 /// Kichwa cha section kwenye fomu (icon + label)
-Widget v2SectionHeader(String title, IconData icon) {
+Widget v2SectionHeader(BuildContext context, String title, IconData icon) {
   return Padding(
     padding: const EdgeInsets.fromLTRB(0, 18, 0, 8),
     child: Row(children: [
-      Icon(icon, size: 14, color: v2Accent),
-      const SizedBox(width: 6),
+      Icon(icon, size: 14, color: v2AccentOf(context)),
+      SizedBox(width: 6),
       Text(title.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w800,
               letterSpacing: .6,
-              color: v2TextSecondary)),
-      const SizedBox(width: 10),
-      const Expanded(child: Divider(height: 1, color: v2Border)),
+              color: v2TextSecondaryOf(context))),
+      SizedBox(width: 10),
+      Expanded(child: Divider(height: 1, color: v2BorderOf(context))),
     ]),
   );
 }
@@ -56,7 +56,7 @@ Widget v2SectionHeader(String title, IconData icon) {
 /// Field decoration ya pamoja (nyeupe, border ya kijivu)
 InputDecoration v2FieldDec(BuildContext context, String hint, {Widget? prefixIcon}) => InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(fontSize: 13.5, color: v2TextMuted),
+      hintStyle: TextStyle(fontSize: 13.5, color: v2TextMutedOf(context)),
       prefixIcon: prefixIcon,
       filled: true,
       fillColor: Ad.card(context),
@@ -64,13 +64,13 @@ InputDecoration v2FieldDec(BuildContext context, String hint, {Widget? prefixIco
           const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: Color(0xFFD0D7E2))),
+          borderSide: BorderSide(color: Color(0xFFD0D7E2))),
       enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: Color(0xFFD0D7E2))),
+          borderSide: BorderSide(color: Color(0xFFD0D7E2))),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: v2Accent, width: 1.5)),
+          borderSide: BorderSide(color: v2AccentOf(context), width: 1.5)),
     );
 
 // ═══════════════════════════════ PICKER SCREEN ═══════════════════════════════
@@ -114,11 +114,11 @@ class _V2PickerScreenState extends State<V2PickerScreen> {
         elevation: 0,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(widget.title,
-              style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w700, color: v2TextPrimary)),
+              style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: v2TextPrimaryOf(context))),
           if (widget.subtitle != null)
             Text(widget.subtitle!,
-                style: const TextStyle(fontSize: 11, color: v2TextMuted)),
+                style: TextStyle(fontSize: 11, color: v2TextMutedOf(context))),
         ]),
       ),
       body: Column(children: [
@@ -131,7 +131,7 @@ class _V2PickerScreenState extends State<V2PickerScreen> {
               prefixIcon: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Icon(PhosphorIcons.magnifyingGlass(),
-                    size: 16, color: v2TextMuted),
+                    size: 16, color: v2TextMutedOf(context)),
               ),
             ),
           ),
@@ -145,40 +145,40 @@ class _V2PickerScreenState extends State<V2PickerScreen> {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                      color: v2SurfaceMuted,
+                      color: v2SurfaceMutedOf(context),
                       borderRadius: BorderRadius.circular(9)),
                   child: Icon(PhosphorIcons.globe(),
-                      size: 17, color: v2TextSecondary),
+                      size: 17, color: v2TextSecondaryOf(context)),
                 ),
                 title: Text(widget.allLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13.5, fontWeight: FontWeight.w600)),
                 trailing: widget.selectedId == null
                     ? Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
-                        color: v2Accent, size: 18)
+                        color: v2AccentOf(context), size: 18)
                     : null,
                 onTap: () => Navigator.pop(context, (id: null, name: null)),
               ),
-              const Divider(height: 1, color: v2Border),
+              Divider(height: 1, color: v2BorderOf(context)),
               for (final o in filtered)
                 ListTile(
                   leading: Container(
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                        color: v2AccentBg,
+                        color: v2AccentBgOf(context),
                         borderRadius: BorderRadius.circular(9)),
-                    child: Icon(widget.icon, size: 17, color: v2Accent),
+                    child: Icon(widget.icon, size: 17, color: v2AccentOf(context)),
                   ),
-                  title: Text(o.name, style: const TextStyle(fontSize: 13.5)),
+                  title: Text(o.name, style: TextStyle(fontSize: 13.5)),
                   subtitle: o.subtitle != null
                       ? Text(o.subtitle!,
-                          style: const TextStyle(
-                              fontSize: 11, color: v2TextMuted))
+                          style: TextStyle(
+                              fontSize: 11, color: v2TextMutedOf(context)))
                       : null,
                   trailing: widget.selectedId == o.id
                       ? Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
-                          color: v2Accent, size: 18)
+                          color: v2AccentOf(context), size: 18)
                       : null,
                   onTap: () => Navigator.pop(context, (id: o.id, name: o.name)),
                 ),
@@ -187,7 +187,7 @@ class _V2PickerScreenState extends State<V2PickerScreen> {
                   padding: const EdgeInsets.all(32),
                   child: Center(
                       child: Text('Hakuna kilichopatikana',
-                          style: TextStyle(color: v2TextMuted))),
+                          style: TextStyle(color: v2TextMutedOf(context)))),
                 ),
             ],
           ),
@@ -735,30 +735,30 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         margin: const EdgeInsets.only(top: 6, bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-            color: v2DangerBg, borderRadius: BorderRadius.circular(10)),
+            color: v2DangerBgOf(context), borderRadius: BorderRadius.circular(10)),
         child: Row(children: [
-          Icon(PhosphorIcons.warningCircle(), size: 15, color: v2Danger),
-          const SizedBox(width: 8),
+          Icon(PhosphorIcons.warningCircle(), size: 15, color: v2DangerOf(context)),
+          SizedBox(width: 8),
           Expanded(
               child: Text(_error!,
-                  style: const TextStyle(fontSize: 12.5, color: v2Danger))),
+                  style: TextStyle(fontSize: 12.5, color: v2DangerOf(context)))),
         ]),
       );
 
   Widget _secHdr(String title, IconData icon, {String? trailing}) => Padding(
         padding: const EdgeInsets.only(top: 14, bottom: 2),
         child: Row(children: [
-          Icon(icon, size: 18, color: v2Accent),
-          const SizedBox(width: 8),
+          Icon(icon, size: 18, color: v2AccentOf(context)),
+          SizedBox(width: 8),
           Expanded(
               child: Text(title,
-                  style: const TextStyle(
-                      color: v2TextPrimary,
+                  style: TextStyle(
+                      color: v2TextPrimaryOf(context),
                       fontSize: 14,
                       fontWeight: FontWeight.w600))),
           if (trailing != null)
             Text(trailing,
-                style: const TextStyle(color: v2TextMuted, fontSize: 12)),
+                style: TextStyle(color: v2TextMutedOf(context), fontSize: 12)),
         ]),
       );
 
@@ -770,21 +770,21 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           Expanded(
             child: Text.rich(TextSpan(
               text: text,
-              style: const TextStyle(
-                  color: v2TextPrimary,
+              style: TextStyle(
+                  color: v2TextPrimaryOf(context),
                   fontSize: 13,
                   fontWeight: FontWeight.w600),
               children: [
                 if (req)
-                  const TextSpan(
-                      text: ' *', style: TextStyle(color: v2Danger)),
+                  TextSpan(
+                      text: ' *', style: TextStyle(color: v2DangerOf(context))),
               ],
             )),
           ),
           if (trailing != null)
             Text(trailing,
                 style: TextStyle(
-                    color: trailingColor ?? v2TextMuted,
+                    color: trailingColor ?? v2TextMutedOf(context),
                     fontSize: 12,
                     fontWeight: trailingColor != null
                         ? FontWeight.w600
@@ -800,7 +800,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         );
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: v2TextMuted, fontSize: 14),
+      hintStyle: TextStyle(color: v2TextMutedOf(context), fontSize: 14),
       isDense: true,
       filled: true,
       fillColor: Ad.card(context),
@@ -809,19 +809,19 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
       prefixIcon: Padding(
         padding: const EdgeInsets.only(left: 12, right: 8),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 18, color: iconColor ?? v2TextMuted),
+          Icon(icon, size: 18, color: iconColor ?? v2TextMutedOf(context)),
           if (prefix255) ...[
-            const SizedBox(width: 10),
-            Text('+255', style: const TextStyle(color: v2TextMuted, fontSize: 14)),
-            const SizedBox(width: 8),
-            Container(width: 1, height: 18, color: v2Border),
+            SizedBox(width: 10),
+            Text('+255', style: TextStyle(color: v2TextMutedOf(context), fontSize: 14)),
+            SizedBox(width: 8),
+            Container(width: 1, height: 18, color: v2BorderOf(context)),
           ],
         ]),
       ),
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       border: b(const Color(0xFFCFD5DF)),
       enabledBorder: b(const Color(0xFFCFD5DF)),
-      focusedBorder: b(v2Accent, 1.5),
+      focusedBorder: b(v2AccentOf(context), 1.5),
     );
   }
 
@@ -837,13 +837,13 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
-                        style: const TextStyle(
-                            color: v2TextPrimary,
+                        style: TextStyle(
+                            color: v2TextPrimaryOf(context),
                             fontSize: 14,
                             fontWeight: FontWeight.w600)),
                     Text(sub,
-                        style: const TextStyle(
-                            color: v2TextMuted, fontSize: 12)),
+                        style: TextStyle(
+                            color: v2TextMutedOf(context), fontSize: 12)),
                   ]),
             ),
             Transform.scale(
@@ -851,7 +851,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
               child: Switch(
                 value: value,
                 onChanged: onChange,
-                activeTrackColor: v2Accent,
+                activeTrackColor: v2AccentOf(context),
                 inactiveTrackColor: Color(0xFFCFD5DF),
                 thumbColor: WidgetStatePropertyAll(Ad.card(context)),
                 trackOutlineColor:
@@ -878,18 +878,18 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-              border: Border.all(color: v2Border),
+              border: Border.all(color: v2BorderOf(context)),
               borderRadius: BorderRadius.circular(11),
               color: Ad.card(context)),
           child: Row(children: [
-            Icon(icon, size: 16, color: v2TextSecondary),
-            const SizedBox(width: 10),
+            Icon(icon, size: 16, color: v2TextSecondaryOf(context)),
+            SizedBox(width: 10),
             Expanded(
                 child: Text(text,
                     style: TextStyle(
                         fontSize: 13,
-                        color: empty ? v2TextMuted : v2TextPrimary))),
-            Icon(PhosphorIcons.caretDown(), size: 14, color: v2TextMuted),
+                        color: empty ? v2TextMutedOf(context) : v2TextPrimaryOf(context)))),
+            Icon(PhosphorIcons.caretDown(), size: 14, color: v2TextMutedOf(context)),
           ]),
         ),
       ),
@@ -922,26 +922,26 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
       padding: const EdgeInsets.fromLTRB(4, 8, 14, 10),
       decoration: BoxDecoration(
         color: Ad.card(context),
-        border: Border(bottom: BorderSide(color: v2Border)),
+        border: Border(bottom: BorderSide(color: v2BorderOf(context))),
       ),
       child: Column(children: [
         Row(children: [
           IconButton(
             onPressed: _back,
-            icon: Icon(PhosphorIcons.arrowLeft(), size: 20, color: v2TextPrimary),
+            icon: Icon(PhosphorIcons.arrowLeft(), size: 20, color: v2TextPrimaryOf(context)),
           ),
           Expanded(
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(_isEditing ? 'Hariri Mtumiaji' : 'Mtumiaji mpya',
-                      style: const TextStyle(
-                          color: v2TextPrimary,
+                      style: TextStyle(
+                          color: v2TextPrimaryOf(context),
                           fontSize: 16,
                           fontWeight: FontWeight.w600)),
                   Text(
                       'Hatua ${_step + 1} kati ya 3 · ${_stepTitles[_step]}',
-                      style: const TextStyle(color: v2TextMuted, fontSize: 12)),
+                      style: TextStyle(color: v2TextMutedOf(context), fontSize: 12)),
                 ]),
           ),
         ]),
@@ -955,7 +955,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                   height: 4,
                   margin: EdgeInsets.only(right: i < 2 ? 6 : 0),
                   decoration: BoxDecoration(
-                    color: i <= _step ? v2Accent : const Color(0xFFCFD5DF),
+                    color: i <= _step ? v2AccentOf(context) : const Color(0xFFCFD5DF),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -973,16 +973,16 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
       padding: const EdgeInsets.fromLTRB(8, 10, 14, 10),
       decoration: BoxDecoration(
         color: Ad.card(context),
-        border: Border(top: BorderSide(color: v2Border)),
+        border: Border(top: BorderSide(color: v2BorderOf(context))),
       ),
       child: Row(children: [
         if (_step > 0)
           TextButton.icon(
             onPressed: _saving ? null : _back,
-            icon: Icon(PhosphorIcons.caretLeft(), size: 18, color: v2TextSecondary),
-            label: const Text('Rudi',
+            icon: Icon(PhosphorIcons.caretLeft(), size: 18, color: v2TextSecondaryOf(context)),
+            label: Text('Rudi',
                 style: TextStyle(
-                    color: v2TextSecondary,
+                    color: v2TextSecondaryOf(context),
                     fontSize: 14,
                     fontWeight: FontWeight.w600)),
           ),
@@ -992,7 +992,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           child: FilledButton(
             onPressed: _saving ? null : _next,
             style: FilledButton.styleFrom(
-              backgroundColor: v2Accent,
+              backgroundColor: v2AccentOf(context),
               foregroundColor: Ad.card(context),
               padding: const EdgeInsets.symmetric(horizontal: 18),
               shape: RoundedRectangleBorder(
@@ -1036,7 +1036,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
       TextField(
         controller: _jinaCtrl,
         textCapitalization: TextCapitalization.words,
-        style: const TextStyle(color: v2TextPrimary, fontSize: 14),
+        style: TextStyle(color: v2TextPrimaryOf(context), fontSize: 14),
         decoration: _inDec(PhosphorIcons.user(), 'mf. Juma Kiswili'),
       ),
       _lbl('Namba ya simu', req: true),
@@ -1044,7 +1044,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         controller: _simuCtrl,
         keyboardType: TextInputType.phone,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: const TextStyle(color: v2TextPrimary, fontSize: 14),
+        style: TextStyle(color: v2TextPrimaryOf(context), fontSize: 14),
         decoration:
             _inDec(PhosphorIcons.phone(), '712 345 678', prefix255: true),
       ),
@@ -1060,17 +1060,17 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
               child: Checkbox(
                 value: _sameAsPhone,
                 onChanged: (v) => setState(() => _sameAsPhone = v ?? false),
-                activeColor: v2Accent,
+                activeColor: v2AccentOf(context),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             // Expanded: maandishi yafuata nafasi — font kubwa ya mtumiaji
             // (scale 1.3+) haivunji row tena kwenye simu ndogo.
-            const Expanded(
+            Expanded(
               child: Text('Ni sawa na namba ya simu',
-                  style: TextStyle(color: v2TextPrimary, fontSize: 13)),
+                  style: TextStyle(color: v2TextPrimaryOf(context), fontSize: 13)),
             ),
           ]),
         ),
@@ -1080,18 +1080,18 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           controller: _waCtrl,
           keyboardType: TextInputType.phone,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(color: v2TextPrimary, fontSize: 14),
+          style: TextStyle(color: v2TextPrimaryOf(context), fontSize: 14),
           decoration: _inDec(
               PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
               '689 225 170',
               prefix255: true,
-              iconColor: v2Success),
+              iconColor: v2SuccessOf(context)),
         ),
       _lbl(_isEditing ? 'Nywila mpya (hiari)' : 'Nywila', req: !_isEditing),
       TextField(
         controller: _passCtrl,
         obscureText: !_showPass,
-        style: const TextStyle(color: v2TextPrimary, fontSize: 14),
+        style: TextStyle(color: v2TextPrimaryOf(context), fontSize: 14),
         decoration:
             _inDec(PhosphorIcons.lockSimple(), 'Angalau herufi 6').copyWith(
           suffixIcon: IconButton(
@@ -1099,13 +1099,13 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
             icon: Icon(
                 _showPass ? PhosphorIcons.eyeSlash() : PhosphorIcons.eye(),
                 size: 16,
-                color: v2TextMuted),
+                color: v2TextMutedOf(context)),
           ),
         ),
       ),
-      const SizedBox(height: 4),
-      const Text('Angalau herufi 6',
-          style: TextStyle(color: v2TextMuted, fontSize: 12)),
+      SizedBox(height: 4),
+      Text('Angalau herufi 6',
+          style: TextStyle(color: v2TextMutedOf(context), fontSize: 12)),
     ]);
   }
 
@@ -1122,16 +1122,16 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-              color: v2SurfaceMuted,
+              color: v2SurfaceMutedOf(context),
               borderRadius: BorderRadius.circular(10)),
-          child: const Row(children: [
+          child: Row(children: [
             SizedBox(
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: v2Accent)),
+                    strokeWidth: 2, color: v2AccentOf(context))),
             SizedBox(width: 10),
-            Text('Inapakia idara...', style: TextStyle(fontSize: 12, color: v2TextMuted)),
+            Text('Inapakia idara...', style: TextStyle(fontSize: 12, color: v2TextMutedOf(context))),
           ]),
         )
       else
@@ -1181,22 +1181,22 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
       if (showMasomo) ...[
         _lbl('Masomo anayofundisha',
             trailing: _masomo.isEmpty ? null : '${_masomo.length} umechagua',
-            trailingColor: _masomo.isEmpty ? null : v2Accent),
+            trailingColor: _masomo.isEmpty ? null : v2AccentOf(context)),
         if (_subjects.isEmpty && _masomo.isEmpty)
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                      color: v2SurfaceMuted,
+                      color: v2SurfaceMutedOf(context),
                       borderRadius: BorderRadius.circular(10)),
-                  child: const Row(children: [
+                  child: Row(children: [
                     SizedBox(
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: v2Accent)),
+                            strokeWidth: 2, color: v2AccentOf(context))),
                     SizedBox(width: 10),
                     Text('Inapakia masomo...',
-                        style: TextStyle(fontSize: 12, color: v2TextMuted)),
+                        style: TextStyle(fontSize: 12, color: v2TextMutedOf(context))),
                   ]),
                 )
               else
@@ -1283,7 +1283,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         decoration: BoxDecoration(
           color: Ad.card(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: v2Border),
+          border: Border.all(color: v2BorderOf(context)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           if (_kwenda.isNotEmpty)
@@ -1303,7 +1303,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 11, vertical: 6),
                       decoration: BoxDecoration(
-                          color: v2AccentBg,
+                          color: v2AccentBgOf(context),
                           borderRadius: BorderRadius.circular(999)),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         // ConstrainedBox + ellipsis: wilaya ndefu kwenye simu
@@ -1316,13 +1316,13 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
                           child: Text(label,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  color: v2Accent,
+                              style: TextStyle(
+                                  color: v2AccentOf(context),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600)),
                         ),
-                        const SizedBox(width: 4),
-                        Icon(PhosphorIcons.x(), size: 13, color: v2Accent),
+                        SizedBox(width: 4),
+                        Icon(PhosphorIcons.x(), size: 13, color: v2AccentOf(context)),
                       ]),
                     ),
                   );
@@ -1330,10 +1330,10 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
               ),
             )
           else
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 8),
               child: Text('Bado hujaongeza mkoa wowote.',
-                  style: TextStyle(color: v2TextMuted, fontSize: 12)),
+                  style: TextStyle(color: v2TextMutedOf(context), fontSize: 12)),
             ),
           _V2DashedAddButton(
             label: 'Ongeza mkoa',
@@ -1348,15 +1348,15 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         decoration: BoxDecoration(
           color: Ad.card(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: v2Border),
+          border: Border.all(color: v2BorderOf(context)),
         ),
         child: Column(children: [
           _toggleRow('Akaunti hai', 'Anaweza kuingia kwenye app', _active,
               (v) => setState(() => _active = v)),
-          const Divider(height: 1, color: v2Border),
+          Divider(height: 1, color: v2BorderOf(context)),
           _toggleRow('Haki za admin', 'Anaweza kusimamia watumiaji', _admin,
               (v) => setState(() => _admin = v)),
-          const Divider(height: 1, color: v2Border),
+          Divider(height: 1, color: v2BorderOf(context)),
           _toggleRow('Amelipa', 'Malipo yamethibitishwa', _verified,
               (v) => setState(() => _verified = v)),
         ]),
@@ -1373,22 +1373,22 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? v2Accent : Ad.card(context),
+          color: selected ? v2AccentOf(context) : Ad.card(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-              color: selected ? v2Accent : Color(0xFFCFD5DF),
+              color: selected ? v2AccentOf(context) : Color(0xFFCFD5DF),
               width: selected ? 1.5 : 1.0),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           if (selected) ...[
             Icon(PhosphorIcons.check(), size: 13, color: Ad.card(context)),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
           ],
           Text(label,
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  color: selected ? Colors.white : v2TextPrimary)),
+                  color: selected ? Colors.white : v2TextPrimaryOf(context))),
         ]),
       ),
     );
@@ -1468,20 +1468,20 @@ class _V2IdaraCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(_icon, size: 22, color: color),
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Text(label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      color: v2TextPrimary,
+                  style: TextStyle(
+                      color: v2TextPrimaryOf(context),
                       fontSize: 14,
                       fontWeight: FontWeight.w600)),
               if (sub.isNotEmpty)
                 Text(sub,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: v2TextMuted, fontSize: 12)),
+                    style: TextStyle(
+                        color: v2TextMutedOf(context), fontSize: 12)),
             ],
           ),
         ),
@@ -1503,7 +1503,7 @@ class _V2DashedAddButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: CustomPaint(
         painter: _DashedBorderPainter(
-          color: v2Accent.withValues(alpha: 0.6),
+          color: v2AccentOf(context).withValues(alpha: 0.6),
           radius: 10,
         ),
         child: SizedBox(
@@ -1511,14 +1511,14 @@ class _V2DashedAddButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(PhosphorIcons.plus(), size: 16, color: v2Accent),
-              const SizedBox(width: 6),
+              Icon(PhosphorIcons.plus(), size: 16, color: v2AccentOf(context)),
+              SizedBox(width: 6),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: v2Accent,
+                  color: v2AccentOf(context),
                 ),
               ),
             ],
@@ -1627,11 +1627,11 @@ class V2UserDetailScreen extends StatelessWidget {
         backgroundColor: Ad.card(context),
         surfaceTintColor: Ad.card(context),
         elevation: 0,
-        title: const Text('Taarifa za Mtumiaji',
+        title: Text('Taarifa za Mtumiaji',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: v2TextPrimary)),
+                color: v2TextPrimaryOf(context))),
         actions: [
           if (onHariri != null)
             Padding(
@@ -1639,9 +1639,9 @@ class V2UserDetailScreen extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: onHariri,
                 icon: Icon(PhosphorIcons.pencilSimple(), size: 14),
-                label: const Text('Hariri'),
+                label: Text('Hariri'),
                 style: TextButton.styleFrom(
-                    foregroundColor: v2Accent,
+                    foregroundColor: v2AccentOf(context),
                     textStyle: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600)),
               ),
@@ -1651,8 +1651,8 @@ class V2UserDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.only(right: 10),
               child: V2IconChip(
                   icon: PhosphorIcons.trash(),
-                  color: v2Danger,
-                  background: v2DangerBg,
+                  color: v2DangerOf(context),
+                  background: v2DangerBgOf(context),
                   onTap: onFuta,
                   size: 30),
             ),
@@ -1664,14 +1664,14 @@ class V2UserDetailScreen extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
           decoration: BoxDecoration(
-              color: v2SurfaceMuted, borderRadius: BorderRadius.circular(16)),
+              color: v2SurfaceMutedOf(context), borderRadius: BorderRadius.circular(16)),
           child: Column(children: [
             Stack(clipBehavior: Clip.none, children: [
               Container(
                 width: 62,
                 height: 62,
                 decoration: BoxDecoration(
-                    color: v2Accent, shape: BoxShape.circle),
+                    color: v2AccentOf(context), shape: BoxShape.circle),
                 alignment: Alignment.center,
                 child: Text(init,
                     style: TextStyle(
@@ -1686,23 +1686,23 @@ class V2UserDetailScreen extends StatelessWidget {
                   width: 16,
                   height: 16,
                   decoration: BoxDecoration(
-                    color: isActive ? v2Success : v2Danger,
+                    color: isActive ? v2SuccessOf(context) : v2DangerOf(context),
                     shape: BoxShape.circle,
-                    border: Border.all(color: v2SurfaceMuted, width: 2.5),
+                    border: Border.all(color: v2SurfaceMutedOf(context), width: 2.5),
                   ),
                 ),
               ),
             ]),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(v2TitleCase(name),
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w800,
-                    color: v2TextPrimary)),
-            const SizedBox(height: 3),
+                    color: v2TextPrimaryOf(context))),
+            SizedBox(height: 3),
             Text(cadre.isEmpty ? '—' : cadre,
                 style:
-                    const TextStyle(color: v2TextSecondary, fontSize: 12.5)),
+                    TextStyle(color: v2TextSecondaryOf(context), fontSize: 12.5)),
             const SizedBox(height: 14),
             // Wrap (si Row): simu ndogo (320) na font kubwa, quick actions
             // 3 (Piga/WhatsApp/Funga) zilivuja 24px. Wrap inazigawa mistari
@@ -1715,7 +1715,7 @@ class V2UserDetailScreen extends StatelessWidget {
                 _quick(context,
                     PhosphorIcons.phoneCall(),
                     'Piga',
-                    v2Accent,
+                    v2AccentOf(context),
                     phone.isEmpty
                         ? null
                         : () => v2Launch(
@@ -1723,7 +1723,7 @@ class V2UserDetailScreen extends StatelessWidget {
                 _quick(context,
                     PhosphorIcons.whatsappLogo(),
                     'WhatsApp',
-                    v2Success,
+                    v2SuccessOf(context),
                     wa.isEmpty
                         ? null
                         : () => v2Launch('https://wa.me/$waIntl')),
@@ -1732,37 +1732,37 @@ class V2UserDetailScreen extends StatelessWidget {
                         ? PhosphorIcons.prohibit()
                         : PhosphorIcons.checkCircle(),
                     isActive ? 'Funga' : 'Fungua',
-                    v2Warning,
+                    v2WarningOf(context),
                     () => _toggleSuspend(context)),
               ],
             ),
           ]),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         // ── Info card ──
         Container(
           decoration: BoxDecoration(
-            color: v2Surface,
+            color: v2SurfaceOf(context),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: v2Border, width: 0.7),
+            border: Border.all(color: v2BorderOf(context), width: 0.7),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Column(children: [
-            _row('SIMU', phone.isEmpty ? '—' : v2FmtPhone(phone),
-                valueColor: v2Accent),
+            _row(context, 'SIMU', phone.isEmpty ? '—' : v2FmtPhone(phone),
+                valueColor: v2AccentOf(context)),
             if (wa.isNotEmpty)
-              _row('WHATSAPP', v2FmtPhone(wa), valueColor: v2Success),
-            _row('IDARA', _deptDisplayName(category)),
-            _row('KADA', cadre.isEmpty ? '—' : cadre),
-            if (subjects.isNotEmpty) _row('MASOMO', subjects.join(', ')),
-            _row('MKOA / WILAYA',
+              _row(context, 'WHATSAPP', v2FmtPhone(wa), valueColor: v2SuccessOf(context)),
+            _row(context, 'IDARA', _deptDisplayName(category)),
+            _row(context, 'KADA', cadre.isEmpty ? '—' : cadre),
+            if (subjects.isNotEmpty) _row(context, 'MASOMO', subjects.join(', ')),
+            _row(context, 'MKOA / WILAYA',
                 region.isEmpty ? '—' : (district.isEmpty ? region : '$region, $district')),
-            _row('KITUO', facility.isEmpty ? '—' : facility),
-            _row('ANAKWENDA', dests.isEmpty ? '—' : dests.join(' · ')),
-            _row('HALI', null, trailing: V2StatusBadge(active: isActive)),
-            _row('AMELIPA', isPaid ? 'Ndiyo' : 'Hapana'),
-            _row('WAJIBU', isAdmin ? 'Admin' : 'Mtumiaji'),
-            _row('IMEUNDWA', _fmtDate('${user['created_at'] ?? ''}'),
+            _row(context, 'KITUO', facility.isEmpty ? '—' : facility),
+            _row(context, 'ANAKWENDA', dests.isEmpty ? '—' : dests.join(' · ')),
+            _row(context, 'HALI', null, trailing: V2StatusBadge(active: isActive)),
+            _row(context, 'AMELIPA', isPaid ? 'Ndiyo' : 'Hapana'),
+            _row(context, 'WAJIBU', isAdmin ? 'Admin' : 'Mtumiaji'),
+            _row(context, 'IMEUNDWA', _fmtDate('${user['created_at'] ?? ''}'),
                 isLast: true),
           ]),
         ),
@@ -1784,38 +1784,38 @@ class V2UserDetailScreen extends StatelessWidget {
   Widget _quick(BuildContext context, IconData icon, String label, Color color, VoidCallback? onTap) {
     final chip = V2IconChip(
         icon: icon,
-        color: onTap == null ? v2TextMuted : color,
+        color: onTap == null ? v2TextMutedOf(context) : color,
         background: Ad.card(context),
         size: 40,
         onTap: onTap);
     return Column(children: [
       chip,
-      const SizedBox(height: 5),
+      SizedBox(height: 5),
       Text(label,
           style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w600,
               color:
-                  onTap == null ? v2TextMuted : v2TextSecondary)),
+                  onTap == null ? v2TextMutedOf(context) : v2TextSecondaryOf(context))),
     ]);
   }
 
-  Widget _row(String label, String? value,
+  Widget _row(BuildContext context, String label, String? value,
       {Color? valueColor, Widget? trailing, bool isLast = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 11),
       decoration: BoxDecoration(
           border: isLast
               ? null
-              : const Border(bottom: BorderSide(color: v2Border))),
+              : Border(bottom: BorderSide(color: v2BorderOf(context)))),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
             flex: 2,
             child: Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
-                    color: v2TextMuted))),
+                    color: v2TextMutedOf(context)))),
         Expanded(
           flex: 3,
           child: Align(
@@ -1826,7 +1826,7 @@ class V2UserDetailScreen extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w500,
-                        color: valueColor ?? v2TextPrimary)),
+                        color: valueColor ?? v2TextPrimaryOf(context))),
           ),
         ),
       ]),

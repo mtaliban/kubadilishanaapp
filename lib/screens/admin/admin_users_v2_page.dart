@@ -616,28 +616,28 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   void _showTrashSheet() {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: v2SurfaceOf(context),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
       builder: (ctx) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Center(
               child: Container(
                   width: 34,
                   height: 4,
                   decoration: BoxDecoration(
-                      color: v2Border,
+                      color: v2BorderOf(context),
                       borderRadius: BorderRadius.circular(4)))),
           const SizedBox(height: 12),
           const Text('Zilizofutwa (kipindi hii)',
               style:
                   TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 6, 20, 4),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
             child: Text(
               'Zimefutwa kweli kwenye server — kurejesha hakipatikani.',
-              style: TextStyle(fontSize: 11.5, color: v2TextMuted),
+              style: TextStyle(fontSize: 11.5, color: v2TextMutedOf(context)),
             ),
           ),
           const SizedBox(height: 6),
@@ -649,13 +649,13 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                   ListTile(
                     dense: true,
                     leading: Icon(PhosphorIcons.user(),
-                        size: 18, color: v2TextMuted),
+                        size: 18, color: v2TextMutedOf(context)),
                     title:
                         Text(v2TitleCase('${t['full_name'] ?? ''}'),
                             style: const TextStyle(fontSize: 13)),
                     subtitle: Text('${t['phone_primary'] ?? ''}',
-                        style: const TextStyle(
-                            fontSize: 11.5, color: v2TextMuted)),
+                        style: TextStyle(
+                            fontSize: 11.5, color: v2TextMutedOf(context))),
                   ),
               ],
             ),
@@ -683,14 +683,14 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: v2SurfaceOf(context),
       body: SafeArea(
         child: Stack(
           children: [
             _loading && _users.isEmpty
                 ? _buildSkeleton()
                 : RefreshIndicator(
-                    color: v2Accent,
+                    color: v2AccentOf(context),
                     onRefresh: _load,
                     child: _buildScrollBody(),
                   ),
@@ -699,7 +699,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
               right: 16,
               child: FloatingActionButton(
                 onPressed: _openAddOptions,
-                backgroundColor: v2Accent,
+                backgroundColor: v2AccentOf(context),
                 shape: const CircleBorder(),
                 elevation: 4,
                 child: Icon(PhosphorIcons.plus(), color: Colors.white, size: 20),
@@ -764,23 +764,23 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: v2Border, width: 0.8),
+        border: Border.all(color: v2BorderOf(context), width: 0.8),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Expanded(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(v2FmtNum(_total),
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w900,
-                    color: v2TextPrimary,
+                    color: v2TextPrimaryOf(context),
                     height: 1.0)),
             const SizedBox(height: 4),
-            const Text('Watumiaji Wote',
+            Text('Watumiaji Wote',
                 style: TextStyle(
                     fontSize: 12.5,
-                    color: v2TextSecondary,
+                    color: v2TextSecondaryOf(context),
                     fontWeight: FontWeight.w500)),
             const SizedBox(height: 12),
             Row(children: [
@@ -791,28 +791,28 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                 borderRadius: BorderRadius.circular(8),
                 child: Badge(
                   label: Text('${_trash.length}',
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: Colors.white, fontSize: 9)),
                   isLabelVisible: _trash.isNotEmpty,
-                  backgroundColor: v2Danger,
+                  backgroundColor: v2DangerOf(context),
                   child: Icon(PhosphorIcons.trash(),
                       size: 22,
-                      color: _trash.isEmpty ? v2TextMuted : v2Danger),
+                      color: _trash.isEmpty ? v2TextMutedOf(context) : v2DangerOf(context)),
                 ),
               ),
             ]),
           ]),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Container(
           width: 58,
           height: 58,
           decoration: BoxDecoration(
-            color: v2AccentBg,
+            color: v2AccentBgOf(context),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(PhosphorIcons.usersThree(PhosphorIconsStyle.fill),
-              size: 28, color: v2Accent),
+              size: 28, color: v2AccentOf(context)),
         ),
       ]),
     );
@@ -822,7 +822,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: _live ? v2SuccessBg : const Color(0xFFF0F0F0),
+        color: _live ? v2SuccessBgOf(context) : Color(0xFFF0F0F0),
         borderRadius: BorderRadius.circular(100),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -830,16 +830,16 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
           width: 6,
           height: 6,
           decoration: BoxDecoration(
-            color: _live ? v2Success : v2TextMuted,
+            color: _live ? v2SuccessOf(context) : v2TextMutedOf(context),
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 5),
+        SizedBox(width: 5),
         Text(_live ? 'Live' : 'Offline',
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: _live ? v2Success : v2TextMuted)),
+                color: _live ? v2SuccessOf(context) : v2TextMutedOf(context))),
       ]),
     );
   }
@@ -853,8 +853,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       child: Row(children: [
         Expanded(
             child: Text(_message!,
-                style: const TextStyle(
-                    fontSize: 12.5, color: v2TextPrimary))),
+                style: TextStyle(
+                    fontSize: 12.5, color: v2TextPrimaryOf(context)))),
         if (_undoFn != null)
           TextButton(
             onPressed: () {
@@ -879,19 +879,19 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: v2Border),
+            border: Border.all(color: v2BorderOf(context)),
           ),
           child: TextField(
             controller: _search,
             style: const TextStyle(fontSize: 13),
             decoration: InputDecoration(
               hintText: 'Tafuta jina, simu, kada...',
-              hintStyle: const TextStyle(
-                  fontSize: 13, color: v2TextMuted),
+              hintStyle: TextStyle(
+                  fontSize: 13, color: v2TextMutedOf(context)),
               prefixIcon: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Icon(PhosphorIcons.magnifyingGlass(),
-                    size: 16, color: v2TextMuted),
+                    size: 16, color: v2TextMutedOf(context)),
               ),
               prefixIconConstraints:
                   const BoxConstraints(minWidth: 38, minHeight: 0),
@@ -910,7 +910,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: v2Accent,
+            color: v2AccentOf(context),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Stack(children: [
@@ -924,8 +924,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                 child: Container(
                   width: 14,
                   height: 14,
-                  decoration: const BoxDecoration(
-                      color: v2Danger, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                      color: v2DangerOf(context), shape: BoxShape.circle),
                   child: Center(
                       child: Text('$_activeFilterCount',
                           style: const TextStyle(
@@ -981,18 +981,18 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(children: [
-        Icon(PhosphorIcons.cloudSlash(), size: 40, color: v2TextMuted),
-        const SizedBox(height: 10),
+        Icon(PhosphorIcons.cloudSlash(), size: 40, color: v2TextMutedOf(context)),
+        SizedBox(height: 10),
         Text(_error!,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: v2TextMuted)),
+            style: TextStyle(fontSize: 12, color: v2TextMutedOf(context))),
         const SizedBox(height: 12),
         ElevatedButton.icon(
           onPressed: _load,
           icon: Icon(PhosphorIcons.arrowClockwise(), size: 15),
-          label: const Text('Jaribu tena'),
+          label: Text('Jaribu tena'),
           style: ElevatedButton.styleFrom(
-              backgroundColor: v2Accent, foregroundColor: Colors.white),
+              backgroundColor: v2AccentOf(context), foregroundColor: Colors.white),
         ),
       ]),
     );
@@ -1002,10 +1002,10 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     return Container(
       padding: const EdgeInsets.all(28),
       child: Column(children: [
-        Icon(PhosphorIcons.userFocus(), size: 44, color: v2TextMuted),
+        Icon(PhosphorIcons.userFocus(), size: 44, color: v2TextMutedOf(context)),
         const SizedBox(height: 10),
-        const Text('Hakuna watumiaji wanaolingana',
-            style: TextStyle(fontSize: 13.5, color: v2TextSecondary)),
+        Text('Hakuna watumiaji wanaolingana',
+            style: TextStyle(fontSize: 13.5, color: v2TextSecondaryOf(context))),
         if (_activeFilterCount > 0) ...[
           const SizedBox(height: 12),
           OutlinedButton(
@@ -1026,8 +1026,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
 
     return Container(
       padding: const EdgeInsets.only(top: 14),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: v2Border, width: 0.5)),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: v2BorderOf(context), width: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1052,10 +1052,10 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
               fit: BoxFit.scaleDown,
               child: Text(
                 _loading ? '…' : '$current / $totalPages',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: v2TextSecondary),
+                    color: v2TextSecondaryOf(context)),
               ),
             ),
           ),
@@ -1086,8 +1086,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     required bool enabled,
     required VoidCallback onTap,
   }) {
-    final fgEnabled = filled ? Colors.white : v2Accent;
-    final fg = enabled ? fgEnabled : v2TextMuted;
+    final fgEnabled = filled ? Colors.white : v2AccentOf(context);
+    final fg = enabled ? fgEnabled : v2TextMutedOf(context);
     return InkWell(
       onTap: enabled ? onTap : null,
       borderRadius: BorderRadius.circular(10),
@@ -1095,9 +1095,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: filled
-              ? (enabled ? v2Accent : v2Border)
+              ? (enabled ? v2AccentOf(context) : v2BorderOf(context))
               : Colors.transparent,
-          border: filled ? null : Border.all(color: enabled ? v2Accent : v2Border),
+          border: filled ? null : Border.all(color: enabled ? v2AccentOf(context) : v2BorderOf(context)),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -1127,7 +1127,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         Container(
           height: 108,
           decoration: BoxDecoration(
-            color: v2Border.withValues(alpha: .4),
+            color: v2BorderOf(context).withValues(alpha: .4),
             borderRadius: BorderRadius.circular(18),
           ),
         ),
@@ -1142,7 +1142,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                 Container(
                   height: 40,
                   decoration: BoxDecoration(
-                      color: v2Border.withValues(alpha: .5),
+                      color: v2BorderOf(context).withValues(alpha: .5),
                       borderRadius: BorderRadius.circular(8)),
                 ),
                 const SizedBox(height: 16),
@@ -1235,18 +1235,18 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
       return PhosphorIcons.briefcase();
     }
     Color _dBg(String code) {
-      if (code.isEmpty) return v2SurfaceMuted;
+      if (code.isEmpty) return v2SurfaceMutedOf(context);
       if (code == 'health') return const Color(0xFFFFF1F2);
-      if (code == 'education') return v2AccentBg;
+      if (code == 'education') return v2AccentBgOf(context);
       if (code == 'service') return const Color(0xFFF0FDF4);
-      return v2SurfaceMuted;
+      return v2SurfaceMutedOf(context);
     }
     Color _dFg(String code) {
-      if (code.isEmpty) return v2TextSecondary;
+      if (code.isEmpty) return v2TextSecondaryOf(context);
       if (code == 'health') return const Color(0xFFDC2626);
-      if (code == 'education') return v2Accent;
+      if (code == 'education') return v2AccentOf(context);
       if (code == 'service') return const Color(0xFF16A34A);
-      return v2TextSecondary;
+      return v2TextSecondaryOf(context);
     }
     final items = [
       (value: '', label: 'Idara Zote', icon: _dIcon(''), iconBg: _dBg(''), iconFg: _dFg('')),
@@ -1418,22 +1418,22 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                  color: active ? v2AccentBg : Colors.white,
+                  color: active ? v2AccentBgOf(context) : Colors.white,
                   border: Border.all(
-                      color: active ? v2Accent : const Color(0xFFD1D9E6),
+                      color: active ? v2AccentOf(context) : Color(0xFFD1D9E6),
                       width: active ? 1.5 : 1),
                   borderRadius: BorderRadius.circular(12)),
               child: Row(children: [
                 Icon(icon,
-                    size: 16, color: active ? v2Accent : v2TextSecondary),
-                const SizedBox(width: 10),
+                    size: 16, color: active ? v2AccentOf(context) : v2TextSecondaryOf(context)),
+                SizedBox(width: 10),
                 Expanded(
                     child: Text(label,
                         style: TextStyle(
                             fontSize: 13,
-                            color: active ? v2Accent : v2TextPrimary))),
+                            color: active ? v2AccentOf(context) : v2TextPrimaryOf(context)))),
                 Icon(PhosphorIcons.caretDown(),
-                    size: 14, color: v2TextMuted),
+                    size: 14, color: v2TextMutedOf(context)),
               ]),
             ),
           ),
@@ -1454,7 +1454,7 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(children: [
               Icon(PhosphorIcons.funnel(),
-                  size: 17, color: v2TextSecondary),
+                  size: 17, color: v2TextSecondaryOf(context)),
               const SizedBox(width: 10),
               const Text('Vichujio',
                   style: TextStyle(
@@ -1470,27 +1470,27 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                 }),
                 child: Row(children: [
                   Icon(PhosphorIcons.arrowClockwise(),
-                      size: 13, color: v2Accent),
+                      size: 13, color: v2AccentOf(context)),
                   const SizedBox(width: 4),
-                  const Text('Futa vyote',
+                  Text('Futa vyote',
                       style:
-                          TextStyle(fontSize: 12, color: v2Accent)),
+                          TextStyle(fontSize: 12, color: v2AccentOf(context))),
                 ]),
               ),
             ]),
           ),
-          const Divider(height: 1, color: v2Border),
+          Divider(height: 1, color: v2BorderOf(context)),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('IDARA',
+                  Text('IDARA',
                       style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
-                          color: v2TextMuted)),
+                          color: v2TextMutedOf(context))),
                   const SizedBox(height: 8),
                   sel(PhosphorIcons.squaresFour(),
                       _category.isEmpty
@@ -1499,32 +1499,32 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                       _pickCategory,
                       active: _category.isNotEmpty),
                   const SizedBox(height: 14),
-                  const Text('MKOA',
+                  Text('MKOA',
                       style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
-                          color: v2TextMuted)),
+                          color: v2TextMutedOf(context))),
                   const SizedBox(height: 8),
                   sel(PhosphorIcons.mapPin(), _regionName ?? 'Mikoa yote',
                       _pickRegion,
                       active: _regionId != null),
                   const SizedBox(height: 14),
-                  const Text('WILAYA',
+                  Text('WILAYA',
                       style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
-                          color: v2TextMuted)),
+                          color: v2TextMutedOf(context))),
                   const SizedBox(height: 8),
                   sel(PhosphorIcons.city(), _districtName ?? 'Wilaya zote',
                       _pickDistrict,
                       enabled: _regionId != null,
                       active: _districtId != null),
                   const SizedBox(height: 14),
-                  const Text('KITUO / MASOMO',
+                  Text('KITUO / MASOMO',
                       style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
-                          color: v2TextMuted)),
+                          color: v2TextMutedOf(context))),
                   const SizedBox(height: 8),
                   if (_category == 'education')
                     sel(PhosphorIcons.bookOpen(),
@@ -1544,12 +1544,12 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                         _pickFacility,
                         enabled: _districtId != null && !_loadingFacilities,
                         active: _facilityId != null),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                 ],
               ),
             ),
           ),
-          const Divider(height: 1, color: v2Border),
+          Divider(height: 1, color: v2BorderOf(context)),
           Padding(
             padding: const EdgeInsets.symmetric(
                 horizontal: 16, vertical: 14),
@@ -1561,10 +1561,10 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                      border: Border.all(color: v2Border),
+                      border: Border.all(color: v2BorderOf(context)),
                       borderRadius: BorderRadius.circular(10)),
                   child: Icon(PhosphorIcons.x(),
-                      size: 17, color: v2TextSecondary),
+                      size: 17, color: v2TextSecondaryOf(context)),
                 ),
               ),
               const Spacer(),
@@ -1585,9 +1585,9 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
                   Navigator.of(context).pop();
                 },
                 icon: Icon(PhosphorIcons.check(), size: 15),
-                label: const Text('Tumia'),
+                label: Text('Tumia'),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: v2Accent,
+                    backgroundColor: v2AccentOf(context),
                     foregroundColor: Colors.white),
               ),
             ]),
