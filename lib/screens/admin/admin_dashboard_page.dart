@@ -89,10 +89,19 @@ class _State extends State<AdminDashboardPage>
     }
     await _loadReports();
     try {
-      final r = await ApiService().adminEvents(limit: 6);
+      final r = await ApiService().adminEvents(limit: 30);
       if (!mounted) return;
       final d = r.data as Map? ?? {};
-      setState(() => _events = (d['events'] as List?) ?? []);
+      // Kama web dashboard: chuja presence ("Mtumiaji ameingia mtandaoni")
+      // KABLA ya kuchukua 6 — matukio halisi (amejiunga, match, malipo...)
+      // yabakiye yanaonekana.
+      final all = (d['events'] as List?) ?? [];
+      setState(() => _events = all.where((e) {
+        final m = asMap(e);
+        final type = '${m['event_type'] ?? m['type'] ?? ''}';
+        return !['user.presence', 'user.online', 'user.offline',
+                 'user.connected', 'user.disconnected'].contains(type);
+      }).toList());
     } catch (_) {}
   }
 

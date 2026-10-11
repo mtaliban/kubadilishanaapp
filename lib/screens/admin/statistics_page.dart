@@ -1785,12 +1785,22 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
         category: _deptCode(_idara),
         level: _levelCode(_ngazi),
       );
-      final e = await ApiService().adminEvents(limit: 6);
+      final e = await ApiService().adminEvents(limit: 30);
       if (!mounted) return;
+      // Kama web dashboard: chuja presence ("Mtumiaji ameingia mtandaoni")
+      // KABLA ya kuchukua 6 — matukio halisi (amejiunga, match, malipo...)
+      // yabakiye yanaonekana.
+      final eventsAll = asList(asMap(e.data)['events']);
+      final events = eventsAll.where((ev) {
+        final m = asMap(ev);
+        final type = '${m['event_type'] ?? m['type'] ?? ''}';
+        return !['user.presence', 'user.online', 'user.offline',
+                 'user.connected', 'user.disconnected'].contains(type);
+      }).toList();
       final data = _buildStats(
         asMap(s.data),
         asMap(r.data),
-        asList(asMap(e.data)['events']),
+        events,
       );
       if (!mounted) return;
       if (data == null) {
