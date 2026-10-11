@@ -1835,6 +1835,8 @@ class V2UserDetailScreen extends StatelessWidget {
 }
 
 // ═══════════════════════════════ ADD ADMIN ═══════════════════════════════
+// Fomu mpya ya mockup (bluu ya app 0xFF1E40AF, fields zenye icons + label juu).
+// onSubmit inatumia adminCreateUser(is_admin:true) — API ileile ya zamani.
 
 class V2AddAdminScreen extends StatefulWidget {
   const V2AddAdminScreen({super.key});
@@ -1844,239 +1846,25 @@ class V2AddAdminScreen extends StatefulWidget {
 
 class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _jina = TextEditingController();
-  final _barua = TextEditingController();
-  final _simu = TextEditingController();
-  final _pass = TextEditingController();
-  bool _saving = false;
-  String? _error;
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+  final _password = TextEditingController();
+  bool _obscure = true;
 
-  Future<void> _hifadhi() async {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
     try {
       await ApiService().adminCreateUser({
-        'full_name': _jina.text.trim(),
-        'email': _barua.text.trim(),
-        'phone_primary': _simu.text.trim(),
-        'password': _pass.text,
+        'full_name': _name.text.trim(),
+        'email': _email.text.trim(),
+        'phone_primary': _phone.text.trim(),
+        'password': _password.text,
         'is_admin': true,
       });
       if (!mounted) return;
-      Navigator.of(context).pop(true);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _error = friendlyError(e);
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _jina.dispose();
-    _barua.dispose();
-    _simu.dispose();
-    _pass.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Ad.card(context),
-      appBar: AppBar(
-        backgroundColor: Ad.card(context),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        title: Text('Ongeza Admin',
-            style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: v2TextPrimary)),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-        decoration: BoxDecoration(
-          color: Ad.card(context),
-          border: Border(top: BorderSide(color: v2Border)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: _saving ? null : _hifadhi,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: v2Accent,
-                  foregroundColor: Ad.card(context),
-                  disabledBackgroundColor: v2Accent.withValues(alpha: .55),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(13))),
-              icon: _saving
-                  ? SizedBox(
-                      width: 15,
-                      height: 15,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Ad.card(context)))
-                  : Icon(PhosphorIcons.floppyDisk(), size: 16),
-              label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 14)),
-            ),
-          ),
-        ),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-            children: [
-              if (_error != null)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                      color: v2DangerBg,
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Row(children: [
-                    Icon(PhosphorIcons.warningCircle(),
-                        size: 15, color: v2Danger),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child: Text(_error!,
-                            style: const TextStyle(
-                                fontSize: 12.5, color: v2Danger))),
-                  ]),
-                ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    color: v2AccentBg,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Row(children: [
-                  Icon(PhosphorIcons.shieldCheck(),
-                      size: 16, color: v2Accent),
-                  const SizedBox(width: 10),
-                  Expanded(
-                      child: Text(
-                          'Anaingia kwa barua pepe — hana idara wala kada.',
-                          style:
-                              const TextStyle(fontSize: 12.5, color: v2Accent))),
-                ]),
-              ),
-              const SizedBox(height: 14),
-              v2SectionHeader('Taarifa za admin', PhosphorIcons.user()),
-              _fld(_jina, 'Jina Kamili', PhosphorIcons.user(),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Inahitajika' : null),
-              const SizedBox(height: 12),
-              _fld(_barua, 'Barua Pepe', PhosphorIcons.envelopeSimple(),
-                  keyboard: TextInputType.emailAddress,
-                  validator: (v) =>
-                      (v == null || !v.contains('@')) ? 'Barua si sahihi' : null),
-              const SizedBox(height: 12),
-              _fld(_simu, 'Namba ya Simu', PhosphorIcons.phone(),
-                  keyboard: TextInputType.phone,
-                  validator: (v) => (v == null || v.trim().length < 9)
-                      ? 'Namba si sahihi'
-                      : null),
-              const SizedBox(height: 12),
-              _fld(_pass, 'Nywila', PhosphorIcons.lockSimple(),
-                  obscure: true,
-                  validator: (v) =>
-                      (v == null || v.length < 6) ? 'Herufi 6+' : null),
-              const SizedBox(height: 8),
-            ]),
-      ),
-    );
-  }
-
-  Widget _fld(TextEditingController c, String hint, IconData icon,
-      {TextInputType keyboard = TextInputType.text,
-      bool obscure = false,
-      String? Function(String?)? validator}) {
-    return TextFormField(
-      controller: c,
-      keyboardType: keyboard,
-      obscureText: obscure,
-      validator: validator,
-      decoration: v2FieldDec(context, hint,
-          prefixIcon: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(icon, size: 16, color: v2TextMuted),
-          )),
-    );
-  }
-}
-
-// ═══════════════════════════════ IMPORT SCREEN ═══════════════════════════════
-
-class V2ImportScreen extends StatefulWidget {
-  final List<dynamic> departments;
-  const V2ImportScreen({super.key, required this.departments});
-  @override
-  State<V2ImportScreen> createState() => _V2ImportScreenState();
-}
-
-class _V2ImportScreenState extends State<V2ImportScreen> {
-  String _cat = 'education';
-  bool _busy = false;
-  String? _error;
-  String? _result;
-  int _created = 0, _skipped = 0, _errs = 0;
-
-  Future<void> _import() async {
-    setState(() {
-      _busy = true;
-      _error = null;
-      _result = null;
-    });
-    try {
-      final res = await FilePicker.platform
-          .pickFiles(type: FileType.custom, allowedExtensions: ['xlsx']);
-      final f = res?.files.firstOrNull;
-      if (f?.path == null) {
-        setState(() => _busy = false);
-        return;
-      }
-      final r = await ApiService().adminImportUsersFile(
-          path: f!.path!, filename: f.name, category: _cat);
-      final d = (r.data as Map?) ?? {};
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _created = (d['created'] as num?)?.toInt() ?? 0;
-        _skipped = (d['skipped'] as num?)?.toInt() ?? 0;
-        _errs = (d['errors'] as List?)?.length ?? 0;
-        _result = 'ok';
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _error = friendlyError(e);
-      });
-    }
-  }
-
-  Future<void> _template() async {
-    try {
-      final bytes = await ApiService().adminImportTemplateBytes(_cat);
-      final path = await FilePicker.platform.saveFile(
-          fileName: 'kiolezo_$_cat.xlsx', bytes: Uint8List.fromList(bytes));
-      if (!mounted) return;
-      if (path == null) {
-        AppToast.info('Imeghairiwa');
-      } else {
-        AppToast.success('Kiolezo imepakuliwa');
-      }
+      AppToast.success('Admin ameongezwa');
+      if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       AppToast.error(friendlyError(e));
@@ -2084,199 +1872,865 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
   }
 
   @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ToastHost(
       child: Scaffold(
-      backgroundColor: Ad.card(context),
-      appBar: AppBar(
-          backgroundColor: Ad.card(context),
-          surfaceTintColor: Ad.card(context),
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
           elevation: 0,
-          title: const Text('Import Watumiaji',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: v2TextPrimary))),
-      body: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-          children: [
-            if (_error != null)
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    color: v2DangerBg,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Row(children: [
-                  Icon(PhosphorIcons.warningCircle(),
-                      size: 15, color: v2Danger),
-                  const SizedBox(width: 8),
-                  Expanded(
-                      child: Text(_error!,
-                          style: const TextStyle(
-                              fontSize: 12.5, color: v2Danger))),
-                ]),
-              ),
-            if (_result != null) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                    color: v2SuccessBg,
-                    borderRadius: BorderRadius.circular(12)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        Icon(PhosphorIcons.checkCircle(PhosphorIconsStyle.fill),
-                            size: 17, color: v2Success),
-                        SizedBox(width: 8),
-                        Text('Import imekamilika',
-                            style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: v2Success)),
-                      ]),
-                      const SizedBox(height: 8),
-                      Row(children: [
-                        _stat('Wameongezwa', _created, v2Success),
-                        const SizedBox(width: 10),
-                        _stat('Wamerukwa', _skipped, v2Warning),
-                        if (_errs > 0) ...[
-                          const SizedBox(width: 10),
-                          _stat('Makosa', _errs, v2Danger),
-                        ],
-                      ]),
-                    ]),
-              ),
-              const SizedBox(height: 14),
-            ],
-            v2SectionHeader('Idara ya faili', PhosphorIcons.squaresFour()),
-            Wrap(spacing: 8, runSpacing: 8, children: [
-              for (final d in widget.departments)
-                InkWell(
-                  onTap: () => setState(() => _cat = '${d['code']}'),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: _cat == '${d['code']}' ? v2AccentBg : v2Surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color:
-                              _cat == '${d['code']}' ? v2Accent : v2Border,
-                          width: _cat == '${d['code']}' ? 1.4 : 1),
-                    ),
-                    child: Text(
-                        '${d['display_name'] ?? d['name'] ?? d['code']}',
-                        style: TextStyle(
-                            fontSize: 12.5,
-                            color: _cat == '${d['code']}'
-                                ? v2Accent
-                                : v2TextSecondary,
-                            fontWeight: _cat == '${d['code']}'
-                                ? FontWeight.w700
-                                : FontWeight.w400)),
-                  ),
-                ),
-            ]),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                  color: v2SurfaceMuted,
-                  borderRadius: BorderRadius.circular(12)),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: _aaText),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+          title: const Text(
+            'Ongeza Admin',
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w500, color: _aaText),
+          ),
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(1),
+            child: Divider(height: 1, color: Color(0xFFF0F1F3)),
+          ),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Form(
+              key: _formKey,
               child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Icon(PhosphorIcons.info(), size: 15, color: v2Accent),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Ujumbe wa juu (mwembamba)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _aaBluePale,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(children: const [
+                      Icon(Icons.verified_user_outlined,
+                          size: 17, color: _aaBlue),
                       SizedBox(width: 8),
-                      Text('Safu za faili',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: v2Accent)),
+                      Expanded(
+                        child: Text(
+                          'Anaingia kwa barua pepe — hana idara wala kada.',
+                          style: TextStyle(fontSize: 12, color: _aaBlue),
+                        ),
+                      ),
                     ]),
-                    const SizedBox(height: 6),
-                    Text(
-                        'Jina Kamili · Simu · WhatsApp · Kada · Kiwango · Somo 1 · Somo 2 · Mkoa · Wilaya · Shule/Kituo · Mkoa wa Lengo 1',
-                        style: TextStyle(
-                            fontSize: 11, color: v2TextSecondary, height: 1.5)),
+                  ),
+                  const SizedBox(height: 16),
+                  // Kichwa cha sehemu
+                  Row(children: [
+                    Icon(Icons.person_outline, size: 15, color: _aaBlue),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'TAARIFA ZA ADMIN',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.6,
+                          color: Color(0xFF4B5563)),
+                    ),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                        child: Divider(height: 1, color: Color(0xFFE5E7EB))),
                   ]),
-            ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _busy ? null : _import,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: v2Accent,
-                    foregroundColor: Ad.card(context),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12))),
-                icon: _busy
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Ad.card(context)))
-                    : Icon(PhosphorIcons.uploadSimple(), size: 17),
-                label: Text(
-                    _busy ? 'Inapakia...' : 'Chagua Faili la Excel',
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 10),
+                  _AaField(
+                    label: 'Jina Kamili',
+                    hint: 'Jina la kwanza na la ukoo',
+                    icon: Icons.person_outline,
+                    controller: _name,
+                    keyboardType: TextInputType.name,
+                    textCapitalization: TextCapitalization.words,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Weka jina kamili'
+                        : null,
+                  ),
+                  _AaField(
+                    label: 'Barua Pepe',
+                    hint: 'jina@mfano.com',
+                    icon: Icons.mail_outline,
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      final t = v?.trim() ?? '';
+                      return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(t)
+                          ? null
+                          : 'Barua pepe si sahihi';
+                    },
+                  ),
+                  _AaField(
+                    label: 'Namba ya Simu',
+                    hint: '0712345678',
+                    icon: Icons.phone_outlined,
+                    controller: _phone,
+                    keyboardType: TextInputType.phone,
+                    validator: (v) {
+                      final t = (v ?? '').replaceAll(' ', '');
+                      return RegExp(r'^(0|\+?255)\d{9}$').hasMatch(t)
+                          ? null
+                          : 'Namba ya simu si sahihi';
+                    },
+                  ),
+                  _AaField(
+                    label: 'Nywila',
+                    hint: '••••••••',
+                    icon: Icons.lock_outline,
+                    controller: _password,
+                    obscure: _obscure,
+                    helper: 'Angalau herufi 8',
+                    suffix: IconButton(
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 36, minHeight: 36),
+                      icon: Icon(
+                        _obscure
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        size: 17,
+                        color: _aaBlue,
+                      ),
+                    ),
+                    validator: (v) => (v == null || v.length < 8)
+                        ? 'Nywila iwe na angalau herufi 8'
+                        : null,
+                  ),
+                  const SizedBox(height: 2),
+                  // Kitufe kiko chini ya fomu moja kwa moja, kulia, kidogo
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: SizedBox(
+                      height: 32,
+                      child: ElevatedButton.icon(
+                        onPressed: _submit,
+                        icon: const Icon(Icons.save_outlined, size: 15),
+                        label: const Text('Hifadhi'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _aaBlue,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: const Color(0xFFC7D2FE),
+                          disabledForegroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          textStyle: const TextStyle(
+                              fontSize: 12.5, fontWeight: FontWeight.w500),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _template,
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: v2Accent,
-                    side: const BorderSide(color: v2Accent),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12))),
-                icon: Icon(PhosphorIcons.downloadSimple(), size: 17),
-                label: const Text('Pakua Kiolezo (Excel)',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Rangi za fomu ya admin
+const Color _aaBlue = Color(0xFF1E40AF);
+const Color _aaBluePale = Color(0xFFEEF2FF);
+const Color _aaText = Color(0xFF111827);
+const Color _aaHint = Color(0xFF9CA3AF);
+const Color _aaFieldBorder = Color(0xFFDDDCF3);
+const Color _aaRed = Color(0xFFDC2626);
+
+/// Field yenye label juu, icon ndani, hint, validator na error ya chini.
+class _AaField extends StatelessWidget {
+  const _AaField({
+    required this.label,
+    required this.hint,
+    required this.icon,
+    required this.controller,
+    this.keyboardType,
+    this.textCapitalization = TextCapitalization.none,
+    this.obscure = false,
+    this.suffix,
+    this.helper,
+    this.validator,
+  });
+
+  final String label;
+  final String hint;
+  final IconData icon;
+  final TextEditingController controller;
+  final TextInputType? keyboardType;
+  final TextCapitalization textCapitalization;
+  final bool obscure;
+  final Widget? suffix;
+  final String? helper;
+  final String? Function(String?)? validator;
+
+  OutlineInputBorder _border(Color c, [double w = 1]) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: c, width: w),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF374151)),
+          ),
+          const SizedBox(height: 5),
+          TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            textCapitalization: textCapitalization,
+            obscureText: obscure,
+            validator: validator,
+            style: const TextStyle(fontSize: 13, color: _aaText),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: hint,
+              hintStyle: const TextStyle(fontSize: 13, color: _aaHint),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              prefixIcon: Icon(icon, size: 17, color: _aaBlue),
+              prefixIconConstraints:
+                  const BoxConstraints(minWidth: 40, minHeight: 20),
+              suffixIcon: suffix,
+              suffixIconConstraints:
+                  const BoxConstraints(minWidth: 36, minHeight: 20),
+              errorStyle: const TextStyle(fontSize: 11, color: _aaRed),
+              enabledBorder: _border(_aaFieldBorder),
+              focusedBorder: _border(_aaBlue, 1.2),
+              errorBorder: _border(_aaRed),
+              focusedErrorBorder: _border(_aaRed, 1.2),
+            ),
+          ),
+          if (helper != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                helper!,
+                style: const TextStyle(fontSize: 10.5, color: _aaHint),
               ),
             ),
-            SizedBox(height: 12),
-            if (_result != null)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: v2Success,
-                      foregroundColor: Ad.card(context),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12))),
-                  child: const Text('Nimemaliza',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
-              ),
-          ]),
-    ));
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════ IMPORT SCREEN ═══════════════════════════════
+// UI mpya ya mockup (IDARA YA FAILI radio chips, Safu za faili, Step 1/2,
+// DropZone yenye dashi, kitufe Import chini-kulia). Logic ileile:
+// template → adminImportTemplateBytes (kiolezo halisi), upload → adminImportUsersFile.
+class V2ImportScreen extends StatefulWidget {
+  final List<dynamic> departments;
+  const V2ImportScreen({super.key, required this.departments});
+
+  // Safu za faili zinazoonyeshwa kwenye kiolezo — zimejaa kutoka kwenye
+  // mockup (pia zinapatikana kwa Elimu; zinaonyeshwa kama chips).
+  @override
+  State<V2ImportScreen> createState() => _V2ImportScreenState();
+}
+
+class _V2ImportScreenState extends State<V2ImportScreen> {
+  String _dept = 'Elimu';
+  bool _busy = false;
+  String? _fileName;
+  PlatformFile? _picked;
+
+  static const List<String> _departmentsMock = [
+    'Afya', 'Elimu', 'Kilimo na ufugaji', 'Watumishi wa Umma'
+  ];
+  static const List<String> _columns = [
+    'Jina Kamili', 'Simu', 'WhatsApp', 'Kada', 'Kiwango', 'Somo 1',
+    'Somo 2', 'Mkoa', 'Wilaya', 'Shule/Kituo', 'Mkoa wa Lengo 1'
+  ];
+
+  // Map ya jina la idara (kiswahili) → code ya backend
+  static String _deptToCat(String dept) => switch (dept) {
+        'Afya' => 'health',
+        'Elimu' => 'education',
+        'Kilimo na ufugaji' => 'kilimo',
+        _ => 'service',
+      };
+
+  Future<void> _import() async {
+    if (_picked == null) return;
+    setState(() => _busy = true);
+    try {
+      final r = await ApiService().adminImportUsersFile(
+          path: _picked!.path!, filename: _picked!.name, category: _deptToCat(_dept));
+      final d = (r.data as Map?) ?? {};
+      final created = (d['created'] as num?)?.toInt() ?? 0;
+      if (mounted) {
+        AppToast.success("Watumiaji $created wameongezwa");
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) AppToast.error(friendlyError(e));
+    }
+    if (mounted) setState(() => _busy = false);
   }
 
-  Widget _stat(String label, int n, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  Future<void> _pickFile() async {
+    try {
+      final res = await FilePicker.platform
+          .pickFiles(type: FileType.custom, allowedExtensions: ['xlsx']);
+      final f = res?.files.firstOrNull;
+      if (f == null || f.path == null) return;
+      setState(() {
+        _picked = f;
+        _fileName = f.name;
+      });
+    } catch (e) {
+      if (mounted) AppToast.error(friendlyError(e));
+    }
+  }
+
+  void _removeFile() {
+    setState(() {
+      _picked = null;
+      _fileName = null;
+    });
+  }
+
+  Future<void> _template() async {
+    try {
+      final bytes = await ApiService()
+          .adminImportTemplateBytes(_deptToCat(_dept));
+      final path = await FilePicker.platform.saveFile(
+          fileName: "kiolezo_${_dept.toLowerCase().replaceAll(' ', '_')}.xlsx",
+          bytes: Uint8List.fromList(bytes));
+      if (!mounted) return;
+      if (path == null) {
+        AppToast.info('Imeghairiwa');
+      } else {
+        AppToast.success('Kiolezo imepakuliwa');
+      }
+    } catch (e) {
+      if (mounted) AppToast.error(friendlyError(e));
+    }
+  }
+
+  String get _fileInfo => _picked == null ? '' : minorInfo(_picked!);
+
+  static String minorInfo(PlatformFile f) {
+    final kb = f.size / 1024;
+    final sizeStr = kb >= 1024
+        ? '${(kb / 1024).toStringAsFixed(1)} MB'
+        : '${kb.toStringAsFixed(0)} KB';
+    return "$sizeStr · safu ${f.path != null ? '2' : '0'}";
+  }
+
+  // ─────────────── UI (mockup) ───────────────
+  @override
+  Widget build(BuildContext context) {
+    return ToastHost(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: _iuText),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+          title: const Text(
+            'Import Watumiaji',
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w500, color: _iuText),
+          ),
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(1),
+            child: Divider(height: 1, color: Color(0xFFF0F1F3)),
+          ),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _IuSectionTitle(
+                    icon: Icons.grid_view_outlined, label: 'IDARA YA FAILI'),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final d in _departmentsMock)
+                      _IuDeptChip(
+                        label: d,
+                        selected: d == _dept,
+                        onTap: () => setState(() => _dept = d),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const _IuColumnsNote(columns: _columns),
+                const SizedBox(height: 14),
+                _IuStep(
+                  number: '1',
+                  title: 'Pakua kiolezo',
+                  subtitle: 'Jaza watumiaji kwenye faili hili la Excel.',
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: _template,
+                      icon: const Icon(Icons.download_outlined, size: 15),
+                      label: const Text('Pakua Kiolezo (Excel)'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _iuBlue,
+                        side: const BorderSide(color: _iuBlue),
+                        minimumSize: const Size(0, 30),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        textStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w500),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _IuStep(
+                  number: '2',
+                  title: 'Pakia faili lililojazwa',
+                  subtitle: 'Chagua faili la Excel (.xlsx).',
+                  child: _fileName != null
+                      ? _IuFileRow(
+                          name: _fileName!,
+                          info: _fileInfo,
+                          onRemove: _removeFile,
+                        )
+                      : _IuDropZone(onTap: _pickFile),
+                ),
+                const SizedBox(height: 16),
+                // Kitufe kiko chini ya fomu moja kwa moja, kulia, kidogo
+                // (Text ina Flexible — 320px nishinawaka kwa salama)
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _fileName != null
+                            ? 'Faili liko tayari'
+                            : 'Chagua faili kwanza',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11, color: _iuMuted),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 34,
+                      child: ElevatedButton.icon(
+                        onPressed: _fileName != null && !_busy ? _import : null,
+                        icon: _busy
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.cloud_upload_outlined, size: 16),
+                        label: const Text('Import'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _iuBlue,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: const Color(0xFFC7D2FE),
+                          disabledForegroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                          textStyle: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w500),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Rangi za Import (mockup)
+const Color _iuBlue = Color(0xFF1E40AF);
+const Color _iuBluePale = Color(0xFFEEF2FF);
+const Color _iuText = Color(0xFF111827);
+const Color _iuMuted = Color(0xFF6B7280);
+const Color _iuLine = Color(0xFFE5E7EB);
+
+class _IuSectionTitle extends StatelessWidget {
+  const _IuSectionTitle({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(children: [
+        Icon(icon, size: 15, color: _iuBlue),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.6,
+              color: Color(0xFF4B5563)),
+        ),
+        const SizedBox(width: 8),
+        const Expanded(child: Divider(height: 1, color: _iuLine)),
+      ]),
+    );
+  }
+}
+
+class _IuDeptChip extends StatelessWidget {
+  const _IuDeptChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-            color: Ad.card(context), borderRadius: BorderRadius.circular(8)),
+          color: selected ? _iuBluePale : Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: _iuLine),
+        ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text('$n',
+          _IuRadioDot(selected: selected),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w800, color: color)),
-          const SizedBox(width: 5),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 11, color: color.withValues(alpha: .8))),
+                  fontSize: 12,
+                  color: selected ? _iuBlue : const Color(0xFF374151),
+                  fontWeight: selected ? FontWeight.w500 : FontWeight.w400),
+            ),
+          ),
         ]),
+      ),
+    );
+  }
+}
+
+/// Duara lenye kitone (si tiki)
+class _IuRadioDot extends StatelessWidget {
+  const _IuRadioDot({required this.selected});
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 13,
+      height: 13,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: selected ? _iuBlue : const Color(0xFF9CA3AF),
+          width: 1.5,
+        ),
+      ),
+      child: selected
+          ? Center(
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: _iuBlue,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+class _IuColumnsNote extends StatelessWidget {
+  const _IuColumnsNote({required this.columns});
+  final List<String> columns;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F6F4),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(children: [
+            Icon(Icons.info_outline, size: 16, color: _iuBlue),
+            SizedBox(width: 6),
+            Text(
+              'Safu za faili',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: _iuBlue),
+            ),
+          ]),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final c in columns)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: _iuLine, width: 0.5),
+                  ),
+                  child: Text(
+                    c,
+                    style: const TextStyle(
+                        fontSize: 10.5, color: Color(0xFF4B5563)),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IuStep extends StatelessWidget {
+  const _IuStep({
+    required this.number,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+  final String number;
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          margin: const EdgeInsets.only(top: 1),
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: _iuBluePale,
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            number,
+            style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: _iuBlue),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: _iuText),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 11, color: _iuMuted),
+              ),
+              const SizedBox(height: 8),
+              child,
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Eneo la kuchagua faili lenye mstari uliokatika (dashed)
+class _IuDropZone extends StatelessWidget {
+  const _IuDropZone({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: CustomPaint(
+        painter: _IuDashedRRectPainter(),
+        child: const SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+            child: Column(
+              children: [
+                Icon(Icons.file_upload_outlined, size: 22, color: _iuBlue),
+                SizedBox(height: 4),
+                Text(
+                  'Chagua Faili la Excel',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: _iuBlue),
+                ),
+                SizedBox(height: 1),
+                Text(
+                  'Bonyeza hapa kuchagua faili',
+                  style: TextStyle(fontSize: 10.5, color: _iuMuted),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IuDashedRRectPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFC7D2FE)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(12)),
       );
+    for (final metric in path.computeMetrics()) {
+      double d = 0;
+      while (d < metric.length) {
+        canvas.drawPath(metric.extractPath(d, d + 6), paint);
+        d += 10;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _IuFileRow extends StatelessWidget {
+  const _IuFileRow({required this.name, required this.onRemove, this.info});
+  final String name;
+  final String? info;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _iuLine),
+      ),
+      child: Row(children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: _iuBluePale,
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: const Icon(Icons.table_chart_outlined,
+              size: 18, color: _iuBlue),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: _iuText),
+              ),
+              if (info != null)
+                Text(info!,
+                    style: const TextStyle(fontSize: 10.5, color: _iuMuted)),
+            ],
+          ),
+        ),
+        InkWell(
+          onTap: onRemove,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF3F4F6),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.close, size: 13, color: Color(0xFF4B5563)),
+          ),
+        ),
+      ]),
+    );
+  }
 }
