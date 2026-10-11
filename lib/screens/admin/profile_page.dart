@@ -1,35 +1,26 @@
 // =====================================================================
-//  UKURASA WA "WASIFU WANGU" — Kubadilishana
-//  Kadi MOJA yenye hali 2:
-//    1. Kuangalia: taarifa kwa mistari (lebo juu, thamani chini)
-//    2. Kuhariri: kadi ile ile inageuka fomu (bofya "Hariri" au "Ongeza")
-//  Hakuna vitufe vikubwa. "Hifadhi" ni kidogo na inawaka tu kukiwa na badiliko.
+//  UKURASA WA "WASIFU WANGU" — DESIGN MPYA (mockup code/profile_page.dart)
+//  Timeline: avatar duara 72 + jina + role; nodes bluu (Jina/simu/WhatsApp/
+//  Barua) zenye mistari ya timeline; edit mode na TextFields + Ghairi/Hifadhi.
 //
-//  pubspec.yaml:
-//    dependencies:
-//      flutter_tabler_icons: 1.43.0
+//  DATA  → onSave inaitwa na AdminProfileScreenPage (API PATCH halisi);
+//          simu + email ni ZILIZOFUNGWA (kama mockup — hazibadiliki hapa).
+//  Fonts → MediaQuery textScaler ≤ 1.0 kama drawer (simu fonti kubwa
+//          hazivunji layout).
 // =====================================================================
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
-class _C {
-  static const pageBg = Color(0xFFF7F7F5);
-  static const cardBorder = Color(0xFFEDEDED);
-  static const primary = Color(0xFF2878D6);
-  static const primaryDark = Color(0xFF1B4F9C);
-  static const avatarBg = Color(0xFFE6EFFB);
-  static const text = Color(0xFF111111);
-  static const label = Color(0xFF8A8A8A);
-  static const empty = Color(0xFF9A9A9A);
-  static const line = Color(0xFFE6E6E6);
-  static const inputBorder = Color(0xFFD5DEEB);
-  static const lockedBg = Color(0xFFF4F5F7);
-  static const lockedText = Color(0xFF6B7280);
-  static const ok = Color(0xFF1B6B1B);
-  static const error = Color(0xFFB91C1C);
-}
+// Rangi za design mpya (kama mockup — badilisha hapa tu)
+const Color _kBlue = Color(0xFF2563EB); // bluu kuu (nodes, Hifadhi, mistari)
+const Color _kBlueSoft = Color(0xFFE8F0FE); // bluu hafifu (avatar, round btns)
+const Color _kBlueBorder = Color(0xFFBFD4F8); // mpaka wa bluu hafifu
+const Color _kText = Color(0xFF111827);
+const Color _kTextMuted = Color(0xFF6B7280);
+const Color _kFieldBorder = Color(0xFFD1D5DB);
+const Color _kFieldBgDark = Color(0xFF1E293B);
+const Color _kTextDark = Color(0xFFE7ECF8);
+const Color _kTextMutedDark = Color(0xFF9AA8C7);
 
 class AdminProfile {
   final String fullName; // "Hamisi Selemani Hamisi"
@@ -55,7 +46,8 @@ class AdminProfile {
       );
 
   String get initials {
-    final parts = fullName.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts =
+        fullName.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts.first[0].toUpperCase();
     return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -78,8 +70,7 @@ class _ProfilePageState extends State<ProfilePage> {
   late AdminProfile _p = widget.profile;
   bool _editing = false;
   bool _saving = false;
-  bool _copied = false;
-  String? _nameErr, _waErr, _formErr;
+  String? _formErr;
 
   final _name = TextEditingController();
   final _wa = TextEditingController();
@@ -92,7 +83,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // "+255 712 345 678" -> "712345678"
-  String _waDigits(String? v) => (v ?? '').replaceAll('+255', '').replaceAll(RegExp(r'\D'), '');
+  String _waDigits(String? v) =>
+      (v ?? '').replaceAll('+255', '').replaceAll(RegExp(r'\D'), '');
 
   // "712345678" -> "+255 712 345 678"
   String _formatWa(String d) =>
@@ -106,7 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _wa.text = _waDigits(_p.whatsapp);
     setState(() {
       _editing = true;
-      _nameErr = _waErr = _formErr = null;
+      _formErr = null;
     });
   }
 
@@ -119,14 +111,16 @@ class _ProfilePageState extends State<ProfilePage> {
     FocusScope.of(context).unfocus();
     final name = _name.text.trim();
     final wa = _wa.text.trim();
-    setState(() {
-      _formErr = null;
-      _nameErr = name.split(RegExp(r'\s+')).length < 2 ? 'Andika majina mawili au zaidi' : null;
-      _waErr = wa.isEmpty || RegExp(r'^[67]\d{8}$').hasMatch(wa)
-          ? null
-          : 'Andika tarakimu 9, mfano 712 345 678';
-    });
-    if (_nameErr != null || _waErr != null) return;
+    String? nameErr;
+    String? waErr;
+    if (name.split(RegExp(r'\s+')).length < 2) {
+      nameErr = 'Andika majina mawili au zaidi';
+    }
+    if (wa.isNotEmpty && !RegExp(r'^[67]\d{8}$').hasMatch(wa)) {
+      waErr = 'Andika tarakimu 9, mfano 712 345 678';
+    }
+    setState(() => _formErr = nameErr ?? waErr);
+    if (_formErr != null) return;
 
     setState(() => _saving = true);
     final waFull = wa.isEmpty ? null : _formatWa(wa);
@@ -145,393 +139,414 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  // HAKUNA toast: kitufe chenyewe kinaonyesha "Imenakiliwa" kwa sekunde 2.
-  Future<void> _copyPhone() async {
-    await Clipboard.setData(ClipboardData(text: _p.phone.replaceAll(' ', '')));
-    if (!mounted) return;
-    setState(() => _copied = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) setState(() => _copied = false);
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final text = dark ? _kTextDark : _kText;
+    final muted = dark ? _kTextMutedDark : _kTextMuted;
+
+    final items = <_TimelineData>[
+      _TimelineData(
+        icon: Icons.person_outline,
+        label: 'Jina kamili',
+        controller: _name,
+        keyboardType: TextInputType.name,
+        valueBuilder: () => Text(_p.fullName,
+            style: TextStyle(fontSize: 15, color: text)),
+        autofocus: true,
+      ),
+      _TimelineData(
+        icon: Icons.call_outlined,
+        label: 'Namba ya simu',
+        controller: null,
+        keyboardType: TextInputType.phone,
+        valueBuilder: () => Text(_p.phone,
+            style: TextStyle(fontSize: 15, color: text)),
+      ),
+      _TimelineData(
+        icon: Icons.chat_outlined,
+        label: 'WhatsApp',
+        controller: _wa,
+        keyboardType: TextInputType.phone,
+        valueBuilder: () => Text(_p.whatsapp ?? 'Haijawekwa',
+            style: TextStyle(
+                fontSize: 15,
+                color: _p.whatsapp == null ? muted : text)),
+      ),
+      _TimelineData(
+        icon: Icons.mail_outline,
+        label: 'Barua pepe',
+        controller: null,
+        keyboardType: TextInputType.emailAddress,
+        fieldFontSize: 14,
+        valueBuilder: () => Text(_p.email ?? 'Haijawekwa',
+            style: TextStyle(
+                fontSize: 15,
+                color: _p.email == null ? muted : text)),
+      ),
+    ];
+
+    return Scaffold(
+      backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+          child: Column(
+            children: [
+              _buildTopBar(dark, text),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 36),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildHeader(text),
+                        SizedBox(height: _editing ? 22 : 26),
+                        for (int i = 0; i < items.length; i++)
+                          _TimelineItem(
+                            data: items[i],
+                            editing: _editing,
+                            isLast: i == items.length - 1,
+                            dark: dark,
+                          ),
+                        if (_editing) ...[
+                          if (_formErr != null) ...[
+                            const SizedBox(height: 10),
+                            Text(_formErr!,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: dark
+                                        ? const Color(0xFFF87171)
+                                        : const Color(0xFFB3261E))),
+                          ],
+                          const SizedBox(height: 14),
+                          _buildEditButtons(),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
+
+  Widget _buildTopBar(bool dark, Color text) {
+    return SizedBox(
+      height: 44,
+      child: Row(
+        children: [
+          InkResponse(
+            onTap: () =>
+                _editing ? _cancelEdit() : Navigator.maybePop(context),
+            radius: 24,
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Icon(_editing ? Icons.close : Icons.arrow_back,
+                  size: 22, color: text),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                _editing ? 'Hariri wasifu' : 'Wasifu',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: text,
+                ),
+              ),
+            ),
+          ),
+          _RoundIconButton(
+            icon: _editing ? Icons.close : Icons.edit_outlined,
+            onTap: _editing ? _cancelEdit : _startEdit,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(Color text) {
+    return Column(
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _kBlueSoft,
+            shape: BoxShape.circle,
+            border: Border.all(color: _kBlueBorder, width: 1.5),
+          ),
+          child: Text(
+            _p.initials,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w500,
+              color: _kBlue,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          _p.fullName,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            color: text,
+            height: 1.25,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          _p.role,
+          style: const TextStyle(fontSize: 13, color: _kBlue),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditButtons() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _SmallPillButton(
+            icon: Icons.close,
+            label: 'Ghairi',
+            filled: false,
+            onTap: _saving ? null : _cancelEdit,
+          ),
+          const SizedBox(width: 8),
+          _SmallPillButton(
+            icon: Icons.check,
+            label: 'Hifadhi',
+            filled: true,
+            loading: _saving,
+            onTap: !_changed ? null : _save,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineData {
+  final IconData icon;
+  final String label;
+  final TextEditingController? controller;
+  final TextInputType keyboardType;
+  final bool autofocus;
+  final double fieldFontSize;
+  final Widget Function() valueBuilder; // read-mode: value ya sasa
+
+  const _TimelineData({
+    required this.icon,
+    required this.label,
+    required this.controller,
+    required this.keyboardType,
+    required this.valueBuilder,
+    this.autofocus = false,
+    this.fieldFontSize = 15,
+  });
+}
+
+class _TimelineItem extends StatelessWidget {
+  final _TimelineData data;
+  final bool editing;
+  final bool isLast;
+  final bool dark;
+
+  const _TimelineItem({
+    required this.data,
+    required this.editing,
+    required this.isLast,
+    required this.dark,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _C.pageBg,
-      appBar: AppBar(
-        backgroundColor: _C.pageBg,
-        surfaceTintColor: _C.pageBg,
-        elevation: 0,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: Icon(_editing ? TablerIcons.x : TablerIcons.arrow_left,
-              size: 22, color: _C.text),
-          onPressed: _editing ? _cancelEdit : () => Navigator.of(context).pop(),
-        ),
-        title: Text(_editing ? 'Hariri wasifu' : 'Wasifu wangu',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _C.text)),
-        actions: [
-          if (!_editing)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: _smallLink(TablerIcons.pencil, 'Hariri', _startEdit),
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _C.cardBorder),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _header(),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOut,
-                  alignment: Alignment.topCenter,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    child: _editing ? _editView() : _readView(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+    final bottomGap = isLast ? 0.0 : (editing ? 16.0 : 20.0);
 
-  // ---------------- KICHWA (picha + jina + cheo) ----------------
-  Widget _header() => Container(
-        padding: const EdgeInsets.only(bottom: 16),
-        margin: const EdgeInsets.only(bottom: 6),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _C.line))),
-        child: Row(children: [
-          Container(
-            width: 56,
-            height: 56,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(color: _C.avatarBg, shape: BoxShape.circle),
-            child: Text(_p.initials,
-                style: const TextStyle(
-                    fontSize: 19, fontWeight: FontWeight.w900, color: _C.primaryDark)),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 24,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_p.fullName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w900, color: _C.text, height: 1.0)),
-                const SizedBox(height: 3),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                      color: _C.avatarBg, borderRadius: BorderRadius.circular(6)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(TablerIcons.shield_check, size: 13, color: _C.primaryDark),
-                    const SizedBox(width: 4),
-                    // Flexible + ellipsis — cheo kirefu (au fonti kubwa ya tests)
-                    // kisivuruge chip hii kwenye skrini ndogo.
-                    Flexible(
-                      child: Text(_p.role,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w700, color: _C.primaryDark)),
-                    ),
-                  ]),
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    color: _kBlue,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(data.icon, size: 14, color: Colors.white),
                 ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(width: 1.5, color: _kBlueBorder),
+                  ),
               ],
             ),
           ),
-        ]),
-      );
-
-  // ---------------- HALI 1: KUANGALIA ----------------
-  Widget _readView() {
-    return Column(
-      key: const ValueKey('read'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _infoRow(TablerIcons.user, 'Jina kamili', Text(_p.fullName, style: _valueStyle)),
-        _divider(),
-        _infoRow(
-          TablerIcons.device_mobile,
-          'Namba ya simu',
-          Row(children: [
-            Expanded(child: Text(_p.phone, style: _valueStyle)),
-            _copied
-                ? _smallLink(TablerIcons.check, 'Imenakiliwa', null, color: _C.ok)
-                : _smallLink(TablerIcons.copy, 'Nakili', _copyPhone),
-          ]),
-        ),
-        _divider(),
-        _infoRow(
-          TablerIcons.brand_whatsapp,
-          'WhatsApp / simu ya pili',
-          _p.whatsapp != null
-              ? Text(_p.whatsapp!, style: _valueStyle)
-              : Row(children: [
-                  const Expanded(child: Text('Haijawekwa', style: _emptyStyle)),
-                  _smallLink(null, 'Ongeza', _startEdit),
-                ]),
-        ),
-        _divider(),
-        _infoRow(
-          TablerIcons.mail,
-          'Barua pepe',
-          Text(_p.email ?? 'Haijawekwa', style: _p.email == null ? _emptyStyle : _valueStyle),
-        ),
-      ],
-    );
-  }
-
-  // ---------------- HALI 2: KUHARIRI ----------------
-  Widget _editView() {
-    return Column(
-      key: const ValueKey('edit'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        _label(TablerIcons.user_square_rounded, 'Jina kamili'),
-        _field(
-          controller: _name,
-          prefix: const Padding(
-            padding: EdgeInsets.only(left: 12, right: 10),
-            child: Icon(TablerIcons.user_circle, size: 20, color: _C.primaryDark),
-          ),
-          hint: 'Mfano: Amani Selemani',
-          error: _nameErr,
-          caps: TextCapitalization.words,
-          onChanged: () => _nameErr = null,
-        ),
-        const SizedBox(height: 14),
-        _label(TablerIcons.brand_whatsapp, 'WhatsApp / simu ya pili', trailing: 'Si lazima'),
-        _field(
-          controller: _wa,
-          prefix: Container(
-            margin: const EdgeInsets.only(left: 12, right: 10),
-            padding: const EdgeInsets.only(right: 10),
-            decoration: const BoxDecoration(border: Border(right: BorderSide(color: _C.line))),
-            child: const Text('+255',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _C.text)),
-          ),
-          hint: '7XX XXX XXX',
-          error: _waErr,
-          keyboard: TextInputType.phone,
-          formatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(9),
-          ],
-          onChanged: () => _waErr = null,
-        ),
-
-        // Zilizofungwa
-        const SizedBox(height: 18),
-        _label(TablerIcons.lock, 'Haziwezi kubadilishwa hapa'),
-        _lockedRow(TablerIcons.device_mobile, _p.phone),
-        const SizedBox(height: 8),
-        _lockedRow(TablerIcons.mail, _p.email ?? 'Barua pepe haijawekwa'),
-        const SizedBox(height: 8),
-        const Text('Kubadilisha hizi, wasiliana na admin mwenzako.',
-            style: TextStyle(fontSize: 12, color: _C.label, height: 1.35)),
-
-        if (_formErr != null) ...[
-          const SizedBox(height: 12),
-          _errorLine(_formErr!),
-        ],
-
-        // Chini
-        Container(
-          margin: const EdgeInsets.only(top: 18),
-          padding: const EdgeInsets.only(top: 12),
-          decoration: const BoxDecoration(border: Border(top: BorderSide(color: _C.line))),
-          child: Row(children: [
-            _smallLink(TablerIcons.arrow_left, 'Ghairi', _saving ? null : _cancelEdit),
-            const Spacer(),
-            SizedBox(
-              height: 32,
-              child: ElevatedButton(
-                onPressed: (_saving || !_changed) ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _C.primary,
-                  disabledBackgroundColor: _C.primary.withValues(alpha: _saving ? 0.75 : 0.45),
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: _saving
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Hifadhi',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-              ),
-            ),
-          ]),
-        ),
-      ],
-    );
-  }
-
-  // ---------------- VIPANDE ----------------
-  static const _valueStyle =
-      TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _C.text, height: 1.35);
-  static const _emptyStyle = TextStyle(fontSize: 15, color: _C.empty, height: 1.35);
-
-  Widget _divider() => const Divider(height: 1, thickness: 1, color: _C.line);
-
-  Widget _infoRow(IconData icon, String label, Widget value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Icon(icon, size: 16, color: _C.primaryDark),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12.5, color: _C.label)),
-              ),
-            ]),
-            const SizedBox(height: 4),
-            Padding(padding: const EdgeInsets.only(left: 22), child: value),
-          ],
-        ),
-      );
-
-  Widget _smallLink(IconData? icon, String text, VoidCallback? onTap, {Color? color}) {
-    final c = color ?? _C.primaryDark;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (icon != null) ...[
-            Icon(icon, size: 15, color: c),
-            const SizedBox(width: 4),
-          ],
-          Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: c)),
-        ]),
-      ),
-    );
-  }
-
-  Widget _label(IconData icon, String text, {String? trailing}) => Padding(
-        padding: const EdgeInsets.only(bottom: 7),
-        child: Row(children: [
-          Icon(icon, size: 17, color: _C.primaryDark),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 13.5, fontWeight: FontWeight.w700, color: _C.text)),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: 6),
-            Text(trailing, style: const TextStyle(fontSize: 12, color: _C.label)),
-          ],
-        ]),
-      );
-
-  Widget _lockedRow(IconData icon, String text) => Container(
-        height: 44,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration:
-            BoxDecoration(color: _C.lockedBg, borderRadius: BorderRadius.circular(10)),
-        child: Row(children: [
-          Icon(icon, size: 18, color: _C.lockedText),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14.5, color: _C.lockedText)),
-          ),
-          const Icon(TablerIcons.lock, size: 16, color: _C.empty),
-        ]),
-      );
-
-  Widget _errorLine(String msg) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(TablerIcons.alert_circle, size: 15, color: _C.error),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(msg,
-                style: const TextStyle(fontSize: 12.5, color: _C.error, height: 1.3)),
+            child: Padding(
+              padding: EdgeInsets.only(bottom: bottomGap),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.label,
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: dark ? _kTextMutedDark : _kTextMuted),
+                  ),
+                  SizedBox(height: editing ? 4 : 0),
+                  // Simu na email zinakataza edit hapa (locked fields).
+                  // Jina + WhatsApp tu ndizo zinaharirika (kama design).
+                  (editing && data.controller != null)
+                      ? SizedBox(
+                          height: 42,
+                          child: TextField(
+                            controller: data.controller,
+                            keyboardType: data.keyboardType,
+                            autofocus: data.autofocus,
+                            style: TextStyle(
+                              fontSize: data.fieldFontSize,
+                              color: dark ? _kTextDark : _kText,
+                            ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                              filled: true,
+                              fillColor: dark ? _kFieldBgDark : Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: _kFieldBorder,
+                                  width: 0.8,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: _kBlue,
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : data.valueBuilder(),
+                ],
+              ),
+            ),
           ),
         ],
-      );
-
-  Widget _field({
-    required TextEditingController controller,
-    required Widget prefix,
-    required String hint,
-    required String? error,
-    required VoidCallback onChanged,
-    TextInputType? keyboard,
-    TextCapitalization caps = TextCapitalization.none,
-    List<TextInputFormatter>? formatters,
-  }) {
-    final hasError = error != null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: controller,
-          keyboardType: keyboard,
-          textCapitalization: caps,
-          inputFormatters: formatters,
-          onChanged: (_) => setState(() {
-            if (hasError) onChanged();
-          }),
-          style: const TextStyle(fontSize: 15, color: _C.text, height: 1.2),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(fontSize: 15, color: _C.empty, height: 1.2),
-            prefixIcon: prefix,
-            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 44),
-            contentPadding: const EdgeInsets.fromLTRB(0, 14, 12, 14),
-            filled: true,
-            fillColor: Colors.white,
-            enabledBorder: _border(hasError ? _C.error : _C.inputBorder),
-            focusedBorder: _border(hasError ? _C.error : _C.primary),
-          ),
-        ),
-        if (hasError) ...[
-          const SizedBox(height: 6),
-          _errorLine(error),
-        ],
-      ],
+      ),
     );
   }
+}
 
-  OutlineInputBorder _border(Color c) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: c, width: 1.5),
-      );
+class _RoundIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _RoundIconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: _kBlueSoft,
+      shape: const CircleBorder(
+        side: BorderSide(color: _kBlueBorder, width: 0.8),
+      ),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: Icon(icon, size: 17, color: _kBlue),
+        ),
+      ),
+    );
+  }
+}
+
+class _SmallPillButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool filled;
+  final bool loading;
+  final VoidCallback? onTap;
+
+  const _SmallPillButton({
+    required this.icon,
+    required this.label,
+    required this.filled,
+    this.loading = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = filled ? Colors.white : _kText;
+
+    return Material(
+      color: filled ? _kBlue : Colors.transparent,
+      shape: StadiumBorder(
+        side: filled
+            ? BorderSide.none
+            : const BorderSide(color: Color(0xFF9CA3AF), width: 0.8),
+      ),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              else
+                Icon(icon, size: 15, color: fg),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -10,14 +10,17 @@
 // KUUNGANISHA NA API: pisha [onSave] — inapokea values zote 4 baada ya
 //   validation ya mockup (jina lazima, simu +255XXXXXXXXX, email si lazima).
 
+import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
-import '../../widgets/app_toast.dart' show AppToast, friendlyError;
+import '../../widgets/app_toast.dart' show friendlyError;
+import 'profile_page.dart' show AdminProfile, ProfilePage;
 
 const _blue = Color(0xFF185FA5);
 const _blueDark = Color(0xFF0C447C);
@@ -617,8 +620,8 @@ class _AdminProfileScreenPageState extends State<AdminProfileScreenPage> {
           wantedRegions: u.wantedRegions,
         ));
       }
-    } catch (e) {
-      AppToast.error(friendlyError(e));
+    } catch (_) {
+      // sasa haitumiki — ProfilePage mpya inashughulikia errors yenyewe
     }
   }
 
@@ -629,15 +632,55 @@ class _AdminProfileScreenPageState extends State<AdminProfileScreenPage> {
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF0F172A)
             : Colors.white,
-        body: Center(child: CircularProgressIndicator()),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
-    return ProfileScreen(
-      name: _name,
-      phone: _phone,
-      whatsapp: _whatsapp,
-      email: _email,
-      onSave: _save,
+    // DESIGN MPYA: ProfilePage (timeline ya nodes bluu — code/profile_page.dart)
+    // badala ya ProfileScreen ya ring % na kadi 4 ya rangi.
+    return ProfilePage(
+      profile: AdminProfile(
+        fullName: _name,
+        role: 'Administrator',
+        phone: _phone,
+        email: _email.isEmpty ? null : _email,
+        whatsapp: _whatsapp.isEmpty ? null : _whatsapp,
+      ),
+      onSave: (name, whatsapp) async {
+        try {
+          await ApiService().updateProfile({
+            'full_name': name,
+            'phone_alt': whatsapp ?? '',
+          });
+          // Sasisha AuthProvider (jina la drawer linaonekana papo hapo).
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final u = auth.user;
+          if (u != null) {
+            auth.updateUser(AuthUser(
+              userId: u.userId,
+              fullName: name,
+              phone: u.phone,
+              phoneAlt: whatsapp ?? u.phoneAlt,
+              email: u.email,
+              category: u.category,
+              cadreCode: u.cadreCode,
+              cadreDisplay: u.cadreDisplay,
+              employmentSector: u.employmentSector,
+              isAdmin: u.isAdmin,
+              isVerified: u.isVerified,
+              contactEnabled: u.contactEnabled,
+              currentStation: u.currentStation,
+              subjects: u.subjects,
+              wantedRegions: u.wantedRegions,
+            ));
+          }
+          // Pakia upya data halisi kutoka server (email n.k. zinaweza
+          // kuzidi values za local sasa).
+          unawaited(_load());
+          return null; // mafanikio
+        } catch (e) {
+          return friendlyError(e);
+        }
+      },
     );
   }
 }
