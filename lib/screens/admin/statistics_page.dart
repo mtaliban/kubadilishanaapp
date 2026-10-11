@@ -635,7 +635,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           decoration: BoxDecoration(
             color: active ? _C.tileBg : Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: active ? _C.blue2(context) : _C.border, width: 1.5),
+            border: Border.all(color: active ? _C.blue2(context) : _C.border2(context), width: 1.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1006,9 +1006,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
               const SizedBox(width: 16),
               Expanded(
                 child: Column(children: [
-                  legend(_C.blue, 'Walimu wa Sekondari', pSek),
-                  legend(_C.donutLight, 'Hakuna ngazi', pNone),
-                  legend(_C.orange, 'Walimu wa Msingi', pPri),
+                  legend(_C.blue2(context), 'Walimu wa Sekondari', pSek),
+                  legend(_C.donut2(context), 'Hakuna ngazi', pNone),
+                  legend(_C.orange2(context), 'Walimu wa Msingi', pPri),
                 ]),
               ),
             ],
@@ -1293,7 +1293,7 @@ class _CardHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _C.tagBg,
+                  color: _C.tagBg2(context),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(tag!,
@@ -1354,7 +1354,7 @@ class _RowDivider extends StatelessWidget {
         decoration: BoxDecoration(
           border: first
               ? null
-              : const Border(top: BorderSide(color: _C.soft, width: 1)),
+              : Border(top: BorderSide(color: _C.soft2(context), width: 1)),
         ),
         child: child,
       );
@@ -1372,7 +1372,7 @@ class _RankBadge extends StatelessWidget {
       height: 28,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: top ? _C.blue2(context) : _C.tileBg,
+        color: top ? _C.blue2(context) : _C.tileBg2(context),
         borderRadius: BorderRadius.circular(9),
       ),
       child: Text('$n',
@@ -1413,7 +1413,7 @@ class _TotalStrip extends StatelessWidget {
         margin: const EdgeInsets.only(top: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: _C.jmBg,
+          color: _C.jmBg2(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: _C.optBorder),
         ),
@@ -1470,7 +1470,7 @@ class _SortBar extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
-          color: _C.tileBg,
+          color: _C.tileBg2(context),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -1595,8 +1595,8 @@ class _RankedBarRow extends StatelessWidget {
             child: Wrap(
               spacing: 16,
               children: [
-                legend(_C.blue, resident, 'waliopo'),
-                legend(_C.orange, moving, 'wanaohamia'),
+                legend(_C.blue2(context), resident, 'waliopo'),
+                legend(_C.orange2(context), moving, 'wanaohamia'),
               ],
             ),
           ),
@@ -2245,7 +2245,7 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
               icon: const Icon(Icons.refresh),
               label: const Text('Jaribu tena'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _C.blue,
+                backgroundColor: _C.blue2(context),
                 foregroundColor: Colors.white,
               ),
             ),

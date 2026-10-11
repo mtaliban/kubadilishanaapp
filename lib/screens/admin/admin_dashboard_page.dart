@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin_theme.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
@@ -149,8 +150,8 @@ class _State extends State<AdminDashboardPage>
 
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+          ? Color(0xFF0F172A)
+          : Ad.card(context),
       body: RefreshIndicator(
         onRefresh: _load,
         color: _kBlue,
@@ -163,35 +164,35 @@ class _State extends State<AdminDashboardPage>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Admin Panel',
                               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700,
-                                  color: _kGrey900, height: 7 / 6)),
+                                  color: Ad.ink(context), height: 7 / 6)),
                           SizedBox(height: 4),
                           Text('Muhtasari wa mfumo',
-                              style: TextStyle(fontSize: 14, color: _kGrey500, height: 10 / 7)),
+                              style: TextStyle(fontSize: 14, color: Ad.muted(context), height: 10 / 7)),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: _kGrey50,
+                        color: Ad.card(context),
                         borderRadius: BorderRadius.circular(100),
-                        border: Border.all(color: _kGrey200),
+                        border: Border.all(color: Ad.border(context)),
                       ),
-                      child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
                         SizedBox(width: 8, height: 8,
                             child: DecoratedBox(decoration: BoxDecoration(
                                 color: Color(0xFFD1D5DB), shape: BoxShape.circle))),
                         SizedBox(width: 6),
                         Text('Live',
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                                color: _kGrey500, height: 1.5)),
+                                color: Ad.muted(context), height: 1.5)),
                       ]),
                     ),
                   ],
@@ -259,14 +260,14 @@ class _State extends State<AdminDashboardPage>
               SliverToBoxAdapter(
                 child: Container(
                   margin: const EdgeInsets.only(top: 12),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(bottom: BorderSide(color: _kGrey200)),
+                  decoration: BoxDecoration(
+                    color: Ad.card(context),
+                    border: Border(bottom: BorderSide(color: Ad.border(context))),
                   ),
                   child: TabBar(
                     controller: _tabCtrl,
                     labelColor: _kBlue,
-                    unselectedLabelColor: _kGrey500,
+                    unselectedLabelColor: Ad.muted(context),
                     labelStyle: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 14, height: 10 / 7),
                     unselectedLabelStyle: const TextStyle(
@@ -307,21 +308,21 @@ class _State extends State<AdminDashboardPage>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Ad.card(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _kGrey100),
+        border: Border.all(color: Ad.tile(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(children: [
-            Icon(Icons.notifications_rounded, size: 15, color: _kGrey900),
+          Row(children: [
+            Icon(Icons.notifications_rounded, size: 15, color: Ad.ink(context)),
             SizedBox(width: 6),
             Flexible(
               child: Text('Matukio ya Hivi Karibuni',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kGrey900, height: 1.5)),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Ad.ink(context), height: 1.5)),
             ),
           ]),
           const SizedBox(height: 10),
@@ -331,20 +332,20 @@ class _State extends State<AdminDashboardPage>
             final time = m['occurred_at'] as String? ?? '';
             return Container(
               padding: const EdgeInsets.symmetric(vertical: 6),
-              decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: _kGrey100, width: 1))),
+              decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Ad.tile(context), width: 1))),
               child: Row(children: [
                 _eventIcon(type),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(_eventTitle(type),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500,
-                          color: _kGrey700, height: 4 / 3),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500,
+                          color: Ad.inkStrong(context), height: 4 / 3),
                       overflow: TextOverflow.ellipsis),
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(_fmtTime(time),
-                    style: const TextStyle(fontSize: 10, color: _kGrey400, height: 1.5)),
+                    style: TextStyle(fontSize: 10, color: Ad.muted2(context), height: 1.5)),
               ]),
             );
           }),
@@ -574,21 +575,21 @@ class _State extends State<AdminDashboardPage>
         children: [
           TextField(
             onChanged: (q) => _loadUsers(q: q),
-            style: const TextStyle(fontSize: 14, color: _kGrey900),
+            style: TextStyle(fontSize: 14, color: Ad.ink(context)),
             decoration: InputDecoration(
               hintText: 'Tafuta jina, simu, kada...',
-              hintStyle: const TextStyle(fontSize: 14, color: _kGrey500),
-              prefixIcon: const Icon(Icons.search_rounded, size: 18, color: _kGrey500),
-              filled: true, fillColor: Colors.white, isDense: true,
+              hintStyle: TextStyle(fontSize: 14, color: Ad.muted(context)),
+              prefixIcon: Icon(Icons.search_rounded, size: 18, color: Ad.muted(context)),
+              filled: true, fillColor: Ad.card(context), isDense: true,
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              border:        OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kGrey200)),
+              border:        OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: Ad.border(context))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: Ad.border(context))),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _kBlue)),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text('Jumla: $_usersTotal',
-              style: const TextStyle(fontSize: 12, color: _kGrey500, height: 4 / 3)),
+              style: TextStyle(fontSize: 12, color: Ad.muted(context), height: 4 / 3)),
           const SizedBox(height: 8),
           if (_usersLoading)
             const Center(child: Padding(
@@ -596,16 +597,16 @@ class _State extends State<AdminDashboardPage>
               child: CircularProgressIndicator(color: _kBlue),
             ))
           else if (_usersList.isEmpty)
-            const Center(child: Padding(
+            Center(child: Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Text('Hakuna watumiaji',
-                  style: TextStyle(fontSize: 14, color: _kGrey500)),
+                  style: TextStyle(fontSize: 14, color: Ad.muted(context))),
             ))
           else
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: _kGrey100),
+                color: Ad.card(context),
+                border: Border.all(color: Ad.tile(context)),
                 borderRadius: BorderRadius.circular(16),
               ),
               clipBehavior: Clip.antiAlias,
@@ -628,15 +629,15 @@ class _State extends State<AdminDashboardPage>
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
-                      border: last ? null : const Border(bottom: BorderSide(color: _kGrey100)),
+                      border: last ? null : Border(bottom: BorderSide(color: Ad.tile(context))),
                     ),
                     child: Row(children: [
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Row(children: [
                             Flexible(child: Text(name,
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                                    color: _kGrey900, height: 4 / 3),
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                                    color: Ad.ink(context), height: 4 / 3),
                                 overflow: TextOverflow.ellipsis)),
                             if (isAdmin) ...[
                               const SizedBox(width: 4),
@@ -644,22 +645,22 @@ class _State extends State<AdminDashboardPage>
                             ],
                           ]),
                           Text(phone,
-                              style: const TextStyle(fontSize: 12, color: _kBlue, height: 4 / 3,
+                              style: TextStyle(fontSize: 12, color: _kBlue, height: 4 / 3,
                                   fontWeight: FontWeight.w600)),
                           if (dests.isNotEmpty)
                             Text(dests,
-                                style: const TextStyle(fontSize: 10, color: _kGrey500, height: 1.5),
+                                style: TextStyle(fontSize: 10, color: Ad.muted(context), height: 1.5),
                                 overflow: TextOverflow.ellipsis),
                         ]),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Flexible(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                         if (cadre.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                                color: _kBlueBg, borderRadius: BorderRadius.circular(4)),
+                                color: Ad.blueSoft(context), borderRadius: BorderRadius.circular(4)),
                             child: Row(mainAxisSize: MainAxisSize.min, children: [
                               const Icon(Icons.menu_book_outlined, size: 10, color: _kBlue),
                               const SizedBox(width: 3),
@@ -674,7 +675,7 @@ class _State extends State<AdminDashboardPage>
                           Text(region,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 11, color: _kGrey500, height: 1.5)),
+                              style: TextStyle(fontSize: 11, color: Ad.muted(context), height: 1.5)),
                       ]),
                       ),
                     ]),
@@ -692,15 +693,15 @@ class _State extends State<AdminDashboardPage>
   Widget _card(String title, Widget body) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: Ad.card(context),
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: _kGrey200),
+      border: Border.all(color: Ad.border(context)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-            color: _kGrey900, height: 4 / 3)),
+        Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+            color: Ad.ink(context), height: 4 / 3)),
         const SizedBox(height: 8),
         body,
       ],
@@ -723,12 +724,12 @@ class _State extends State<AdminDashboardPage>
         child: Icon(icon, size: 17, color: _kBlue),
       ),
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 44),
-      filled: true, fillColor: Colors.white,
-      border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kGrey200)),
+      filled: true, fillColor: Ad.card(context),
+      border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Ad.border(context))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Ad.border(context))),
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _kBlue)),
     ),
-    style: const TextStyle(fontSize: 13.5, color: _kGrey900),
+    style: TextStyle(fontSize: 13.5, color: Ad.ink(context)),
     items: items,
     onChanged: onChanged,
   );
@@ -798,21 +799,21 @@ class _BigCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Ad.card(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kGrey200),
+        border: Border.all(color: Ad.border(context)),
         boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4, offset: Offset(0, 1))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(value,
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: color, height: 7 / 6),
             maxLines: 1, overflow: TextOverflow.ellipsis),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(label,
-            style: const TextStyle(fontSize: 11, color: _kGrey500, height: 4 / 3)),
+            style: TextStyle(fontSize: 11, color: Ad.muted(context), height: 4 / 3)),
         if (sub != null) ...[
-          const SizedBox(height: 2),
-          Text(sub!, style: const TextStyle(fontSize: 10, color: _kGrey400, height: 1.5)),
+          SizedBox(height: 2),
+          Text(sub!, style: TextStyle(fontSize: 10, color: Ad.muted2(context), height: 1.5)),
         ],
       ]),
     );
@@ -829,9 +830,9 @@ class _NumberTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
-        child: Text('Hakuna data', style: TextStyle(fontSize: 13, color: _kGrey500)),
+        child: Text('Hakuna data', style: TextStyle(fontSize: 13, color: Ad.muted(context))),
       );
     }
     final total = rows.fold(0, (s, r) => s + r.count);
@@ -840,21 +841,21 @@ class _NumberTable extends StatelessWidget {
     Widget content = Column(
       children: [
         // Header
-        _hdr(),
+        _hdr(context),
         // Rows
         ...rows.map((r) {
           final pct = ((r.count / safeTotal) * 100).round();
-          return _row(r, pct);
+          return _row(r, pct, context);
         }),
         // Footer
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: const BoxDecoration(border: Border(top: BorderSide(color: _kGrey100))),
+          decoration: BoxDecoration(border: Border(top: BorderSide(color: Ad.tile(context)))),
           child: Row(children: [
-            const Expanded(child: Text('Jumla',
-                style: TextStyle(fontSize: 12, color: _kGrey500))),
+            Expanded(child: Text('Jumla',
+                style: TextStyle(fontSize: 12, color: Ad.muted(context)))),
             Text('$total',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kGrey900)),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Ad.ink(context))),
           ]),
         ),
       ],
@@ -869,38 +870,38 @@ class _NumberTable extends StatelessWidget {
     return content;
   }
 
-  Widget _hdr() => Container(
+  Widget _hdr(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(vertical: 6),
-    decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kGrey100))),
+    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Ad.tile(context)))),
     child: Row(children: [
-      const SizedBox(width: 24, child: Text('#',
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
+      SizedBox(width: 24, child: Text('#',
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)),
           textAlign: TextAlign.center)),
-      const SizedBox(width: 6),
-      const Expanded(child: Text('Jina',
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400))),
-      const SizedBox(width: 6,
-          child: Text('%', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
+      SizedBox(width: 6),
+      Expanded(child: Text('Jina',
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)))),
+      SizedBox(width: 6,
+          child: Text('%', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)),
               textAlign: TextAlign.right)),
-      const SizedBox(width: 40,
-          child: Text('Idadi', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
+      SizedBox(width: 40,
+          child: Text('Idadi', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)),
               textAlign: TextAlign.right)),
     ]),
   );
 
-  Widget _row(_NRow r, int pct) => Container(
+  Widget _row(_NRow r, int pct, BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(vertical: 6),
-    decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kGrey100))),
+    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Ad.tile(context)))),
     child: Row(children: [
       SizedBox(width: 24, child: Text('${rows.indexOf(r) + 1}',
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)),
           textAlign: TextAlign.center)),
-      const SizedBox(width: 6),
+      SizedBox(width: 6),
       Expanded(child: Text(r.label,
-          style: const TextStyle(fontSize: 13, color: _kGrey700, height: 4 / 3),
+          style: TextStyle(fontSize: 13, color: Ad.inkStrong(context), height: 4 / 3),
           overflow: TextOverflow.ellipsis)),
       SizedBox(width: 32, child: Text('$pct%',
-          style: const TextStyle(fontSize: 11, color: _kGrey400),
+          style: TextStyle(fontSize: 11, color: Ad.muted2(context)),
           textAlign: TextAlign.right)),
       SizedBox(width: 40, child: Text('${r.count}',
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _kBlue),
@@ -926,9 +927,9 @@ class _RegionDistrictTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
-        child: Text('Hakuna data', style: TextStyle(fontSize: 13, color: _kGrey500)),
+        child: Text('Hakuna data', style: TextStyle(fontSize: 13, color: Ad.muted(context))),
       );
     }
     final maxTotal = rows.fold(1, (m, r) => m > r.current + r.incoming ? m : r.current + r.incoming);
@@ -938,22 +939,22 @@ class _RegionDistrictTable extends StatelessWidget {
         // Header
         Container(
           padding: const EdgeInsets.symmetric(vertical: 6),
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kGrey100))),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Ad.tile(context)))),
           child: Row(children: [
-            const SizedBox(width: 20, child: Text('#',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
+            SizedBox(width: 20, child: Text('#',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)),
                 textAlign: TextAlign.center)),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Expanded(child: Text(regionHeader,
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400))),
-            const SizedBox(width: 44, child: Text('Waliopo',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)))),
+            SizedBox(width: 44, child: Text('Waliopo',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)),
                 textAlign: TextAlign.right)),
-            const SizedBox(width: 48, child: Text('Wanaohamia',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
+            SizedBox(width: 48, child: Text('Wanaohamia',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)),
                 textAlign: TextAlign.right)),
-            if (!showBar) const SizedBox(width: 40, child: Text('Jumla',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
+            if (!showBar) SizedBox(width: 40, child: Text('Jumla',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)),
                 textAlign: TextAlign.right)),
             if (showBar) const SizedBox(width: 40),
           ]),
@@ -966,17 +967,17 @@ class _RegionDistrictTable extends StatelessWidget {
           final label = showRegion ? (r.district.isNotEmpty ? '${r.region} — ${r.district}' : r.region) : (r.district.isNotEmpty ? r.district : r.region);
           return Container(
             padding: const EdgeInsets.symmetric(vertical: 7),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kGrey100))),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Ad.tile(context)))),
             child: Row(children: [
               SizedBox(width: 20, child: Text('${i + 1}',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400),
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)),
                   textAlign: TextAlign.center)),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Expanded(child: Text(label,
-                  style: const TextStyle(fontSize: 12, color: _kGrey700, height: 4 / 3),
+                  style: TextStyle(fontSize: 12, color: Ad.inkStrong(context), height: 4 / 3),
                   overflow: TextOverflow.ellipsis)),
               SizedBox(width: 44, child: Text('${r.current}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kGrey700),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Ad.inkStrong(context)),
                   textAlign: TextAlign.right)),
               SizedBox(width: 48, child: Text('${r.incoming}',
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kOrange),
@@ -992,7 +993,7 @@ class _RegionDistrictTable extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                     child: LinearProgressIndicator(
                       value: total / maxTotal,
-                      backgroundColor: _kGrey100,
+                      backgroundColor: Ad.tile(context),
                       valueColor: const AlwaysStoppedAnimation<Color>(_kBlue),
                       minHeight: 5,
                     ),
@@ -1015,20 +1016,20 @@ class _IncomingTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
-        child: Text('Hakuna data', style: TextStyle(fontSize: 13, color: _kGrey500)),
+        child: Text('Hakuna data', style: TextStyle(fontSize: 13, color: Ad.muted(context))),
       );
     }
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.symmetric(vertical: 6),
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kGrey100))),
-          child: const Row(children: [
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Ad.tile(context)))),
+          child: Row(children: [
             // Flexible columns — simu ndogo (320px) isifuruge (overflow guard)
             Text('#',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400)),
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context))),
             SizedBox(width: 6),
             Flexible(
                 flex: 3,
@@ -1036,7 +1037,7 @@ class _IncomingTable extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400))),
+                        fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context)))),
             Flexible(
                 flex: 2,
                 child: Text('Kwenda',
@@ -1046,13 +1047,13 @@ class _IncomingTable extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: _kGrey400))),
+                        color: Ad.muted2(context)))),
             SizedBox(width: 8),
             Text('Idadi',
                 style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: _kGrey400),
+                    color: Ad.muted2(context)),
                 textAlign: TextAlign.right),
           ]),
         ),
@@ -1061,19 +1062,19 @@ class _IncomingTable extends StatelessWidget {
           final s = entry.value;
           return Container(
             padding: const EdgeInsets.symmetric(vertical: 7),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kGrey100))),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Ad.tile(context)))),
             child: Row(children: [
               Text('${i + 1}',
-                  style: const TextStyle(
-                      fontSize: 10, fontWeight: FontWeight.w700, color: _kGrey400)),
-              const SizedBox(width: 6),
+                  style: TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.w700, color: Ad.muted2(context))),
+              SizedBox(width: 6),
               Flexible(
                   flex: 3,
                   child: Text(s['from'] as String? ?? '',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 12, color: _kGrey700, height: 4 / 3))),
+                      style: TextStyle(
+                          fontSize: 12, color: Ad.inkStrong(context), height: 4 / 3))),
               Flexible(
                   flex: 2,
                   child: Text(s['to'] as String? ?? '',
