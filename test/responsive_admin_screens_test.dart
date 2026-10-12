@@ -5,6 +5,7 @@
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
 import 'package:kubadilishanaapp/screens/admin_login_screen.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_shell.dart';
@@ -202,8 +203,8 @@ void main() {
       ),
       loggedIn: false,
     );
-    // Bonyeza edit (pencil) → fomu inafunguka.
-    await tester.tap(find.byIcon(Icons.edit_outlined).last);
+    // Bonyeza edit (pencil, Tabler) → fomu inafunguka.
+    await tester.tap(find.byIcon(TablerIcons.pencil).last);
     await tester.pump(const Duration(milliseconds: 150));
     expect(find.text('Hariri wasifu'), findsOneWidget);
     expect(find.text('Jina kamili'), findsOneWidget);

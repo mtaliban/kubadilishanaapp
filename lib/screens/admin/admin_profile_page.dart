@@ -10,6 +10,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
 // Rangi za app (bluu ya app, si bluu angavu)
 const Color _blue = Color(0xFF1E40AF);
@@ -142,7 +143,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             child: SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.only(bottom: 18),
-              child: Column(
+              child:              Column(
                 children: [
                   _edit ? _editTopBar() : _viewTopBar(),
                   _header(small: _edit),
@@ -153,6 +154,12 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
           ),
         ),
       ),
+      // ⭐ VITUFE VYA KUDUMU (Ghairi / Hifadhi) — nje YA scroll view, chini
+      // KAILE KAILE ya screen. Shida ya awali: vitufe vilikuwa vitu vya
+      // mwisho ndani ya fomu — keyboard ikifunguka (baada ya 'Hariri')
+      // vilifunikwa/kusukuma nje ya screen. Sasa ni bar ya footer:
+      // inaonekana mara moja 'Hariri' ikibonyezwa, keyboard ikiwa wazi au la.
+      bottomNavigationBar: _edit ? _actionBar() : null,
     );
   }
 
@@ -161,7 +168,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     return _TopBar(
       title: 'Wasifu',
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, size: 22, color: _text),
+        icon: const Icon(TablerIcons.arrowLeft, size: 22, color: _text),
         onPressed: () => Navigator.maybePop(context),
       ),
       trailing: InkWell(
@@ -175,7 +182,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             shape: BoxShape.circle,
             border: Border.all(color: const Color(0xFFC7D2FE)),
           ),
-          child: const Icon(Icons.edit_outlined, size: 15, color: _blue),
+          child: const Icon(TablerIcons.pencil, size: 15, color: _blue),
         ),
       ),
     );
@@ -185,7 +192,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     return _TopBar(
       title: 'Hariri wasifu',
       leading: IconButton(
-        icon: const Icon(Icons.close, size: 22, color: _text),
+        icon: const Icon(TablerIcons.x, size: 22, color: _text),
         onPressed: _cancel,
       ),
     );
@@ -246,10 +253,10 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   // ---------- Kutazama ----------
   Widget _infoCard() {
     final rows = <_Info>[
-      _Info(Icons.person_outline, 'Jina kamili', _name),
-      _Info(Icons.phone_outlined, 'Namba ya simu', _phone),
-      _Info(Icons.chat_bubble_outline, 'WhatsApp', _wa),
-      _Info(Icons.mail_outline, 'Barua pepe', _mail),
+      _Info(TablerIcons.user, 'Jina kamili', _name),
+      _Info(TablerIcons.phone, 'Namba ya simu', _phone),
+      _Info(TablerIcons.messageCircle, 'WhatsApp', _wa),
+      _Info(TablerIcons.mail, 'Barua pepe', _mail),
     ];
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 14),
@@ -279,7 +286,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             _EditField(
               label: 'Jina kamili',
               hint: 'Jina la kwanza na la ukoo',
-              icon: Icons.person_outline,
+              icon: TablerIcons.user,
               controller: _nameC,
               keyboardType: TextInputType.name,
               capitalization: TextCapitalization.characters,
@@ -289,7 +296,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             _EditField(
               label: 'Namba ya simu',
               hint: '0712345678',
-              icon: Icons.phone_outlined,
+              icon: TablerIcons.phone,
               controller: _phoneC,
               keyboardType: TextInputType.phone,
               validator: (v) {
@@ -300,7 +307,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             _EditField(
               label: 'WhatsApp',
               hint: '0712345678',
-              icon: Icons.chat_bubble_outline,
+              icon: TablerIcons.messageCircle,
               controller: _waC,
               keyboardType: TextInputType.phone,
               validator: (v) {
@@ -312,7 +319,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             _EditField(
               label: 'Barua pepe',
               hint: 'jina@mfano.com',
-              icon: Icons.mail_outline,
+              icon: TablerIcons.mail,
               controller: _mailC,
               keyboardType: TextInputType.emailAddress,
               validator: (v) {
@@ -321,68 +328,80 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 return _mailRe.hasMatch(t) ? null : 'Barua pepe si sahihi';
               },
             ),
-            const SizedBox(height: 2),
-            // Vitufe vidogo, kulia, chini ya fomu moja kwa moja
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 32,
-                  child: OutlinedButton.icon(
-                    onPressed: _saving ? null : _cancel,
-                    icon: const Icon(Icons.close, size: 15),
-                    label: const Text('Ghairi'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF374151),
-                      side: const BorderSide(color: Color(0xFFD1D5DB)),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      textStyle: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  height: 32,
-                  child: ElevatedButton.icon(
-                    onPressed: _saving ? null : _save,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        // Ikoni ya kuhifadhi (si tiki)
-                        : const Icon(Icons.save_outlined, size: 15),
-                    label: const Text('Hifadhi'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _blue,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(0xFFC7D2FE),
-                      disabledForegroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      textStyle: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Bar ya kudumu ya chini: Ghairi (outlined) + Hifadhi (bluu) — kulia.
+  /// Iko kwenye Scaffold.bottomNavigationBar: HAIFIKA kwenye scroll,
+  /// HAIFUNIKWA na keyboard (Material inai-push juu ya keyboard).
+  Widget _actionBar() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: _line)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: _saving ? null : _cancel,
+                icon: const Icon(TablerIcons.x, size: 15, color: Color(0xFF374151)),
+                label: const Text(
+                  'Ghairi',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFD1D5DB)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: _saving ? null : _save,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    // Ikoni ya kuhifadhi (deviceFloppy — ile ile ya login)
+                    : const Icon(TablerIcons.deviceFloppy, size: 15),
+                label: const Text('Hifadhi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _blue,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFC7D2FE),
+                  disabledForegroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  textStyle: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
