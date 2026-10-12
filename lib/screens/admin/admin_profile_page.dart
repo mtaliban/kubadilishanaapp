@@ -374,58 +374,66 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           child: Row(
-            // Mockup: Ghairi KUSHOTO, Hifadhi KULIA — spaceBetween ili Hifadhi
-            // isipotee hata kama nafasi ni ndogo.
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // KAMBUKA sinin: kila button ina Expanded (50/50) — kwenye screen
+            // NDOGO KAMILI (360px bila nav bar, keyboard wazi) layout
+            // HAIWEZI kumea au kutuma button nje ya screen. Hifadhi KULIA,
+            // Ghairi KUSHOTO daima.
             children: [
-              TextButton.icon(
-                onPressed: _saving ? null : _cancel,
-                icon: Icon(TablerIcons.x,
-                    size: 15, color: _mutedT(context)),
-                label: Text(
-                  'Ghairi',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: _textT(context),
+              // Ghairi — KUSHOTO, upana sawa na Hifadhi (Expanded 50/50) —
+              // hata screen ndogo zaidi: layout HAIWEZI kutuma buttons nje.
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: _saving ? null : _cancel,
+                  icon: Icon(TablerIcons.x, size: 15, color: _mutedT(context)),
+                  label: Text(
+                    'Ghairi',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: _textT(context),
+                    ),
                   ),
-                ),
-                style: TextButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD1D5DB)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  style: TextButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 6),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 ),
               ),
-              const SizedBox(width: 8), // Hifadhi — white, bluu, nameba deviceFloppy
-              ElevatedButton.icon(
-                onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    // Ikoni ya kuhifadhi (deviceFloppy — ile ile ya login)
-                    : const Icon(TablerIcons.deviceFloppy, size: 15),
-                label: const Text('Hifadhi'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _blue,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFC7D2FE),
-                  disabledForegroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  textStyle: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+              const SizedBox(width: 10),
+              // Hifadhi — KULIA. bluu; haipoti nje ya screen (Expanded imeshikilia).
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(TablerIcons.deviceFloppy, size: 15),
+                  label: const Text('Hifadhi'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _blue,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFFC7D2FE),
+                    disabledForegroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 6),
+                    textStyle: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
