@@ -366,7 +366,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     return Container(
       decoration: BoxDecoration(
         color: dark ? const Color(0xFF1E293B) : Colors.white,
-        border: const Border(top: BorderSide(color: _line)),
+        // MSTARI JUU UMESHINDWA (uombezi): border top FUTWA — bar iko safi,
+        // hakuna mstari juu ya vitufe (mockup hauna mstari).
       ),
       child: SafeArea(
         top: false,
@@ -385,8 +386,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 label: Text(
                   'Ghairi',
                   style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                     color: _textT(context),
                   ),
                 ),
@@ -422,8 +423,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 label: const Text(
                   'Hifadhi',
                   style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -435,7 +436,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 4),
                   textStyle: const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                   shape: RoundedRectangleBorder(
