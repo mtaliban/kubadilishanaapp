@@ -378,8 +378,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             // HAIWEZI kumea au kutuma button nje ya screen. Hifadhi KULIA,
             // Ghairi KUSHOTO daima.
             children: [
-              // Ghairi — KUSHOTO, ndogo (flex 15) ukiwa Hifadhi kubwa kidogo
-              // (flex 30) — muundo wa mockup: vitufe vidogo vinavy-onekana.
+              // Ghairi — KUSHOTO, flex 15 — UKUBWA SAWA na Hifadhi (15) —
+              // zote ndogo (nusu-screen nusu kwa pamoja ~30%).
               Expanded(
                 flex: 15,
                 child: TextButton.icon(
@@ -404,9 +404,9 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 ),
               ),
               const SizedBox(width: 10),
-              // Hifadhi — KULIA. bluu; haipoti nje ya screen (Expanded imeshikilia).
+              // Hifadhi — KULIA bluu, flex 15 — sawa na Ghairi.
               Expanded(
-                flex: 30,
+                flex: 15,
                 child: ElevatedButton.icon(
                   onPressed: _saving ? null : _save,
                   icon: _saving
