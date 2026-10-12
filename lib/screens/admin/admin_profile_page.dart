@@ -379,9 +379,10 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             // HAIWEZI kumea au kutuma button nje ya screen. Hifadhi KULIA,
             // Ghairi KUSHOTO daima.
             children: [
-              // Ghairi — KUSHOTO, upana sawa na Hifadhi (Expanded 50/50) —
-              // hata screen ndogo zaidi: layout HAIWEZI kutuma buttons nje.
+              // Ghairi — KUSHOTO, ndogo (flex 15) ukiwa Hifadhi kubwa kidogo
+              // (flex 30) — muundo wa mockup: vitufe vidogo vinavy-onekana.
               Expanded(
+                flex: 15,
                 child: TextButton.icon(
                   onPressed: _saving ? null : _cancel,
                   icon: Icon(TablerIcons.x, size: 15, color: _mutedT(context)),
@@ -389,7 +390,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                     'Ghairi',
                     style: TextStyle(
                       fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: _textT(context),
                     ),
                   ),
@@ -406,6 +407,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
               const SizedBox(width: 10),
               // Hifadhi — KULIA. bluu; haipoti nje ya screen (Expanded imeshikilia).
               Expanded(
+                flex: 30,
                 child: ElevatedButton.icon(
                   onPressed: _saving ? null : _save,
                   icon: _saving
@@ -418,7 +420,13 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                           ),
                         )
                       : const Icon(TablerIcons.deviceFloppy, size: 15),
-                  label: const Text('Hifadhi'),
+                  label: const Text(
+                    'Hifadhi',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _blue,
                     foregroundColor: Colors.white,
