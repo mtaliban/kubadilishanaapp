@@ -363,10 +363,11 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   /// Iko kwenye Scaffold.bottomNavigationBar: HAIFIKA kwenye scroll,
   /// HAIFUNIKWA na keyboard (Material inai-push juu ya keyboard).
   Widget _actionBar() {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _line)),
+      decoration: BoxDecoration(
+        color: dark ? const Color(0xFF1E293B) : Colors.white,
+        border: const Border(top: BorderSide(color: _line)),
       ),
       child: SafeArea(
         top: false,
@@ -377,13 +378,14 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             children: [
               TextButton.icon(
                 onPressed: _saving ? null : _cancel,
-                icon: const Icon(TablerIcons.x, size: 15, color: Color(0xFF374151)),
-                label: const Text(
+                icon: Icon(TablerIcons.x,
+                    size: 15, color: _mutedT(context)),
+                label: Text(
                   'Ghairi',
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF374151),
+                    color: _textT(context),
                   ),
                 ),
                 style: TextButton.styleFrom(
