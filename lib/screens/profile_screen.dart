@@ -44,6 +44,19 @@ String _parseErr(dynamic e) {
   return 'Imeshindikana';
 }
 
+// ── Dark-mode helpers (light = const asili; dark = tokens za giza) ──────────
+bool _nd(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
+Color _accentT(BuildContext c) => _nd(c) ? const Color(0xFF7AA7FF) : const Color(0xFF2A3EB1);
+Color _accentMutedT(BuildContext c) => _nd(c) ? const Color(0xFF1C2A44) : const Color(0xFFEDEFFA);
+Color _surface1T(BuildContext c) => _nd(c) ? const Color(0xFF212833) : const Color(0xFFF5F6FA);
+Color _borderT(BuildContext c) => _nd(c) ? const Color(0xFF2A3240) : const Color(0xFFE4E6EE);
+Color _textPrimaryT(BuildContext c) => _nd(c) ? const Color(0xFFE7ECF8) : const Color(0xFF1A1D29);
+Color _textSecondaryT(BuildContext c) => _nd(c) ? const Color(0xFFA9B7D6) : const Color(0xFF5C6072);
+Color _textMutedT(BuildContext c) => _nd(c) ? const Color(0xFF9AA8C7) : const Color(0xFF9297A8);
+Color _successT(BuildContext c) => _nd(c) ? const Color(0xFF86EFAC) : const Color(0xFF1E9E5A);
+Color _successBgT(BuildContext c) => _nd(c) ? const Color(0xFF14532D) : const Color(0xFFE7F7EE);
+Color _onAccentT(BuildContext c) => _nd(c) ? const Color(0xFF0F172A) : Colors.white;
+
 /* ============================================================
    SCREEN KUU
    ============================================================ */
@@ -455,12 +468,6 @@ class _AdminProfilePage extends StatefulWidget {
 class _AdminProfilePageState extends State<_AdminProfilePage> {
   bool _editing = false;
 
-  static const _accent = Color(0xFF2A3EB1);
-  static const _accentMuted = Color(0xFFEDEFFA);
-  static const _surface1 = Color(0xFFF5F6FA);
-  static const _border = Color(0xFFE4E6EE);
-  static const _textPrimary = Color(0xFF1A1D29);
-  static const _textMuted = Color(0xFF9297A8);
 
   String get _name => widget.rawProfile['full_name']?.toString() ?? '';
   String get _initials {
@@ -511,25 +518,25 @@ class _AdminProfilePageState extends State<_AdminProfilePage> {
                 Row(children: [
                   Container(
                     width: 44, height: 44,
-                    decoration: BoxDecoration(color: _accentMuted, borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.person_outline_rounded, size: 22, color: _accent),
+                    decoration: BoxDecoration(color: _accentMutedT(context), borderRadius: BorderRadius.circular(12)),
+                    child: Icon(Icons.person_outline_rounded, size: 22, color: _accentT(context)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
                       Text(_editing ? 'Hariri wasifu' : 'Wasifu wa Admin',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _textPrimary, height: 1.2)),
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _textPrimaryT(context), height: 1.2)),
                     const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: _accentMuted, borderRadius: BorderRadius.circular(999)),
-                        child: const Text('Admin',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _textPrimary)),
+                        decoration: BoxDecoration(color: _accentMutedT(context), borderRadius: BorderRadius.circular(999)),
+                        child: Text('Admin',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _textPrimaryT(context))),
                       ),
                     ]),
                     const SizedBox(height: 2),
                     Text(_editing ? 'Badilisha kisha hifadhi' : 'Taarifa za akaunti yako',
-                        style: const TextStyle(fontSize: 12, color: _textMuted)),
+                        style: TextStyle(fontSize: 12, color: _textMutedT(context))),
                   ])),
                   const SizedBox(width: 8),
                   if (!_editing)
@@ -540,12 +547,12 @@ class _AdminProfilePageState extends State<_AdminProfilePage> {
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: _border),
+                          border: Border.all(color: _borderT(context)),
                         ),
-                        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.edit_outlined, size: 14, color: _textPrimary),
-                          SizedBox(width: 5),
-                          Text('Hariri', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _textPrimary)),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.edit_outlined, size: 14, color: _textPrimaryT(context)),
+                          const SizedBox(width: 5),
+                          Text('Hariri', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _textPrimaryT(context))),
                         ]),
                       ),
                     )
@@ -557,12 +564,12 @@ class _AdminProfilePageState extends State<_AdminProfilePage> {
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: _border),
+                          border: Border.all(color: _borderT(context)),
                         ),
-                        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.close_rounded, size: 14, color: _textPrimary),
-                          SizedBox(width: 5),
-                          Text('Ghairi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _textPrimary)),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.close_rounded, size: 14, color: _textPrimaryT(context)),
+                          const SizedBox(width: 5),
+                          Text('Ghairi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _textPrimaryT(context))),
                         ]),
                       ),
                     ),
@@ -597,15 +604,6 @@ class _ViewAdmin extends StatelessWidget {
 
   String get _phoneAlt => (profile['phone_alt'] ?? '').toString();
 
-  static const _accent = Color(0xFF2A3EB1);
-  static const _accentMuted = Color(0xFFEDEFFA);
-  static const _success = Color(0xFF1E9E5A);
-  static const _successBg = Color(0xFFE7F7EE);
-  static const _surface1 = Color(0xFFF5F6FA);
-  static const _border = Color(0xFFE4E6EE);
-  static const _textPrimary = Color(0xFF1A1D29);
-  static const _textSecondary = Color(0xFF5C6072);
-  static const _textMuted = Color(0xFF9297A8);
 
   Widget _contactRow({
     required BuildContext context,
@@ -631,12 +629,12 @@ class _ViewAdmin extends StatelessWidget {
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Text(label, style: const TextStyle(fontSize: 13, color: _textMuted)),
+            Text(label, style: TextStyle(fontSize: 13, color: _textMutedT(context))),
             if (statusBadge != null) statusBadge,
           ]),
           const SizedBox(height: 2),
           Text(value,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _textPrimary)),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _textPrimaryT(context))),
         ]),
       ),
       const SizedBox(width: 8),
@@ -672,21 +670,21 @@ class _ViewAdmin extends StatelessWidget {
             child: Column(children: [
               Container(
                 width: 96, height: 96,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: _accent, border: Border.all(color: _accentMuted, width: 6)),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: _accentT(context), border: Border.all(color: _accentMutedT(context), width: 6)),
                 alignment: Alignment.center,
                 child: Text(_initials, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700)),
               ),
               const SizedBox(height: 14),
               Text(_name, textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _textPrimary)),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _textPrimaryT(context))),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: _accentMuted, borderRadius: BorderRadius.circular(999)),
-                child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.shield_outlined, size: 16, color: _accent),
-                  SizedBox(width: 6),
-                  Text('Administrator', style: TextStyle(color: _accent, fontWeight: FontWeight.w700, fontSize: 13)),
+                decoration: BoxDecoration(color: _accentMutedT(context), borderRadius: BorderRadius.circular(999)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.shield_outlined, size: 16, color: _accentT(context)),
+                  const SizedBox(width: 6),
+                  Text('Administrator', style: TextStyle(color: _accentT(context), fontWeight: FontWeight.w700, fontSize: 13)),
                 ]),
               ),
             ]),
@@ -694,29 +692,29 @@ class _ViewAdmin extends StatelessWidget {
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border, width: 0.6)),
+            decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _borderT(context), width: 0.6)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Mawasiliano', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _textPrimary)),
+              Text('Mawasiliano', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _textPrimaryT(context))),
               const SizedBox(height: 14),
               _contactRow(
                 context: context,
-                leadingIcon: Icons.email_outlined, leadingColor: _accent, leadingBg: _accentMuted,
+                leadingIcon: Icons.email_outlined, leadingColor: _accentT(context), leadingBg: _accentMutedT(context),
                 label: 'Barua pepe', value: email,
                 statusBadge: emailVerified
-                    ? const _AdminStatusBadge(label: 'Imethibitishwa', color: _success, background: _successBg)
+                    ? _AdminStatusBadge(label: 'Imethibitishwa', color: _successT(context), background: _successBgT(context))
                     : null,
-                trailingIcon: Icons.copy_outlined, trailingColor: _textSecondary, trailingBg: _surface1,
+                trailingIcon: Icons.copy_outlined, trailingColor: _textSecondaryT(context), trailingBg: _surface1T(context),
                 onTrailingTap: () {
                   Clipboard.setData(ClipboardData(text: email));
                   AppToast.success('Barua pepe imenakiliwa');
                 },
               ),
-              const Divider(height: 26, color: _border),
+              Divider(height: 26, color: _borderT(context)),
               _contactRow(
                 context: context,
-                leadingIcon: Icons.call_outlined, leadingColor: _accent, leadingBg: _accentMuted,
+                leadingIcon: Icons.call_outlined, leadingColor: _accentT(context), leadingBg: _accentMutedT(context),
                 label: 'Namba ya simu', value: phone.isNotEmpty ? _fmtPhone(phone) : '—',
-                trailingIcon: Icons.call, trailingColor: _accent, trailingBg: _accentMuted,
+                trailingIcon: Icons.call, trailingColor: _accentT(context), trailingBg: _accentMutedT(context),
                 onTrailingTap: () async {
                   final digits = phone.replaceAll(RegExp(r'\D'), '');
                   if (digits.isEmpty) return;
@@ -724,12 +722,12 @@ class _ViewAdmin extends StatelessWidget {
                 },
               ),
               if (_phoneAlt.isNotEmpty) ...[
-                const Divider(height: 26, color: _border),
+                Divider(height: 26, color: _borderT(context)),
                 _contactRow(
                   context: context,
-                  leadingIcon: Icons.chat_bubble_outline, leadingColor: _success, leadingBg: _successBg,
+                  leadingIcon: Icons.chat_bubble_outline, leadingColor: _successT(context), leadingBg: _successBgT(context),
                   label: 'WhatsApp / Simu ya pili', value: _fmtPhone(_phoneAlt),
-                  trailingIcon: Icons.chat_bubble, trailingColor: Colors.white, trailingBg: _success,
+                  trailingIcon: Icons.chat_bubble, trailingColor: _onAccentT(context), trailingBg: _successT(context),
                   onTrailingTap: () async {
                     final digits = _phoneAlt.replaceAll(RegExp(r'\D'), '');
                     final intl = digits.startsWith('0') ? '255${digits.substring(1)}' : digits;
@@ -741,11 +739,11 @@ class _ViewAdmin extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 18, color: _textMuted)),
+            Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 18, color: _textMutedT(context))),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text('Barua pepe haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
-                  style: TextStyle(fontSize: 13, color: _textMuted, height: 1.35)),
+                  style: TextStyle(fontSize: 13, color: _textMutedT(context), height: 1.35)),
             ),
           ]),
         ]),
@@ -789,14 +787,6 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
   String? _error;
   final _formKey = GlobalKey<FormState>();
 
-  static const _accent = Color(0xFF2A3EB1);
-  static const _accentMuted = Color(0xFFEDEFFA);
-  static const _success = Color(0xFF1E9E5A);
-  static const _surface1 = Color(0xFFF5F6FA);
-  static const _border = Color(0xFFE4E6EE);
-  static const _textPrimary = Color(0xFF1A1D29);
-  static const _textSecondary = Color(0xFF5C6072);
-  static const _textMuted = Color(0xFF9297A8);
 
   String get _name => widget.profile['full_name']?.toString() ?? '';
   String get _initials {
@@ -835,14 +825,14 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
   }
 
   InputDecoration _inputDec(IconData? icon) => InputDecoration(
-        prefixIcon: icon == null ? null : Icon(icon, size: 20, color: _textMuted),
+        prefixIcon: icon == null ? null : Icon(icon, size: 20, color: _textMutedT(context)),
         filled: true,
         fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _accent, width: 1.6)),
-        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _border)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: _borderT(context))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: _borderT(context))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: _accentT(context), width: 1.6)),
+        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: _borderT(context))),
       );
 
   @override
@@ -865,59 +855,59 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
             Row(children: [
               Container(
                 width: 64, height: 64,
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: _accent),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: _accentT(context)),
                 alignment: Alignment.center,
                 child: Text(_initials, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(_name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _textPrimary)),
+                  Text(_name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _textPrimaryT(context))),
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: _accentMuted, borderRadius: BorderRadius.circular(999)),
-                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.shield_outlined, size: 14, color: _accent),
-                      SizedBox(width: 5),
-                      Text('Administrator', style: TextStyle(color: _accent, fontWeight: FontWeight.w700, fontSize: 12)),
+                    decoration: BoxDecoration(color: _accentMutedT(context), borderRadius: BorderRadius.circular(999)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.shield_outlined, size: 14, color: _accentT(context)),
+                      const SizedBox(width: 5),
+                      Text('Administrator', style: TextStyle(color: _accentT(context), fontWeight: FontWeight.w700, fontSize: 12)),
                     ]),
                   ),
                 ]),
               ),
             ]),
             const SizedBox(height: 20),
-            const Text('Taarifa za msingi', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _textPrimary)),
+            Text('Taarifa za msingi', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _textPrimaryT(context))),
             const SizedBox(height: 18),
-            const Text('Jina kamili', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textSecondary)),
+            Text('Jina kamili', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textSecondaryT(context))),
             const SizedBox(height: 8),
             TextFormField(
               controller: _nameCtrl,
-              style: const TextStyle(fontSize: 15, color: _textPrimary),
+              style: TextStyle(fontSize: 15, color: _textPrimaryT(context)),
               decoration: _inputDec(Icons.person_outline),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Weka jina kamili' : null,
             ),
             const SizedBox(height: 18),
-            const Text('Namba ya simu (Pili / WhatsApp)',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textSecondary)),
+            Text('Namba ya simu (Pili / WhatsApp)',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textSecondaryT(context))),
             const SizedBox(height: 8),
             Container(
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: _border)),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: _borderT(context))),
               child: Row(children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  decoration: const BoxDecoration(
-                    color: _surface1,
+                  decoration: BoxDecoration(
+                    color: _surface1T(context),
                     borderRadius: BorderRadius.horizontal(left: Radius.circular(14)),
                   ),
-                  child: const Text('+255', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _textPrimary)),
+                  child: Text('+255', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _textPrimaryT(context))),
                 ),
-                Container(width: 1, height: 24, color: _border),
+                Container(width: 1, height: 24, color: _borderT(context)),
                 Expanded(
                   child: TextFormField(
                     controller: _altCtrl,
                     keyboardType: TextInputType.phone,
-                    style: const TextStyle(fontSize: 15, color: _textPrimary),
+                    style: TextStyle(fontSize: 15, color: _textPrimaryT(context)),
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
                       border: InputBorder.none,
@@ -928,32 +918,32 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
                         (v != null && v.trim().isNotEmpty && v.trim().length < 9) ? 'Namba si sahihi' : null,
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(right: 12),
-                  child: Icon(Icons.chat_bubble, color: _success, size: 20),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Icon(Icons.chat_bubble, color: _successT(context), size: 20),
                 ),
               ]),
             ),
             const SizedBox(height: 18),
-            const Text('Barua pepe',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textSecondary)),
+            Text('Barua pepe',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textSecondaryT(context))),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              decoration: BoxDecoration(color: _surface1, borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(color: _surface1T(context), borderRadius: BorderRadius.circular(14)),
               child: Row(children: [
-                const Icon(Icons.email_outlined, size: 20, color: _textMuted),
+                Icon(Icons.email_outlined, size: 20, color: _textMutedT(context)),
                 const SizedBox(width: 10),
-                Expanded(child: Text(email, style: const TextStyle(fontSize: 15, color: _textMuted))),
-                const Icon(Icons.lock_outline, size: 18, color: _textMuted),
+                Expanded(child: Text(email, style: TextStyle(fontSize: 15, color: _textMutedT(context)))),
+                Icon(Icons.lock_outline, size: 18, color: _textMutedT(context)),
               ]),
             ),
             const SizedBox(height: 10),
-            const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Padding(padding: EdgeInsets.only(top: 1), child: Icon(Icons.info_outline, size: 16, color: _textMuted)),
-              SizedBox(width: 6),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Padding(padding: const EdgeInsets.only(top: 1), child: Icon(Icons.info_outline, size: 16, color: _textMutedT(context))),
+              const SizedBox(width: 6),
               Expanded(child: Text('Barua pepe haiwezi kubadilishwa hapa — wasiliana na admin mwenza.',
-                  style: TextStyle(fontSize: 12, color: _textMuted, height: 1.35))),
+                  style: TextStyle(fontSize: 12, color: _textMutedT(context), height: 1.35))),
             ]),
           ]),
         ),
@@ -966,8 +956,8 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                side: const BorderSide(color: _border),
-                foregroundColor: _textPrimary,
+                side: BorderSide(color: _borderT(context)),
+                foregroundColor: _textPrimaryT(context),
               ),
               child: const Text('Ghairi', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
@@ -983,8 +973,8 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
               label: Text(_saving ? 'Inahifadhi...' : 'Hifadhi mabadiliko',
                   style: const TextStyle(fontWeight: FontWeight.w700)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _accent,
-                foregroundColor: Colors.white,
+                backgroundColor: _accentT(context),
+                foregroundColor: _onAccentT(context),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
