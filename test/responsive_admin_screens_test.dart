@@ -25,7 +25,7 @@ import 'package:kubadilishanaapp/screens/admin/admin_password_resets_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_add_user_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_add_admin_page.dart';
 import 'package:kubadilishanaapp/screens/admin/admin_import_users_page.dart';
-import 'package:kubadilishanaapp/screens/admin/profile_page.dart';
+import 'package:kubadilishanaapp/screens/admin/admin_profile_page.dart';
 
 import 'helpers/responsive_pump.dart';
 
@@ -152,41 +152,66 @@ void main() {
         label: 'ImportUsersPage');
   });
 
-  testWidgets('ProfilePage (view mode, data mbili)', (tester) async {
+  testWidgets('AdminProfilePage (view mode, data mbili)', (tester) async {
     // Hakuna API halisi hapa: onSave inajifanya tu.
-    Future<String?> fakeSave(String fullName, String? whatsapp) async => null;
+    Future<bool> fakeSave(
+            String fullName, String phone, String whatsapp, String email) async =>
+        true;
 
     // 1) Taarifa kamili (WhatsApp ipo).
     var overflows = await pumpResponsive(
       tester,
-      (_) => ProfilePage(
-        profile: const AdminProfile(
-          fullName: 'Amani Selemani',
-          role: 'Administrator',
-          phone: '+255 712 345 678',
-          email: 'amani@kubadilishana.app',
-          whatsapp: '+255 712 345 678',
-        ),
+      (_) => AdminProfilePage(
+        fullName: 'Amani Selemani',
+        phone: '+255 712 345 678',
+        email: 'amani@kubadilishana.app',
+        whatsapp: '+255 712 345 678',
         onSave: fakeSave,
       ),
       loggedIn: false,
     );
-    expect(overflows, isEmpty, reason: 'OVERFLOW kwenye ProfilePage (kamili)');
+    expect(overflows, isEmpty,
+        reason: 'OVERFLOW kwenye AdminProfilePage (kamili)');
 
     // 2) Jina ndefu + barua ndefu + hakuna WhatsApp (mistari ya "Haijawekwa").
     overflows = await pumpResponsive(
       tester,
-      (_) => ProfilePage(
-        profile: const AdminProfile(
-          fullName: 'Amani Selemani Mkwajuni Nyanguso',
-          role: 'Administrator',
-          phone: '+255 712 345 678',
-          email: 'amani.mkwajuni.nyanguso@kubadilishana.app',
-        ),
+      (_) => AdminProfilePage(
+        fullName: 'Amani Selemani Mkwajuni Nyanguso',
+        phone: '+255 712 345 678',
+        email: 'amani.mkwajuni.nyanguso@kubadilishana.app',
         onSave: fakeSave,
       ),
       loggedIn: false,
     );
-    expect(overflows, isEmpty, reason: 'OVERFLOW kwenye ProfilePage (ndefu)');
+    expect(overflows, isEmpty,
+        reason: 'OVERFLOW kwenye AdminProfilePage (ndefu)');
+  });
+
+  testWidgets('AdminProfilePage (edit mode — fomu yenye fields 4)', (tester) async {
+    Future<bool> fakeSave(
+            String fullName, String phone, String whatsapp, String email) async =>
+        true;
+    await pumpResponsive(
+      tester,
+      (_) => AdminProfilePage(
+        fullName: 'Amani Selemani Mkwajuni Nyanguso',
+        phone: '+255 712 345 678',
+        email: 'amani.mkwajuni.nyanguso@kubadilishana.app',
+        onSave: fakeSave,
+      ),
+      loggedIn: false,
+    );
+    // Bonyeza edit (pencil) → fomu inafunguka.
+    await tester.tap(find.byIcon(Icons.edit_outlined).last);
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(find.text('Hariri wasifu'), findsOneWidget);
+    expect(find.text('Jina kamili'), findsOneWidget);
+    expect(find.text('Namba ya simu'), findsOneWidget);
+    expect(find.text('WhatsApp'), findsOneWidget);
+    expect(find.text('Barua pepe'), findsOneWidget);
+    // Ghairi + Hifadhi navyo (vitufe vidogo chini-kulia).
+    expect(find.text('Ghairi'), findsOneWidget);
+    expect(find.text('Hifadhi'), findsOneWidget);
   });
 }

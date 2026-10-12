@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_shell.dart' show LanguageProvider;
 import '../../services/app_navigator.dart' show adminPageNotifier;
@@ -22,7 +23,7 @@ import 'maoni_page.dart' show AdminMaoniPage;
 import 'statistics_page.dart';
 import 'admin_monitoring_page.dart';
 import 'admin_password_resets_page.dart';
-import 'profile_screen.dart';
+import 'admin_profile_page.dart';
 
 // ─── Footer (bottom nav) — mockup ya admin_panel.dart ──────────────────────
 
@@ -235,8 +236,50 @@ class _AdminShellState extends State<AdminShell> {
 
   void _openProfile() {
     if (Navigator.of(context).canPop()) Navigator.pop(context);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final u = auth.user;
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => const AdminProfileScreenPage(),
+      builder: (_) => AdminProfilePage(
+        fullName: u?.fullName ?? '',
+        phone: u?.phone ?? '',
+        whatsapp: (u?.phoneAlt ?? '').isEmpty ? null : u!.phoneAlt,
+        email: (u?.email ?? '').isEmpty ? null : u!.email,
+        onSave: (fullName, phone, whatsapp, email) async {
+          // Hifadhi kwenye backend (PATCH /users/me).
+          try {
+            await ApiService().updateProfile({
+              'full_name': fullName,
+              'phone_primary': phone,
+              'phone_alt': whatsapp,
+              if (email.isNotEmpty || (u?.email ?? '').isNotEmpty)
+                'email': email,
+            });
+            // Sasisha AuthProvider dumisha (drawer + header julio).
+            if (u != null) {
+              auth.updateUser(AuthUser(
+                userId: u.userId,
+                fullName: fullName,
+                phone: phone,
+                phoneAlt: whatsapp,
+                email: email,
+                category: u.category,
+                cadreCode: u.cadreCode,
+                cadreDisplay: u.cadreDisplay,
+                employmentSector: u.employmentSector,
+                isAdmin: u.isAdmin,
+                isVerified: u.isVerified,
+                contactEnabled: u.contactEnabled,
+                currentStation: u.currentStation,
+                subjects: u.subjects,
+                wantedRegions: u.wantedRegions,
+              ));
+            }
+            return true;
+          } catch (_) {
+            return false;
+          }
+        },
+      ),
     ));
   }
 
