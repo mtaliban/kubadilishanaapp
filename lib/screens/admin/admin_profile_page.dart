@@ -358,26 +358,27 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     );
   }
 
-  /// Bar ya kudumu ya chini: Ghairi (outlined) + Hifadhi (bluu) — kulia.
+  /// Bar ya kudumu ya chini: Ghairi + Hifadhi — KUSHOTO (kama mockup).
   /// Iko kwenye Scaffold.bottomNavigationBar: HAIFIKA kwenye scroll,
   /// HAIFUNIKWA na keyboard (Material inai-push juu ya keyboard).
   Widget _actionBar() {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: dark ? const Color(0xFF1E293B) : Colors.white,
-        // MSTARI JUU UMESHINDWA (uombezi): border top FUTWA — bar iko safi,
-        // hakuna mstari juu ya vitufe (mockup hauna mstari).
+        // Dark: rangi SAWA na scaffold (0xFF0F172A) — hakuna 'div' tofauti
+        // inayoonekana kama kanda nyuma ya buttons.
+        color: dark ? const Color(0xFF0F172A) : Colors.white,
+        // Border top imefutwa — bar iko safi (mockup hauna mstari).
       ),
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            // Buttons NDONGO (wrap-content, si Expanded ya nusu-screen):
-            // upana una follow text+icon TU. Haziwezi kumea au kutoka screen
-            // — ziko kwenye Row ya 'MainAxisAlignment.end' (bar ya chini).
+            mainAxisAlignment: MainAxisAlignment.start,
+            // KUSHOTO: buttons zinaanza mwanzo wa Row (si kulia).
+            // Zote wrap-content (upana wa text+icon tu) na haziwezi kutoka
+            // screen — Ghairi KISHOTO, Hifadhi mbele yake.
             children: [
               // Ghairi — upana wa content tu (mfupi).
               TextButton.icon(
@@ -394,9 +395,10 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 style: TextButton.styleFrom(
                   // VITUFE VIDOGO: minimumSize ya DEFAULT ya Material (64×36)
                   // ndiyo chanzo cha 'div kubwa' — imepunguzwa 0×28 +
-                  // tapTargetSize.shrinkWrap (inakata area ya kugusa kubwa
-                  // ya Material). Height halisi sasa 28, si 32-44.
-                  side: const BorderSide(color: Color(0xFFD1D5DB)),
+                  // tapTargetSize.shrinkWrap. Height halisi 28.
+                  // BORDER DARK-AWARE: ilikuwa #D1D5DB (kijivu kipya, ilikuwa
+                  // 'div' nyeupe kwenye dark) — kwenye dark utumia _lineD.
+                  side: BorderSide(color: _lineT(context)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
