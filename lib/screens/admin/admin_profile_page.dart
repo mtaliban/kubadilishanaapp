@@ -373,84 +373,77 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           child: Row(
-            // KAMBUKA sinin: kila button ina Expanded (50/50) — kwenye screen
-            // NDOGO KAMILI (360px bila nav bar, keyboard wazi) layout
-            // HAIWEZI kumea au kutuma button nje ya screen. Hifadhi KULIA,
-            // Ghairi KUSHOTO daima.
+            mainAxisAlignment: MainAxisAlignment.end,
+            // Buttons NDONGO (wrap-content, si Expanded ya nusu-screen):
+            // upana una follow text+icon TU. Haziwezi kumea au kutoka screen
+            // — ziko kwenye Row ya 'MainAxisAlignment.end' (bar ya chini).
             children: [
-              // Ghairi — KUSHOTO, flex 15 — UKUBWA SAWA na Hifadhi (15) —
-              // zote ndogo (nusu-screen nusu kwa pamoja ~30%).
-              Expanded(
-                flex: 15,
-                child: TextButton.icon(
-                  onPressed: _saving ? null : _cancel,
-                  icon: Icon(TablerIcons.x, size: 15, color: _mutedT(context)),
-                  label: Text(
-                    'Ghairi',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: _textT(context),
-                    ),
+              // Ghairi — upana wa content tu (mfupi).
+              TextButton.icon(
+                onPressed: _saving ? null : _cancel,
+                icon: Icon(TablerIcons.x, size: 15, color: _mutedT(context)),
+                label: Text(
+                  'Ghairi',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: _textT(context),
                   ),
-                  style: TextButton.styleFrom(
-                    // VITUFE VIDOGO: minimumSize ya DEFAULT ya Material (64×36)
-                    // ndiyo chanzo cha 'div kubwa' — imepunguzwa 0×28 +
-                    // tapTargetSize.shrinkWrap (inakata area ya kugusa kubwa
-                    // ya Material). Height halisi sasa 28, si 32-44.
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    minimumSize: const Size(0, 28),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                style: TextButton.styleFrom(
+                  // VITUFE VIDOGO: minimumSize ya DEFAULT ya Material (64×36)
+                  // ndiyo chanzo cha 'div kubwa' — imepunguzwa 0×28 +
+                  // tapTargetSize.shrinkWrap (inakata area ya kugusa kubwa
+                  // ya Material). Height halisi sasa 28, si 32-44.
+                  side: const BorderSide(color: Color(0xFFD1D5DB)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
               const SizedBox(width: 10),
-              // Hifadhi — KULIA bluu, flex 15 — sawa na Ghairi.
-              Expanded(
-                flex: 15,
-                child: ElevatedButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(TablerIcons.deviceFloppy, size: 15),
-                  label: const Text(
-                    'Hifadhi',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
+              // Hifadhi — KULIA bluu, upana wa content tu (mfupi).
+              ElevatedButton.icon(
+                onPressed: _saving ? null : _save,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(TablerIcons.deviceFloppy, size: 15),
+                label: const Text(
+                  'Hifadhi',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _blue,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFC7D2FE),
-                    disabledForegroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    textStyle: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    // Hifadhi pia ndogo — height halisi 28 (minimumSize BAIASI).
-                    minimumSize: const Size(0, 28),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _blue,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFC7D2FE),
+                  disabledForegroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  textStyle: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  // Hifadhi pia ndogo — height halisi 28 (minimumSize BAIASI).
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
             ],
