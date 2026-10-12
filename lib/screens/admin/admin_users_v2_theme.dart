@@ -877,7 +877,12 @@ Future<V2AddOption?> showV2AddOptionsSheet(BuildContext context) {
           const SizedBox(height: 8),
           _addOption(ctx, PhosphorIcons.shieldCheck(), 'Ongeza Admin',
               'Anaingia kwa email, hana idara', V2AddOption.ongezaAdmin,
-              const Color(0xFFF3E8FF), const Color(0xFF7C3AED)),
+              Theme.of(ctx).brightness == Brightness.dark
+                  ? const Color(0xFF2E1A47)
+                  : const Color(0xFFF3E8FF),
+              Theme.of(ctx).brightness == Brightness.dark
+                  ? const Color(0xFFC4B5FD)
+                  : const Color(0xFF7C3AED)),
           const SizedBox(height: 8),
           _addOption(ctx, PhosphorIcons.microsoftExcelLogo(), 'Import Watumiaji',
               'Pakia wengi kwa mara moja (.xlsx)',

@@ -124,6 +124,9 @@ class _C {
   static Color simuFg_2(BuildContext c) => of(c, simuFg, simuFgD);
   static Color smsBg_2(BuildContext c) => of(c, smsBg, smsBgD);
   static Color smsFg_2(BuildContext c) => of(c, smsFg, smsFgD);
+  static Color card_2c(BuildContext c) => of(c, Colors.white, const Color(0xFF1E293B));
+  static Color dash_2(BuildContext c) => of(c, dash, dashD);
+  static Color dashSoft_2(BuildContext c) => of(c, dashSoft, dashSoftD);
 }
 
 // ----------------------------------------------------------------------------
@@ -491,7 +494,9 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
             hintText: 'Andika jina, mkoa au idara',
             hintStyle: TextStyle(color: _C.of(context, _C.placeholder, _C.placeholderD), fontSize: 15),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF18202F)
+                : Colors.white,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
@@ -604,7 +609,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
         height: 42,
         padding: const EdgeInsets.only(left: 14, right: 6),
         decoration: BoxDecoration(
-          color: on ? _C.blue : Colors.white,
+          color: on ? _C.blue : _C.card_2c(context),
           border: Border.all(color: on ? _C.blue : _C.border_2(context), width: 1.5),
           borderRadius: BorderRadius.circular(22),
         ),
@@ -757,8 +762,8 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
           height: 34,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: _C.avatarBorder_2(context)),
+            color          : _C.card_2c(context),
+          border: Border.all(color: _C.avatarBorder_2(context)),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: children),
@@ -789,7 +794,7 @@ class _CallCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _C.card_2c(context),
         border: Border.all(color: _C.border_2(context), width: 1.5),
         borderRadius: BorderRadius.circular(22),
       ),
@@ -843,15 +848,14 @@ class _CallCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _C.card_2c(context),
                     border: Border.all(color: _C.chevBorder_2(context)),
                     borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: AnimatedRotation(
+                  ),                    child: AnimatedRotation(
                     turns: open ? .5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(TablerIcons.chevron_down,
-                        size: 17, color: Colors.black),
+                    child: Icon(TablerIcons.chevron_down,
+                        size: 17, color: _C.ink_2(context)),
                   ),
                 ),
               ),
@@ -896,7 +900,7 @@ class _CallCard extends StatelessWidget {
                     child: CustomPaint(
                       size: const Size(2, double.infinity),
                       painter: _DashedLinePainter(
-                          vertical: true, color: _C.dash, strokeWidth: 2),
+                          vertical: true, color: _C.dash_2(context), strokeWidth: 2),
                     ),
                   ),
                 Positioned(
@@ -906,7 +910,7 @@ class _CallCard extends StatelessWidget {
                     width: 14,
                     height: 14,
                     decoration: BoxDecoration(
-                      color: isFirst ? Colors.white : _C.blue,
+                      color: isFirst ? _C.card_2c(context) : _C.blue,
                       shape: BoxShape.circle,
                       border: isFirst
                           ? Border.all(color: _C.blue, width: 3.5)
@@ -973,7 +977,7 @@ class _CallCard extends StatelessWidget {
               width: double.infinity,
               child: CustomPaint(
                 painter: _DashedLinePainter(
-                    vertical: false, color: _C.dashSoft, strokeWidth: 1.5),
+                    vertical: false, color: _C.dashSoft_2(context), strokeWidth: 1.5),
               ),
             ),
             const SizedBox(height: 18),
@@ -1042,14 +1046,14 @@ class _PersonBlock extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(
-                      color: filledChip ? _C.blue : Colors.white,
+                      color: filledChip ? _C.blue : _C.card_2c(context),
                       border: Border.all(color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Text(role,
                         style: TextStyle(
                             fontSize: 13.5,
-                            color: filledChip ? Colors.white : _C.blue)),
+                            color: filledChip ? Colors.white : _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
                   ),
                 ],
               ),
@@ -1129,12 +1133,12 @@ class _PersonBlock extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: _C.card_2c(context),
                         border: Border.all(color: _C.avatarBorder_2(context)),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(TablerIcons.copy,
-                          size: 18, color: Colors.black),
+                      child: Icon(TablerIcons.copy,
+                          size: 18, color: _C.ink_2(context)),
                     ),
                   ),
                 ],
@@ -1253,7 +1257,7 @@ class _ActionButtons extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: _C.iconBoxBorder_2(context)),
                 ),
-                child: Icon(actions[i].$1, size: 21, color: Colors.black),
+                child: Icon(actions[i].$1, size: 21, color: _C.ink_2(context)),
               ),
             ),
           ],
@@ -1275,7 +1279,7 @@ class _ActionButtons extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _C.iconBoxBorder_2(context)),
                 ),
-                child: Icon(actions[i].$1, size: 22, color: Colors.black),
+                child: Icon(actions[i].$1, size: 22, color: _C.ink_2(context)),
               ),
             ),
           ),
@@ -1365,7 +1369,7 @@ class _DashedArrow extends StatelessWidget {
           Expanded(
             child: CustomPaint(
               painter: _DashedLinePainter(
-                  vertical: false, color: _C.dash, strokeWidth: 2),
+                  vertical: false, color: _C.dash_2(context), strokeWidth: 2),
               child: SizedBox(height: 2, width: double.infinity),
             ),
           ),

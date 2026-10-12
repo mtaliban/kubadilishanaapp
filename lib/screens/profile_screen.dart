@@ -413,20 +413,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
               child: Row(children: [
                 Material(
-                  color: const Color(0xFFF3F4F6),
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF212833) : const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(10),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(10),
                     onTap: () => Navigator.maybePop(context),
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Icon(Icons.chevron_left_rounded, size: 20, color: Color(0xFF374151)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(Icons.chevron_left_rounded, size: 20, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFE7ECF8) : const Color(0xFF374151)),
                     ),
                   ),
                 ),
               ]),
             ),
-            Container(height: 1, color: const Color(0xFFE5E7EB)),
+              Container(height: 1, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2A3240) : const Color(0xFFE5E7EB)),
             Expanded(child: body),
           ]),
         ),
@@ -489,20 +489,20 @@ class _AdminProfilePageState extends State<_AdminProfilePage> {
             padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
             child: Row(children: [
               Material(
-                color: const Color(0xFFF3F4F6),
+                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF212833) : const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
                   onTap: () => Navigator.maybePop(context),
-                  child: const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Icon(Icons.chevron_left_rounded, size: 20, color: Color(0xFF374151)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(Icons.chevron_left_rounded, size: 20, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFE7ECF8) : const Color(0xFF374151)),
                   ),
                 ),
               ),
             ]),
           ),
-          Container(height: 1, color: const Color(0xFFE5E7EB)),
+          Container(height: 1, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2A3240) : const Color(0xFFE5E7EB)),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
@@ -519,12 +519,12 @@ class _AdminProfilePageState extends State<_AdminProfilePage> {
                     Row(children: [
                       Text(_editing ? 'Hariri wasifu' : 'Wasifu wa Admin',
                           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _textPrimary, height: 1.2)),
-                      const SizedBox(width: 8),
+                    const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(color: _accentMuted, borderRadius: BorderRadius.circular(999)),
                         child: const Text('Admin',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _accent)),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _textPrimary)),
                       ),
                     ]),
                     const SizedBox(height: 2),
@@ -696,7 +696,7 @@ class _ViewAdmin extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border, width: 0.6)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Mawasiliano', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+              const Text('Mawasiliano', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _textPrimary)),
               const SizedBox(height: 14),
               _contactRow(
                 context: context,
@@ -887,9 +887,9 @@ class _EditAdminProfileState extends State<_EditAdminProfile> {
               ),
             ]),
             const SizedBox(height: 20),
-            const Text('Taarifa za msingi', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+            const Text('Taarifa za msingi', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _textPrimary)),
             const SizedBox(height: 18),
-            const Text('Jina kamili', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _accent)),
+            const Text('Jina kamili', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textSecondary)),
             const SizedBox(height: 8),
             TextFormField(
               controller: _nameCtrl,
@@ -1005,7 +1005,8 @@ class _ErrBox extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: const Color(0xFFFEF2F2), borderRadius: BorderRadius.circular(8)),
-        child: Text(message, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 14)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF3A2C14) : const Color(0xFFFEF2F2), borderRadius: BorderRadius.circular(8)),
+        child: Text(message, style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFFBBF24) : const Color(0xFFDC2626), fontSize: 14)),
       );
 }

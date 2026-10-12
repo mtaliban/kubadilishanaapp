@@ -263,5 +263,15 @@ class AppTheme {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
     ),
+    dialogTheme: const DialogThemeData(
+      backgroundColor: Color(0xFF1E293B),
+      surfaceTintColor: Colors.transparent,
+      titleTextStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFFF9FAFB)),
+    ),
+    popupMenuTheme: const PopupMenuThemeData(
+      color: Color(0xFF1E293B),
+      surfaceTintColor: Colors.transparent,
+      textStyle: TextStyle(fontSize: 14, color: Color(0xFFF9FAFB)),
+    ),
   );
 }

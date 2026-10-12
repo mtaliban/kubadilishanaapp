@@ -1884,23 +1884,23 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
   Widget build(BuildContext context) {
     return ToastHost(
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: _aaScaffoldT(context),
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
+          backgroundColor: _aaScaffoldT(context),
+          surfaceTintColor: _aaScaffoldT(context),
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: _aaText),
+            icon: Icon(Icons.arrow_back, color: _aaTextT(context)),
             onPressed: () => Navigator.maybePop(context),
           ),
-          title: const Text(
+          title: Text(
             'Ongeza Admin',
             style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w500, color: _aaText),
+                fontSize: 16, fontWeight: FontWeight.w500, color: _aaTextT(context)),
           ),
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, color: Color(0xFFF0F1F3)),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Divider(height: 1, color: _aaFieldBorderT(context)),
           ),
         ),
         body: SafeArea(
@@ -1917,17 +1917,17 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      color: _aaBluePale,
+                      color: _aaBluePaleT(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(children: const [
+                    child: Row(children: [
                       Icon(Icons.verified_user_outlined,
-                          size: 17, color: _aaBlue),
-                      SizedBox(width: 8),
+                          size: 17, color: _aaBlueT(context)),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Anaingia kwa barua pepe — hana idara wala kada.',
-                          style: TextStyle(fontSize: 12, color: _aaBlue),
+                          style: TextStyle(fontSize: 12, color: _aaBlueT(context)),
                         ),
                       ),
                     ]),
@@ -1935,19 +1935,19 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                   const SizedBox(height: 16),
                   // Kichwa cha sehemu
                   Row(children: [
-                    Icon(Icons.person_outline, size: 15, color: _aaBlue),
+                    Icon(Icons.person_outline, size: 15, color: _aaBlueT(context)),
                     const SizedBox(width: 6),
-                    const Text(
+                    Text(
                       'TAARIFA ZA ADMIN',
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.6,
-                          color: Color(0xFF4B5563)),
+                          color: _aaLabelT(context)),
                     ),
                     const SizedBox(width: 8),
-                    const Expanded(
-                        child: Divider(height: 1, color: Color(0xFFE5E7EB))),
+                    Expanded(
+                        child: Divider(height: 1, color: _aaFieldBorderT(context))),
                   ]),
                   const SizedBox(height: 10),
                   _AaField(
@@ -2004,7 +2004,7 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                         size: 17,
-                        color: _aaBlue,
+                        color: _aaBlueT(context),
                       ),
                     ),
                     validator: (v) => (v == null || v.length < 8)
@@ -2022,10 +2022,11 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                         icon: const Icon(Icons.save_outlined, size: 15),
                         label: const Text('Hifadhi'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _aaBlue,
+                          backgroundColor: _aaBlueT(context),
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor: const Color(0xFFC7D2FE),
-                          disabledForegroundColor: Colors.white,
+                          disabledBackgroundColor: _aaBluePaleT(context),
+                          disabledForegroundColor: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0F172A) : Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           textStyle: const TextStyle(
@@ -2046,13 +2047,29 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
   }
 }
 
-// Rangi za fomu ya admin
+// Rangi za fomu ya admin (theme-aware: _aa*T(context) helpers chini)
 const Color _aaBlue = Color(0xFF1E40AF);
 const Color _aaBluePale = Color(0xFFEEF2FF);
-const Color _aaText = Color(0xFF111827);
 const Color _aaHint = Color(0xFF9CA3AF);
 const Color _aaFieldBorder = Color(0xFFDDDCF3);
 const Color _aaRed = Color(0xFFDC2626);
+
+Color _aaTextT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFFE7ECF8) : const Color(0xFF111827);
+Color _aaBlueT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF7AA7FF) : _aaBlue;
+Color _aaBluePaleT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF1C2A44) : _aaBluePale;
+Color _aaHintT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF94A3B8) : _aaHint;
+Color _aaFieldBorderT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF334155) : _aaFieldBorder;
+Color _aaRedT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFFF87171) : _aaRed;
+Color _aaLabelT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFFA9B7D6) : const Color(0xFF374151);
+Color _aaScaffoldT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white;
 
 /// Field yenye label juu, icon ndani, hint, validator na error ya chini.
 class _AaField extends StatelessWidget {
@@ -2094,10 +2111,10 @@ class _AaField extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF374151)),
+                color: _aaLabelT(context)),
           ),
           const SizedBox(height: 5),
           TextFormField(
@@ -2106,32 +2123,31 @@ class _AaField extends StatelessWidget {
             textCapitalization: textCapitalization,
             obscureText: obscure,
             validator: validator,
-            style: const TextStyle(fontSize: 13, color: _aaText),
+            style: TextStyle(fontSize: 13, color: _aaTextT(context)),
             decoration: InputDecoration(
               isDense: true,
               hintText: hint,
-              hintStyle: const TextStyle(fontSize: 13, color: _aaHint),
+              hintStyle: TextStyle(fontSize: 13, color: _aaHintT(context)),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              prefixIcon: Icon(icon, size: 17, color: _aaBlue),
+              prefixIcon: Icon(icon, size: 17, color: _aaBlueT(context)),
               prefixIconConstraints:
                   const BoxConstraints(minWidth: 40, minHeight: 20),
               suffixIcon: suffix,
               suffixIconConstraints:
                   const BoxConstraints(minWidth: 36, minHeight: 20),
-              errorStyle: const TextStyle(fontSize: 11, color: _aaRed),
-              enabledBorder: _border(_aaFieldBorder),
-              focusedBorder: _border(_aaBlue, 1.2),
-              errorBorder: _border(_aaRed),
-              focusedErrorBorder: _border(_aaRed, 1.2),
+              errorStyle: TextStyle(fontSize: 11, color: _aaRedT(context)),
+              enabledBorder: _border(_aaFieldBorderT(context)),
+              focusedBorder: _border(_aaBlueT(context), 1.2),
+              errorBorder: _border(_aaRedT(context)),
+              focusedErrorBorder: _border(_aaRedT(context), 1.2),
             ),
           ),
-          if (helper != null)
-            Padding(
+          if (helper != null)              Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 helper!,
-                style: const TextStyle(fontSize: 10.5, color: _aaHint),
+                style: TextStyle(fontSize: 10.5, color: _aaHintT(context)),
               ),
             ),
         ],
@@ -2249,23 +2265,23 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
   Widget build(BuildContext context) {
     return ToastHost(
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: _aaScaffoldT(context),
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
+          backgroundColor: _aaScaffoldT(context),
+          surfaceTintColor: _aaScaffoldT(context),
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: _iuText),
+            icon: Icon(Icons.arrow_back, color: _iuTextT(context)),
             onPressed: () => Navigator.maybePop(context),
           ),
-          title: const Text(
+          title: Text(
             'Import Watumiaji',
             style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w500, color: _iuText),
+                fontSize: 16, fontWeight: FontWeight.w500, color: _iuTextT(context)),
           ),
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, color: Color(0xFFF0F1F3)),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Divider(height: 1, color: _aaFieldBorderT(context)),
           ),
         ),
         body: SafeArea(
@@ -2303,8 +2319,8 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                       icon: const Icon(Icons.download_outlined, size: 15),
                       label: const Text('Pakua Kiolezo (Excel)'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: _iuBlue,
-                        side: const BorderSide(color: _iuBlue),
+                        foregroundColor: _iuBlueT(context),
+                        side: BorderSide(color: _iuBlueT(context)),
                         minimumSize: const Size(0, 30),
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -2341,7 +2357,7 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                             : 'Chagua faili kwanza',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: _iuMuted),
+                        style: TextStyle(fontSize: 11, color: _iuMutedT(context)),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -2358,10 +2374,11 @@ class _V2ImportScreenState extends State<V2ImportScreen> {
                             : const Icon(Icons.cloud_upload_outlined, size: 16),
                         label: const Text('Import'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _iuBlue,
+                          backgroundColor: _iuBlueT(context),
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor: const Color(0xFFC7D2FE),
-                          disabledForegroundColor: Colors.white,
+                          disabledBackgroundColor: _iuBluePaleT(context),
+                          disabledForegroundColor: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0F172A) : Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(horizontal: 18),
                           textStyle: const TextStyle(
@@ -2389,6 +2406,17 @@ const Color _iuText = Color(0xFF111827);
 const Color _iuMuted = Color(0xFF6B7280);
 const Color _iuLine = Color(0xFFE5E7EB);
 
+Color _iuBlueT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF7AA7FF) : _iuBlue;
+Color _iuBluePaleT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF1C2A44) : _iuBluePale;
+Color _iuTextT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFFE7ECF8) : _iuText;
+Color _iuMutedT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF9AA8C7) : _iuMuted;
+Color _iuLineT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF2A3240) : _iuLine;
+
 class _IuSectionTitle extends StatelessWidget {
   const _IuSectionTitle({required this.icon, required this.label});
   final IconData icon;
@@ -2399,18 +2427,18 @@ class _IuSectionTitle extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(children: [
-        Icon(icon, size: 15, color: _iuBlue),
+        Icon(icon, size: 15, color: _iuBlueT(context)),
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.6,
-              color: Color(0xFF4B5563)),
+              color: _aaLabelT(context)),
         ),
         const SizedBox(width: 8),
-        const Expanded(child: Divider(height: 1, color: _iuLine)),
+        Expanded(child: Divider(height: 1, color: _iuLineT(context))),
       ]),
     );
   }
@@ -2434,9 +2462,9 @@ class _IuDeptChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? _iuBluePale : Colors.white,
+          color: selected ? _iuBluePaleT(context) : _aaScaffoldT(context),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: _iuLine),
+          border: Border.all(color: _iuLineT(context)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           _IuRadioDot(selected: selected),
@@ -2448,7 +2476,7 @@ class _IuDeptChip extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                   fontSize: 12,
-                  color: selected ? _iuBlue : const Color(0xFF374151),
+                  color: selected ? _iuBlueT(context) : _iuTextT(context),
                   fontWeight: selected ? FontWeight.w500 : FontWeight.w400),
             ),
           ),
@@ -2471,7 +2499,7 @@ class _IuRadioDot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: selected ? _iuBlue : const Color(0xFF9CA3AF),
+          color: selected ? _iuBlueT(context) : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF)),
           width: 1.5,
         ),
       ),
@@ -2480,8 +2508,8 @@ class _IuRadioDot extends StatelessWidget {
               child: Container(
                 width: 6,
                 height: 6,
-                decoration: const BoxDecoration(
-                  color: _iuBlue,
+                decoration: BoxDecoration(
+                  color: _iuBlueT(context),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -2501,21 +2529,21 @@ class _IuColumnsNote extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F6F4),
+        color: _iuBluePaleT(context),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(children: [
-            Icon(Icons.info_outline, size: 16, color: _iuBlue),
-            SizedBox(width: 6),
+          Row(children: [
+            Icon(Icons.info_outline, size: 16, color: _iuBlueT(context)),
+            const SizedBox(width: 6),
             Text(
               'Safu za faili',
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: _iuBlue),
+                  color: _iuBlueT(context)),
             ),
           ]),
           const SizedBox(height: 8),
@@ -2528,14 +2556,14 @@ class _IuColumnsNote extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _aaScaffoldT(context),
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: _iuLine, width: 0.5),
+                    border: Border.all(color: _iuLineT(context), width: 0.5),
                   ),
                   child: Text(
                     c,
-                    style: const TextStyle(
-                        fontSize: 10.5, color: Color(0xFF4B5563)),
+                    style: TextStyle(
+                        fontSize: 10.5, color: _aaLabelT(context)),
                   ),
                 ),
             ],
@@ -2568,16 +2596,16 @@ class _IuStep extends StatelessWidget {
           height: 22,
           margin: const EdgeInsets.only(top: 1),
           alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: _iuBluePale,
+          decoration: BoxDecoration(
+            color: _iuBluePaleT(context),
             shape: BoxShape.circle,
           ),
           child: Text(
             number,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: _iuBlue),
+                color: _iuBlueT(context)),
           ),
         ),
         const SizedBox(width: 10),
@@ -2587,15 +2615,15 @@ class _IuStep extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: _iuText),
+                    color: _iuTextT(context)),
               ),
               const SizedBox(height: 1),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 11, color: _iuMuted),
+                style: TextStyle(fontSize: 11, color: _iuMutedT(context)),
               ),
               const SizedBox(height: 8),
               child,
@@ -2618,26 +2646,26 @@ class _IuDropZone extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: CustomPaint(
-        painter: _IuDashedRRectPainter(),
-        child: const SizedBox(
+        painter: _IuDashedRRectPainter(context),
+        child: SizedBox(
           width: double.infinity,
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
             child: Column(
               children: [
-                Icon(Icons.file_upload_outlined, size: 22, color: _iuBlue),
-                SizedBox(height: 4),
+                Icon(Icons.file_upload_outlined, size: 22, color: _iuBlueT(context)),
+                const SizedBox(height: 4),
                 Text(
                   'Chagua Faili la Excel',
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: _iuBlue),
+                      color: _iuBlueT(context)),
                 ),
-                SizedBox(height: 1),
+                const SizedBox(height: 1),
                 Text(
                   'Bonyeza hapa kuchagua faili',
-                  style: TextStyle(fontSize: 10.5, color: _iuMuted),
+                  style: TextStyle(fontSize: 10.5, color: _iuMutedT(context)),
                 ),
               ],
             ),
@@ -2649,10 +2677,12 @@ class _IuDropZone extends StatelessWidget {
 }
 
 class _IuDashedRRectPainter extends CustomPainter {
+  _IuDashedRRectPainter(BuildContext c) : _dark = Theme.of(c).brightness == Brightness.dark;
+  final bool _dark;
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFC7D2FE)
+      ..color = _dark ? const Color(0xFF334155) : const Color(0xFFC7D2FE)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
     final path = Path()
@@ -2684,18 +2714,18 @@ class _IuFileRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _iuLine),
+        border: Border.all(color: _iuLineT(context)),
       ),
       child: Row(children: [
         Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: _iuBluePale,
+            color: _iuBluePaleT(context),
             borderRadius: BorderRadius.circular(9),
           ),
-          child: const Icon(Icons.table_chart_outlined,
-              size: 18, color: _iuBlue),
+          child: Icon(Icons.table_chart_outlined,
+              size: 18, color: _iuBlueT(context)),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -2706,14 +2736,14 @@ class _IuFileRow extends StatelessWidget {
                 name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
-                    color: _iuText),
+                    color: _iuTextT(context)),
               ),
               if (info != null)
                 Text(info!,
-                    style: const TextStyle(fontSize: 10.5, color: _iuMuted)),
+                    style: TextStyle(fontSize: 10.5, color: _iuMutedT(context))),
             ],
           ),
         ),
@@ -2723,11 +2753,12 @@ class _IuFileRow extends StatelessWidget {
           child: Container(
             width: 24,
             height: 24,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF3F4F6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E293B) : const Color(0xFFF3F4F6),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.close, size: 13, color: Color(0xFF4B5563)),
+            child: Icon(Icons.close, size: 13, color: _aaLabelT(context)),
           ),
         ),
       ]),

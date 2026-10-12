@@ -48,6 +48,11 @@ class _C {
   static const donutLight = Color(0xFFB9C7EC);
   static const arrow = Color(0xFF8A9BC2);
   static const optBorder = Color(0xFFE1E8F6);
+
+  // ── DARK variants za inspecta zilizobaki (theme awareness) ─────────────
+  static const whiteD = Color(0xFF1E293B);      // badala ya Colors.white (kadi/chips tupu)
+  static const whiteD2 = Color(0xFF0F172A);      // badala ya Colors.white (bottom sheet)
+  static const arrowD = Color(0xFF7A8AAE);       // arrow icon/text kwenye giza
   static const heroTop = Colors.white; // nyeupe kabisa (ilikuwa #F4F7FF)
 
   // ── DARK/LIGHT: getters zinazotumia Theme.of(context).brightness ────────
@@ -55,8 +60,6 @@ class _C {
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
 
-  static Color of(BuildContext context, Color light, Color darkDark) =>
-      isDark(context) ? darkDark : light;
 
   // ── Dark variants (zinazosomeka kwenye giza) ─────────────────────────
   static const inkD = Color(0xFFE7ECF8);
@@ -97,8 +100,12 @@ class _C {
   static Color orange2(BuildContext c) => isDark(c) ? orangeD : orange;
   static Color donut2(BuildContext c) => isDark(c) ? const Color(0xFF41547E) : donutLight;
   static Color optBorder2(BuildContext c) => isDark(c) ? const Color(0xFF2A3858) : optBorder;
+  static Color arrow2(BuildContext c) => isDark(c) ? arrowD : arrow;
+  static Color bgOrWhite(BuildContext c) => isDark(c) ? whiteD : Colors.white;
+  static Color sheetBg(BuildContext c) => isDark(c) ? whiteD2 : Colors.white;
+  static const greenD = Color(0xFF86EFAC);
+  static Color greenDot(BuildContext c) => isDark(c) ? greenD : green;
 }
-
 
 // ----------------------------------------------------------------------------
 // Models
@@ -397,7 +404,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircleAvatar(radius: 4, backgroundColor: _C.green),
+                  CircleAvatar(radius: 4, backgroundColor: _C.greenDot(context)),
                   const SizedBox(width: 6),
                   Text('Live',
                       style: TextStyle(color: _C.greenFg2(context), fontSize: 13)),
@@ -426,7 +433,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           children: [
             Row(
               children: [
-                CircleAvatar(radius: 4, backgroundColor: _C.blue),
+                CircleAvatar(radius: 4, backgroundColor: _C.blue2(context)),
                 SizedBox(width: 7),
                 Expanded(
                   child: Text('Watumiaji waliopo',
@@ -495,7 +502,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                   final w = ((c.maxWidth.isFinite ? c.maxWidth : 128).clamp(60.0, 128.0)).toDouble();
                   return CustomPaint(
                     size: Size(w, w * 0.5),
-                    painter: _SparklinePainter(d.weeklyNew),
+                    painter: _SparklinePainter(d.weeklyNew, isDark: _C.isDark(context)),
                   );
                 }),
               ],
@@ -589,8 +596,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       ),
                       const SizedBox(width: 8),
                       Text(d.events[i].time,
-                          style: const TextStyle(
-                              fontSize: 13.5, color: _C.muted3)),
+                          style: TextStyle(
+                              fontSize: 13.5, color: _C.muted3C(context))),
                     ],
                   ),
                 ),
@@ -633,7 +640,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: active ? _C.tileBg : Colors.white,
+            color: active ? _C.tileBg2(context) : _C.bgOrWhite(context),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: active ? _C.blue2(context) : _C.border2(context), width: 1.5),
           ),
@@ -649,10 +656,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: active ? FontWeight.w500 : FontWeight.w400,
-                        color: active ? _C.blue2(context) : _C.ink)),
+                        color: active ? _C.blue2(context) : _C.ink2(context))),
               ),
               const SizedBox(width: 7),
-              const Icon(TablerIcons.chevron_down, size: 15, color: _C.muted),
+              Icon(TablerIcons.chevron_down, size: 15, color: _C.mutedA(context)),
             ],
           ),
         ),
@@ -663,9 +670,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Colors.white,
+      backgroundColor: _C.sheetBg(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -696,8 +701,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       ),
                       GestureDetector(
                         onTap: () => Navigator.pop(ctx),
-                        child: const Icon(TablerIcons.x,
-                            size: 22, color: _C.muted),
+                        child: Icon(TablerIcons.x,
+                            size: 22, color: _C.mutedA(context)),
                       ),
                     ]),
                     const SizedBox(height: 12),
@@ -708,8 +713,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
                         style: TextStyle(fontSize: 14.5, color: _C.ink2(context)),
                         decoration: InputDecoration(
                           hintText: 'Tafuta...',
-                          hintStyle: const TextStyle(
-                              color: Color(0xFF8A9BC2), fontSize: 14.5),
+                          hintStyle: TextStyle(
+                              color: _C.arrow2(context), fontSize: 14.5),
                           contentPadding:
                               const EdgeInsets.symmetric(horizontal: 14),
                           suffixIcon: Icon(TablerIcons.search,
@@ -742,7 +747,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
-                                color: on ? _C.tileBg : Colors.white,
+                                color: on ? _C.tileBg2(context) : _C.bgOrWhite(context),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                     color: on ? _C.blue2(context) : _C.optBorder2(context),
@@ -759,7 +764,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                     ),
                                     child: Icon(o.icon,
                                         size: 19,
-                                        color: on ? Colors.white : _C.blue),
+                                        color: on ? Colors.white : _C.blue2(context)),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -772,8 +777,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w500,
                                                 color: on
-                                                    ? _C.blue
-                                                    : _C.ink)),
+                                                    ? _C.blue2(context)
+                                                    : _C.ink2(context))),
                                         if (o.subtitle.isNotEmpty)
                                           Text(o.subtitle,
                                               style: TextStyle(
@@ -840,7 +845,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 child: Row(
                   children: [
                     _IconTile(d.departments[i].icon,
-                        size: 36, radius: 11, iconSize: 18, bg: _C.tileBg),
+                        size: 36, radius: 11, iconSize: 18, bg: _C.tileBg2(context)),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -895,7 +900,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
               ),
               child: Row(
                 children: [
-                  const CircleAvatar(radius: 6, backgroundColor: _C.green),
+                                  CircleAvatar(radius: 6, backgroundColor: _C.greenDot(context)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text('Hai (active)',
@@ -983,10 +988,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     CustomPaint(
                       size: const Size(110, 110),
                       painter: _DonutPainter([
-                        _Seg(pSek, _C.blue),
-                        _Seg(pNone, _C.donutLight),
-                        _Seg(pPri, _C.orange),
-                      ]),
+                        _Seg(pSek, _C.blue2(context)),
+                        _Seg(pNone, _C.donut2(context)),
+                        _Seg(pPri, _C.orange2(context)),
+                      ], isDark: _C.isDark(context)),
                     ),
                     Column(
                       mainAxisSize: MainAxisSize.min,
@@ -1066,8 +1071,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                       style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w500,
-                                          color: _C.blue2(context))),
-                                  Text(
+                                          color: _C.blue2(context))),                                  Text(
                                       '${(d.kada[i].count / d.totalUsers * 100).toStringAsFixed(1)}%',
                                       style: TextStyle(
                                           fontSize: 12, color: _C.muted2B(context))),
@@ -1155,15 +1159,15 @@ class _StatisticsPageState extends State<StatisticsPage> {
                               fontWeight: FontWeight.w500,
                               color: _C.ink2(context))),
                       const SizedBox(width: 8),
-                      const Icon(TablerIcons.arrow_right,
-                          size: 17, color: _C.arrow),
+                      Icon(TablerIcons.arrow_right,
+                          size: 17, color: _C.arrow2(context)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(d.flows[i].to,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
-                                color: _C.orange)),
+                                color: _C.orange2(context))),
                       ),
                       Text('${d.flows[i].count}',
                           style: TextStyle(
@@ -1175,7 +1179,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     Padding(
                       padding: const EdgeInsets.only(left: 38),
                       child:
-                          _Bar(fraction: d.flows[i].count / maxC, color: _C.orange),
+                          _Bar(fraction: d.flows[i].count / maxC, color: _C.orange2(context)),
                     ),
                   ],
                 ),
@@ -1230,17 +1234,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _endMarker() => const Padding(
-        padding: EdgeInsets.fromLTRB(0, 22, 0, 8),
+  Widget _endMarker() => Padding(
+        padding: const EdgeInsets.fromLTRB(0, 22, 0, 8),
         child: Row(
           children: [
-            Expanded(child: Divider(color: Color(0xFFE1E8F6), thickness: 1.5)),
+            Expanded(child: Divider(color: _C.optBorder2(context), thickness: 1.5)),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 10),
               child: Text('Mwisho wa ukurasa',
-                  style: TextStyle(fontSize: 13, color: _C.arrow)),
+                  style: TextStyle(fontSize: 13, color: _C.arrow2(context))),
             ),
-            Expanded(child: Divider(color: Color(0xFFE1E8F6), thickness: 1.5)),
+            Expanded(child: Divider(color: _C.optBorder2(context), thickness: 1.5)),
           ],
         ),
       );
@@ -1259,7 +1263,7 @@ class _Card extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _C.bgOrWhite(context),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: _C.border2(context), width: 1.5),
         ),
@@ -1315,7 +1319,7 @@ class _SubText extends StatelessWidget {
         child: Transform.translate(
           offset: const Offset(0, -6),
           child: Text(text,
-              style: const TextStyle(fontSize: 13.5, color: _C.muted3)),
+              style: TextStyle(fontSize: 13.5, color: _C.muted3C(context))),
         ),
       );
 }
@@ -1333,15 +1337,18 @@ class _IconTile extends StatelessWidget {
       this.bg = _C.iconTile});
 
   @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(radius),
-        ),
-        child: Icon(icon, size: iconSize, color: _C.blue2(context)),
-      );
+  Widget build(BuildContext context) {
+    final tileBg = _C.isDark(context) ? _C.iconTileD : bg;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: tileBg,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+      child: Icon(icon, size: iconSize, color: _C.blue2(context)),
+    );
+  }
 }
 
 class _RowDivider extends StatelessWidget {
@@ -1379,7 +1386,7 @@ class _RankBadge extends StatelessWidget {
           style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: top ? Colors.white : _C.blue)),
+              color: top ? Colors.white : _C.blue2(context))),
     );
   }
 }
@@ -1415,7 +1422,7 @@ class _TotalStrip extends StatelessWidget {
         decoration: BoxDecoration(
           color: _C.jmBg2(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _C.optBorder),
+          border: Border.all(color: _C.optBorder2(context)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1443,9 +1450,8 @@ class _SortBar extends StatelessWidget {
         onTap: () => onChanged(s),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-          decoration: BoxDecoration(
-            color: on ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(9),
+          decoration: BoxDecoration(                color: on ? _C.bgOrWhite(context) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(9),
             boxShadow: on
                 ? const [
                     BoxShadow(
@@ -1459,7 +1465,7 @@ class _SortBar extends StatelessWidget {
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: on ? FontWeight.w500 : FontWeight.w400,
-                  color: on ? _C.blue2(context) : _C.muted)),
+                  color: on ? _C.blue2(context) : _C.mutedA(context))),
         ),
       );
     }
@@ -1583,7 +1589,7 @@ class _RankedBarRow extends StatelessWidget {
                       SizedBox(
                           width: w * moving / maxTotal,
                           height: 8,
-                          child: const ColoredBox(color: _C.orange)),
+                          child: ColoredBox(color: _C.orange2(context))),
                     ],
                   ),
                 ),
@@ -1613,7 +1619,8 @@ class _RankedBarRow extends StatelessWidget {
 /// Sparkline of the last 7 days: gradient area + line + highlighted peak dot.
 class _SparklinePainter extends CustomPainter {
   final List<int> values;
-  _SparklinePainter(this.values);
+  final bool isDark;
+  _SparklinePainter(this.values, {this.isDark = false});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1650,7 +1657,7 @@ class _SparklinePainter extends CustomPainter {
     canvas.drawPath(
       line,
       Paint()
-        ..color = _C.blue
+        ..color = isDark ? _C.blueD : _C.blue
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5
         ..strokeCap = StrokeCap.round
@@ -1661,12 +1668,12 @@ class _SparklinePainter extends CustomPainter {
     for (var i = 1; i < values.length; i++) {
       if (values[i] > values[peak]) peak = i;
     }
-    canvas.drawCircle(pts[peak], 4, Paint()..color = Colors.white);
+    canvas.drawCircle(pts[peak], 4, Paint()..color = isDark ? _C.jmBgD : Colors.white);
     canvas.drawCircle(
       pts[peak],
       4,
       Paint()
-        ..color = _C.blue
+        ..color = isDark ? _C.blueD : _C.blue
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5,
     );
@@ -1685,7 +1692,8 @@ class _Seg {
 /// Donut chart: background ring + coloured arcs with a small gap between.
 class _DonutPainter extends CustomPainter {
   final List<_Seg> segs;
-  _DonutPainter(this.segs);
+  final bool isDark;
+  _DonutPainter(this.segs, {this.isDark = false});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1697,7 +1705,7 @@ class _DonutPainter extends CustomPainter {
       center,
       r,
       Paint()
-        ..color = _C.barBg
+        ..color = isDark ? _C.barBgD : _C.barBg
         ..style = PaintingStyle.stroke
         ..strokeWidth = stroke,
     );

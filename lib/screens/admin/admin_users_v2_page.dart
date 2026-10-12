@@ -723,7 +723,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: v2SurfaceOf(context),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -762,7 +762,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: v2SurfaceOf(context),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: v2BorderOf(context), width: 0.8),
       ),
@@ -822,7 +822,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: _live ? v2SuccessBgOf(context) : Color(0xFFF0F0F0),
+        color: _live ? v2SuccessBgOf(context) : v2SurfaceMutedOf(context),
         borderRadius: BorderRadius.circular(100),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -849,7 +849,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 9, 6, 9),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(10)),
+          color: v2SurfaceOf(context), borderRadius: BorderRadius.circular(10)),
       child: Row(children: [
         Expanded(
             child: Text(_message!,
@@ -877,13 +877,13 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         child: Container(
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: v2SurfaceOf(context),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: v2BorderOf(context)),
           ),
           child: TextField(
             controller: _search,
-            style: const TextStyle(fontSize: 13),
+            style: TextStyle(fontSize: 13, color: v2TextPrimaryOf(context)),
             decoration: InputDecoration(
               hintText: 'Tafuta jina, simu, kada...',
               hintStyle: TextStyle(
@@ -1135,7 +1135,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: BoxDecoration(
-              color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              color: v2SurfaceOf(context), borderRadius: BorderRadius.circular(16)),
           child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1236,16 +1236,32 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
     }
     Color _dBg(String code) {
       if (code.isEmpty) return v2SurfaceMutedOf(context);
-      if (code == 'health') return const Color(0xFFFFF1F2);
+      if (code == 'health') {
+        return Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF3A1D1B)
+            : const Color(0xFFFFF1F2);
+      }
       if (code == 'education') return v2AccentBgOf(context);
-      if (code == 'service') return const Color(0xFFF0FDF4);
+      if (code == 'service') {
+        return Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF14532D)
+            : const Color(0xFFF0FDF4);
+      }
       return v2SurfaceMutedOf(context);
     }
     Color _dFg(String code) {
       if (code.isEmpty) return v2TextSecondaryOf(context);
-      if (code == 'health') return const Color(0xFFDC2626);
+      if (code == 'health') {
+        return Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFFF87171)
+            : const Color(0xFFDC2626);
+      }
       if (code == 'education') return v2AccentOf(context);
-      if (code == 'service') return const Color(0xFF16A34A);
+      if (code == 'service') {
+        return Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF86EFAC)
+            : const Color(0xFF16A34A);
+      }
       return v2TextSecondaryOf(context);
     }
     final items = [
@@ -1418,9 +1434,13 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                  color: active ? v2AccentBgOf(context) : Colors.white,
+                  color: active ? v2AccentBgOf(context) : v2SurfaceOf(context),
                   border: Border.all(
-                      color: active ? v2AccentOf(context) : Color(0xFFD1D9E6),
+                      color: active
+                          ? v2AccentOf(context)
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? v2BorderOf(context)
+                              : const Color(0xFFD1D9E6)),
                       width: active ? 1.5 : 1),
                   borderRadius: BorderRadius.circular(12)),
               child: Row(children: [
@@ -1440,9 +1460,9 @@ class _V2FiltersSheetState extends State<_V2FiltersSheet> {
         );
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      decoration: BoxDecoration(
+        color: v2SurfaceOf(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
       ),
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),

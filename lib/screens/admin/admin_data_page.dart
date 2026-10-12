@@ -13,7 +13,6 @@ import '../../utils/safe_cast.dart';
 
 const _kBlue     = Color(0xFF1E40AF);
 const _kTileGrey = Color(0xFFF8FAFC);
-const _kActionFg = Color(0xFF475569);
 const _kSlate500 = Color(0xFF64748B);
 const _kBlueBg   = Color(0xFFEFF6FF);
 const _kBlueDark = Color(0xFF1D4ED8);
@@ -29,9 +28,8 @@ const _kGrey400  = Color(0xFF9CA3AF);
 const _kGrey200  = Color(0xFFE5E7EB);
 const _kGrey100  = Color(0xFFF3F4F6);
 const _kGrey300  = Color(0xFFD1D5DB);
-const _kBgSoft   = Colors.white;
+const _kActionFg = Color(0xFF475569);
 
-// ── Theme-aware helpers (dark/light) — dark variants zinazosomeka ────────────
 bool _kIsDark(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
 Color _kCardBg(BuildContext c) => _kIsDark(c) ? const Color(0xFF1E293B) : Colors.white;
 Color _kInk(BuildContext c) => _kIsDark(c) ? const Color(0xFFE7ECF8) : _kGrey900;
@@ -39,6 +37,11 @@ Color _kMutedT(BuildContext c) => _kIsDark(c) ? const Color(0xFF9AA8C7) : _kGrey
 Color _kBorderT(BuildContext c) => _kIsDark(c) ? const Color(0xFF2A3240) : _kGrey200;
 Color _kBlueT(BuildContext c) => _kIsDark(c) ? const Color(0xFF7AA7FF) : _kBlue;
 Color _kBlueBgT(BuildContext c) => _kIsDark(c) ? const Color(0xFF1C2A44) : _kBlueBg;
+Color _kTileGreyT(BuildContext c) => _kIsDark(c) ? const Color(0xFF212833) : _kTileGrey;
+Color _kSubT(BuildContext c) => _kIsDark(c) ? const Color(0xFF9AA8C7) : _kGrey500;
+Color _kChipTextT(BuildContext c) => _kIsDark(c) ? const Color(0xFFCBD5E1) : _kGrey700;
+Color _kSearchTextT(BuildContext c) => _kIsDark(c) ? const Color(0xFFE7ECF8) : _kGrey700;
+Color _kActionFgT(BuildContext c) => _kIsDark(c) ? const Color(0xFFCBD5E1) : _kActionFg;
 
 class AdminDataPage extends StatefulWidget {
   const AdminDataPage({super.key});
@@ -451,9 +454,11 @@ class _AdminDataPageState extends State<AdminDataPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: disabled ? _kRedBg : const Color(0xFFF0FDF4),
+            color: _kIsDark(context) ? (disabled ? const Color(0xFF3A1D1B) : const Color(0xFF14532D))
+                : (disabled ? _kRedBg : const Color(0xFFF0FDF4)),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: disabled ? const Color(0xFFFCA5A5) : const Color(0xFFBBF7D0)),
+              border: Border.all(color: _kIsDark(context) ? (disabled ? const Color(0xFF7F1D1D) : const Color(0xFF14532D))
+                  : (disabled ? const Color(0xFFFCA5A5) : const Color(0xFFBBF7D0))),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               if (!disabled) Container(
@@ -465,7 +470,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                 disabled ? 'Imezimwa' : 'Hai',
                 style: TextStyle(
                   fontSize: 10, fontWeight: FontWeight.w700, height: 1.5,
-                  color: disabled ? _kRed : const Color(0xFF15803D),
+                  color: disabled ? _kRed : const Color(0xFF86EFAC),
                 ),
               ),
             ]),
@@ -476,23 +481,24 @@ class _AdminDataPageState extends State<AdminDataPage>
         if (level.isEmpty) return [];
         final isSecondary = level == 'secondary';
         return [pill(isSecondary ? 'Secondary' : 'Primary',
-            const Color(0xFFF1F5F9),
-            const Color(0xFF334155))];
+            _kIsDark(context) ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+            _kIsDark(context) ? const Color(0xFF9AA8C7) : const Color(0xFF334155))];
       case 'cadres':
         final cat   = item['category'] as String? ?? '';
         final level = item['level'] as String? ?? '';
         return [
-          if (cat.isNotEmpty)   pill(cat,   _kBlueBg,  _kBlueDark),
-          if (level.isNotEmpty) pill(level, _kAmberBg, _kAmber),
+          if (cat.isNotEmpty)   pill(cat,   _kBlueBgT(context),  _kBlueDark),
+          if (level.isNotEmpty) pill(level, _kIsDark(context) ? const Color(0xFF3A2C14) : _kAmberBg,
+              _kIsDark(context) ? const Color(0xFFFBBF24) : _kAmber),
         ];
       case 'districts':
         final rn = _getRegionName(item);
         if (rn.isEmpty) return [];
-        return [pill(rn, _kBlueBg, _kBlueDark)];
+        return [pill(rn, _kBlueBgT(context), _kBlueDark)];
       case 'facilities':
         final tl = (item['level'] ?? item['type'] ?? item['type_category']) as String? ?? '';
         if (tl.isEmpty) return [];
-        return [pill(tl, _kBlueBg, _kBlueDark)];
+        return [pill(tl, _kBlueBgT(context), _kBlueDark)];
       default:
         return [];
     }
@@ -510,12 +516,12 @@ class _AdminDataPageState extends State<AdminDataPage>
       controller: _tabCtrl,
       isScrollable: true,
       tabAlignment: TabAlignment.start,
-      labelColor: _kBlue,
-      unselectedLabelColor: _kGrey500,
+        labelColor: _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue,
+      unselectedLabelColor: _kIsDark(context) ? const Color(0xFF9AA8C7) : _kGrey500,
       labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
       unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
       indicator: BoxDecoration(
-        color: _kBlueBg,
+      color: _kIsDark(context) ? const Color(0xFF1C2A44) : _kBlueBg,
         borderRadius: BorderRadius.circular(20),
       ),
       indicatorSize: TabBarIndicatorSize.tab,
@@ -548,7 +554,7 @@ class _AdminDataPageState extends State<AdminDataPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBgSoft,
+      backgroundColor: _kIsDark(context) ? const Color(0xFF0F172A) : Colors.white,
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [
           SliverToBoxAdapter(
@@ -558,37 +564,37 @@ class _AdminDataPageState extends State<AdminDataPage>
                 Container(
                   width: 52, height: 52,
                   decoration: BoxDecoration(
-                    color: _kBlueBg,
+                    color: _kIsDark(context) ? const Color(0xFF1C2A44) : _kBlueBg,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(PhosphorIcons.database(PhosphorIconsStyle.fill), color: _kBlue, size: 26),
+                  child: Icon(PhosphorIcons.database(PhosphorIconsStyle.fill), color: _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue, size: 26),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
-                      const Text('Data',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _kGrey900)),
+                      Text('Data',
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _kInk(context))),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
+                            color: _kIsDark(context) ? const Color(0xFF14532D) : const Color(0xFFDCFCE7),
                             borderRadius: BorderRadius.circular(20)),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Container(width: 6, height: 6,
-                              decoration: const BoxDecoration(
-                                  color: Color(0xFF16A34A), shape: BoxShape.circle)),
+                              decoration: BoxDecoration(
+                                color: _kIsDark(context) ? const Color(0xFF86EFAC) : const Color(0xFF16A34A), shape: BoxShape.circle)),
                           const SizedBox(width: 4),
-                          const Text('Live', style: TextStyle(
+                          Text('Live', style: TextStyle(
                               fontSize: 10, fontWeight: FontWeight.w800,
-                              color: Color(0xFF15803D), letterSpacing: 0.5)),
+                              color: _kIsDark(context) ? const Color(0xFF86EFAC) : const Color(0xFF15803D), letterSpacing: 0.5)),
                         ]),
                       ),
                     ]),
-                    const Text('Simamia data za mfumo',
-                        style: TextStyle(fontSize: 13, color: _kGrey500)),
+                    Text('Simamia data za mfumo',
+                        style: TextStyle(fontSize: 13, color: _kSubT(context))),
                   ]),
                 ),
               ]),
@@ -617,7 +623,7 @@ class _AdminDataPageState extends State<AdminDataPage>
 
     return RefreshIndicator(
       onRefresh: () async { _cache.remove(type); await _loadType(type); },
-      color: _kBlue,
+      color: _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue,
       child: CustomScrollView(
         key: PageStorageKey<String>(type),
         physics: const AlwaysScrollableScrollPhysics(),
@@ -629,23 +635,23 @@ class _AdminDataPageState extends State<AdminDataPage>
             ),
           ),
           if (loading)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator(color: _kBlue)),
+              child: Center(child: CircularProgressIndicator(color: _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue)),
             )
           else if (error != null)
             SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(PhosphorIcons.warningCircle(), color: _kRed, size: 48),
+                  Icon(PhosphorIcons.warningCircle(), color: const Color(0xFFF87171), size: 48),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
                     onPressed: () { _cache.remove(type); _loadType(type); },
                     icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
                     label: const Text('Jaribu tena'),
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Colors.white),
+                        backgroundColor: _kIsDark(context) ? const Color(0xFF2563EB) : _kBlue, foregroundColor: Colors.white),
                   ),
                 ]),
               ),
@@ -655,9 +661,9 @@ class _AdminDataPageState extends State<AdminDataPage>
               hasScrollBody: false,
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(PhosphorIcons.tray(), size: 48, color: _kGrey400),
+                  Icon(PhosphorIcons.tray(), size: 48, color: _kIsDark(context) ? const Color(0xFF475569) : _kGrey400),
                   const SizedBox(height: 8),
-                  const Text('Hakuna data', style: TextStyle(fontSize: 14, color: _kGrey500)),
+                  Text('Hakuna data', style: TextStyle(fontSize: 14, color: _kSubT(context))),
                 ]),
               ),
             )
@@ -701,26 +707,26 @@ class _AdminDataPageState extends State<AdminDataPage>
       Row(children: [
         Expanded(
           child: Text('$count $label zilizosajiliwa',
-              style: const TextStyle(fontSize: 13, color: _kGrey500)),
+              style: TextStyle(fontSize: 13, color: _kSubT(context))),
         ),
         _addBtn(type),
       ]),
       const SizedBox(height: 10),
       TextField(
         controller: _searchCtrls[type],
-        style: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
+        style: TextStyle(fontSize: 13, color: _kSearchTextT(context)),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(fontSize: 13, color: _kSlate500),
-          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 16, color: const Color(0xFF334155)),
+          hintStyle: TextStyle(fontSize: 13, color: _kIsDark(context) ? const Color(0xFF94A3B8) : _kSlate500),
+          prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), size: 16, color: _kIsDark(context) ? const Color(0xFF94A3B8) : const Color(0xFF334155)),
           prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 0),
           filled: true,
           fillColor: _kIsDark(context) ? const Color(0xFF1E293B) : Colors.white,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
-          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
+          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _kIsDark(context) ? const Color(0xFF334155) : const Color(0xFF94A3B8), width: 1)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _kIsDark(context) ? const Color(0xFF334155) : const Color(0xFF94A3B8), width: 1)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue, width: 1.5)),
         ),
       ),
       if (type == 'subjects') ...[
@@ -757,15 +763,15 @@ class _AdminDataPageState extends State<AdminDataPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
-                color: selected == e.key ? _kBlueBg : Colors.white,
-                border: Border.all(
-                    color: selected == e.key ? _kBlue : _kGrey200, width: 1.5),
+              color: selected == e.key ? _kBlueBgT(context) : _kCardBg(context),
+              border: Border.all(
+                  color: selected == e.key ? _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue : _kBorderT(context), width: 1.5),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(e.value, style: TextStyle(
                 fontSize: 12,
                 fontWeight: selected == e.key ? FontWeight.w700 : FontWeight.w500,
-                color: selected == e.key ? _kBlue : _kGrey700,
+                  color: selected == e.key ? (_kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue) : _kChipTextT(context),
               )),
             ),
           ),
@@ -792,15 +798,15 @@ class _AdminDataPageState extends State<AdminDataPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
-                color: _facLevelFilter == lvl ? _kBlueBg : Colors.white,
-                border: Border.all(
-                    color: _facLevelFilter == lvl ? _kBlue : _kGrey200, width: 1.5),
+              color: _facLevelFilter == lvl ? _kBlueBgT(context) : _kCardBg(context),
+              border: Border.all(
+                  color: _facLevelFilter == lvl ? _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue : _kBorderT(context), width: 1.5),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(lvl.isEmpty ? 'Zote' : lvl, style: TextStyle(
                 fontSize: 12,
                 fontWeight: _facLevelFilter == lvl ? FontWeight.w700 : FontWeight.w500,
-                color: _facLevelFilter == lvl ? _kBlue : _kGrey700,
+                color: _facLevelFilter == lvl ? (_kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue) : _kChipTextT(context),
               )),
             ),
           ),
@@ -845,19 +851,19 @@ class _AdminDataPageState extends State<AdminDataPage>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: selId.isEmpty ? Colors.white : _kBlueBg,
-          border: Border.all(color: selId.isEmpty ? _kGrey200 : _kBlue, width: 1.5),
+          color: selId.isEmpty ? _kCardBg(context) : _kBlueBgT(context),
+          border: Border.all(color: selId.isEmpty ? _kBorderT(context) : _kBlue, width: 1.5),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Text(selName ?? 'Mkoa wote', style: TextStyle(
             fontSize: 12,
             fontWeight: selId.isEmpty ? FontWeight.w500 : FontWeight.w700,
-            color: selId.isEmpty ? _kGrey700 : _kBlue,
+            color: selId.isEmpty ? _kChipTextT(context) : _kBlue,
           )),
           const SizedBox(width: 4),
           Icon(PhosphorIcons.caretDown(), size: 12,
-              color: selId.isEmpty ? _kGrey400 : _kBlue),
+              color: selId.isEmpty ? _kIsDark(context) ? const Color(0xFF64748B) : _kGrey400 : _kBlue),
         ]),
       ),
     );
@@ -883,13 +889,13 @@ class _AdminDataPageState extends State<AdminDataPage>
           child: Column(children: [
             const SizedBox(height: 6),
             Center(child: Container(width: 36, height: 4,
-                decoration: BoxDecoration(color: _kGrey200, borderRadius: BorderRadius.circular(2)))),
+                decoration: BoxDecoration(color: _kIsDark(ctx) ? const Color(0xFF334155) : _kGrey200, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(children: [
                 Expanded(child: Text(title,
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kGrey900))),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _kInk(ctx)))),
                 GestureDetector(
                   onTap: () => Navigator.pop(ctx),
                   child: Container(
@@ -900,7 +906,7 @@ class _AdminDataPageState extends State<AdminDataPage>
                         color: _kCardBg(ctx),
                         shape: BoxShape.circle,
                         border: Border.all(color: _kIsDark(ctx) ? const Color(0xFF334155) : _kGrey200)),
-                    child: Icon(PhosphorIcons.x(), size: 14, color: _kGrey700),
+                    child: Icon(PhosphorIcons.x(), size: 14, color: _kChipTextT(ctx)),
                   ),
                 ),
               ]),
@@ -916,18 +922,18 @@ class _AdminDataPageState extends State<AdminDataPage>
                 },
                 decoration: InputDecoration(
                   hintText: 'Tafuta...',
-                  hintStyle: const TextStyle(color: _kGrey400, fontSize: 14),
-                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: _kGrey400, size: 16),
+                  hintStyle: TextStyle(color: _kIsDark(ctx) ? const Color(0xFF94A3B8) : _kGrey400, fontSize: 14),
+                  prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: _kIsDark(ctx) ? const Color(0xFF94A3B8) : _kGrey400, size: 16),
                   fillColor: _kIsDark(context) ? const Color(0xFF1E293B) : Colors.white, filled: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: _kGrey300)),
+                      borderSide: BorderSide(color: _kIsDark(ctx) ? const Color(0xFF334155) : _kGrey300)),
                 ),
               ),
             ),
             const SizedBox(height: 8),
-            const Divider(height: 1, color: _kGrey200),
+            Divider(height: 1, color: _kIsDark(ctx) ? const Color(0xFF2A3240) : _kGrey200),
             Expanded(
               child: ListView.builder(
                 itemCount: filtered.length,
@@ -937,11 +943,11 @@ class _AdminDataPageState extends State<AdminDataPage>
                     onTap: () { Navigator.pop(ctx); onPick(item.value); },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: _kGrey100)),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: _kIsDark(ctx) ? const Color(0xFF212833) : _kGrey100)),
                       ),
                       child: Text(item.label,
-                          style: const TextStyle(fontSize: 15, color: _kGrey900)),
+                          style: TextStyle(fontSize: 15, color: _kInk(ctx))),
                     ),
                   );
                 },
@@ -1005,14 +1011,14 @@ class _AdminDataPageState extends State<AdminDataPage>
     if (type == 'subjects') {
       final level = (item['level'] as String? ?? '').toLowerCase();
       return level == 'secondary'
-          ? (PhosphorIcons.atom(PhosphorIconsStyle.fill), _kBlue, _kTileGrey)
-          : (PhosphorIcons.textAa(PhosphorIconsStyle.fill), _kBlue, _kTileGrey);
+          ? (PhosphorIcons.atom(PhosphorIconsStyle.fill), _kBlue, _kIsDark(context) ? const Color(0xFF1C2A44) : _kTileGrey)
+          : (PhosphorIcons.textAa(PhosphorIconsStyle.fill), _kBlue, _kIsDark(context) ? const Color(0xFF1C2A44) : _kTileGrey);
     }
     if (type == 'regions') return (PhosphorIcons.mountains(PhosphorIconsStyle.fill),
         const Color(0xFF3B82F6), const Color(0xFFEFF6FF));
     if (type == 'districts') return (PhosphorIcons.mapTrifold(PhosphorIconsStyle.fill),
         const Color(0xFF3B82F6), const Color(0xFFEFF6FF));
-    return (PhosphorIcons.circle(), _kActionFg, _kTileGrey);
+    return (PhosphorIcons.circle(), _kActionFg, _kIsDark(context) ? const Color(0xFF212833) : _kTileGrey);
   }
 
   Widget _buildItem(String type, Map<String, dynamic> item) {
@@ -1041,17 +1047,17 @@ class _AdminDataPageState extends State<AdminDataPage>
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(name,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey900),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kInk(context)),
                   overflow: TextOverflow.ellipsis),
               if (code.isNotEmpty || badges.isNotEmpty || facSub.isNotEmpty)
                 const SizedBox(height: 3),
               Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 if (code.isNotEmpty)
-                  Text(code, style: const TextStyle(fontSize: 11, color: _kGrey500, fontFamily: 'monospace')),
+                  Text(code, style: TextStyle(fontSize: 11, color: _kSubT(context), fontFamily: 'monospace')),
                 ...badges,
               ]),
               if (facSub.isNotEmpty)
-                Text(facSub, style: const TextStyle(fontSize: 11, color: _kGrey500),
+                Text(facSub, style: TextStyle(fontSize: 11, color: _kSubT(context)),
                     overflow: TextOverflow.ellipsis),
             ]),
           ),
@@ -1078,11 +1084,11 @@ class _RowAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      _sq(PhosphorIcons.eye(), _kActionFg, _kTileGrey, onView),
+      _sq(PhosphorIcons.eye(), _kActionFgT(context), _kTileGreyT(context), onView),
       const SizedBox(width: 6),
-      _sq(PhosphorIcons.pencilSimple(), _kActionFg, _kTileGrey, onEdit),
+      _sq(PhosphorIcons.pencilSimple(), _kActionFgT(context), _kTileGreyT(context), onEdit),
       const SizedBox(width: 6),
-      _sq(PhosphorIcons.trash(), const Color(0xFFEF4444), const Color(0xFFFEF2F2), onDelete),
+      _sq(PhosphorIcons.trash(), const Color(0xFFEF4444), _kIsDark(context) ? const Color(0xFF3A1D1B) : const Color(0xFFFEF2F2), onDelete),
     ]);
   }
 

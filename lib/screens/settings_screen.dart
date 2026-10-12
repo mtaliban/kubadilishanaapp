@@ -14,6 +14,16 @@ const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kGrey100 = Color(0xFFF3F4F6);
 
+bool _nd(BuildContext c__) => Theme.of(c__).brightness == Brightness.dark;
+Color _kGrey100T(BuildContext c__) => _nd(c__) ? const Color(0xFF212833) : _kGrey100;
+Color _kGrey200T(BuildContext c__) => _nd(c__) ? const Color(0xFF2A3240) : _kGrey200;
+Color _kGrey400T(BuildContext c__) => _nd(c__) ? const Color(0xFF64748B) : _kGrey400;
+Color _kGrey500T(BuildContext c__) => _nd(c__) ? const Color(0xFF9AA8C7) : _kGrey500;
+Color _kGrey700T(BuildContext c__) => _nd(c__) ? const Color(0xFFCBD5E1) : _kGrey700;
+Color _kGrey900T(BuildContext c__) => _nd(c__) ? const Color(0xFFE7ECF8) : _kGrey900;
+Color _kBlue50T(BuildContext c__) => _nd(c__) ? const Color(0xFF1C2A44) : _kBlue50;
+Color _kBlueT(BuildContext c__) => _nd(c__) ? const Color(0xFF7AA7FF) : _kBlue;
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -157,27 +167,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () => Navigator.maybePop(context),
               child: Container(
                 width: 38, height: 38,
-                decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _kGrey700)),
+                decoration: BoxDecoration(color: _kGrey100T(context), borderRadius: BorderRadius.circular(10)),
+                child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _kGrey700T(context))),
             ),
             const SizedBox(width: 12),
             Container(
               width: 40, height: 40,
               decoration: BoxDecoration(
-                color: _kBlue50,
+                color: _kBlue50T(context),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _kBlue.withValues(alpha: 0.2))),
-              child: const Icon(Icons.settings_outlined, size: 20, color: _kBlue)),
+                border: Border.all(color: _kBlueT(context).withValues(alpha: 0.2))),
+              child: Icon(Icons.settings_outlined, size: 20, color: _kBlueT(context))),
             const SizedBox(width: 12),
-            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Mipangilio',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900T(context))),
               Text('Arifa na mikoa inayofuatwa',
-                  style: TextStyle(fontSize: 12, color: _kGrey500)),
+                  style: TextStyle(fontSize: 12, color: _kGrey500T(context))),
             ])),
           ]),
         ),
-        Container(height: 1, color: _kGrey200),
+        Container(height: 1, color: _kGrey200T(context)),
         Expanded(child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
         children: [
@@ -188,7 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _kGrey200),
+              border: Border.all(color: _kGrey200T(context)),
               boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
             ),
             child: _notifLoading
@@ -198,9 +208,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   )
                 : Column(children: [
                     _buildNotifSwitch(key: 'new_matches', title: 'Mechi Zimepatikana', subtitle: 'Pokea arifa unapopata mechi mpya'),
-                    Container(height: 1, color: _kGrey200),
+                    Container(height: 1, color: _kGrey200T(context)),
                     _buildNotifSwitch(key: 'messages', title: 'Ujumbe', subtitle: 'Arifa za ujumbe mpya'),
-                    Container(height: 1, color: _kGrey200),
+                    Container(height: 1, color: _kGrey200T(context)),
                     Padding(
                       padding: const EdgeInsets.all(14),
                       child: SizedBox(
@@ -231,7 +241,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _kGrey200),
+              border: Border.all(color: _kGrey200T(context)),
               boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
             ),
             child: _regionsLoading
@@ -241,9 +251,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   )
                 : Column(children: [
                     if (_allRegions.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Text('Hakuna mikoa', style: TextStyle(color: _kGrey400)),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text('Hakuna mikoa', style: TextStyle(color: _kGrey400T(context))),
                       )
                     else
                       ..._allRegions.map((r) {
@@ -255,7 +265,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           // ListTile inahitaji Material yake ili ink/ripple isifichwe
                           // na Container yenye background hapo juu.
                           child: CheckboxListTile(
-                            title: Text(name, style: const TextStyle(fontSize: 14, color: _kGrey700)),
+                            title: Text(name, style: TextStyle(fontSize: 14, color: _kGrey700T(context))),
                             value: isFollowed,
                             activeColor: _kBlue,
                             checkColor: Colors.white,
@@ -268,7 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         );
                       }),
-                    Container(height: 1, color: _kGrey200),
+                    Container(height: 1, color: _kGrey200T(context)),
                     Padding(
                       padding: const EdgeInsets.all(14),
                       child: SizedBox(
@@ -299,14 +309,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Row(children: [
       Container(
         width: 28, height: 28,
-        decoration: BoxDecoration(color: _kBlue50, borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(color: _kBlue50T(context), borderRadius: BorderRadius.circular(8)),
         child: Center(child: Icon(icon, size: 14, color: _kBlue)),
       ),
       const SizedBox(width: 8),
       Expanded(
         child: Text(title,
-            style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w800, color: _kGrey700, letterSpacing: 0.2)),
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w800, color: _kGrey700T(context), letterSpacing: 0.2)),
       ),
     ]);
   }
@@ -317,8 +327,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // ListTile inahitaji Material yake ili ink/ripple isifichwe na Container
       // yenye background ya WhiteCard.
       child: SwitchListTile(
-        title: Text(title, style: const TextStyle(fontSize: 14, color: _kGrey700, fontWeight: FontWeight.w500)),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: _kGrey400)),
+        title: Text(title, style: TextStyle(fontSize: 14, color: _kGrey700T(context), fontWeight: FontWeight.w500)),
+        subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: _kGrey400T(context))),
         value: _notifPrefs[key] ?? false,
         activeThumbColor: _kBlue,
         onChanged: (val) => setState(() { _notifPrefs = Map.from(_notifPrefs)..[key] = val; }),

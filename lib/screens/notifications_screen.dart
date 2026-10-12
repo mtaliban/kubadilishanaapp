@@ -12,6 +12,17 @@ const _kGrey500  = Color(0xFF6B7280);
 const _kGrey700  = Color(0xFF374151);
 const _kGrey900  = Color(0xFF111827);
 
+// ── Theme-aware helpers (light values = original const) ─
+bool _nd(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
+Color _kGrey100T(BuildContext c) => _nd(c) ? const Color(0xFF212833) : _kGrey100;
+Color _kGrey200T(BuildContext c) => _nd(c) ? const Color(0xFF2A3240) : _kGrey200;
+Color _kGrey400T(BuildContext c) => _nd(c) ? const Color(0xFF64748B) : _kGrey400;
+Color _kGrey500T(BuildContext c) => _nd(c) ? const Color(0xFF9AA8C7) : _kGrey500;
+Color _kGrey700T(BuildContext c) => _nd(c) ? const Color(0xFFCBD5E1) : _kGrey700;
+Color _kGrey900T(BuildContext c) => _nd(c) ? const Color(0xFFE7ECF8) : _kGrey900;
+Color _kBrand50T(BuildContext c) => _nd(c) ? const Color(0xFF1C2A44) : _kBrand50;
+Color _kBrandT(BuildContext c) => _nd(c) ? const Color(0xFF7AA7FF) : _kBrand;
+
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -145,14 +156,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         children: [
           _header(unread),
           _summaryStrip(),
-          const Divider(height: 1, color: _kGrey200),
+          Divider(height: 1, color: _kGrey200T(context)),
           Expanded(
             child: _loading
-                ? const Center(child: SizedBox(width: 22, height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: _kBrand)))
+                ? Center(child: SizedBox(width: 22, height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: _kBrandT(context))))
                 : RefreshIndicator(
                     onRefresh: _load,
-                    color: _kBrand,
+                    color: _kBrandT(context),
                     child: _notifications.isEmpty ? _empty() : _list(),
                   ),
           ),
@@ -229,17 +240,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Container(
             width: 36, height: 36,
             decoration: BoxDecoration(
-                color: _kGrey100, borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 15, color: _kGrey700),
+                color: _kGrey100T(context), borderRadius: BorderRadius.circular(10)),
+            child: Icon(Icons.arrow_back_ios_new_rounded,
+                size: 15, color: _kGrey700T(context)),
           ),
         ),
         const SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-          const Text('Arifa',
+          Text('Arifa',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800,
-                  color: _kGrey900, height: 1.1)),
+                    color: _kGrey900T(context), height: 1.1)),
           Text(
             unread > 0 ? '$unread hazijasomwa' : 'Zote zimesomwa',
             style: TextStyle(
@@ -255,15 +266,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
-                color: _kBrand50,
+                color: _kBrand50T(context),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _kBrand.withValues(alpha: 0.2)),
+                border: Border.all(color: _kBrandT(context).withValues(alpha: 0.2)),
               ),
-              child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.done_all_rounded, size: 14, color: _kBrand),
-                SizedBox(width: 4),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.done_all_rounded, size: 14, color: _kBrandT(context)),
+                const SizedBox(width: 4),
                 Text('Soma Zote', style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w600, color: _kBrand)),
+                    fontSize: 12, fontWeight: FontWeight.w600, color: _kBrandT(context))),
               ]),
             ),
           ),
@@ -279,7 +290,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         Container(
           width: 64, height: 64,
           decoration: BoxDecoration(
-              color: _kGrey100, borderRadius: BorderRadius.circular(18)),
+              color: _kGrey100T(context), borderRadius: BorderRadius.circular(18)),
           child: const Icon(Icons.notifications_none_rounded,
               size: 30, color: _kGrey400),
         ),
@@ -288,12 +299,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
                 color: _kGrey700)),
         const SizedBox(height: 6),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 40),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
           child: Text(
             'Ukipata match, ujumbe au mchango — itaonekana hapa.',
-            style: TextStyle(fontSize: 12.5, color: _kGrey500, height: 1.5),
-            textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12.5, color: _kGrey500T(context), height: 1.5),
+          textAlign: TextAlign.center,
           ),
         ),
       ])),
@@ -305,7 +316,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       padding: const EdgeInsets.fromLTRB(0, 6, 0, 80),
       itemCount: _notifications.length,
       separatorBuilder: (_, _) =>
-          const Divider(height: 1, indent: 88, endIndent: 0, color: _kGrey200),
+          Divider(height: 1, indent: 88, endIndent: 0, color: _kGrey200T(context)),
       itemBuilder: (_, i) => _tile(_notifications[i]),
     );
   }
@@ -331,7 +342,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Container(
               width: 54, height: 54,
               decoration: BoxDecoration(
-                color: _kGrey100,
+                color: _kGrey100T(context),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -346,7 +357,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
-                  border: Border.all(color: _kGrey200, width: 1.5),
+                  border: Border.all(color: _kGrey200T(context), width: 1.5),
                 ),
                 child: ClipOval(
                   child: Image.asset(
@@ -391,7 +402,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   child: Text(time, style: TextStyle(
                     fontSize: 12,
                     fontWeight: read ? FontWeight.normal : FontWeight.w600,
-                    color: read ? _kGrey400 : _kBrand,
+                    color: read ? _kGrey400T(context) : _kBrandT(context),
                   )),
                 ),
               ],
@@ -399,8 +410,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             if (body.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(body,
-                  style: const TextStyle(
-                      fontSize: 13, color: _kGrey500, height: 1.4),
+                  style: TextStyle(
+                      fontSize: 13, color: _kGrey500T(context), height: 1.4),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis),
             ],

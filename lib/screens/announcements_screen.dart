@@ -10,6 +10,16 @@ const _kGrey400 = Color(0xFF9CA3AF);
 const _kGrey200 = Color(0xFFE5E7EB);
 const _kGrey100 = Color(0xFFF3F4F6);
 
+bool _nd(BuildContext c__) => Theme.of(c__).brightness == Brightness.dark;
+Color _kGrey100T(BuildContext c__) => _nd(c__) ? const Color(0xFF212833) : _kGrey100;
+Color _kGrey200T(BuildContext c__) => _nd(c__) ? const Color(0xFF2A3240) : _kGrey200;
+Color _kGrey400T(BuildContext c__) => _nd(c__) ? const Color(0xFF64748B) : _kGrey400;
+Color _kGrey500T(BuildContext c__) => _nd(c__) ? const Color(0xFF9AA8C7) : _kGrey500;
+Color _kGrey700T(BuildContext c__) => _nd(c__) ? const Color(0xFFCBD5E1) : (const Color(0xFF374151));
+Color _kGrey900T(BuildContext c__) => _nd(c__) ? const Color(0xFFE7ECF8) : _kGrey900;
+Color _kBlue50T(BuildContext c__) => _nd(c__) ? const Color(0xFF1C2A44) : const Color(0xFFEFF6FF);
+Color _kBlueT(BuildContext c__) => _nd(c__) ? const Color(0xFF7AA7FF) : _kBlue;
+
 const _kPageSize = 2;
 
 class AnnouncementsScreen extends StatefulWidget {
@@ -160,8 +170,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               onTap: () => Navigator.maybePop(context),
               child: Container(
                 width: 38, height: 38,
-                decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _kGrey800)),
+                decoration: BoxDecoration(color: _kGrey100T(context), borderRadius: BorderRadius.circular(10)),
+                child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _kGrey900T(context))),
             ),
             const SizedBox(width: 12),
             Container(
@@ -169,18 +179,18 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _kBlue.withValues(alpha: 0.2))),
-              child: const Icon(Icons.campaign_outlined, size: 20, color: _kBlue)),
+                border: Border.all(color: _kBlueT(context).withValues(alpha: 0.2))),
+              child: Icon(Icons.campaign_outlined, size: 20, color: _kBlueT(context))),
             const SizedBox(width: 12),
-            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Matangazo',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _kGrey900T(context))),
               Text('Matangazo rasmi kutoka kwa admin',
-                  style: TextStyle(fontSize: 12, color: _kGrey500)),
+                  style: TextStyle(fontSize: 12, color: _kGrey500T(context))),
             ])),
           ]),
         ),
-        Container(height: 1, color: _kGrey200),
+        Container(height: 1, color: _kGrey200T(context)),
         Expanded(child: RefreshIndicator(
           onRefresh: _load,
           color: _kBlue,
@@ -191,9 +201,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Subtitle
-              const Text(
+              Text(
                 'Matangazo ya rasmi kutoka kwa admin — unaweza kufuta (✕) baada ya kusoma.',
-                style: TextStyle(fontSize: 12, color: _kGrey500),
+                style: TextStyle(fontSize: 12, color: _kGrey500T(context)),
               ),
               const SizedBox(height: 20),
 
@@ -207,13 +217,13 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               else ...[
                 // ── MPYA heading ──
                 Row(children: [
-                  const Icon(Icons.campaign_outlined, size: 13, color: _kGrey400),
+                  Icon(Icons.campaign_outlined, size: 13, color: _kGrey400T(context)),
                   const SizedBox(width: 6),
                   Text('MPYA (${_active.length})',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: _kGrey500,
+                          color: _kGrey500T(context),
                           letterSpacing: 0.8)),
                 ]),
                 const SizedBox(height: 10),
@@ -225,18 +235,18 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     decoration: BoxDecoration(
                       color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _kGrey200),
+                      border: Border.all(color: _kGrey200T(context)),
                       boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2))],
                     ),
-                    child: const Column(
+                    child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.inbox_outlined, size: 28, color: _kGrey400),
-                          SizedBox(height: 10),
+                          Icon(Icons.inbox_outlined, size: 28, color: _kGrey400T(context)),
+                          const SizedBox(height: 10),
                           Text('Hakuna matangazo mpya.',
                               style: TextStyle(
                                   fontSize: 13,
-                                  color: _kGrey500,
+                                  color: _kGrey500T(context),
                                   fontWeight: FontWeight.w500)),
                         ]),
                   )
@@ -259,10 +269,10 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 12),
                               child: Text('$safeActivePage / $totalActivePages',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: _kGrey500)),
+                                      color: _kGrey500T(context))),
                             ),
                             _pageBtn(
                                 Icons.chevron_right,
@@ -277,13 +287,13 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 if (_history.isNotEmpty) ...[
                   const SizedBox(height: 32),
                   Row(children: [
-                    const Icon(Icons.access_time, size: 13, color: _kGrey400),
+                    Icon(Icons.access_time, size: 13, color: _kGrey400T(context)),
                     const SizedBox(width: 6),
                     Text('ZILIZOPITA (${_history.length})',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: _kGrey500,
+                            color: _kGrey500T(context),
                             letterSpacing: 0.8)),
                   ]),
                   const SizedBox(height: 10),
@@ -307,10 +317,10 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                   const EdgeInsets.symmetric(horizontal: 12),
                               child: Text(
                                   '$safeHistoryPage / $totalHistoryPages',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: _kGrey500)),
+                                      color: _kGrey500T(context))),
                             ),
                             _pageBtn(
                                 Icons.chevron_right,
@@ -344,7 +354,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kGrey200),
+        border: Border.all(color: _kGrey200T(context)),
         boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -355,32 +365,32 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               // font-bold text-brand-grey-900 text-[15px] leading-snug
               Text(title,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                       height: 1.3,
-                      color: _kGrey900)),
+                      color: _kGrey900T(context))),
               const SizedBox(height: 6),
               // text-[11px] text-brand-grey-500
               Wrap(spacing: 10, runSpacing: 4, children: [
                 Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.people_outline, size: 11, color: _kBlue),
+                  Icon(Icons.people_outline, size: 11, color: _kBlueT(context)),
                   const SizedBox(width: 3),
                   Text(author,
                       style:
-                          const TextStyle(fontSize: 11, color: _kGrey500)),
+                          TextStyle(fontSize: 11, color: _kGrey500T(context))),
                 ]),
                 if (ago.isNotEmpty)
                   Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.access_time, size: 11, color: _kGrey400),
+                    Icon(Icons.access_time, size: 11, color: _kGrey400T(context)),
                     const SizedBox(width: 3),
                     Text(ago,
-                        style: const TextStyle(
-                            fontSize: 11, color: _kGrey500)),
+                        style: TextStyle(
+                            fontSize: 11, color: _kGrey500T(context))),
                   ]),
                 if (recipientCount != null)
                   Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.people, size: 11, color: _kBlue),
+                    Icon(Icons.people, size: 11, color: _kBlueT(context)),
                     const SizedBox(width: 3),
                     Text('$recipientCount walengwa',
                         style: const TextStyle(
@@ -400,16 +410,16 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               child: Container(
                 width: 28,
                 height: 28,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _kGrey100,
+                  color: _kGrey100T(context),
                 ),
                 child: isDismissing
-                    ? const Padding(
+                    ? Padding(
                         padding: EdgeInsets.all(7),
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: _kBlue))
-                    : const Icon(Icons.close, size: 14, color: _kGrey500),
+                    : Icon(Icons.close, size: 14, color: _kGrey500T(context)),
               ),
             ),
           ),
@@ -417,7 +427,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         const SizedBox(height: 12),
         // message — text-sm text-brand-grey-800 whitespace-pre-wrap leading-relaxed
         Text(message,
-            style: const TextStyle(fontSize: 14, height: 1.6, color: _kGrey800)),
+            style: TextStyle(fontSize: 14, height: 1.6, color: _kGrey900T(context))),
       ]),
     );
   }
@@ -434,7 +444,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kGrey200),
+        border: Border.all(color: _kGrey200T(context)),
         boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
       clipBehavior: Clip.hardEdge,
@@ -450,23 +460,23 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(children: [
-                        const Icon(Icons.campaign_outlined,
+                        Icon(Icons.campaign_outlined,
                             size: 12, color: _kBlue),
                         const SizedBox(width: 5),
                         Expanded(
                           child: Text(title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
-                                  color: _kGrey900),
+                                  color: _kGrey900T(context)),
                               overflow: TextOverflow.ellipsis),
                         ),
                       ]),
                       if (!expanded && body.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(body,
-                            style: const TextStyle(
-                                fontSize: 11, color: _kGrey500),
+                            style: TextStyle(
+                                fontSize: 11, color: _kGrey500T(context)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
                       ],
@@ -474,13 +484,13 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
               const SizedBox(width: 8),
               Icon(expanded ? Icons.expand_less : Icons.expand_more,
-                  size: 18, color: _kGrey400),
+                  size: 18, color: _kGrey400T(context)),
             ]),
           ),
         ),
         // Expanded body
         if (expanded) ...[
-          Container(height: 1, color: _kGrey200),
+          Container(height: 1, color: _kGrey200T(context)),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
             child:
@@ -491,11 +501,11 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               if (ago.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Row(children: [
-                  const Icon(Icons.access_time, size: 10, color: _kGrey400),
+                  Icon(Icons.access_time, size: 10, color: _kGrey400T(context)),
                   const SizedBox(width: 4),
                   Text(ago,
                       style:
-                          const TextStyle(fontSize: 11, color: _kGrey400)),
+                          TextStyle(fontSize: 11, color: _kGrey400T(context))),
                 ]),
               ],
             ]),
