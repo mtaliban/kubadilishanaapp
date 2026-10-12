@@ -57,6 +57,9 @@ class _C {
   static Color editFillOf(BuildContext c) => _of(c, editFill, const Color(0xFF212833));
   static Color greenDarkOf(BuildContext c) => _of(c, greenDark, const Color(0xFF86EFAC));
   static Color disabledOf(BuildContext c) => _of(c, disabled, const Color(0xFF334155));
+  static Color redOf(BuildContext c) => _of(c, red, const Color(0xFFF87171));
+  static Color greenOf(BuildContext c) => _of(c, green, const Color(0xFF5FD49A));
+  static Color blueUnderlineOf(BuildContext c) => _of(c, blue, const Color(0xFF7AA7FF));
   static Color scaffoldOf(BuildContext c) => _of(c, Colors.white, const Color(0xFF0F172A));
 }
 
@@ -381,10 +384,16 @@ class _MaoniPageState extends State<MaoniPage> {
                   _C.blueSoftOf(context), _C.blueOf(context), _C.blueOf(context)),
               const SizedBox(width: 16),
               _tabItem(_Tab.hayajibiwa, 'Hayajibiwa', _AppIcons.pending,
-                  _pending, _C.redSoftOf(context), _C.red, _C.red),
+                  _pending,
+                  _C.redSoftOf(context),
+                  _C.redOf(context),
+                  _C.redOf(context)),
               const SizedBox(width: 16),
               _tabItem(_Tab.yamejibiwa, 'Yamejibiwa', _AppIcons.done,
-                  _answered, _C.greenSoftOf(context), _C.greenDarkOf(context), _C.green),
+                  _answered,
+                  _C.greenSoftOf(context),
+                  _C.greenDarkOf(context),
+                  _C.greenOf(context)),
             ],
           ),
         ),
@@ -400,20 +409,23 @@ class _MaoniPageState extends State<MaoniPage> {
         decoration: BoxDecoration(
           border: Border(
               bottom: BorderSide(
-                  color: on ? _C.blue : Colors.transparent, width: 2.5)),
+                  color: on ? _C.blueOf(context) : Colors.transparent,
+                  width: 2.5)),
         ),
         child: Row(
           children: [
             Icon(icon,
                 size: 17,
-                color: t == _Tab.yote ? (on ? _C.blue : _C.muted) : iconColor),
+                color: t == _Tab.yote
+                    ? (on ? _C.blueOf(context) : _C.mutedOf(context))
+                    : iconColor),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: on ? FontWeight.w500 : FontWeight.w400,
-                color: on ? _C.blue : _C.muted,
+                color: on ? _C.blueOf(context) : _C.mutedOf(context),
               ),
             ),
             const SizedBox(width: 6),
@@ -520,14 +532,17 @@ class _MaoniPageState extends State<MaoniPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(answered ? _AppIcons.done : _AppIcons.pending,
-              size: 16, color: answered ? _C.green : _C.red),
+              size: 16,
+                color: answered
+                    ? _C.greenOf(context)
+                    : _C.redOf(context)),
           const SizedBox(width: 5),
           Text(
             answered ? 'Imejibiwa' : 'Haijajibiwa',
             style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: answered ? _C.greenDark : _C.red),
+                color: answered ? _C.greenDarkOf(context) : _C.redOf(context)),
           ),
         ],
       );
