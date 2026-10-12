@@ -136,15 +136,20 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.only(bottom: 18),
-          child: Column(
-            children: [
-              _edit ? _editTopBar() : _viewTopBar(),
-              _header(small: _edit),
-              _edit ? _form() : _infoCard(),
-            ],
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.only(bottom: 18),
+              child: Column(
+                children: [
+                  _edit ? _editTopBar() : _viewTopBar(),
+                  _header(small: _edit),
+                  _edit ? _form() : _infoCard(),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -156,7 +161,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     return _TopBar(
       title: 'Wasifu',
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: _text),
+        icon: const Icon(Icons.arrow_back, size: 22, color: _text),
         onPressed: () => Navigator.maybePop(context),
       ),
       trailing: InkWell(
@@ -170,7 +175,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             shape: BoxShape.circle,
             border: Border.all(color: const Color(0xFFC7D2FE)),
           ),
-          child: const Icon(Icons.edit_outlined, size: 16, color: _blue),
+          child: const Icon(Icons.edit_outlined, size: 15, color: _blue),
         ),
       ),
     );
@@ -180,7 +185,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     return _TopBar(
       title: 'Hariri wasifu',
       leading: IconButton(
-        icon: const Icon(Icons.close, color: _text),
+        icon: const Icon(Icons.close, size: 22, color: _text),
         onPressed: _cancel,
       ),
     );
@@ -243,7 +248,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     final rows = <_Info>[
       _Info(Icons.person_outline, 'Jina kamili', _name),
       _Info(Icons.phone_outlined, 'Namba ya simu', _phone),
-      _Info(Icons.chat_outlined, 'WhatsApp', _wa),
+      _Info(Icons.chat_bubble_outline, 'WhatsApp', _wa),
       _Info(Icons.mail_outline, 'Barua pepe', _mail),
     ];
     return Container(
@@ -295,7 +300,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             _EditField(
               label: 'WhatsApp',
               hint: '0712345678',
-              icon: Icons.chat_outlined,
+              icon: Icons.chat_bubble_outline,
               controller: _waC,
               keyboardType: TextInputType.phone,
               validator: (v) {

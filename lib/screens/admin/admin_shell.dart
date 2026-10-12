@@ -211,8 +211,56 @@ class _AdminShellState extends State<AdminShell> {
       case 9:  return const AdminStatisticsPage();
       case 10: return const AdminMonitoringPage();
       case 11: return const AdminPasswordResetsPage();
+      case 12: return _buildProfilePage(); // Wasifu wangu — screen ya shell
       default: return const AdminDashboardPage();
     }
+  }
+
+  /// Wasifu wa admin: AdminProfilePage (mockup) — data kutoka AuthProvider;
+  /// onSave inaitwa nayo inasasisha AuthProvider dumisha (drawer + header).
+  Widget _buildProfilePage() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final u = auth.user;
+    return AdminProfilePage(
+      fullName: u?.fullName ?? '',
+      phone: u?.phone ?? '',
+      whatsapp: (u?.phoneAlt ?? '').isEmpty ? null : u!.phoneAlt,
+      email: (u?.email ?? '').isEmpty ? null : u!.email,
+      onSave: (fullName, phone, whatsapp, email) async {
+        // Hifadhi kwenye backend (PATCH /users/me).
+        try {
+          await ApiService().updateProfile({
+            'full_name': fullName,
+            'phone_primary': phone,
+            'phone_alt': whatsapp,
+            if (email.isNotEmpty || (u?.email ?? '').isNotEmpty) 'email': email,
+          });
+          // Sasisha AuthProvider dumisha (drawer + header luglio).
+          if (u != null) {
+            auth.updateUser(AuthUser(
+              userId: u.userId,
+              fullName: fullName,
+              phone: phone,
+              phoneAlt: whatsapp,
+              email: email,
+              category: u.category,
+              cadreCode: u.cadreCode,
+              cadreDisplay: u.cadreDisplay,
+              employmentSector: u.employmentSector,
+              isAdmin: u.isAdmin,
+              isVerified: u.isVerified,
+              contactEnabled: u.contactEnabled,
+              currentStation: u.currentStation,
+              subjects: u.subjects,
+              wantedRegions: u.wantedRegions,
+            ));
+          }
+          return true;
+        } catch (_) {
+          return false;
+        }
+      },
+    );
   }
 
   void _go(int i) {
@@ -232,55 +280,6 @@ class _AdminShellState extends State<AdminShell> {
     await Provider.of<AuthProvider>(context, listen: false).logout();
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, '/login');
-  }
-
-  void _openProfile() {
-    if (Navigator.of(context).canPop()) Navigator.pop(context);
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final u = auth.user;
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => AdminProfilePage(
-        fullName: u?.fullName ?? '',
-        phone: u?.phone ?? '',
-        whatsapp: (u?.phoneAlt ?? '').isEmpty ? null : u!.phoneAlt,
-        email: (u?.email ?? '').isEmpty ? null : u!.email,
-        onSave: (fullName, phone, whatsapp, email) async {
-          // Hifadhi kwenye backend (PATCH /users/me).
-          try {
-            await ApiService().updateProfile({
-              'full_name': fullName,
-              'phone_primary': phone,
-              'phone_alt': whatsapp,
-              if (email.isNotEmpty || (u?.email ?? '').isNotEmpty)
-                'email': email,
-            });
-            // Sasisha AuthProvider dumisha (drawer + header julio).
-            if (u != null) {
-              auth.updateUser(AuthUser(
-                userId: u.userId,
-                fullName: fullName,
-                phone: phone,
-                phoneAlt: whatsapp,
-                email: email,
-                category: u.category,
-                cadreCode: u.cadreCode,
-                cadreDisplay: u.cadreDisplay,
-                employmentSector: u.employmentSector,
-                isAdmin: u.isAdmin,
-                isVerified: u.isVerified,
-                contactEnabled: u.contactEnabled,
-                currentStation: u.currentStation,
-                subjects: u.subjects,
-                wantedRegions: u.wantedRegions,
-              ));
-            }
-            return true;
-          } catch (_) {
-            return false;
-          }
-        },
-      ),
-    ));
   }
 
   @override
@@ -325,7 +324,7 @@ class _AdminShellState extends State<AdminShell> {
         current: _indexToNavItem[_idx] ?? NavItem.takwimu,
         onSelect: (item) {
           if (item == NavItem.wasifu) {
-            _openProfile(); // Wasifu wangu — page inapushwa, siyo tab ya shell
+            _go(12); // Wasifu wangu — screen ya shell (tier ya index 12)
             return;
           }
           _go(_navItemToIndex[item] ?? 9);
