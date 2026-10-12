@@ -40,6 +40,22 @@ const Color kFieldBorder = Color(0xFFE3E7EE); // close button border
 const Color kPress = Color(0xFFD6E3FB); // active ripple
 const Color kRedSoft = Color(0xFFFEF3F2); // danger ripple (Toka)
 
+// ── Theme-aware helpers (light = original const; dark = slate palette) ─────
+bool _drk(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
+Color kTextT(BuildContext c) => _drk(c) ? const Color(0xFFE7ECF8) : kText;
+Color kTextStrongT(BuildContext c) => _drk(c) ? const Color(0xFFE7ECF8) : kTextStrong;
+Color kMutedT(BuildContext c) => _drk(c) ? const Color(0xFF9AA8C7) : kMuted;
+Color kTextSecondaryT(BuildContext c) => _drk(c) ? const Color(0xFF9AA8C7) : kTextSecondary;
+Color kBorderT(BuildContext c) => _drk(c) ? const Color(0xFF2A3240) : kBorder;
+Color kTileGrayT(BuildContext c) => _drk(c) ? const Color(0xFF212833) : kTileGray;
+Color kBlueTintT(BuildContext c) => _drk(c) ? const Color(0xFF1C2A44) : kBlueTint;
+Color kBlueBorderT(BuildContext c) => _drk(c) ? const Color(0xFF334155) : kBlueBorder;
+Color kBlueT(BuildContext c) => _drk(c) ? const Color(0xFF7AA7FF) : kBlue;
+Color kFieldBorderT(BuildContext c) => _drk(c) ? const Color(0xFF334155) : kFieldBorder;
+Color kPressT(BuildContext c) => _drk(c) ? const Color(0xFF233250) : kPress;
+Color kRedSoftT(BuildContext c) => _drk(c) ? const Color(0xFF3A1D1B) : kRedSoft;
+Color kRedT(BuildContext c) => _drk(c) ? const Color(0xFFF87171) : kRed;
+
 // ───────────────────────── 1. Menu items ─────────────────────────
 
 /// none          -> never shows a badge (Takwimu, Matangazo, Data, Wasifu)
@@ -330,7 +346,7 @@ class AppDrawer extends StatelessWidget {
         subtitle: subtitle,
         onClose: () => Navigator.of(context).pop(),
       ),
-      const Divider(height: 1, thickness: 0.5, color: kBorder),
+      Divider(height: 1, thickness: 0.5, color: kBorderT(context)),
       // Orodha INATELEZA (kama mockup): font kubwa ya mfumo au screen fupi
       // isiivunje drawer — rows zote zibaki na ukubwa wao, zinasogezwa.
       Expanded(
@@ -346,7 +362,7 @@ class AppDrawer extends StatelessWidget {
           ),
         ),
       ),
-      const Divider(height: 1, thickness: 0.5, color: kBorder),
+      Divider(height: 1, thickness: 0.5, color: kBorderT(context)),
       // Wasifu wangu + Toka zimefungwa chini (vihavitiki kamwe) — kama mockup.
       _ProfileRow(
         name: userName,
@@ -373,7 +389,7 @@ class _GroupLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 6),
       child: Text(text,
-          style: const TextStyle(fontSize: 12, color: kMuted)),
+          style: TextStyle(fontSize: 12, color: kMutedT(context))),
     );
   }
 }
@@ -404,7 +420,7 @@ class _DrawerHeader extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: kBlueTint,
+              color: kBlueTintT(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: logo,
@@ -418,11 +434,11 @@ class _DrawerHeader extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
                     height: 1.2,
-                    color: kTextStrong,
+                    color: kTextStrongT(context),
                   ),
                 ),
                 const SizedBox(height: 1),
@@ -430,7 +446,7 @@ class _DrawerHeader extends StatelessWidget {
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: kMuted),
+                  style: TextStyle(fontSize: 12, color: kMutedT(context)),
                 ),
               ],
             ),
@@ -442,10 +458,10 @@ class _DrawerHeader extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                border: Border.all(color: kFieldBorder),
+                border: Border.all(color: kFieldBorderT(context)),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(TablerIcons.x, size: 18, color: kTextStrong),
+              child: Icon(TablerIcons.x, size: 18, color: kTextStrongT(context)),
             ),
           ),
         ],
@@ -472,23 +488,23 @@ class _DrawerRow extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     // Design mpya: active row = kSoft (#E8EFFC) + left-border bluu 4;
     // ripple kPress (kRedSoft kwa Toka); label 15 w600 active; badge pill 22.
-    final Color fg = active ? kBlue : kText;
+    final Color fg = active ? kBlueT(context) : kTextT(context);
     return Ink(
       decoration: BoxDecoration(
         color: active
-            ? kBlueTint
+            ? kBlueTintT(context)
             : (dark ? const Color(0xFF1E293B) : Colors.transparent),
         border: Border(
           left: BorderSide(
-            color: active ? kBlue : Colors.transparent,
+            color: active ? kBlueT(context) : Colors.transparent,
             width: 4,
           ),
         ),
       ),
       child: InkWell(
         onTap: onTap,
-        splashColor: kPress,
-        highlightColor: kPress,
+        splashColor: kPressT(context),
+        highlightColor: kPressT(context),
         child: SizedBox(
           height: 48,
           child: Row(
@@ -517,10 +533,10 @@ class _DrawerRow extends StatelessWidget {
                   child: CountBadge(count: count, height: 22, fontSize: 12, borderWidth: 0),
                 )
               else
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(right: 18),
                   child: Icon(TablerIcons.chevron_right,
-                      size: 16, color: kMuted),
+                      size: 16, color: kMutedT(context)),
                 ),
             ],
           ),
@@ -542,12 +558,12 @@ class _ProfileRow extends StatelessWidget {
     // Design mpya: footer ya Wasifu wangu — duara 38 'H' + label 14 w600
     // + subtitle 11 kijivu + chevron; height 60, border-top.
     return Container(
-      decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: kBorder))),
+      decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: kBorderT(context)))),
       child: InkWell(
         onTap: onTap,
-        splashColor: kPress,
-        highlightColor: kPress,
+        splashColor: kPressT(context),
+        highlightColor: kPressT(context),
         child: SizedBox(
           height: 60,
           child: Padding(
@@ -558,14 +574,14 @@ class _ProfileRow extends StatelessWidget {
                   width: 38,
                   height: 38,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: kBlueTint,
+                  decoration: BoxDecoration(
+                    color: kBlueTintT(context),
                     shape: BoxShape.circle,
                   ),
                   child: Text(initial,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w600, color: kBlue)),
+                          fontWeight: FontWeight.w600, color: kBlueT(context))),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -573,12 +589,12 @@ class _ProfileRow extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Wasifu wangu',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: kTextStrong,
+                          color: kTextStrongT(context),
                           height: 1.2,
                         ),
                       ),
@@ -587,16 +603,16 @@ class _ProfileRow extends StatelessWidget {
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: kMuted,
+                          color: kMutedT(context),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(TablerIcons.chevron_right,
-                    size: 20, color: kMuted),
+                Icon(TablerIcons.chevron_right,
+                    size: 20, color: kMutedT(context)),
               ],
             ),
           ),
@@ -614,11 +630,11 @@ class _LogoutRow extends StatelessWidget {
   Widget build(BuildContext context) {
     // Design mpya: Toka — nyekundu + ripple kRedSoft, height 44, icon 20.
     return Ink(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
           border: Border(top: BorderSide(color: Colors.transparent))),
       child: InkWell(
         onTap: onTap,
-        splashColor: kRedSoft,
+        splashColor: kRedSoftT(context),
         highlightColor: kRedSoft,
         child: const SizedBox(
           height: 44,

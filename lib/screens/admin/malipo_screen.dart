@@ -58,6 +58,25 @@ class _C {
   static const dangerFg = Color(0xFFB91C1C);
   static const dangerBg = Color(0xFFFEE9E9);
   static const dangerBorder = Color(0xFFFCA5A5);
+
+  // ── Theme-aware (light = original const; dark = slate/giza) ──
+  static bool d(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
+  static Color of(BuildContext c, Color light, Color dark) =>
+      d(c) ? dark : light;
+  static Color surfaceT(BuildContext c) => of(c, surface, const Color(0xFF1E293B));
+  static Color surface1T(BuildContext c) => of(c, surface1, const Color(0xFF212833));
+  static Color borderT(BuildContext c) => of(c, border, const Color(0xFF2A3240));
+  static Color borderStrongT(BuildContext c) => of(c, borderStrong, const Color(0xFF465164));
+  static Color textT(BuildContext c) => of(c, text, const Color(0xFFE7ECF8));
+  static Color text2T(BuildContext c) => of(c, text2, const Color(0xFFA9B7D6));
+  static Color mutedT(BuildContext c) => of(c, muted, const Color(0xFF94A3B8));
+  static Color accentBgT(BuildContext c) => of(c, accentBg, const Color(0xFF1C2A44));
+  static Color accentBorderT(BuildContext c) => of(c, accentBorder, const Color(0xFF334155));
+  static Color scaffoldT(BuildContext c) => of(c, surface, const Color(0xFF0F172A));
+  static Color blueT(BuildContext c) => of(c, blue, const Color(0xFF7AA7FF));
+  static Color dangerBgT(BuildContext c) => of(c, dangerBg, const Color(0xFF3A1D1B));
+  static Color dangerFgT(BuildContext c) => of(c, dangerFg, const Color(0xFFF87171));
+  static Color dangerBorderT(BuildContext c) => of(c, dangerBorder, const Color(0xFF7F1D1D));
 }
 
 // ───────────────────────── ICON (mahali pamoja) ─────────────────────────
@@ -98,15 +117,15 @@ extension MalipoStatusX on MalipoStatus {
         MalipoStatus.completed => _C.green,
         MalipoStatus.rejected => _C.red,
       };
-  Color get fg => switch (this) {
-        MalipoStatus.pending => _C.warningFg,
-        MalipoStatus.completed => _C.successFg,
-        MalipoStatus.rejected => _C.dangerFg,
+  Color fg(BuildContext context) => switch (this) {
+        MalipoStatus.pending => _C.d(context) ? const Color(0xFFFBBF24) : _C.warningFg,
+        MalipoStatus.completed => _C.d(context) ? const Color(0xFF86EFAC) : _C.successFg,
+        MalipoStatus.rejected => _C.d(context) ? const Color(0xFFF87171) : _C.dangerFg,
       };
-  Color get bg => switch (this) {
-        MalipoStatus.pending => _C.warningBg,
-        MalipoStatus.completed => _C.successBg,
-        MalipoStatus.rejected => _C.dangerBg,
+  Color bg(BuildContext context) => switch (this) {
+        MalipoStatus.pending => _C.d(context) ? const Color(0xFF3A2C14) : _C.warningBg,
+        MalipoStatus.completed => _C.d(context) ? const Color(0xFF14532D) : _C.successBg,
+        MalipoStatus.rejected => _C.d(context) ? const Color(0xFF3A1D1B) : _C.dangerBg,
       };
 }
 
@@ -396,7 +415,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _C.surface,
+      backgroundColor: _C.scaffoldT(context),
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _c,
@@ -425,8 +444,8 @@ class _MalipoScreenState extends State<MalipoScreen> {
   Widget _header() => Padding(
         padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
         child: Row(children: [
-          const Text('Malipo',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w500, color: _C.text)),
+          Text('Malipo',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w500, color: _C.textT(context))),
           const SizedBox(width: 10),
           const _LiveDot(),
           const Spacer(),
@@ -444,10 +463,10 @@ class _MalipoScreenState extends State<MalipoScreen> {
                 height: 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: _C.borderStrong, width: 0.6),
+                  border: Border.all(color: _C.borderStrongT(context), width: 0.6),
                 ),
                 child: Icon(MpIcons.search,
-                    size: 20, color: _searchOpen ? _C.blue : _C.text),
+                    size: 20, color: _searchOpen ? _C.blue : _C.textT(context)),
               ),
             ),
           ),
@@ -482,7 +501,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(ce.$1,
-                    style: const TextStyle(fontSize: 12, color: _C.text2),
+                    style: TextStyle(fontSize: 12, color: _C.text2T(context)),
                     textAlign: TextAlign.center),
                 Text(ce.$2,
                     style: TextStyle(
@@ -492,7 +511,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
                         color: ce.$4),
                     textAlign: TextAlign.center),
                 Text(ce.$3,
-                    style: const TextStyle(fontSize: 11.5, height: 1.3, color: _C.text2),
+                    style: TextStyle(fontSize: 11.5, height: 1.3, color: _C.text2T(context)),
                     textAlign: TextAlign.center),
               ],
             ),
@@ -505,13 +524,13 @@ class _MalipoScreenState extends State<MalipoScreen> {
   (String, String, String, Color) _centerTexts() {
     switch (_filter) {
       case MalipoStatus.completed:
-        return ('Imekamilika', 'TZS ${_fmt(_c.completedAmount)}', 'malipo ${_c.completedCount}', MalipoStatus.completed.fg);
+        return ('Imekamilika', 'TZS ${_fmt(_c.completedAmount)}', 'malipo ${_c.completedCount}', MalipoStatus.completed.fg(context));
       case MalipoStatus.pending:
-        return ('Inasubiri', 'TZS ${_fmt(_c.pendingAmount)}', 'malipo ${_c.pendingCount}', MalipoStatus.pending.fg);
+        return ('Inasubiri', 'TZS ${_fmt(_c.pendingAmount)}', 'malipo ${_c.pendingCount}', MalipoStatus.pending.fg(context));
       case MalipoStatus.rejected:
-        return ('Imekataliwa', '${_c.rejectedCount}', 'malipo', MalipoStatus.rejected.fg);
+        return ('Imekataliwa', '${_c.rejectedCount}', 'malipo', MalipoStatus.rejected.fg(context));
       case null:
-        return ('Malipo yote', '${_c.totalCount}', 'TZS ${_fmt(_c.completedAmount)} zimekamilika', _C.text);
+        return ('Malipo yote', '${_c.totalCount}', 'TZS ${_fmt(_c.completedAmount)} zimekamilika', _C.textT(context));
     }
   }
 
@@ -526,9 +545,9 @@ class _MalipoScreenState extends State<MalipoScreen> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.fromLTRB(6, 10, 6, 9),
             decoration: BoxDecoration(
-              color: on ? s.bg : Colors.transparent,
+              color: on ? s.bg(context) : Colors.transparent,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: on ? s.color : _C.borderStrong, width: 0.6),
+              border: Border.all(color: on ? s.color : _C.borderStrongT(context), width: 0.6),
             ),
             child: Column(children: [
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -541,7 +560,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
                   child: Text(s.label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: on ? s.fg : _C.text2)),
+                      style: TextStyle(fontSize: 12, color: on ? s.fg(context) : _C.text2T(context))),
                 ),
               ]),
               const SizedBox(height: 2),
@@ -549,8 +568,8 @@ class _MalipoScreenState extends State<MalipoScreen> {
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
-                      color: on ? s.fg : _C.text)),
-              Text(sub, style: const TextStyle(fontSize: 11, color: _C.muted)),
+                      color: on ? s.fg(context) : _C.textT(context))),
+              Text(sub, style: TextStyle(fontSize: 11, color: _C.mutedT(context))),
             ]),
           ),
         ),
@@ -572,9 +591,9 @@ class _MalipoScreenState extends State<MalipoScreen> {
   Widget _filterLine() => Padding(
         padding: const EdgeInsets.fromLTRB(14, 0, 14, 4),
         child: Row(children: [
-          const Text('Zinaonyeshwa: ', style: TextStyle(fontSize: 13, color: _C.text2)),
+          Text('Zinaonyeshwa: ', style: TextStyle(fontSize: 13, color: _C.text2T(context))),
           Text(_filter!.label,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _filter!.fg)),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _filter!.fg(context))),
           const Spacer(),
           GestureDetector(
             onTap: () => _select(_filter),
@@ -593,15 +612,15 @@ class _MalipoScreenState extends State<MalipoScreen> {
         child: TextField(
           controller: _search,
           autofocus: true,
-          style: const TextStyle(fontSize: 15, color: _C.text),
+          style: TextStyle(fontSize: 15, color: _C.textT(context)),
           decoration: InputDecoration(
             hintText: 'Jina, namba au kodi',
-            hintStyle: const TextStyle(color: _C.muted, fontSize: 15),
-            prefixIcon: const Icon(MpIcons.search, size: 20, color: _C.muted),
+            hintStyle: TextStyle(color: _C.mutedT(context), fontSize: 15),
+            prefixIcon: Icon(MpIcons.search, size: 20, color: _C.mutedT(context)),
             contentPadding: const EdgeInsets.symmetric(vertical: 14),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _C.borderStrong, width: 0.8),
+              borderSide: BorderSide(color: _C.borderStrongT(context), width: 0.8),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -616,12 +635,12 @@ class _MalipoScreenState extends State<MalipoScreen> {
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 10, 14, 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(color: s.bg, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: s.bg(context), borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
         Icon(s == MalipoStatus.completed ? MpIcons.circleCheck : MpIcons.circleX,
-            size: 20, color: s.fg),
+            size: 20, color: s.fg(context)),
         const SizedBox(width: 8),
-        Expanded(child: Text(_banner!, style: TextStyle(fontSize: 14, color: s.fg))),
+        Expanded(child: Text(_banner!, style: TextStyle(fontSize: 14, color: s.fg(context)))),
         if (_showUndo)
           GestureDetector(
             onTap: _undo,
@@ -632,9 +651,9 @@ class _MalipoScreenState extends State<MalipoScreen> {
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: s.fg,
+                      color: s.fg(context),
                       decoration: TextDecoration.underline,
-                      decorationColor: s.fg)),
+                      decorationColor: s.fg(context))),
             ),
           ),
       ]),
@@ -651,7 +670,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
         group = g;
         out.add(Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Text(g, style: const TextStyle(fontSize: 12, color: _C.muted)),
+          child: Text(g, style: TextStyle(fontSize: 12, color: _C.mutedT(context))),
         ));
       }
       out.add(_ticket(m));
@@ -669,9 +688,9 @@ class _MalipoScreenState extends State<MalipoScreen> {
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 0, 14, 12),
       decoration: BoxDecoration(
-        color: _C.surface,
+        color: _C.surfaceT(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border, width: 0.5),
+        border: Border.all(color: _C.borderT(context), width: 0.5),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15.5),
@@ -686,11 +705,11 @@ class _MalipoScreenState extends State<MalipoScreen> {
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(m.name,
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w500, color: _C.text)),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w500, color: _C.textT(context))),
                       const SizedBox(height: 2),
                       Text('${_phone(m.phone)} · ${_time(m.sentAt)}',
-                          style: const TextStyle(fontSize: 13, color: _C.text2)),
+                          style: TextStyle(fontSize: 13, color: _C.text2T(context))),
                     ]),
                   ),
                   const SizedBox(width: 10),
@@ -700,11 +719,11 @@ class _MalipoScreenState extends State<MalipoScreen> {
                             fontSize: 24,
                             height: 1.1,
                             fontWeight: FontWeight.w500,
-                            color: rejected ? _C.muted : s.fg,
+                            color: rejected ? _C.muted : s.fg(context),
                             decoration:
                                 rejected ? TextDecoration.lineThrough : TextDecoration.none,
-                            decorationColor: _C.muted)),
-                    const Text('TZS', style: TextStyle(fontSize: 11, color: _C.muted)),
+                            decorationColor: _C.mutedT(context))),
+                    Text('TZS', style: TextStyle(fontSize: 11, color: _C.mutedT(context))),
                   ]),
                 ]),
               ),
@@ -714,8 +733,8 @@ class _MalipoScreenState extends State<MalipoScreen> {
             if (rejecting) _rejectPanel(m),
             if (open && !rejecting)
               Container(
-                decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: _C.border, width: 0.5))),
+                decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: _C.borderT(context), width: 0.5))),
                 padding: const EdgeInsets.only(top: 10),
                 child: _detail(m),
               ),
@@ -746,11 +765,11 @@ class _MalipoScreenState extends State<MalipoScreen> {
               Expanded(
                 child: Text(m.code,
                     maxLines: 1,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 13,
                         letterSpacing: 0.8,
-                        color: _C.text)),
+                        color: _C.textT(context))),
               ),
               Semantics(
                 label: 'Nakili kodi',
@@ -789,7 +808,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
                     height: 34,
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: open ? _C.accentBg : _C.surface1),
+                        color: open ? _C.accentBgT(context) : _C.surface1T(context)),
                     child: Icon(open ? MpIcons.eyeOff : MpIcons.eye,
                         size: 19, color: open ? _C.blue : _C.text2),
                   ),
@@ -820,7 +839,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
                   ),
                 ],
               ] else
-                _Stamp(label: s.label.toUpperCase(), color: s.color, fg: s.fg),
+                _Stamp(label: s.label.toUpperCase(), color: s.color, fg: s.fg(context)),
             ]),
           ),
         ),
@@ -835,9 +854,9 @@ class _MalipoScreenState extends State<MalipoScreen> {
         width: 18,
         height: 18,
         decoration: BoxDecoration(
-          color: _C.surface,
+          color: _C.surfaceT(context),
           shape: BoxShape.circle,
-          border: Border.all(color: _C.border, width: 0.5),
+          border: Border.all(color: _C.borderT(context), width: 0.5),
         ),
       );
 
@@ -858,7 +877,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
           height: 34,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: filled ? color : _C.surface,
+            color: filled ? color : _C.surfaceT(context),
             border: Border.all(color: color, width: 1.5),
           ),
           child: Icon(icon, size: 18, color: filled ? Colors.white : color),
@@ -870,8 +889,8 @@ class _MalipoScreenState extends State<MalipoScreen> {
   Widget _rejectPanel(Malipo m) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-      decoration: const BoxDecoration(
-        color: _C.dangerBg,
+      decoration: BoxDecoration(
+        color: _C.dangerBgT(context),
         border: Border(top: BorderSide(color: _C.dangerBorder, width: 0.5)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -888,14 +907,14 @@ class _MalipoScreenState extends State<MalipoScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
-                  color: _reason == r ? _C.red : _C.surface,
+                  color: _reason == r ? _C.red : _C.surfaceT(context),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                      color: _reason == r ? _C.red : _C.borderStrong, width: 0.6),
+                      color: _reason == r ? _C.red : _C.borderStrongT(context), width: 0.6),
                 ),
                 child: Text(r,
                     style: TextStyle(
-                        fontSize: 13, color: _reason == r ? Colors.white : _C.text)),
+                        fontSize: 13, color: _reason == r ? Colors.white : _C.textT(context))),
               ),
             ),
         ]),
@@ -903,16 +922,16 @@ class _MalipoScreenState extends State<MalipoScreen> {
         TextField(
           controller: _other,
           onChanged: (_) => setState(() => _error = ''),
-          style: const TextStyle(fontSize: 14, color: _C.text),
+          style: TextStyle(fontSize: 14, color: _C.textT(context)),
           decoration: InputDecoration(
             hintText: 'Sababu nyingine (hiari)',
-            hintStyle: const TextStyle(color: _C.muted, fontSize: 14),
+            hintStyle: TextStyle(color: _C.mutedT(context), fontSize: 14),
             filled: true,
-            fillColor: _C.surface,
+            fillColor: _C.surfaceT(context),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _C.borderStrong, width: 0.8),
+              borderSide: BorderSide(color: _C.borderStrongT(context), width: 0.8),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -943,11 +962,11 @@ class _MalipoScreenState extends State<MalipoScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: _C.surface,
+                  color: _C.surfaceT(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _C.borderStrong, width: 0.6),
+                  border: Border.all(color: _C.borderStrongT(context), width: 0.6),
                 ),
-                child: const Icon(MpIcons.back, size: 20, color: _C.text),
+                child: Icon(MpIcons.back, size: 20, color: _C.textT(context)),
               ),
             ),
           ),
@@ -988,7 +1007,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
         child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Icon(icon, size: 18, color: iconColor),
           const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontSize: 14, color: _C.text)),
+          Text(label, style: TextStyle(fontSize: 14, color: _C.textT(context))),
           const SizedBox(width: 8),
           const Expanded(
             child: Padding(
@@ -1006,22 +1025,22 @@ class _MalipoScreenState extends State<MalipoScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 0, 16, 14),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        row(MpIcons.send, _C.blue, 'Imetumwa', _time(m.sentAt), _C.text),
+        row(MpIcons.send, _C.blue, 'Imetumwa', _time(m.sentAt), _C.textT(context)),
         row(
           p ? MpIcons.clock : MpIcons.eyeCheck,
           p ? _C.amber : _C.blue,
           p ? 'Inakaguliwa' : 'Imekaguliwa',
           p ? 'inasubiri' : 'SMS imeangaliwa',
-          p ? _C.warningFg : _C.text,
+          p ? _C.warningFg : _C.textT(context),
         ),
         row(
           p
               ? MpIcons.circleDashed
               : (s == MalipoStatus.completed ? MpIcons.circleCheck : MpIcons.circleX),
-          p ? _C.muted : s.color,
+          p ? _C.mutedT(context) : s.color,
           'Matokeo',
           p ? 'bado' : s.label,
-          p ? _C.muted : s.fg,
+          p ? _C.mutedT(context) : s.fg(context),
         ),
         if (s == MalipoStatus.rejected && (m.rejectReason ?? '').isNotEmpty)
           Padding(
@@ -1036,17 +1055,17 @@ class _MalipoScreenState extends State<MalipoScreen> {
             ]),
           ),
         const SizedBox(height: 12),
-        const Row(children: [
-          Icon(MpIcons.message, size: 15, color: _C.muted),
+        Row(children: [
+          Icon(MpIcons.message, size: 15, color: _C.mutedT(context)),
           SizedBox(width: 5),
-          Text('SMS ya mchangiaji', style: TextStyle(fontSize: 12, color: _C.muted)),
+          Text('SMS ya mchangiaji', style: TextStyle(fontSize: 12, color: _C.mutedT(context))),
         ]),
         const SizedBox(height: 4),
         if ((m.sms ?? '').isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: const BoxDecoration(
-              color: _C.surface1,
+            decoration: BoxDecoration(
+              color: _C.surface1T(context),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(16),
@@ -1055,11 +1074,11 @@ class _MalipoScreenState extends State<MalipoScreen> {
               ),
             ),
             child: Text(m.sms!,
-                style: const TextStyle(fontSize: 14, height: 1.55, color: _C.text)),
+                style: TextStyle(fontSize: 14, height: 1.55, color: _C.textT(context))),
           )
         else
-          const Text('Hakuna SMS iliyotumwa.',
-              style: TextStyle(fontSize: 13, color: _C.muted)),
+          Text('Hakuna SMS iliyotumwa.',
+              style: TextStyle(fontSize: 13, color: _C.mutedT(context))),
       ]),
     );
   }
@@ -1069,7 +1088,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
     final s = _filter;
     final hasQuery = _search.text.trim().isNotEmpty;
     final bg = s?.bg ?? _C.accentBg;
-    final fg = s?.fg ?? _C.blue;
+    final fg = s?.fg(context) ?? _C.blueT(context);
     final text = hasQuery
         ? 'Hakuna matokeo ya "${_search.text.trim()}".'
         : 'Hakuna malipo ${switch (s) {
@@ -1086,12 +1105,12 @@ class _MalipoScreenState extends State<MalipoScreen> {
           Container(
             width: 88,
             height: 88,
-            decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: _C.of(context, const Color(0xFFE3F5EC), const Color(0xFF15302A)), shape: BoxShape.circle),
             child: Icon(MpIcons.receipt, size: 42, color: fg),
           ),
           const SizedBox(height: 16),
-          const Text('Hakuna malipo',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: _C.text)),
+          Text('Hakuna malipo',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: _C.textT(context))),
           const SizedBox(height: 6),
           Text(text,
               textAlign: TextAlign.center,
@@ -1140,10 +1159,10 @@ class _MalipoScreenState extends State<MalipoScreen> {
       return Opacity(
         opacity: disabled ? 0.4 : 1,
         child: Material(
-          color: filled ? _C.accentBg : Colors.transparent,
+          color: filled ? _C.accentBgT(context) : Colors.transparent,
           shape: StadiumBorder(
               side: BorderSide(
-                  color: filled ? Colors.transparent : _C.borderStrong, width: 0.6)),
+                  color: filled ? Colors.transparent : _C.borderStrongT(context), width: 0.6)),
           child: InkWell(
             customBorder: const StadiumBorder(),
             onTap: disabled ? null : onTap,
@@ -1179,7 +1198,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
           },
         ),
         Text('${_c.page} / ${_c.pages}',
-            style: const TextStyle(fontSize: 13, color: _C.muted)),
+            style: TextStyle(fontSize: 13, color: _C.mutedT(context))),
         pill(
           icon: MpIcons.next,
           text: 'Inayofuata',
@@ -1300,6 +1319,7 @@ class _DonutState extends State<_Donut> with SingleTickerProviderStateMixin {
                 selected: widget.selected,
                 prev: _prev,
                 t: Curves.easeOut.transform(_a.value),
+                darkBg: Theme.of(context).brightness == Brightness.dark,
               ),
             ),
           ),
@@ -1315,8 +1335,9 @@ class _DonutPainter extends CustomPainter {
   final MalipoStatus? selected;
   final MalipoStatus? prev;
   final double t;
-  const _DonutPainter(
-      {required this.segs, required this.selected, required this.prev, required this.t});
+  final bool darkBg;
+  _DonutPainter(
+      {required this.segs, required this.selected, required this.prev, required this.t, required this.darkBg});
 
   double _w(MalipoStatus s, MalipoStatus? sel) => sel == s ? 22 : 16;
   double _o(MalipoStatus s, MalipoStatus? sel) => (sel != null && sel != s) ? 0.3 : 1;
@@ -1331,7 +1352,7 @@ class _DonutPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 16
-        ..color = _C.surface1,
+        ..color = darkBg ? const Color(0xFF212833) : _C.surface1,
     );
     for (final s in segs) {
       final w = _w(s.status, prev) + (_w(s.status, selected) - _w(s.status, prev)) * t;

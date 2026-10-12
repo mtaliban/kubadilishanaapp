@@ -38,6 +38,26 @@ class _C {
   static const searchIcon = Color(0xFF334155);
   static const editFill = Color(0xFFF3F6FB);
   static const disabled = Color(0xFFcbd5e1);
+
+  // DARK tokens (theme-aware ZA _of) — zitumike kwa kueleza dark variant
+  static bool _d(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
+  static Color _of(BuildContext c, Color light, Color dark) =>
+      _d(c) ? dark : light;
+  static Color blueOf(BuildContext c) => _of(c, blue, const Color(0xFF7AA7FF));
+  static Color blueLinkOf(BuildContext c) => _of(c, blueLink, const Color(0xFF7AA7FF));
+  static Color blueSoftOf(BuildContext c) => _of(c, blueSoft, const Color(0xFF1C2A44));
+  static Color greenSoftOf(BuildContext c) => _of(c, greenSoft, const Color(0xFF14532D));
+  static Color redSoftOf(BuildContext c) => _of(c, redSoft, const Color(0xFF3A1D1B));
+  static Color inkOf(BuildContext c) => _of(c, ink, const Color(0xFFE7ECF8));
+  static Color bodyOf(BuildContext c) => _of(c, body, const Color(0xFFE7ECF8));
+  static Color mutedOf(BuildContext c) => _of(c, muted, const Color(0xFF9AA8C7));
+  static Color lineOf(BuildContext c) => _of(c, line, const Color(0xFF2A3240));
+  static Color searchLineOf(BuildContext c) => _of(c, searchLine, const Color(0xFF475569));
+  static Color searchIconOf(BuildContext c) => _of(c, searchIcon, const Color(0xFF94A3B8));
+  static Color editFillOf(BuildContext c) => _of(c, editFill, const Color(0xFF212833));
+  static Color greenDarkOf(BuildContext c) => _of(c, greenDark, const Color(0xFF86EFAC));
+  static Color disabledOf(BuildContext c) => _of(c, disabled, const Color(0xFF334155));
+  static Color scaffoldOf(BuildContext c) => _of(c, Colors.white, const Color(0xFF0F172A));
 }
 
 // ---------------------------------------------------------------- Aikoni
@@ -296,7 +316,7 @@ class _MaoniPageState extends State<MaoniPage> {
     final shown = all.skip(start).take(widget.pageSize).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _C.scaffoldOf(context),
       body: CustomScrollView(
         controller: _scroll,
         slivers: [
@@ -327,20 +347,20 @@ class _MaoniPageState extends State<MaoniPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              children: const [
+              children: [
                 Text('Maoni',
                     style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w500,
-                        color: _C.ink)),
-                SizedBox(width: 12),
+                        color: _C.inkOf(context))),
+                const SizedBox(width: 12),
                 LiveDot(),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text('Live',
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: _C.greenDark)),
+                        color: _C.greenDarkOf(context))),
               ],
             ),
             const SizedBox(height: 12),
@@ -351,20 +371,20 @@ class _MaoniPageState extends State<MaoniPage> {
       );
 
   Widget _tabs() => Container(
-        decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: _C.line))),
+        decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: _C.lineOf(context)))),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
               _tabItem(_Tab.yote, 'Yote', _AppIcons.inbox, _items.length,
-                  _C.blueSoft, _C.blue, _C.blue),
+                  _C.blueSoftOf(context), _C.blueOf(context), _C.blueOf(context)),
               const SizedBox(width: 16),
               _tabItem(_Tab.hayajibiwa, 'Hayajibiwa', _AppIcons.pending,
-                  _pending, _C.redSoft, _C.red, _C.red),
+                  _pending, _C.redSoftOf(context), _C.red, _C.red),
               const SizedBox(width: 16),
               _tabItem(_Tab.yamejibiwa, 'Yamejibiwa', _AppIcons.done,
-                  _answered, _C.greenSoft, _C.greenDark, _C.green),
+                  _answered, _C.greenSoftOf(context), _C.greenDarkOf(context), _C.green),
             ],
           ),
         ),
@@ -424,18 +444,18 @@ class _MaoniPageState extends State<MaoniPage> {
           _query = v;
           _page = 1;
         }),
-        style: const TextStyle(fontSize: 15, color: _C.ink),
+        style: TextStyle(fontSize: 15, color: _C.inkOf(context)),
         decoration: InputDecoration(
           hintText: 'Tafuta jina, namba au ujumbe',
-          hintStyle: const TextStyle(color: Color(0xFF475569), fontSize: 15),
+          hintStyle: TextStyle(color: _C.searchLineOf(context), fontSize: 15),
           prefixIcon:
-              Icon(_AppIcons.search, size: 20, color: _C.searchIcon),
+              Icon(_AppIcons.search, size: 20, color: _C.searchIconOf(context)),
           prefixIconConstraints: const BoxConstraints(minWidth: 30),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           enabledBorder:
-              const UnderlineInputBorder(borderSide: BorderSide(color: _C.searchLine)),
+              UnderlineInputBorder(borderSide: BorderSide(color: _C.searchLineOf(context))),
           focusedBorder:
-              const UnderlineInputBorder(borderSide: BorderSide(color: _C.blue, width: 1.5)),
+              UnderlineInputBorder(borderSide: BorderSide(color: _C.blueOf(context), width: 1.5)),
         ),
       );
 
@@ -451,7 +471,7 @@ class _MaoniPageState extends State<MaoniPage> {
               _tab == _Tab.hayajibiwa
                   ? 'Hakuna maoni yasiyojibiwa'
                   : 'Hakuna maoni hapa',
-              style: const TextStyle(fontSize: 14, color: _C.muted),
+              style: TextStyle(fontSize: 14, color: _C.mutedOf(context)),
             ),
           ],
         ),
@@ -462,7 +482,7 @@ class _MaoniPageState extends State<MaoniPage> {
     return Container(
       padding: const EdgeInsets.only(top: 14, bottom: 16),
       decoration:
-          const BoxDecoration(border: Border(bottom: BorderSide(color: _C.line))),
+          BoxDecoration(border: Border(bottom: BorderSide(color: _C.lineOf(context)))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -472,7 +492,7 @@ class _MaoniPageState extends State<MaoniPage> {
               SizedBox(
                 height: 22,
                 child:
-                    Text('\u201C', style: _serif(30, color: _C.blueLink, height: 1)),
+                    Text('\u201C', style: _serif(30, color: _C.blueLinkOf(context), height: 1)),
               ),
               _status(m.answered),
             ],
@@ -482,7 +502,7 @@ class _MaoniPageState extends State<MaoniPage> {
             padding: const EdgeInsets.only(top: 8, bottom: 10),
             child: Text(
               '\u2014 ${m.name} \u00B7 ${m.phone} \u00B7 ${m.date}',
-              style: const TextStyle(fontSize: 12, color: _C.muted),
+              style: TextStyle(fontSize: 12, color: _C.mutedOf(context)),
             ),
           ),
           if (editing)
@@ -515,24 +535,24 @@ class _MaoniPageState extends State<MaoniPage> {
   // Jibu lililopo: mstari wa bluu kushoto + "Hariri jibu"
   Widget _replyBlock(Maoni m) => Container(
         padding: const EdgeInsets.only(left: 12),
-        decoration: const BoxDecoration(
-            border: Border(left: BorderSide(color: _C.blueLink, width: 3))),
+        decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: _C.blueLinkOf(context), width: 3))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Jibu lako',
-                style: TextStyle(fontSize: 12, color: _C.muted)),
+            Text('Jibu lako',
+                style: TextStyle(fontSize: 12, color: _C.mutedOf(context))),
             Padding(
               padding: const EdgeInsets.only(top: 2, bottom: 6),
               child: Text(m.reply,
-                  style: _serif(15, style: FontStyle.italic, color: _C.ink)),
+                  style: _serif(15, style: FontStyle.italic, color: _C.inkOf(context))),
             ),
             InkWell(
               onTap: () => _startEdit(m),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text('Hariri jibu',
-                    style: TextStyle(fontSize: 13, color: _C.blueLink)),
+                    style: TextStyle(fontSize: 13, color: _C.blueLinkOf(context))),
               ),
             ),
           ],
@@ -548,7 +568,7 @@ class _MaoniPageState extends State<MaoniPage> {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundColor: _C.blue,
+              backgroundColor: _C.blueOf(context),
               child: Icon(_AppIcons.reply, size: 20, color: Colors.white),
             ),
             const SizedBox(width: 10),
@@ -571,18 +591,18 @@ class _MaoniPageState extends State<MaoniPage> {
             autofocus: true,
             minLines: 3,
             maxLines: 6,
-            style: _serif(16, style: FontStyle.italic, color: _C.ink, height: 1.4),
-            decoration: const InputDecoration(
+            style: _serif(16, style: FontStyle.italic, color: _C.inkOf(context), height: 1.4),
+            decoration: InputDecoration(
               hintText: 'Andika jibu lako...',
               filled: true,
-              fillColor: _C.editFill,
+              fillColor: _C.editFillOf(context),
               contentPadding: EdgeInsets.all(12),
               border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: _C.blueLink, width: 2)),
+                  borderSide: BorderSide(color: _C.blueLinkOf(context), width: 2)),
               enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: _C.blueLink, width: 2)),
+                  borderSide: BorderSide(color: _C.blueLinkOf(context), width: 2)),
               focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: _C.blueLink, width: 2)),
+                  borderSide: BorderSide(color: _C.blueLinkOf(context), width: 2)),
             ),
           ),
           const SizedBox(height: 4),
@@ -608,10 +628,10 @@ class _MaoniPageState extends State<MaoniPage> {
               const SizedBox(width: 18),
               InkWell(
                 onTap: () => setState(() => _editing = null),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   child:
-                      Text('Ghairi', style: TextStyle(fontSize: 14, color: _C.muted)),
+                      Text('Ghairi', style: TextStyle(fontSize: 14, color: _C.mutedOf(context))),
                 ),
               ),
             ],
@@ -628,8 +648,8 @@ class _MaoniPageState extends State<MaoniPage> {
     return Container(
       margin: const EdgeInsets.only(top: 4),
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: _C.line))),
+      decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: _C.lineOf(context)))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -658,7 +678,7 @@ class _MaoniPageState extends State<MaoniPage> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: p == page ? FontWeight.w500 : FontWeight.w400,
-                    color: p == page ? Colors.white : const Color(0xFF475569),
+                    color: p == page ? Colors.white : _C.mutedOf(context),
                   ),
                 ),
               ),
@@ -779,13 +799,13 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
   Widget build(BuildContext context) {
     if (_loading && _items.isEmpty) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: _C.scaffoldOf(context),
         body: const Center(child: CircularProgressIndicator(color: _C.blue)),
       );
     }
     if (_loadError != null && _items.isEmpty) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: _C.scaffoldOf(context),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -797,7 +817,7 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
                 child: Text(
                   _loadError!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: _C.muted),
+                  style: TextStyle(fontSize: 13, color: _C.mutedOf(context)),
                 ),
               ),
               const SizedBox(height: 16),

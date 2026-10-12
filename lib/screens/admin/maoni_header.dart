@@ -25,6 +25,8 @@ class MaoniHeader extends StatefulWidget {
   State<MaoniHeader> createState() => _MaoniHeaderState();
 }
 
+bool _ndc(BuildContext c) => Theme.of(c).brightness == Brightness.dark;
+
 class _MaoniHeaderState extends State<MaoniHeader> {
   static const blue = Color(0xFF1E40AF);
   bool _searching = false;
@@ -95,7 +97,9 @@ class _MaoniHeaderState extends State<MaoniHeader> {
                         controller: _ctrl,
                         autofocus: true,
                         onChanged: widget.onSearch,
-                        style: const TextStyle(fontSize: 13),
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: _ndc(context) ? const Color(0xFFE7ECF8) : const Color(0xFF0F172A)),
                         decoration: InputDecoration(
                           hintText: 'Tafuta…',
                           isDense: true,
@@ -118,11 +122,13 @@ class _MaoniHeaderState extends State<MaoniHeader> {
           Row(
             children: [
               _tab(0, 'Yote', widget.allCount,
-                  const Color(0xFFDCFCE7), const Color(0xFF15803D)),
+                  _ndc(context) ? const Color(0xFF14532D) : const Color(0xFFDCFCE7),
+                  _ndc(context) ? const Color(0xFF86EFAC) : const Color(0xFF15803D)),
               _tab(1, 'Yasiyojibiwa', widget.unansweredCount,
                   const Color(0xFFDC2626), Colors.white),
               _tab(2, 'Yaliyojibiwa', widget.answeredCount,
-                  const Color(0xFFDCFCE7), const Color(0xFF15803D)),
+                  _ndc(context) ? const Color(0xFF14532D) : const Color(0xFFDCFCE7),
+                  _ndc(context) ? const Color(0xFF86EFAC) : const Color(0xFF15803D)),
             ],
           ),
           Divider(height: 0.5, thickness: 0.5, color: cs.outlineVariant),
@@ -183,19 +189,19 @@ class _LiveBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCFCE7),
+        color: _ndc(context) ? const Color(0xFF14532D) : const Color(0xFFDCFCE7),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.circle, size: 6, color: Color(0xFF16A34A)),
-          SizedBox(width: 5),
+          Icon(Icons.circle, size: 6, color: _ndc(context) ? const Color(0xFF86EFAC) : const Color(0xFF16A34A)),
+          const SizedBox(width: 5),
           Text('LIVE',
               style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF15803D))),
+                  color: _ndc(context) ? const Color(0xFF86EFAC) : const Color(0xFF15803D))),
         ],
       ),
     );

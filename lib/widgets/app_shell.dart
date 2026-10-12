@@ -264,8 +264,9 @@ class _AppShellState extends State<AppShell> {
   // ── Bottom nav item ──
   Widget _navItem(int idx, String svgAsset, String label, String route, int badge) {
     final active = widget.tabIndex == idx;
-    const brandBlue = Color(0xFF1E40AF);
-    const grey500 = Color(0xFF6B7280);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final brandBlue = dark ? const Color(0xFF7AA7FF) : const Color(0xFF1E40AF);
+    final grey500 = dark ? const Color(0xFF9AA8C7) : const Color(0xFF6B7280);
     final color = active ? brandBlue : grey500;
 
     return Expanded(
@@ -288,7 +289,11 @@ class _AppShellState extends State<AppShell> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFDC2626),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white, width: 1.5),
+                    border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1E293B)
+                            : Colors.white,
+                        width: 1.5),
                   ),
                   constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
                   child: Center(
@@ -337,7 +342,9 @@ class _AppShellState extends State<AppShell> {
 
         return NetworkToastListener(
           child: Scaffold(
-          backgroundColor: AppColors.bg,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF0F172A)
+              : AppColors.bg,
           body: ToastHost(child: SafeArea(
             child: Stack(children: [
               // Positioned.fill inahakikisha Column inapata constraints zenye
@@ -371,8 +378,13 @@ class _AppShellState extends State<AppShell> {
           bottomNavigationBar: MediaQuery.withNoTextScaling(
             child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: const Border(top: BorderSide(color: Color(0xFFF3F4F6))),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E293B)
+                  : Colors.white,
+              border: Border(top: BorderSide(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF2A3240)
+                      : const Color(0xFFF3F4F6))),
               boxShadow: [BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10, offset: const Offset(0, -2),
