@@ -374,7 +374,9 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            // Mockup: Ghairi KUSHOTO, Hifadhi KULIA — spaceBetween ili Hifadhi
+            // isipotee hata kama nafasi ni ndogo.
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               TextButton.icon(
                 onPressed: _saving ? null : _cancel,
@@ -396,7 +398,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 8), // Hifadhi — white, bluu, nameba deviceFloppy
               ElevatedButton.icon(
                 onPressed: _saving ? null : _save,
                 icon: _saving
