@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'admin_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
@@ -1037,7 +1038,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         controller: _jinaCtrl,
         textCapitalization: TextCapitalization.words,
         style: TextStyle(color: v2TextPrimaryOf(context), fontSize: 14),
-        decoration: _inDec(PhosphorIcons.user(), 'mf. Juma Kiswili'),
+        decoration: _inDec(TablerIcons.user, 'mf. Juma Kiswili'),
       ),
       _lbl('Namba ya simu', req: true),
       TextField(
@@ -1046,7 +1047,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         style: TextStyle(color: v2TextPrimaryOf(context), fontSize: 14),
         decoration:
-            _inDec(PhosphorIcons.phone(), '712 345 678', prefix255: true),
+            _inDec(TablerIcons.phone, '712 345 678', prefix255: true),
       ),
       _lbl('WhatsApp', trailing: 'hiari'),
       GestureDetector(
@@ -1082,7 +1083,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           style: TextStyle(color: v2TextPrimaryOf(context), fontSize: 14),
           decoration: _inDec(
-              PhosphorIcons.whatsappLogo(PhosphorIconsStyle.fill),
+              TablerIcons.brandWhatsapp,
               '689 225 170',
               prefix255: true,
               iconColor: v2SuccessOf(context)),
@@ -1093,7 +1094,7 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
         obscureText: !_showPass,
         style: TextStyle(color: v2TextPrimaryOf(context), fontSize: 14),
         decoration:
-            _inDec(PhosphorIcons.lockSimple(), 'Angalau herufi 6').copyWith(
+            _inDec(TablerIcons.lock, 'Angalau herufi 6').copyWith(
           suffixIcon: IconButton(
             onPressed: () => setState(() => _showPass = !_showPass),
             icon: Icon(
@@ -1953,7 +1954,7 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                   _AaField(
                     label: 'Jina Kamili',
                     hint: 'Jina la kwanza na la ukoo',
-                    icon: Icons.person_outline,
+                    icon: TablerIcons.user,
                     controller: _name,
                     keyboardType: TextInputType.name,
                     textCapitalization: TextCapitalization.words,
@@ -1964,7 +1965,7 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                   _AaField(
                     label: 'Barua Pepe',
                     hint: 'jina@mfano.com',
-                    icon: Icons.mail_outline,
+                    icon: TablerIcons.mail,
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     validator: (v) {
@@ -1977,7 +1978,7 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                   _AaField(
                     label: 'Namba ya Simu',
                     hint: '0712345678',
-                    icon: Icons.phone_outlined,
+                    icon: TablerIcons.phone,
                     controller: _phone,
                     keyboardType: TextInputType.phone,
                     validator: (v) {
@@ -1990,7 +1991,7 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                   _AaField(
                     label: 'Nywila',
                     hint: '••••••••',
-                    icon: Icons.lock_outline,
+                    icon: TablerIcons.lock,
                     controller: _password,
                     obscure: _obscure,
                     helper: 'Angalau herufi 8',
@@ -2019,7 +2020,7 @@ class _V2AddAdminScreenState extends State<V2AddAdminScreen> {
                       height: 32,
                       child: ElevatedButton.icon(
                         onPressed: _submit,
-                        icon: const Icon(Icons.save_outlined, size: 15),
+                        icon: const Icon(TablerIcons.deviceFloppy, size: 15),
                         label: const Text('Hifadhi'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _aaBlueT(context),

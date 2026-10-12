@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -864,18 +865,18 @@ Future<V2AddOption?> showV2AddOptionsSheet(BuildContext context) {
               height: 34,
               decoration: BoxDecoration(
                   color: v2AccentBgOf(ctx), borderRadius: BorderRadius.circular(10)),
-              child: Icon(PhosphorIcons.plus(), size: 17, color: v2AccentOf(ctx)),
+              child: Icon(TablerIcons.plus, size: 17, color: v2AccentOf(ctx)),
             ),
             const SizedBox(width: 10),
             const Text('Ongeza',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           ]),
           const SizedBox(height: 14),
-          _addOption(ctx, PhosphorIcons.userPlus(), 'Mtumiaji Mpya',
+          _addOption(ctx, TablerIcons.userPlus, 'Mtumiaji Mpya',
               'Mwalimu, afisa afya au mtumishi mwingine',
               V2AddOption.mtumiajiMpya, v2AccentBgOf(ctx), v2AccentOf(ctx)),
           const SizedBox(height: 8),
-          _addOption(ctx, PhosphorIcons.shieldCheck(), 'Ongeza Admin',
+          _addOption(ctx, TablerIcons.shieldCheck, 'Ongeza Admin',
               'Anaingia kwa email, hana idara', V2AddOption.ongezaAdmin,
               Theme.of(ctx).brightness == Brightness.dark
                   ? const Color(0xFF2E1A47)

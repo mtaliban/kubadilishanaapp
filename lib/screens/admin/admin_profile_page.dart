@@ -190,12 +190,11 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
 
   // ---------- Juu ----------
   Widget _viewTopBar() {
+    // Hakuna mshale wa rudi — Wasifu ni screen/tab ya AdminShell, haifunguliwi
+    // kwa Navigator.push; kurudi kunafanyika kwa drawer/footer ya shell.
     return _TopBar(
       title: 'Wasifu',
-      leading: IconButton(
-        icon: const Icon(TablerIcons.arrowLeft, size: 22, color: _text),
-        onPressed: () => Navigator.maybePop(context),
-      ),
+      leading: const SizedBox(width: 40),
       trailing: InkWell(
         onTap: _startEdit,
         customBorder: const CircleBorder(),

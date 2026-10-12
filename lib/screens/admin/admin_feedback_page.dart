@@ -434,7 +434,10 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                             ElevatedButton.icon(
                               onPressed: _load,
                               icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
-                              label: Text('Jaribu tena', style: GoogleFonts.inter()),
+                              label: Text('Jaribu tena',
+                                  style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w600,
+                                      color: Ad.card(context))),
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: _kBlueT(context), foregroundColor: Ad.card(context)),
                             ),

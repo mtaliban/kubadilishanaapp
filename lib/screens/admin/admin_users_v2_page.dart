@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/admin_badge_service.dart';
 import '../../services/api_service.dart';
@@ -648,7 +649,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                 for (final t in _trash)
                   ListTile(
                     dense: true,
-                    leading: Icon(PhosphorIcons.user(),
+                    leading: Icon(TablerIcons.user,
                         size: 18, color: v2TextMutedOf(context)),
                     title:
                         Text(v2TitleCase('${t['full_name'] ?? ''}'),
@@ -702,7 +703,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                 backgroundColor: v2AccentOf(context),
                 shape: const CircleBorder(),
                 elevation: 4,
-                child: Icon(PhosphorIcons.plus(), color: Colors.white, size: 20),
+                child: Icon(TablerIcons.plus, color: Colors.white, size: 20),
               ),
             ),
           ],
