@@ -395,16 +395,16 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                   ),
                   style: TextButton.styleFrom(
                     // VITUFE VIDOGO: minimumSize ya DEFAULT ya Material (64×36)
-                    // ndiyo chanzo cha 'div kubwa' — imepunguzwa 0×32 +
+                    // ndiyo chanzo cha 'div kubwa' — imepunguzwa 0×28 +
                     // tapTargetSize.shrinkWrap (inakata area ya kugusa kubwa
-                    // ya Material). Height halisi sasa 32, si 40-44.
+                    // ya Material). Height halisi sasa 28, si 32-44.
                     side: const BorderSide(color: Color(0xFFD1D5DB)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 6),
-                    minimumSize: const Size(0, 32),
+                        horizontal: 8, vertical: 4),
+                    minimumSize: const Size(0, 28),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
@@ -439,7 +439,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                     disabledForegroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 6),
+                        horizontal: 8, vertical: 4),
                     textStyle: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
@@ -447,8 +447,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    // Hifadhi pia ndogo — height halisi 32 (minimumSize BAIASI).
-                    minimumSize: const Size(0, 32),
+                    // Hifadhi pia ndogo — height halisi 28 (minimumSize BAIASI).
+                    minimumSize: const Size(0, 28),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),

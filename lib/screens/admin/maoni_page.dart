@@ -144,10 +144,12 @@ class _LiveDotState extends State<LiveDot> with SingleTickerProviderStateMixin {
 
 const _serifFallback = ['Georgia', 'Noto Serif', 'Times New Roman'];
 
+// RANGI DARK-AWARE: color LAZIMA itumwe waziwa (default ya _serif ilikuwa
+// _C.body — meusi hardcoded, haionekani kwenye dark mode).
 TextStyle _serif(
   double size, {
   FontStyle style = FontStyle.normal,
-  Color color = _C.body,
+  required Color color,
   double height = 1.5,
 }) =>
     TextStyle(
@@ -509,7 +511,9 @@ class _MaoniPageState extends State<MaoniPage> {
               _status(m.answered),
             ],
           ),
-          Text(m.text, style: _serif(17)),
+          // RANGI DARK-AWARE: default ya _serif ilikuwa _C.body (meusi hardcoded)
+          // — kwenye dark mode HAIONEKANI. Tumia bodyOf(context).
+          Text(m.text, style: _serif(17, color: _C.bodyOf(context))),
           Padding(
             padding: const EdgeInsets.only(top: 8, bottom: 10),
             child: Text(
