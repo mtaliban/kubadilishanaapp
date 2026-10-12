@@ -189,7 +189,10 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
               ),
               const SizedBox(height: 14),
               Text('Futa Maoni',
-                  style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700)),
+                  style: GoogleFonts.inter(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: _kInkT(context))),
               const SizedBox(height: 8),
               Text('Una uhakika unataka kufuta maoni haya?',
                   textAlign: TextAlign.center,
@@ -681,7 +684,9 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                       width: 16, height: 16,
                       child: CircularProgressIndicator(color: Ad.card(context), strokeWidth: 2))
                   : const SizedBox.shrink(),
-              label: Text('Hifadhi jibu', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+              label: Text('Hifadhi jibu',
+                  style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600, color: Ad.card(context))),
             ),
           ),
         ]),
@@ -912,9 +917,15 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     // Kama picha: "Yaliyojibiwa" (kijani, duara la check) /
     // "Yasiyojibiwa" (orange, saa).
-    final fg = answered ? const Color(0xFF15803D) : const Color(0xFFC2410C);
-    final bg = answered ? const Color(0xFFECFDF5) : const Color(0xFFFFF7ED);
-    final bd = answered ? const Color(0xFFA7F3D0) : const Color(0xFFFED7AA);
+    final fg = answered
+        ? _kIsDark(context) ? const Color(0xFF5FD49A) : const Color(0xFF15803D)
+        : _kIsDark(context) ? const Color(0xFFFFB380) : const Color(0xFFC2410C);
+    final bg = answered
+        ? _kIsDark(context) ? const Color(0xFF14532D) : const Color(0xFFECFDF5)
+        : _kIsDark(context) ? const Color(0xFF3A2414) : const Color(0xFFFFF7ED);
+    final bd = answered
+        ? _kIsDark(context) ? const Color(0xFF166534) : const Color(0xFFA7F3D0)
+        : _kIsDark(context) ? const Color(0xFF6B3708) : const Color(0xFFFED7AA);
     final label = answered ? 'Yaliyojibiwa' : 'Yasiyojibiwa';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -958,7 +969,9 @@ class _PaginationBtn extends StatelessWidget {
         width: 30, height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: enabled ? Colors.white : _kSoft,
+          color: enabled
+              ? Ad.of(context, Colors.white, const Color(0xFF1E293B))
+              : _kIsDark(context) ? const Color(0xFF1C2A44) : _kSoft,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: _kBorderT(context)),
         ),
@@ -1120,10 +1133,10 @@ class _ReplyBoxState extends State<ReplyBox> {
           GestureDetector(
             onTap: widget.onCancel,
             behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.fromLTRB(4, 10, 0, 6),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 10, 0, 6),
               child: Text('Ghairi',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF5B6679))),
+                  style: TextStyle(fontSize: 12, color: _kGreyT(context))),
             ),
           ),
       ],

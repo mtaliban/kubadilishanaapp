@@ -22,6 +22,30 @@ const Color _line = Color(0xFFE5E7EB);
 const Color _fieldBorder = Color(0xFFDDDCF3);
 const Color _red = Color(0xFFDC2626);
 
+// ── DARK tokens (hali ya giza — zinatumika wakati ThemeProvider.dark) ────
+const Color _textD = Color(0xFFE7ECF8);
+const Color _mutedD = Color(0xFF9AA8C7);
+const Color _hintD = Color(0xFF7B8DA5);
+const Color _lineD = Color(0xFF2A3240);
+const Color _fieldBorderD = Color(0xFF334155);
+const Color _bluePaleD = Color(0xFF1C2A44);
+const Color _blueD = Color(0xFF7AA7FF);
+
+Color _textT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? _textD : _text;
+Color _mutedT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? _mutedD : _muted;
+Color _hintT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? _hintD : _hint;
+Color _lineT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? _lineD : _line;
+Color _fieldBorderT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? _fieldBorderD : _fieldBorder;
+Color _bluePaleT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? _bluePaleD : _bluePale;
+Color _blueT(BuildContext c) =>
+    Theme.of(c).brightness == Brightness.dark ? _blueD : _blue;
+
 /// Ukurasa wa Wasifu wa admin (kutazama + kuhariri).
 /// UI tu: weka logic yako ya kuhifadhi ndani ya [onSave].
 /// [onSave] irudishe true ikifanikiwa (ukurasa utarudi kwenye hali ya kutazama).
@@ -134,8 +158,9 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -210,7 +235,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
             height: size,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: _bluePale,
+              color: _bluePaleT(context),
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFFD1D5DB)),
             ),
@@ -219,7 +244,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
               style: TextStyle(
                 fontSize: small ? 17 : 22,
                 fontWeight: FontWeight.w500,
-                color: _blue,
+                color: _blueT(context),
               ),
             ),
           ),
@@ -227,22 +252,22 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
           Text(
             _name,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: _text,
+              color: _textT(context),
             ),
           ),
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
             decoration: BoxDecoration(
-              color: _bluePale,
+              color: _bluePaleT(context),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
               widget.role,
-              style: const TextStyle(fontSize: 11, color: _blue),
+              style: TextStyle(fontSize: 11, color: _blueT(context)),
             ),
           ),
         ],
@@ -263,7 +288,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _line),
+        border: Border.all(color: _lineT(context)),
       ),
       child: Column(
         children: [
@@ -426,10 +451,10 @@ class _TopBar extends StatelessWidget {
             Align(alignment: Alignment.centerLeft, child: leading),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: _text,
+                color: _textT(context),
               ),
             ),
             if (trailing != null)
@@ -462,11 +487,13 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final empty = info.value.trim().isEmpty;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final divider = dark ? const Color(0xFF2A3240) : const Color(0xFFF3F4F6);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         border: showDivider
-            ? const Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))
+            ? Border(bottom: BorderSide(color: divider))
             : null,
       ),
       child: Row(
@@ -475,10 +502,10 @@ class _InfoRow extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: _bluePale,
+              color: _bluePaleT(context),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(info.icon, size: 17, color: _blue),
+            child: Icon(info.icon, size: 17, color: _blueT(context)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -487,14 +514,14 @@ class _InfoRow extends StatelessWidget {
               children: [
                 Text(
                   info.label,
-                  style: const TextStyle(fontSize: 10.5, color: _muted),
+                  style: TextStyle(fontSize: 10.5, color: _mutedT(context)),
                 ),
                 const SizedBox(height: 1),
                 Text(
                   empty ? 'Haijawekwa' : info.value,
                   style: TextStyle(
                     fontSize: 13.5,
-                    color: empty ? _hint : _text,
+                    color: empty ? _hintT(context) : _textT(context),
                   ),
                 ),
               ],
@@ -539,10 +566,10 @@ class _EditField extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF374151),
+              color: _mutedT(context),
             ),
           ),
           const SizedBox(height: 5),
@@ -551,19 +578,19 @@ class _EditField extends StatelessWidget {
             keyboardType: keyboardType,
             textCapitalization: capitalization,
             validator: validator,
-            style: const TextStyle(fontSize: 13, color: _text),
+            style: TextStyle(fontSize: 13, color: _textT(context)),
             decoration: InputDecoration(
               isDense: true,
               hintText: hint,
-              hintStyle: const TextStyle(fontSize: 13, color: _hint),
+              hintStyle: TextStyle(fontSize: 13, color: _hintT(context)),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              prefixIcon: Icon(icon, size: 17, color: _blue),
+              prefixIcon: Icon(icon, size: 17, color: _blueT(context)),
               prefixIconConstraints:
                   const BoxConstraints(minWidth: 40, minHeight: 20),
               errorStyle: const TextStyle(fontSize: 11, color: _red),
-              enabledBorder: _border(_fieldBorder),
-              focusedBorder: _border(_blue, 1.2),
+              enabledBorder: _border(_fieldBorderT(context)),
+              focusedBorder: _border(_blueT(context), 1.2),
               errorBorder: _border(_red),
               focusedErrorBorder: _border(_red, 1.2),
             ),
