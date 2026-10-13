@@ -40,6 +40,13 @@ const String kWilayaAny = 'Wilaya yeyote';
 
 final List<String> _crashLog = [];
 
+// UI ya kwanza imeonyeka? Kama NDIYO, kosa lolote la nyuma ya pazia
+// (mtandao, WS n.k.) LIFUATE kwenye crash-log TU — USITENGEZE app nzima
+// na skrini ya "Hakuna mtandao" (ile ilikuwa inaonekana KABLA ya logo).
+// Banner ya mtandao (AppShell/NetworkBanner) na toasts ndizo zinazoonyesha
+// offline NDANI ya app, kama WhatsApp.
+bool _uiShown = false;
+
 Future<PackageInfo?> _loadPackageInfo() async {
   try {
     return await PackageInfo.fromPlatform();
@@ -111,11 +118,18 @@ void main() {
     }
 
     runApp(const _UserApp());
+    // Frame ya kwanza ikaonyeka → app iko NDANI. Makosa yaliyofuata (async,
+    // WS, API) hayabadilishi skrini — yanaendelea kwenye crash-log tu.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _uiShown = true);
   }, (error, stack) {
     _crashLog.add('[Zone] $error\n$stack');
-    try {
-      runApp(_ErrorApp(error.toString()));
-    } catch (_) {}
+    if (!_uiShown) {
+      // Kosa kabla ya frame ya kwanza (runApp haijafanikiwa) — onyesha skrini ya kosa.
+      try {
+        runApp(_ErrorApp(error.toString()));
+      } catch (_) {}
+    }
+    // App iko ndani tayari: USIRUDIE runApp — banner/toasts zinashughulikia offline.
   });
 }
 

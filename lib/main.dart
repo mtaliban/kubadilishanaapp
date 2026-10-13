@@ -41,6 +41,13 @@ const String kWilayaAny = 'Wilaya yeyote';
 // Global error log — displayed in _ErrorApp if crash happens
 final List<String> _crashLog = [];
 
+// UI ya kwanza imeonyeka? Kama NDIYO, kosa lolote la nyuma ya pazia
+// (mtandao, WS n.k.) LIFUATE kwenye crash-log TU — USITENGEZE app nzima
+// na skrini ya "Hakuna mtandao" (ile ilikuwa inaonekana KABLA ya logo).
+// Banner ya mtandao (AppShell/NetworkBanner) na toasts ndizo zinazoonyesha
+// offline NDANI ya app, kama WhatsApp.
+bool _uiShown = false;
+
 // Version ya APK — inaonyeshwa kwenye screens za makosa ili screenshot
 // ionyeshe APK iliyotumika (husaidia kubaini kama mtumiaji bado anatumia
 // APK ya zamani isiyopata fixes).
@@ -132,12 +139,18 @@ void main() {
     }
 
     runApp(const KubadilishanaApp());
+    // Frame ya kwanza ikaonyeka → app iko NDANI. Makosa yaliyofuata (async,
+    // WS, API) hayabadilishi skrini — yanaendelea kwenye crash-log tu.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _uiShown = true);
   }, (error, stack) {
     _crashLog.add('[Zone] $error\n$stack');
-    // Try to show error app if runApp already ran
-    try {
-      runApp(_ErrorApp(error.toString()));
-    } catch (_) {}
+    if (!_uiShown) {
+      // Kosa kabla ya frame ya kwanza (runApp haijafanikiwa) — onyesha skrini ya kosa.
+      try {
+        runApp(_ErrorApp(error.toString()));
+      } catch (_) {}
+    }
+    // App iko ndani tayari: USIRUDIE runApp — banner/toasts zinashughulikia offline.
   });
 }
 

@@ -7,6 +7,7 @@ import '../services/app_cache.dart';
 import '../services/websocket_service.dart';
 import '../services/notification_service.dart';
 import '../services/app_navigator.dart';
+import '../services/network_service.dart';
 import '../utils/safe_cast.dart';
 
 class AuthUser {
@@ -157,6 +158,10 @@ class AuthProvider extends ChangeNotifier {
     }
 
     // --- Hakuna cache — inahitaji mtandao ---
+    // OFFLINE-FIRST: bila mtandao USISUBIRI timeout ya API (lilikuwa
+    // linasimamisha splash kwa sekunde 15+). Rudi false haraka — splash
+    // inaenda /login na mtumiaji anaona app MARA MOJA, kama WhatsApp.
+    if (NetworkService().isOffline) return false;
     try {
       final res = await _api.getMe();
       final data = asMap(res.data);
