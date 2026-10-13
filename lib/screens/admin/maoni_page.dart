@@ -10,6 +10,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -178,7 +179,11 @@ DateTime _parseIso(dynamic v, {DateTime? fallback}) {
   }
 }
 
-/// Ramani ya item ya API → Maoni (id int-ish, jina/simu/tarehe jformatted).
+/** Ramani ya item ya API → Maoni (id int-ish, jina/simu/tarehe jformatted). */
+@visibleForTesting
+Maoni maoniFromFeedbackForTest(Map<String, dynamic> m, int fallbackId) =>
+    _maoniFromFeedback(m, fallbackId);
+
 Maoni _maoniFromFeedback(Map<String, dynamic> m, int fallbackId) {
   final idStr = (m['id'] ?? m['_id'] ?? fallbackId).toString();
   final idFallback = int.tryParse(idStr) ?? fallbackId;
@@ -190,8 +195,19 @@ Maoni _maoniFromFeedback(Map<String, dynamic> m, int fallbackId) {
   final created = _parseIso(m['created_at']);
   final subject = (m['subject'] ?? '').toString().trim();
   final message = (m['message'] ?? '').toString().trim();
+  // BUG-WA-MAJIRUDIA: app ya user inatuma subject = herufi 60 za kwanza za
+  // ujumbe mwenyewe (au ujumbe mzima kama fupi), hivyo kadi ilionyesha subject
+  // na message zinazofanana kama MBILI ("Okay\nOkay", kichwa fkula + ujumbe).
+  // Subject inaonyeshwa TU kama SI sehemu ya ujumbe — inatibu pia data ya
+  // zamani iliyohifadhiwa kwenye DB bila kubadilisha backend.
+  // Kichwa fkula kina '...' ya truncation (app ya user: herufi 60 + '...') —
+  // tunafuta vitone vinavyoishia na kupima kama subject ni mwanzo wa ujumbe.
+  final subjectCore = subject.replaceAll(RegExp(r'\.{1,3}$'), '').trim();
+  final subjectIsPrefix =
+      subjectCore.isNotEmpty && message.startsWith(subjectCore);
   final userText = [
-    if (subject.isNotEmpty) subject,
+    if (subject.isNotEmpty && !message.contains(subject) && !subjectIsPrefix)
+      subject,
     if (message.isNotEmpty) message,
   ].join('\n');
   final reply = (m['admin_reply'] ?? m['reply'] ?? '').toString().trim();
