@@ -97,6 +97,42 @@ class AuthProvider extends ChangeNotifier {
   bool _loading = false;
   String? _error;
   bool _errorIsNetwork = false;
+  bool _onlineHooked = false;
+
+  /// OFFLINE-FIRST: session ilirudishwa bila mtandao (token ipo, profile
+  /// bado haijathibitishwa). Mtandao ukirudi, pakia /me nyuma ya pazia —
+  /// bila login, bila splash. Listener inajiondoa yenyewe baada ya mara 1.
+  void _hookOnlineRefresh() {
+    if (_onlineHooked) return;
+    _onlineHooked = true;
+    NetworkService().addOnlineListener(_refreshOnOnline);
+  }
+
+  Future<void> _refreshOnOnline() async {
+    NetworkService().removeOnlineListener(_refreshOnOnline);
+    _onlineHooked = false;
+    try {
+      final res = await _api.getMe();
+      final data = asMap(res.data);
+      _user = AuthUser.fromJson(data);
+      await _api.saveUserData(data);
+      notifyListeners();
+    } on DioException catch (e) {
+      // 401 pekee inamaanisha session ilishaisha kweli.
+      if (e.response?.statusCode == 401) {
+        await _api.removeToken();
+        await _api.clearUserData();
+        _user = null;
+        AppCache().clear();
+        AdminBadgeService().reset();
+        notifyListeners();
+        appNavigatorKey.currentState
+            ?.pushNamedAndRemoveUntil('/login', (_) => false);
+      }
+    } catch (_) {
+      // Kosa la mtandao lingine — mtumiaji baki ndani (banner inaonyesha).
+    }
+  }
 
   /// Admin 2FA: email inayosubiri OTP.
   String? pendingAdminEmail;
@@ -158,10 +194,16 @@ class AuthProvider extends ChangeNotifier {
     }
 
     // --- Hakuna cache — inahitaji mtandao ---
-    // OFFLINE-FIRST: bila mtandao USISUBIRI timeout ya API (lilikuwa
-    // linasimamisha splash kwa sekunde 15+). Rudi false haraka — splash
-    // inaenda /login na mtumiaji anaona app MARA MOJA, kama WhatsApp.
-    if (NetworkService().isOffline) return false;
+    // OFFLINE-FIRST / KANUNI YA WHATSAPP: token ipo = session ipo.
+    // Hakuna mtandao? USIPELEKE mtumiaji login — ingia dashboard katika
+    // hali ya kushuka (data ya cache + banner "Hakuna mtandao"). Profile
+    // itajaza nyuma ya pazia mtandao ukirudi.
+    if (NetworkService().isOffline) {
+      _setupRealtime();
+      _hookOnlineRefresh(); // profile itajaza mtandao ukirudi
+      notifyListeners();
+      return true;
+    }
     try {
       final res = await _api.getMe();
       final data = asMap(res.data);
@@ -171,11 +213,23 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } on DioException catch (e) {
-      // 401: token imeisha → ondoa; kosa lingine → bakia kwenye login screen
-      if (e.response?.statusCode == 401) await _api.removeToken();
-      return false;
+      // 401: server IMETHIBITISHA session imeisha → ondoa token (logout halisi).
+      if (e.response?.statusCode == 401) {
+        await _api.removeToken();
+        return false;
+      }
+      // Kosa la mtandao (timeout n.k.) — sio uthibitisho wa logout: bakia
+      // ndani ya app (dashboard hali ya kushuka), kama WhatsApp.
+      _setupRealtime();
+      _hookOnlineRefresh(); // profile itajaza mtandao ukirudi
+      notifyListeners();
+      return true;
     } catch (_) {
-      return false;
+      // Kosa kisichotabulika wakati wa getMe — sio uthibitisho wa logout.
+      _setupRealtime();
+      _hookOnlineRefresh();
+      notifyListeners();
+      return true;
     }
   }
 
