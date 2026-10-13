@@ -131,25 +131,25 @@ class _FakeRepo implements reg.RegistrationRepository {
   Future<bool> isPhoneAvailable(String phone) async => true;
   @override
   Future<List<reg.RegOption>> regions() async =>
-      [const reg.RegOption(id: '1', label: 'Dar Es Salaam')];
+      [reg.RegOption(id: '1', label: 'Dar Es Salaam')];
   @override
   Future<List<reg.RegOption>> districts(reg.RegOption region) async =>
-      [const reg.RegOption(id: '2', label: 'Ilala Mc')];
+      [reg.RegOption(id: '2', label: 'Ilala Mc')];
   @override
   Future<List<reg.RegOption>> schools(reg.RegOption district) async =>
-      [const reg.RegOption(id: '3', label: 'Vivandani Primary School')];
+      [reg.RegOption(id: '3', label: 'Vivandani Primary School')];
   @override
   Future<List<reg.RegOption>> facilities(reg.RegOption district) async =>
-      [const reg.RegOption(id: '4', label: 'Amana Hospital')];
+      [reg.RegOption(id: '4', label: 'Amana Hospital')];
   @override
   Future<List<reg.RegOption>> referralHospitals(reg.RegOption region) async =>
-      [const reg.RegOption(id: '5', label: 'Muhimbili')];
+      [reg.RegOption(id: '5', label: 'Muhimbili')];
   @override
   Future<List<reg.RegOption>> cadres() async =>
-      [const reg.RegOption(id: 'co', label: 'Clinical Officer')];
+      [reg.RegOption(id: 'co', label: 'Clinical Officer')];
   @override
   Future<List<reg.RegOption>> subjects(reg.EduLevel level) async =>
-      [const reg.RegOption(id: 'eng', label: 'English')];
+      [reg.RegOption(id: 'eng', label: 'English')];
   @override
   Future<void> submit(reg.RegistrationData data) async {}
 }

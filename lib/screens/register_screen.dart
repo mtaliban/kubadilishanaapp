@@ -1,6 +1,24 @@
+// ============================================================================
+// REGISTRATION FLOW (Flutter)
+//
+// MAELEKEZO KWA AI: USIBADILISHE muonekano, rangi, icons, ukubwa wa vitufe wala
+// mpangilio wa ukurasa huu. Unganisha API kwa kutekeleza tu `RegistrationRepository`
+// (angalia chini) na kuipitisha kwenye `RegistrationFlowPage`.
+//
+// pubspec.yaml:  flutter pub add tabler_icons_plus
+//
+// Matumizi:
+//   RegistrationFlowPage(
+//     repository: MyApiRepository(),      // au MockRegistrationRepository()
+//     onLoginTap: () { /* nenda login */ },
+//     onFinished: (data) { /* data.toJson() */ },
+//   )
+// ============================================================================
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 
 // ============================================================================
 // RANGI (badilisha hapa tu kama unataka bluu nyingine)
@@ -22,52 +40,75 @@ class _C {
 }
 
 // ============================================================================
-// ICONS: zote ziko sehemu moja. Kila mstari una jina la icon ya Tabler
-// iliyotumika kwenye mockup. Ukitumia package ya Tabler, badilisha hapa tu.
+// ICONS: zote ziko sehemu moja na ni Tabler Icons (package: tabler_icons_plus),
+// zile zile za mockup. Ongeza kwenye pubspec: flutter pub add tabler_icons_plus
 // ============================================================================
 class RegIcons {
   RegIcons._();
-  static const IconData back = Icons.arrow_back; // arrow-left
-  static const IconData next = Icons.arrow_forward; // arrow-right
-  static const IconData edit = Icons.edit_outlined; // pencil
-  static const IconData add = Icons.add; // plus
-  static const IconData search = Icons.search; // search
-  static const IconData chevronUp = Icons.keyboard_arrow_up; // chevron-up
-  static const IconData chevronDown = Icons.keyboard_arrow_down; // chevron-down
-  static const IconData ok = Icons.check_circle; // circle-check
-  static const IconData bad = Icons.cancel; // circle-x
-  static const IconData check = Icons.check; // check
-  static const IconData name = Icons.account_box_outlined; // user-square-rounded
-  static const IconData phone = Icons.phone_outlined; // phone
-  static const IconData whatsapp = Icons.chat_outlined; // brand-whatsapp
-  static const IconData afya = Icons.medical_services_outlined; // stethoscope
-  static const IconData elimu = Icons.school_outlined; // school
-  static const IconData kilimo = Icons.grass; // wheat
-  static const IconData umma = Icons.apartment_outlined; // building-community
-  static const IconData wizaraAfya = Icons.account_balance_outlined; // building-bank
-  static const IconData tamisemi = Icons.apartment_outlined; // building-community
-  static const IconData msingi = Icons.widgets_outlined; // blocks
-  static const IconData sekondari = Icons.functions; // math-function
-  static const IconData cheo = Icons.medical_services_outlined; // stethoscope
-  static const IconData mkoa = Icons.location_on_outlined; // map-pin
-  static const IconData wilaya = Icons.business_outlined; // building
-  static const IconData shule = Icons.school_outlined; // school
-  static const IconData kituo = Icons.local_hospital_outlined; // building-hospital
-  static const IconData mwaka1 = Icons.calendar_today_outlined; // calendar
-  static const IconData miaka2 = Icons.date_range_outlined; // calendar-stats
-  static const IconData miaka3 = Icons.military_tech_outlined; // medal
-  static const IconData register = Icons.person_add_alt_1_outlined; // user-plus
-  static const IconData route = Icons.alt_route; // route
+  static const IconData back = TablerIcons.arrowLeft;
+  static const IconData next = TablerIcons.arrowRight;
+  static const IconData edit = TablerIcons.pencil;
+  static const IconData add = TablerIcons.plus;
+  static const IconData search = TablerIcons.search;
+  static const IconData chevronUp = TablerIcons.chevronUp;
+  static const IconData chevronDown = TablerIcons.chevronDown;
+  static const IconData ok = TablerIcons.circleCheck;
+  static const IconData bad = TablerIcons.circleX;
+  static const IconData check = TablerIcons.check;
+  static const IconData name = TablerIcons.userSquareRounded;
+  static const IconData phone = TablerIcons.phone;
+  static const IconData whatsapp = TablerIcons.brandWhatsapp;
+  static const IconData afya = TablerIcons.stethoscope;
+  static const IconData elimu = TablerIcons.school;
+  static const IconData kilimo = TablerIcons.wheat;
+  static const IconData umma = TablerIcons.buildingCommunity;
+  static const IconData wizaraAfya = TablerIcons.buildingBank;
+  static const IconData tamisemi = TablerIcons.buildingCommunity;
+  static const IconData msingi = TablerIcons.blocks;
+  static const IconData sekondari = TablerIcons.mathFunction;
+  static const IconData cheo = TablerIcons.stethoscope;
+  static const IconData mkoa = TablerIcons.mapPin;
+  static const IconData wilaya = TablerIcons.building;
+  static const IconData shule = TablerIcons.school;
+  static const IconData kituo = TablerIcons.buildingHospital;
+  static const IconData mwaka1 = TablerIcons.calendar;
+  static const IconData miaka2 = TablerIcons.calendarStats;
+  static const IconData miaka3 = TablerIcons.medal;
+  static const IconData register = TablerIcons.userPlus;
+  static const IconData route = TablerIcons.route;
 }
 
 // ============================================================================
 // MODELS
 // ============================================================================
+/// API mara nyingine inarudisha maandishi kama "ST. RITA&#039;S" au "D &amp; T".
+/// Hii inayabadilisha kuwa herufi za kawaida.
+String decodeHtmlEntities(String s) {
+  if (!s.contains('&')) return s;
+  var out = s.replaceAllMapped(
+    RegExp(r'&#(\d+);'),
+    (m) => String.fromCharCode(int.parse(m[1]!)),
+  );
+  out = out.replaceAllMapped(
+    RegExp(r'&#[xX]([0-9a-fA-F]+);'),
+    (m) => String.fromCharCode(int.parse(m[1]!, radix: 16)),
+  );
+  return out
+      .replaceAll('&quot;', '"')
+      .replaceAll('&apos;', "'")
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&amp;', '&');
+}
+
 class RegOption {
   final String id;
   final String label;
   final String? subtitle;
-  const RegOption({required this.id, required this.label, this.subtitle});
+  RegOption({required this.id, required String label, String? subtitle})
+      : label = decodeHtmlEntities(label),
+        subtitle = subtitle == null ? null : decodeHtmlEntities(subtitle);
 
   @override
   bool operator ==(Object other) => other is RegOption && other.id == id;
@@ -159,7 +200,7 @@ class RegistrationData {
 
 // ============================================================================
 // REPOSITORY: hapa ndipo unaunganisha API zako.
-// Tengeneza class inayotelekeza interface hii na uipitishe kwenye
+// Tengeneza class inayotekeleza interface hii na uipitishe kwenye
 // RegistrationFlowPage. Mfano wa data uko kwenye
 // mock_registration_repository.dart
 // ============================================================================
@@ -179,6 +220,10 @@ abstract class RegistrationRepository {
 // PAGE
 // ============================================================================
 enum _PhoneStatus { idle, checking, available, taken }
+
+Color? _statusColor(_PhoneStatus s) => s == _PhoneStatus.available
+    ? _C.success
+    : (s == _PhoneStatus.taken ? _C.danger : null);
 
 class _Target {
   RegOption? region;
@@ -219,9 +264,12 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     _Item('Miaka 2', RegIcons.miaka2),
     _Item('Miaka 3+', RegIcons.miaka3),
   ];
-  static const _noHospital = RegOption(id: '__none__', label: 'Bila Hospitali (Hiari)');
+  static final _noHospital = RegOption(id: '__none__', label: 'Bila Hospitali (Hiari)');
 
   RegistrationRepository get _repo => widget.repository;
+
+  final _scroll = ScrollController();
+  final Map<String, GlobalKey> _sectionKeys = {};
 
   int _step = 0;
   bool _finished = false;
@@ -264,12 +312,37 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _waCtrl.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
   // --------------------------------------------------------------------------
   // BUILD
   // --------------------------------------------------------------------------
+  GlobalKey _sectionKey(String id) => _sectionKeys.putIfAbsent(id, () => GlobalKey());
+
+  /// Baada ya kuchagua, orodha inajifunga na ukurasa unapanda juu kuonyesha
+  /// kilichochaguliwa na orodha inayofuata.
+  void _reveal(String id, {double alignment = 0.04}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _sectionKeys[id]?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          alignment: alignment,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _scrollTop() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) _scroll.jumpTo(0);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -279,15 +352,14 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
           builder: (context, cons) {
             final minH = math.max(0.0, cons.maxHeight - 42);
             return SingleChildScrollView(
+              controller: _scroll,
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: minH),
                 child: Align(
-                  // Hatua ya kwanza iko katikati ya screen, zingine zinaanzia juu
-                  alignment: (_step == 0 && !_finished)
-                      ? Alignment.center
-                      : Alignment.topCenter,
+                  // Kila hatua fupi inakaa katikati ya screen (ikiwa ndefu, inatembea)
+                  alignment: Alignment.center,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 560),
                     child: Column(
@@ -348,7 +420,7 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
         border: Border.all(color: _C.border, width: 0.5),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: _finished
             ? _doneChildren()
             : [_progress(), ..._stepBody(), _footer()],
@@ -375,15 +447,22 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
                 steps[_step],
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue),
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue),
               ),
             ),
             const SizedBox(width: 6),
-            Flexible(child: Text('Hatua $n ya $total', style: const TextStyle(fontSize: 13, color: _C.textSec))),
+            Flexible(
+              child: Text('Hatua $n ya $total',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13, color: _C.textSec)),
+            ),
             const Spacer(),
             Text(
               '${(n * 100 / total).round()}%',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue),
+              style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w500, color: _C.blue),
             ),
           ],
         ),
@@ -468,6 +547,7 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
         controller: _phoneCtrl,
         keyboardType: TextInputType.phone,
         onChanged: (v) => _checkPhone(v, false),
+        underlineColor: _statusColor(_phoneStatus),
       ),
       _PhoneStatusRow(status: _phoneStatus),
       _label('Namba ya WhatsApp'),
@@ -477,6 +557,7 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
         controller: _waCtrl,
         keyboardType: TextInputType.phone,
         onChanged: (v) => _checkPhone(v, true),
+        underlineColor: _statusColor(_waStatus),
       ),
       _PhoneStatusRow(status: _waStatus),
     ];
@@ -794,25 +875,16 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
       ));
       if (t0.region != null && _edit != 'tm0') {
         final r = t0.region!;
-        list.add(_label('Hospitali ya rufaa ya mkoa', required: false, size: 15));
-        list.add(const Padding(
-          padding: EdgeInsets.only(top: 2),
-          child: Text(
-            'Chagua hospitali unayotaka, au endelea bila',
-            style: TextStyle(fontSize: 13, color: _C.textSec),
-          ),
-        ));
-        list.add(_Async(
-          key: ValueKey('lh-${r.id}'),
-          load: () => _repo.referralHospitals(r),
-          builder: (opts) => _PickList(
-            options: [_noHospital, ...opts],
-            selectedId: _targetHospital?.id ?? _noHospital.id,
-            hint: 'hospitali',
-            onPick: (o) => setState(() {
-              _targetHospital = o.id == _noHospital.id ? null : o;
-            }),
-          ),
+        list.add(_dropdown(
+          id: 'lh',
+          label: 'Hospitali ya rufaa ya mkoa',
+          icon: RegIcons.kituo,
+          value: _targetHospital,
+          placeholder: 'Bila Hospitali',
+          loadKey: 'lh-${r.id}',
+          load: () async => [_noHospital, ...await _repo.referralHospitals(r)],
+          onPick: (o) => _targetHospital = o.id == _noHospital.id ? null : o,
+          fallbackSelectedId: _noHospital.id,
         ));
       }
     } else {
@@ -1019,8 +1091,9 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     required Future<List<RegOption>> Function() load,
     required void Function(RegOption) onPick,
   }) {
+    final Widget body;
     if (value == null || _edit == id) {
-      return Column(
+      body = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _label(label, size: 15),
@@ -1036,56 +1109,64 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
               options: opts,
               selectedId: value?.id,
               hint: label,
-              onPick: (o) => setState(() {
-                onPick(o);
-                _edit = null;
-                _open = null;
-                _error = null;
-              }),
+              onPick: (o) {
+                setState(() {
+                  onPick(o);
+                  _edit = null;
+                  _open = null;
+                  _error = null;
+                });
+                _reveal(id);
+              },
             ),
           ),
         ],
       );
-    }
-    return Padding(
-      padding: const EdgeInsets.only(top: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: _C.textSec)),
-          InkWell(
-            onTap: () => setState(() {
-              _edit = id;
-              _open = null;
-            }),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: _C.borderStrong, width: 0.5)),
-              ),
-              child: Row(
-                children: [
-                  Icon(icon, size: 20, color: _C.blue),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      value.label,
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.text),
+    } else {
+      body = Padding(
+        padding: const EdgeInsets.only(top: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 12, color: _C.textSec)),
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _edit = id;
+                  _open = null;
+                });
+                _reveal(id);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: _C.borderStrong, width: 0.5)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(icon, size: 20, color: _C.blue),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        value.label,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.text),
+                      ),
                     ),
-                  ),
-                  const Icon(RegIcons.edit, size: 15, color: _C.blue),
-                  const SizedBox(width: 4),
-                  const Text('Badilisha', style: TextStyle(fontSize: 13, color: _C.blue)),
-                ],
+                    const Icon(RegIcons.edit, size: 15, color: _C.blue),
+                    const SizedBox(width: 4),
+                    const Text('Badilisha', style: TextStyle(fontSize: 13, color: _C.blue)),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
+    return KeyedSubtree(key: _sectionKey(id), child: body);
   }
 
-  /// Dropdown ya hiari (Shule, Kituo). Inafunguka ukibonyeza.
+  /// Dropdown ya hiari (Shule, Kituo). Inafunguka ukibonyeza, na inajifunga ukichagua.
   Widget _dropdown({
     required String id,
     required String label,
@@ -1095,62 +1176,69 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     required Object loadKey,
     required Future<List<RegOption>> Function() load,
     required void Function(RegOption) onPick,
+    String? fallbackSelectedId,
   }) {
     final open = _open == id;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _label(label, required: false),
-        InkWell(
-          onTap: () => setState(() => _open = open ? null : id),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _C.borderStrong, width: 2)),
-            ),
-            child: Row(
-              children: [
-                Icon(icon, size: 20, color: _C.blue),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    value?.label ?? placeholder,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: value == null ? _C.textMuted : _C.text,
+    return KeyedSubtree(
+      key: _sectionKey(id),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _label(label, required: false),
+          InkWell(
+            onTap: () => setState(() => _open = open ? null : id),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _C.borderStrong, width: 2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, size: 20, color: _C.blue),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      value?.label ?? placeholder,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: value == null ? _C.textMuted : _C.text,
+                      ),
                     ),
                   ),
-                ),
-                Icon(open ? RegIcons.chevronUp : RegIcons.chevronDown, size: 20, color: _C.blue),
-              ],
-            ),
-          ),
-        ),
-        if (open)
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(top: 10),
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _C.borderStrong, width: 0.5),
-            ),
-            child: _Async(
-              key: ValueKey('$id-$loadKey'),
-              load: load,
-              builder: (opts) => _PickList(
-                options: opts,
-                selectedId: value?.id,
-                hint: label,
-                onPick: (o) => setState(() {
-                  onPick(o);
-                  _open = null;
-                  _error = null;
-                }),
+                  Icon(open ? RegIcons.chevronUp : RegIcons.chevronDown, size: 20, color: _C.blue),
+                ],
               ),
             ),
           ),
-      ],
+          if (open)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _C.borderStrong, width: 0.5),
+              ),
+              child: _Async(
+                key: ValueKey('$id-$loadKey'),
+                load: load,
+                builder: (opts) => _PickList(
+                  options: opts,
+                  selectedId: value?.id ?? fallbackSelectedId,
+                  hint: label,
+                  onPick: (o) {
+                    setState(() {
+                      onPick(o);
+                      _open = null;
+                      _error = null;
+                    });
+                    _reveal(id, alignment: 0.25);
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -1162,15 +1250,18 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     final Widget left = _step == 0
         ? InkWell(
             onTap: widget.onLoginTap,
-            child: const Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(text: 'Una akaunti? ', style: TextStyle(fontSize: 14, color: _C.textSec)),
-                  TextSpan(
-                    text: 'Ingia',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _C.blue),
-                  ),
-                ],
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: 'Una akaunti? ', style: TextStyle(fontSize: 14, color: _C.textSec)),
+                    TextSpan(
+                      text: 'Ingia',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _C.blue),
+                    ),
+                  ],
+                ),
               ),
             ),
           )
@@ -1190,55 +1281,21 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
           );
 
     final Widget right = last
-        ? Material(
-            color: _C.blue,
-            shape: const StadiumBorder(),
-            child: InkWell(
-              customBorder: const StadiumBorder(),
-              onTap: _submitting ? null : _goNext,
-              child: SizedBox(
-                height: 34,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_submitting)
-                        const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      else
-                        const Icon(RegIcons.register, size: 16, color: Colors.white),
-                      const SizedBox(width: 6),
-                      const Text(
-                        'Najisajili',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+        ? _ActionButton(
+            label: 'Najisajili',
+            leading: RegIcons.register,
+            loading: _submitting,
+            onTap: _submitting ? null : _goNext,
           )
-        : InkWell(
+        : _ActionButton(
+            label: 'Endelea',
+            trailing: RegIcons.next,
+            square: true,
             onTap: _goNext,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Endelea', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: _C.blue)),
-                  SizedBox(width: 6),
-                  Icon(RegIcons.next, size: 18, color: _C.blue),
-                ],
-              ),
-            ),
           );
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (_error != null)
           Padding(
@@ -1246,16 +1303,12 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
             child: Text(_error!, style: const TextStyle(fontSize: 13, color: _C.danger)),
           ),
         Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 42),
-            // Wrap: footer isiivunje kwenye simu ndogo — Rudi/Endelea zinapishagulia.
-            child: Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 12,
-              runSpacing: 6,
-              children: [left, right],
+          padding: const EdgeInsets.only(top: 16),            child: SizedBox(
+            width: double.infinity,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [Flexible(child: left), right],
             ),
           ),
         ),
@@ -1271,6 +1324,7 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
       _edit = null;
       if (_step > 0) _step--;
     });
+    _scrollTop();
   }
 
   Future<void> _goNext() async {
@@ -1287,6 +1341,7 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
         _edit = null;
         _step++;
       });
+      _scrollTop();
       return;
     }
     await _submit();
@@ -1504,6 +1559,7 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
   }
 
   void _restart() {
+    _scrollTop();
     setState(() {
       _step = 0;
       _finished = false;
@@ -1702,36 +1758,9 @@ class _PickListState extends State<_PickList> {
       children: [
         const SizedBox(height: 6),
         if (widget.options.length > 12)
-          Container(
-            height: 38,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: _C.surface,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _C.borderStrong, width: 0.5),
-            ),
-            child: Row(
-              children: [
-                const Icon(RegIcons.search, size: 16, color: _C.textSec),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    onChanged: (v) => setState(() => _q = v),
-                    style: const TextStyle(fontSize: 13, color: _C.text),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: false,
-                      hintText: 'Tafuta ${widget.hint}...',
-                      hintStyle: const TextStyle(fontSize: 13, color: _C.textMuted),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          _SearchBox(
+            hint: 'Tafuta ${widget.hint}...',
+            onChanged: (v) => setState(() => _q = v),
           ),
         const SizedBox(height: 4),
         if (shown.isEmpty)
@@ -1846,7 +1875,7 @@ class _ChoiceCards extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       onTap: () => onTap(i),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: on ? _C.blue : _C.borderStrong, width: on ? 1.5 : 0.5),
@@ -1854,13 +1883,13 @@ class _ChoiceCards extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: _C.blueSoft,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(item.icon, size: 22, color: _C.blue),
+              child: Icon(item.icon, size: 20, color: _C.blue),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1947,6 +1976,7 @@ class _UnderlineField extends StatelessWidget {
   final TextInputType keyboardType;
   final TextCapitalization capitalization;
   final ValueChanged<String>? onChanged;
+  final Color? underlineColor;
 
   const _UnderlineField({
     required this.icon,
@@ -1955,14 +1985,17 @@ class _UnderlineField extends StatelessWidget {
     required this.keyboardType,
     this.capitalization = TextCapitalization.none,
     this.onChanged,
+    this.underlineColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: _C.borderStrong, width: 2)),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: underlineColor ?? _C.borderStrong, width: 2),
+        ),
       ),
       child: Row(
         children: [
@@ -2006,7 +2039,12 @@ class _PhoneStatusRow extends StatelessWidget {
           children: [
             Icon(RegIcons.ok, size: 16, color: _C.success),
             SizedBox(width: 6),
-            Text('Namba inapatikana', style: TextStyle(fontSize: 12, color: _C.success)),
+            Expanded(
+              child: Text('Namba inapatikana',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: _C.success)),
+            ),
           ],
         );
         break;
@@ -2015,7 +2053,12 @@ class _PhoneStatusRow extends StatelessWidget {
           children: [
             Icon(RegIcons.bad, size: 16, color: _C.danger),
             SizedBox(width: 6),
-            Text('Namba hii tayari inatumiwa', style: TextStyle(fontSize: 12, color: _C.danger)),
+            Expanded(
+              child: Text('Namba imetumika',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: _C.danger)),
+            ),
           ],
         );
         break;
@@ -2028,7 +2071,12 @@ class _PhoneStatusRow extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2, color: _C.textSec),
             ),
             SizedBox(width: 6),
-            Text('Inakagua...', style: TextStyle(fontSize: 12, color: _C.textSec)),
+            Expanded(
+              child: Text('Inakagua...',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: _C.textSec)),
+            ),
           ],
         );
         break;
@@ -2039,6 +2087,136 @@ class _PhoneStatusRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: SizedBox(height: 18, child: child),
+    );
+  }
+}
+
+/// Kisanduku cha kutafuta: cheupe, mpaka wa kijivu, unakuwa bluu ukibonyeza.
+class _SearchBox extends StatefulWidget {
+  final String hint;
+  final ValueChanged<String> onChanged;
+
+  const _SearchBox({required this.hint, required this.onChanged});
+
+  @override
+  State<_SearchBox> createState() => _SearchBoxState();
+}
+
+class _SearchBoxState extends State<_SearchBox> {
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final f = _focus.hasFocus;
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: f ? _C.blue : _C.borderStrong, width: f ? 1.5 : 1),
+      ),
+      child: Row(
+        children: [
+          Icon(RegIcons.search, size: 18, color: f ? _C.blue : _C.textSec),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              focusNode: _focus,
+              onChanged: widget.onChanged,
+              style: const TextStyle(fontSize: 14, color: _C.text),
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                hintText: widget.hint,
+                hintStyle: const TextStyle(fontSize: 14, color: _C.textMuted),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kitufe kidogo cha bluu.
+/// square = true  -> mraba mdogo wenye kona laini (Endelea), urefu 36.
+/// square = false -> umbo la duara kamili (Najisajili), urefu 34.
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final IconData? leading;
+  final IconData? trailing;
+  final bool loading;
+  final bool square;
+  final VoidCallback? onTap;
+
+  const _ActionButton({
+    required this.label,
+    this.leading,
+    this.trailing,
+    this.loading = false,
+    this.square = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ShapeBorder shape = square
+        ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+        : const StadiumBorder();
+    return Material(
+      color: _C.blue,
+      shape: shape,
+      child: InkWell(
+        customBorder: shape,
+        onTap: onTap,
+        child: SizedBox(
+          height: square ? 36 : 34,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (loading)
+                  const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                else if (leading != null)
+                  Icon(leading, size: 16, color: Colors.white),
+                if (loading || leading != null) const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: 6),
+                  Icon(trailing, size: 16, color: Colors.white),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
