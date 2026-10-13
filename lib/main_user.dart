@@ -33,7 +33,7 @@ import 'screens/call_history_screen.dart';
 import 'screens/settings_screen.dart';
 import 'widgets/app_shell.dart' show LanguageProvider, ThemeProvider;
 
-// "Wilaya yeyote" — lebo maalum ya lengo (regiza: registration_flow_screen)
+// "Wilaya yeyote" — lebo maalum ya lengo (tazama: register_screen.dart)
 const String kWilayaAny = 'Wilaya yeyote';
 
 // NOTE: admin screens HAZIJAIMPORTWA hapa — hazitaingia kwenye APK ya user.

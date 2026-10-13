@@ -35,7 +35,7 @@ import 'screens/settings_screen.dart';
 import 'app_config.dart';
 import 'widgets/app_shell.dart' show LanguageProvider, ThemeProvider;
 
-// "Wilaya yeyote" — lebo maalum ya lengo (regiza: registration_flow_screen)
+// "Wilaya yeyote" — lebo maalum ya lengo (tazama: register_screen.dart)
 const String kWilayaAny = 'Wilaya yeyote';
 
 // Global error log — displayed in _ErrorApp if crash happens
