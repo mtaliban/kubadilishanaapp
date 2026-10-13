@@ -210,6 +210,10 @@ class CallRecord {
   /// Mpokeaji: mkoa anaotaka kuhamia ('' = haipo → '—' kwenye kisanduku).
   final String toDesiredMkoa;
 
+  /// Mtumaji: mkoa wake MWENYEWE anaotaka kuhamia ('' = haipo → '—').
+  /// (Data ya Mtumaji yake — siyo mkoa wa Mpokeaji.)
+  final String fromDesiredMkoa;
+
   const CallRecord({
     required this.id,
     required this.type,
@@ -217,6 +221,7 @@ class CallRecord {
     required this.to,
     required this.time,
     this.toDesiredMkoa = '',
+    this.fromDesiredMkoa = '',
   });
 
   /// Mapi kutoka GET /messages/admin/contacts (moja kwa moja kutoka backend):
@@ -264,9 +269,64 @@ class CallRecord {
         phone: (e['to_phone'] ?? '').toString().replaceAll('+255', '0'),
       ),
       toDesiredMkoa: e['to_desired_region']?.toString() ?? '',
+      fromDesiredMkoa: e['from_desired_region']?.toString() ?? '',
       time: time,
     );
   }
+
+  /// Nakili ya rekodi (inatumika pale tunapoieneza 'Anaenda' kutoka kwenye
+  /// orodha ya users — thamani zilizopo haziguswi).
+  CallRecord copyWith({String? toDesiredMkoa, String? fromDesiredMkoa}) =>
+      CallRecord(
+        id: id,
+        type: type,
+        from: from,
+        to: to,
+        time: time,
+        toDesiredMkoa: toDesiredMkoa ?? this.toDesiredMkoa,
+        fromDesiredMkoa: fromDesiredMkoa ?? this.fromDesiredMkoa,
+      );
+}
+
+/// Kujaza 'Anaenda' (mkoa wa kuhamia) kwa Mtumaji na Mpokeaji pale payload ya
+/// `/messages/admin/contacts` haipo `from_/to_desired_region` (hii ndiyo
+/// sababu ya kisanduku cha Mpokeaji kudhihirisha '—' kwenye app halisi).
+/// Tunatumia orodha ya users ya admin (GET /admin/users) na namba ya simu
+/// kama funguo — tunanormailiza kwa HERUFI 9 ZA MWISHO za dijiti, hivyo
+/// '0715000222', '255715000222' na '+255715000222' zinafanana zote.
+List<CallRecord> jazaMaeneoYaKuhamia(List<CallRecord> records, List users) {
+  String digits(String phone) {
+    final d = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    return d.length >= 9 ? d.substring(d.length - 9) : d;
+  }
+
+  final simuKwaMkoa = <String, String>{};
+  for (final raw in users) {
+    final u = asMap(raw);
+    final phone = (u['phone_primary'] ?? u['phone'] ?? '').toString();
+    if (phone.isEmpty) continue;
+    final dests =
+        (u['desired_destinations'] ?? u['destinations']) as List? ?? [];
+    final majina = [
+      for (final d in dests)
+        '${asMap(d)['region_name'] ?? asMap(d)['region'] ?? ''}'.trim(),
+    ].where((n) => n.isNotEmpty).toList();
+    if (majina.isEmpty) continue;
+    simuKwaMkoa[digits(phone)] = majina.join(', ');
+  }
+  if (simuKwaMkoa.isEmpty) return records;
+
+  return [
+    for (final r in records)
+      r.copyWith(
+        toDesiredMkoa: r.toDesiredMkoa.isEmpty
+            ? (simuKwaMkoa[digits(r.to.phone)] ?? r.toDesiredMkoa)
+            : r.toDesiredMkoa,
+        fromDesiredMkoa: r.fromDesiredMkoa.isEmpty
+            ? (simuKwaMkoa[digits(r.from.phone)] ?? r.fromDesiredMkoa)
+            : r.fromDesiredMkoa,
+      ),
+  ];
 }
 
 // ----------------------------------------------------------------------------
@@ -330,11 +390,26 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
       final raw = data is List
           ? data
           : (asMap(data)['contacts'] ?? asMap(data)['results'] as List? ?? []);
+      var rekodi = [
+        for (var i = 0; i < raw.length; i++)
+          CallRecord.fromApi(asMap(raw[i]), i),
+      ]..sort((a, b) => b.time.compareTo(a.time));
+
+      // ── 'Anaenda' (mkoa anaohamia) mara nyingi haipo kwenye payload ya
+      // contacts — tunaijaza kutoka GET /admin/users (namba ya simu = funguo).
+      if (rekodi
+          .any((r) => r.toDesiredMkoa.isEmpty || r.fromDesiredMkoa.isEmpty)) {
+        try {
+          final ur = await ApiService().adminUsers(params: {'limit': 500});
+          final users = (asMap(ur.data)['users'] as List?) ?? [];
+          rekodi = jazaMaeneoYaKuhamia(rekodi, users);
+        } catch (_) {
+          // Kujaza hii ni ziada; kadi zinabaki na '—' kama haikufanikiwa.
+        }
+      }
+
       setState(() {
-        _apiList = [
-          for (var i = 0; i < raw.length; i++)
-            CallRecord.fromApi(asMap(raw[i]), i),
-        ]..sort((a, b) => b.time.compareTo(a.time));
+        _apiList = rekodi;
         _loading = false;
         _page = 1;
       });
@@ -813,30 +888,34 @@ class _CallCard extends StatelessWidget {
               // nyembamba linapunguza nafasi lake kwanza; muda unabaki na
               // nafasi yake isiyoshindana. Mpangilio ileile, hakuna ellipsis.
               Flexible(
-                child: Container(
-                  height: 36,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: r.type.bgOf(context),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(r.type.icon, size: 19, color: r.type.fgOf(context)),
-                      Flexible(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 7),
-                          child: Text(r.type.label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: r.type.fgOf(context))),
+                flex: 20,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 240),
+                  child: Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: r.type.bgOf(context),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(r.type.icon, size: 19, color: r.type.fgOf(context)),
+                        Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 7),
+                            child: Text(r.type.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: r.type.fgOf(context))),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -951,17 +1030,16 @@ class _CallCard extends StatelessWidget {
                   Text('${p.idara} · ${p.cheo}',
                       style: TextStyle(fontSize: 14.5, color: _C.muted_2(context))),
                   SizedBox(height: 2),
-                  Row(
+                  Wrap(
+                    spacing: 5,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Icon(TablerIcons.map_pin, size: 15, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(p.mkoa,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: 14.5, color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
-                      ),
+                      Text(p.mkoa,
+                          maxLines: 2,
+                          softWrap: true,
+                          style: TextStyle(
+                              fontSize: 14.5, color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
                     ],
                   ),
                 ],
@@ -980,7 +1058,10 @@ class _CallCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _PersonBlock(
-                role: 'Mtumaji', person: r.from, anaenda: r.to.mkoa, filledChip: true),
+                role: 'Mtumaji',
+                person: r.from,
+                anaenda: r.fromDesiredMkoa, // Anaenda ya Mtumaji yake mwenyewe
+                filledChip: true),
             const SizedBox(height: 18),
             SizedBox(
               height: 1.5,
@@ -994,7 +1075,7 @@ class _CallCard extends StatelessWidget {
             _PersonBlock(
                 role: 'Mpokeaji',
                 person: r.to,
-                anaenda: r.toDesiredMkoa,
+                anaenda: r.toDesiredMkoa, // Anaenda ya Mpokeaji (to_desired_region)
                 filledChip: false),
           ],
         ),
@@ -1086,16 +1167,19 @@ class _PersonBlock extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Flexible(
+                Expanded(
+                    flex: 3,
                     child: _routeEnd(context, 'Anatoka', person.mkoa.isEmpty ? '—' : person.mkoa,
                         CrossAxisAlignment.start)),
                 const Expanded(
+                  flex: 2,
                   child: Padding(
                     padding: EdgeInsets.only(left: 6, right: 6, top: 14),
                     child: _DashedArrow(),
                   ),
                 ),
-                Flexible(
+                Expanded(
+                    flex: 3,
                     child: _routeEnd(context, 'Anaenda', anaenda!.isEmpty ? '—' : anaenda!,
                         CrossAxisAlignment.end)),
               ],
@@ -1190,20 +1274,18 @@ class _PersonBlock extends StatelessWidget {
         children: [
           Text(label, style: TextStyle(fontSize: 13, color: _C.muted_2(context))),
           SizedBox(height: 2),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          Wrap(
+            spacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Icon(TablerIcons.map_pin, size: 17, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(mkoa,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w500,
-                        color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
-              ),
+              Text(mkoa,
+                  maxLines: 2,
+                  softWrap: true,
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                      color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
             ],
           ),
         ],
