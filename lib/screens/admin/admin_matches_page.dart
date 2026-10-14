@@ -7,7 +7,8 @@
 
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
-import '../../widgets/app_toast.dart';
+import '../../services/cached_repository.dart';
+import '../../widgets/no_cached_data_widget.dart';
 import 'wenzao_view.dart';
 
 class AdminMatchesPage extends StatefulWidget {
@@ -19,9 +20,11 @@ class AdminMatchesPage extends StatefulWidget {
 
 class _AdminMatchesPageState extends State<AdminMatchesPage> {
   bool _loading = true;
-  String? _error;
   List<WenzaoPerson> _people = [];
   List<String> _allRegions = const [];
+
+  /// OFFLINE-FIRST — funguo ya diski ya CachedRepository.
+  static const String _kKey = 'page:admin/users-with-matches';
 
   @override
   void initState() {
@@ -49,29 +52,26 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final res = await ApiService().adminUsersWithMatches(limit: 500);
-      if (!mounted) return;
-      final raw = res.data;
-      final list = raw is List
-          ? raw
-          : ((raw['users'] ?? raw['results'] ?? raw['data']) as List? ?? []);
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
+    await CachedRepository().loadPage(
+        _kKey,
+        () async =>
+            (await ApiService().adminUsersWithMatches(limit: 500)).data,
+        (data) async {
+      if (!mounted || data == null) return;
+      final list = data is List
+          ? data
+          : ((data['users'] ?? data['results'] ?? data['data'] ?? const [])
+              as List);
       setState(() {
         _people =
             list.whereType<Map<String, dynamic>>().map(_mapPerson).toList();
         _loading = false;
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = friendlyError(e);
-      });
-    }
+    });
+    if (!mounted) return;
+    if (_people.isEmpty && _loading) setState(() => _loading = false);
   }
 
   /* ── Data mapping ── */
@@ -129,7 +129,8 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    if (_loading) {
+    final hasDisk = CachedRepository().readOrNull<dynamic>(_kKey) != null;
+    if (_loading && _people.isEmpty && !hasDisk) {
       return Scaffold(
         backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
         body: Center(
@@ -139,40 +140,22 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
       );
     }
 
-    if (_error != null) {
+    if (_people.isEmpty && !hasDisk) {
+      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
+      // (pull-to-refresh pekee; huwezi "Jaribu tena" button).
       return Scaffold(
         backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.cloud_off_rounded,
-                  size: 52,
-                  color: dark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
-              const SizedBox(height: 14),
-              Text('Imeshindikana kupakia',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: dark ? const Color(0xFFF9FAFB) : const Color(0xFF0F172A))),
-              const SizedBox(height: 6),
-              Text(_error!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: dark ? const Color(0xFFA8B1C1) : const Color(0xFF5B6475),
-                      fontSize: 13)),
-              const SizedBox(height: 18),
-              FilledButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Jaribu tena'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F7A52),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
+        body: RefreshIndicator(
+          onRefresh: _load,
+          color: dark ? const Color(0xFF5FD49A) : const Color(0xFF0F7A52),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 120),
+              NoCachedDataWidget(
+                hint: 'Vuta chini kupakia — wenzao watahifadhiwa kwenye simu.',
               ),
-            ]),
+            ],
           ),
         ),
       );

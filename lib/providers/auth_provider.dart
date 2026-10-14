@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/admin_badge_service.dart';
 import '../services/api_service.dart';
 import '../services/app_cache.dart';
+import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../services/notification_service.dart';
 import '../services/app_navigator.dart';
@@ -124,6 +125,7 @@ class AuthProvider extends ChangeNotifier {
         await _api.clearUserData();
         _user = null;
         AppCache().clear();
+        CachedRepository().clearAll();
         AdminBadgeService().reset();
         notifyListeners();
         appNavigatorKey.currentState
@@ -183,6 +185,7 @@ class AuthProvider extends ChangeNotifier {
             await _api.clearUserData();
             _user = null;
             AppCache().clear();
+            CachedRepository().clearAll();
             AdminBadgeService().reset();
             notifyListeners();
             appNavigatorKey.currentState
@@ -423,6 +426,7 @@ class AuthProvider extends ChangeNotifier {
     // ili mtumiaji mpya asiweze kuona data za aliyekuwa hapo awali (TTL ya
     // cache ni dakika 2-30 — bila hii data za zamani zingerejea kwa screen).
     AppCache().clear();
+    CachedRepository().clearAll();
     // Badges za admin (payments/feedback counts) ziwekwe sifuri.
     AdminBadgeService().stop();
     AdminBadgeService().reset();

@@ -12,14 +12,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 class _Entry {
   final dynamic data;
   final DateTime expiresAt;
+  final DateTime setAt;
 
-  _Entry(this.data, Duration ttl) : expiresAt = DateTime.now().add(ttl);
-  _Entry._raw(this.data, this.expiresAt);
+  _Entry(this.data, Duration ttl)
+      : expiresAt = DateTime.now().add(ttl),
+        setAt = DateTime.now();
+  _Entry._raw(this.data, this.expiresAt, this.setAt);
 
-  factory _Entry.fromJson(Map<String, dynamic> j) =>
-      _Entry._raw(j['d'], DateTime.parse(j['exp'] as String));
+  factory _Entry.fromJson(Map<String, dynamic> j) => _Entry._raw(
+      j['d'], DateTime.parse(j['exp'] as String),
+      DateTime.tryParse('${j['at'] ?? ''}') ?? DateTime.now());
 
-  Map<String, dynamic> toJson() => {'d': data, 'exp': expiresAt.toIso8601String()};
+  Map<String, dynamic> toJson() =>
+      {'d': data, 'exp': expiresAt.toIso8601String(), 'at': setAt.toIso8601String()};
 
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 }
@@ -86,6 +91,21 @@ class AppCache extends ChangeNotifier {
   /// "Cached + banner". Kwenye mtandao mbaya, GET inarudisha data hii
   /// badala ya kosa; mtumiaji anaona data za mwisho + banner juu.
   dynamic getStale(String key) => _store[key]?.data;
+
+  /// Muda ambao data ya funguo hii ilihifadhiwa (diski au kumbukumbu).
+  /// Inatumika na CachedRepository kwa "data ya HH:mm" — bando la juu
+  /// lisiwe "--:--" kama kuna data iliyohifadhiwa.
+  DateTime? getSetAt(String key) {
+    // Funguo za CachedRepository zina timestamp yao (repo_at_<key>) —
+    // zinasomwa hapa na CachedRepository, sio hapa.
+    return _store[key]?.setAt;
+  }
+
+  /// Funguo zote zenye hitaji (kwa CachedRepository.latestUpdatedAt).
+  Iterable<String> get keys => _store.keys;
+
+  /// Kama kuna data yoyote (stale pamoja) kwenye cache.
+  bool get hasAny => _store.isNotEmpty;
 
   void invalidate(String key) {
     final had = _store.remove(key) != null;

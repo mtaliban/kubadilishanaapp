@@ -20,8 +20,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
-import '../../widgets/app_toast.dart' show friendlyError;
+import '../../widgets/no_cached_data_widget.dart';
 
 // ----------------------------------------------------------------------------
 // Colors (from the approved mockup)
@@ -1766,9 +1767,10 @@ class AdminStatisticsPage extends StatefulWidget {
 }
 
 class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
-  bool _loading = true;
-  String? _error;
   StatsData? _data;
+
+  /// Diski ina data halisi ya takwimu (sio ghafi isiyochakata/data bandia).
+  bool _diskOk = false;
 
   String _mkoa = 'Mkoa wote';
   String _idara = 'Idara zote';
@@ -1777,61 +1779,71 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
   @override
   void initState() {
     super.initState();
+    CachedRepository().addListener(_onRepoChange);
     _load();
   }
 
+  @override
+  void dispose() {
+    CachedRepository().removeListener(_onRepoChange);
+    super.dispose();
+  }
+
+  /// Ghafla-data: CachedRepository ikirundika data mpya kwenye diski
+  /// (refresh ya nyuma ya pazia), ukurasa unajisasisha — hata kama data
+  /// ilishapakuliwa mara ya kwanza.
+  void _onRepoChange() {
+    if (mounted) setState(() {});
+  }
+
+  // Diski ina data au la — bila spinner ya kutisha; UI inaonyesha "haijapakuliwa"
+  // ignore: unused_element
+  bool get _loading => CachedRepository().readOrNull<dynamic>(_kStatsKey) == null;
+
   Future<void> _load() async {
-    final first = _data == null;
-    setState(() {
-      if (first) _loading = true;
-      _error = null;
-    });
-    try {
-      final s = await ApiService().adminStats();
-      final r = await ApiService().adminReports(
-        region: _mkoa == 'Mkoa wote' ? null : _mkoa,
-        category: _deptCode(_idara),
-        level: _levelCode(_ngazi),
-      );
-      final e = await ApiService().adminEvents(limit: 30);
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    await CachedRepository().loadPage(_kStatsKey, _fetchAll, (data) async {
       if (!mounted) return;
+      if (data == null) return; // hakuna diski + API imeshindwa → skrini isiwe mpya
+      final statsMap = asMap((data as Map)['stats']);
+      final reportsMap = asMap(data['reports']);
+      final eventsMap = asMap(data['events']);
       // Kama web dashboard: chuja presence ("Mtumiaji ameingia mtandaoni")
       // KABLA ya kuchukua 6 — matukio halisi (amejiunga, match, malipo...)
       // yabakiye yanaonekana.
-      final eventsAll = asList(asMap(e.data)['events']);
+      final eventsAll = asList(eventsMap['events']);
       final events = eventsAll.where((ev) {
         final m = asMap(ev);
         final type = '${m['event_type'] ?? m['type'] ?? ''}';
         return !['user.presence', 'user.online', 'user.offline',
                  'user.connected', 'user.disconnected'].contains(type);
       }).toList();
-      final data = _buildStats(
-        asMap(s.data),
-        asMap(r.data),
-        events,
-      );
-      if (!mounted) return;
-      if (data == null) {
-        // Page inahesabu asilimia na reduce() — orodha tupu zingeicha.
-        // Badala ya kuonyesha demo/data bandia, tuonyeshe error ya kweli.
-        setState(() {
-          _loading = false;
-          _error = 'Hakuna takwimu zilizopatikana bado.';
-        });
-        return;
-      }
+      final data0 = _buildStats(statsMap, reportsMap, events);
+      if (data0 == null) return; // hakuna takwimu halisi bado — diski isiwe na data bandia
       setState(() {
-        _data = data;
-        _loading = false;
+        _data = data0;
+        _diskOk = true;
       });
-    } catch (err) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = friendlyError(err);
-      });
-    }
+    });
+    if (!mounted) return;
+    // Kama diski na API zote mbili hazikutoa takwimu halisi — onyesha hali
+    // "haijapakuliwa" (pull-to-refresh pekee). Error inaondolewa kwenye skrini.
+    if (_data == null) setState(() {});
   }
+
+  /// API zote tatu za ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
+  Future<Map<String, dynamic>> _fetchAll() async {
+    final s = await ApiService().adminStats();
+    final r = await ApiService().adminReports(
+      region: _mkoa == 'Mkoa wote' ? null : _mkoa,
+      category: _deptCode(_idara),
+      level: _levelCode(_ngazi),
+    );
+    final e = await ApiService().adminEvents(limit: 30);
+    return {'stats': s.data, 'reports': r.data, 'events': e.data};
+  }
+
+  static const String _kStatsKey = 'page:admin/stats';
 
   String? _deptCode(String label) {
     switch (label) {
@@ -2246,30 +2258,17 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading && _data == null) {
+    if (_data == null && !_diskOk) {
+      // Diski hamna takwimu halisi + API imeshindwa/bado — widget MOYA ya
+      // "haijapakuliwa" (pull-to-refresh pekee).
+      return NoCachedDataWidget(
+        hint: 'Takwimu zitapakia mtandao ukifungua ukurasa.',
+        onLoad: _load,
+      );
+    }
+    if (_data == null) {
       return Center(
           child: CircularProgressIndicator(color: _C.blue2(context)));
-    }
-    if (_error != null && _data == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline,
-                color: Color(0xFFE03131), size: 48),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _load,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Jaribu tena'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _C.blue2(context),
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      );
     }
     return StatisticsPage(
       data: _data!, // kamwe null hapa — guards hapo juu

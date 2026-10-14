@@ -7,7 +7,8 @@
 
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
-import '../../widgets/app_toast.dart';
+import '../../services/cached_repository.dart';
+import '../../widgets/no_cached_data_widget.dart';
 import 'match_view.dart';
 
 class AdminRealMatchesPage extends StatefulWidget {
@@ -19,10 +20,12 @@ class AdminRealMatchesPage extends StatefulWidget {
 
 class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   bool _loading = true;
-  String? _error;
   List<MatchPair> _pairs = [];
   final Set<String> _starred = {};
   List<String> _allRegions = const [];
+
+  /// OFFLINE-FIRST — funguo ya diski ya CachedRepository.
+  static const String _kKey = 'page:admin/real-matches';
 
   @override
   void initState() {
@@ -50,17 +53,15 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final res = await ApiService().adminRealMatches(limit: 500);
-      if (!mounted) return;
-      final raw = res.data;
-      final list = raw is List
-          ? raw
-          : ((raw['matches'] ?? raw['results']) as List? ?? []);
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
+    await CachedRepository().loadPage(
+        _kKey, () async => (await ApiService().adminRealMatches(limit: 500)).data,
+        (data) async {
+      if (!mounted || data == null) return;
+      final list = data is List
+          ? data
+          : ((data['matches'] ?? data['results'] ?? const []) as List);
       setState(() {
         _pairs = list
             .whereType<Map<String, dynamic>>()
@@ -68,13 +69,9 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
             .toList();
         _loading = false;
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = friendlyError(e);
-      });
-    }
+    });
+    if (!mounted) return;
+    if (_pairs.isEmpty && _loading) setState(() => _loading = false);
   }
 
   /* ── Data mapping ── */
@@ -162,7 +159,8 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    if (_loading) {
+    final hasDisk = CachedRepository().readOrNull<dynamic>(_kKey) != null;
+    if (_loading && _pairs.isEmpty && !hasDisk) {
       return Scaffold(
         backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
         body: Center(
@@ -172,40 +170,22 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
       );
     }
 
-    if (_error != null) {
+    if (_pairs.isEmpty && !hasDisk) {
+      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
+      // (pull-to-refresh pekee; huwezi "Jaribu tena" button).
       return Scaffold(
         backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.cloud_off_rounded,
-                  size: 52,
-                  color: dark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
-              const SizedBox(height: 14),
-              Text('Imeshindikana kupakia',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: dark ? const Color(0xFFF9FAFB) : const Color(0xFF0F172A))),
-              const SizedBox(height: 6),
-              Text(_error!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: dark ? const Color(0xFFA8B1C1) : const Color(0xFF5B6475),
-                      fontSize: 13)),
-              const SizedBox(height: 18),
-              FilledButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Jaribu tena'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F7A52),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
+        body: RefreshIndicator(
+          onRefresh: _load,
+          color: dark ? const Color(0xFF5FD49A) : const Color(0xFF0F7A52),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 120),
+              NoCachedDataWidget(
+                hint: 'Vuta chini kupakia — matches za kweli zitahifadhiwa kwenye simu.',
               ),
-            ]),
+            ],
           ),
         ),
       );

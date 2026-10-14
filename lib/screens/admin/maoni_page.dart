@@ -15,6 +15,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
+import '../../widgets/no_cached_data_widget.dart';
 import '../../services/websocket_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
@@ -752,7 +754,9 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
   final Map<int, String> _apiIds = {};
   int _fallbackCounter = 1000;
   bool _loading = true;
-  String? _loadError;
+
+  /// OFFLINE-FIRST — funguo ya diski ya CachedRepository (maoni yote).
+  static const String kMaoniCacheKey = 'page:admin/feedback';
 
   void _onWs(Map<String, dynamic> payload) {
     final type = (payload['type'] ?? payload['event'])?.toString() ?? '';
@@ -775,22 +779,23 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
   }
 
   Future<void> _load() async {
-    final first = _items.isEmpty && _loading;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
     setState(() {
-      if (first) _loading = true;
-      _loadError = null;
+      if (_items.isEmpty && _loading) _loading = true;
     });
-    try {
-      final res = await ApiService().adminListFeedback(status: '', q: '');
-      if (!mounted) return;
-      final data = res.data;
+    await CachedRepository().loadPage(
+        kMaoniCacheKey,
+        () async => (await ApiService().adminListFeedback(status: '', q: '')).data,
+        (data) async {
+      if (!mounted || data == null) return;
       final list = data is List
           ? data
           : (data is Map
               ? (data['items'] as List? ??
                   data['results'] as List? ??
-                  [])
-              : <dynamic>[]);
+                  const [])
+              : const <dynamic>[]);
       final items = <Maoni>[];
       for (final it in list) {
         if (it is! Map) continue;
@@ -803,13 +808,9 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
         _items = items;
         _loading = false;
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _loadError = friendlyError(e);
-      });
-    }
+    });
+    if (!mounted) return;
+    if (_items.isEmpty && _loading) setState(() => _loading = false);
   }
 
   Future<void> _sendReply(Maoni item, String text) async {
@@ -832,34 +833,27 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
 
   @override
   Widget build(BuildContext context) {
+    final hasDisk = CachedRepository().readOrNull<dynamic>(kMaoniCacheKey) != null;
     if (_loading && _items.isEmpty) {
       return Scaffold(
         backgroundColor: _C.scaffoldOf(context),
         body: const Center(child: CircularProgressIndicator(color: _C.blue)),
       );
     }
-    if (_loadError != null && _items.isEmpty) {
+    if (_items.isEmpty && !hasDisk) {
+      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
+      // (pull-to-refresh pekee; hakuna kitufe cha "Jaribu tena", hakuna ikoni nyekundu).
       return Scaffold(
         backgroundColor: _C.scaffoldOf(context),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(_AppIcons.pending, size: 40, color: _C.red),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Text(
-                  _loadError!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: _C.mutedOf(context)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Jaribu tena'),
+        body: RefreshIndicator(
+          onRefresh: _load,
+          color: _C.blue,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 120),
+              NoCachedDataWidget(
+                hint: 'Vuta chini kupakia — maoni yatahifadhiwa kwenye simu.',
               ),
             ],
           ),

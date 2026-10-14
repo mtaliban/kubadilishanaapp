@@ -12,6 +12,7 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/cached_repository.dart';
 import '../services/network_service.dart';
 
 class NetworkBanner extends StatefulWidget {
@@ -76,7 +77,10 @@ class _NetworkBannerState extends State<NetworkBanner> {
 
   Widget _buildBar() {
     final s    = NetworkService().status;
-    final last = NetworkService().lastOnline;
+    // "data ya HH:mm" = updatedAt ya CachedRepository (data iliyohifadhiwa
+    // kwenye diski). Kama kuna cached data, KAMWE isiwe "--:--" — muda wa
+    // mtandao (lastOnline) ni fallback tu kama hakuna cache kabisa.
+    final last = CachedRepository().latestUpdatedAt ?? NetworkService().lastOnline;
 
     late Color  bg, fg;
     late IconData icon;

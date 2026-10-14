@@ -10,6 +10,7 @@ import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'services/api_service.dart';
 import 'services/app_cache.dart';
+import 'services/cached_repository.dart';
 import 'services/app_navigator.dart';
 import 'services/network_service.dart';
 import 'services/offline_queue.dart';
@@ -122,6 +123,14 @@ void main() {
       await AppCache().warmUp();
     } catch (e) {
       _crashLog.add('[Cache] $e');
+    }
+
+    // Pakia timestamps za CachedRepository (offline-first) — kurusa zote
+    // zinasoma disk mara moja; bango la juu linaona "data ya HH:mm" sahihi.
+    try {
+      await CachedRepository().warmUp();
+    } catch (e) {
+      _crashLog.add('[CacheRepo] $e');
     }
 
     // Anza huduma ya mtandao — inaangalia connectivity na /health

@@ -21,8 +21,12 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
+
+/// Funguo ya diski ya CachedRepository — historia ya matangazo.
+const String kMatangazoCacheKey = 'page:admin/announcements';
 
 // ───────────────────────── RANGI ─────────────────────────
 class _C {
@@ -1203,36 +1207,65 @@ class ApiMatangazoController extends MatangazoController {
   /// PAKIA historia + wasikilizaji kutoka API. Inaitwa mara moja na page.
   Future<void> load() async {
     if (_busy) return;
+
+    // ── OFFLINE-FIRST: soma disk mara moja (cabbag) ──
+    _applyDisk(CachedRepository().readOrNull<dynamic>(kMatangazoCacheKey));
+    if (_busy) return;
+
     _busy = true;
     try {
-      final res = await ApiService().adminListAnnouncements();
-      final data = res.data;
-      final raw = data is List
-          ? data
-          : (asMap(data)['announcements'] as List? ??
-              asMap(data)['results'] as List? ??
-              const []);
-      _all = [
-        for (final e in raw)
-          Tangazo(
-            id: (asMap(e)['announcement_id'] ?? asMap(e)['id'] ?? '').toString(),
-            title: asMap(e)['title']?.toString() ?? '',
-            type: _typeFromApi(asMap(e)['type']?.toString()),
-            date: _matangazoDate(asMap(e)['created_at']),
-            message: asMap(e)['message']?.toString() ?? '',
-          ),
-      ];
+      // OFFLINE-FIRST: refresh() huandika diski yenyewe ikifaulu; ikishindwa
+      // (offline) data ya diski inabaki — hakuna skrini inayobadilika.
+      await CachedRepository().refresh(kMatangazoCacheKey,
+          () async => (await ApiService().adminListAnnouncements()).data);
+      final raw = CachedRepository().readOrNull<dynamic>(kMatangazoCacheKey);
+      if (raw is List && raw.isNotEmpty) {
+        _all = [
+          for (final e in raw)
+            Tangazo(
+              id: (asMap(e)['announcement_id'] ?? asMap(e)['id'] ?? '')
+                  .toString(),
+              title: asMap(e)['title']?.toString() ?? '',
+              type: _typeFromApi(asMap(e)['type']?.toString()),
+              date: _matangazoDate(asMap(e)['created_at']),
+              message: asMap(e)['message']?.toString() ?? '',
+            ),
+        ];
+      }
       total = _all.length;
       pages = _pagesFor(_all.length);
       page = 1;
       _applyPage();
       notifyListeners();
     } catch (e) {
+      // OFFLINE-FIRST: hakuna kosa linaloonekana — disk bado ina historia.
       AppToast.error(friendlyError(e));
     } finally {
       _busy = false;
     }
     await _loadAudiences();
+  }
+
+  /// Disk-first: soma raw kutoka CacheRepository. Data ya zamani inaonyeshwa
+  /// HAPO HAPO — API ikifaulu, historia mpya inabadilisha hii bila spinner.
+  void _applyDisk(dynamic data) {
+    final raw = data;
+    if (raw is! List) return;
+    _all = [
+      for (final e in raw)
+        Tangazo(
+          id: (asMap(e)['announcement_id'] ?? asMap(e)['id'] ?? '').toString(),
+          title: asMap(e)['title']?.toString() ?? '',
+          type: _typeFromApi(asMap(e)['type']?.toString()),
+          date: _matangazoDate(asMap(e)['created_at']),
+          message: asMap(e)['message']?.toString() ?? '',
+        ),
+    ];
+    total = _all.length;
+    pages = _pagesFor(_all.length);
+    page = 1;
+    _applyPage();
+    notifyListeners();
   }
 
   /// Makundi (idara) + idadi halisi za watumiaji (kama ukurasa wa zamani).

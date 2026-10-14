@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
+import '../../widgets/no_cached_data_widget.dart';
 import '../../services/websocket_service.dart';
 import '../../widgets/app_toast.dart';
 import 'admin_idara_dialogs.dart';
@@ -114,27 +116,31 @@ class _AdminDataPageState extends State<AdminDataPage>
   }
 
   Future<void> _loadType(String type) async {
-    // SILENT REFRESH: spinner TU wakati tab haina data bado (kwanza kabisa).
-    // Refresh zilizofuata (baada ya add/edit/delete) zinabadilisha data
-    // HAPO HAPO — page haizunguki, haikati mtumiaji, scroll inadumu.
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Spinner TU wakati tab haina data hata kwenye diski; refresh zilizofuata
+    // (baada ya add/edit/delete) zinabadilisha data HAPO HAPO bila spinner.
     final first = !_cache.containsKey(type);
     setState(() {
       if (first) _loading[type] = true;
       _errors[type] = null;
     });
-    try {
-      final res = await ApiService().adminListData(type);
-      if (!mounted) return;
-      final data = res.data;
+    await CachedRepository().loadPage('page:admin/data/$type',
+        () async => (await ApiService().adminListData(type)).data, (data) async {
+      if (!mounted || data == null) return;
+      final list = data is List
+          ? data
+          : ((data['results'] ?? data['items'] ?? data['users'] ??
+                  data['data'] ?? []) as List);
       setState(() {
-        _cache[type] = data is List
-            ? data
-            : ((data['results'] ?? data['items'] ?? data['users'] ?? data['data'] ?? []) as List);
+        _cache[type] = list;
         _loading[type] = false;
+        _errors[type] = null;
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _loading[type] = false; _errors[type] = e.toString(); });
+    });
+    if (!mounted) return;
+    if ((_cache[type] ?? const []).isEmpty && (_loading[type] ?? false)) {
+      // Diski + API zote tupu — onaisha spinner; NoCachedDataWidget itaonyeshwa.
+      setState(() { _loading[type] = false; });
     }
   }
 
@@ -618,11 +624,11 @@ class _AdminDataPageState extends State<AdminDataPage>
 
   Widget _buildTabContent(String type) {
     final loading  = _loading[type] ?? false;
-    final error    = _errors[type];
     final filtered = _filtered(type);
+    final hasDisk  = (_cache[type] ?? const []).isNotEmpty;
 
     return RefreshIndicator(
-      onRefresh: () async { _cache.remove(type); await _loadType(type); },
+      onRefresh: () => _loadType(type),
       color: _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue,
       child: CustomScrollView(
         key: PageStorageKey<String>(type),
@@ -634,26 +640,18 @@ class _AdminDataPageState extends State<AdminDataPage>
               child: _buildFilterArea(type, filtered.length),
             ),
           ),
-          if (loading)
+          if (loading && !hasDisk)
             SliverFillRemaining(
               hasScrollBody: false,
               child: Center(child: CircularProgressIndicator(color: _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue)),
             )
-          else if (error != null)
-            SliverFillRemaining(
+          else if (!hasDisk && !loading)
+            // HAKUNA data diski + API imeshtindwa — widget MOYA ya "haijapakuliwa"
+            // (pull-down kupakia; mtandao ukirudi onRefresh hauffanikwaji).
+            const SliverFillRemaining(
               hasScrollBody: false,
-              child: Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(PhosphorIcons.warningCircle(), color: const Color(0xFFF87171), size: 48),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: () { _cache.remove(type); _loadType(type); },
-                    icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
-                    label: const Text('Jaribu tena'),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: _kIsDark(context) ? const Color(0xFF2563EB) : _kBlue, foregroundColor: Colors.white),
-                  ),
-                ]),
+              child: NoCachedDataWidget(
+                hint: 'Vuta chini kupakia — data itahifadhiwa hata ukiwa offline.',
               ),
             )
           else if (filtered.isEmpty)

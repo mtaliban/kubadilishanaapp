@@ -4,15 +4,15 @@ import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/admin_badge_service.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
-import '../../widgets/select_sheet.dart';
+import '../../widgets/no_cached_data_widget.dart';
 import 'admin_delete_user_dialog.dart';
 import 'admin_filter_users_sheet.dart';
 import 'admin_users_v2_screens.dart';
 import 'admin_view_user_page.dart';
 import 'admin_users_v2_theme.dart';
-import '../../widgets/app_toast.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // WATUMIAJI (Admin) — MOCKUP TIMELINE LAYOUT:
@@ -31,10 +31,14 @@ class AdminUsersV2Page extends StatefulWidget {
 
 class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   bool _loading = true;
-  String? _error;
   List<dynamic> _users = [];
   int _total = 0;
   bool _live = false;
+
+  /// OFFLINE-FIRST: orodha ya mwisho ya watumiaji, kutoka kwenye diski.
+  /// Nani anaonekana kwenye _users — bila API _errorNun alozList
+  /// aka data diski ipo, orodha inaonekana mara moja.
+  static const String _kUsersKey = 'page:admin/users';
 
   final _search = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
@@ -158,35 +162,30 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   }
 
   Future<void> _load() async {
-    // SILENT REFRESH: spinner TU wakati orodha bado tupu (kwanza kabisa).
-    // Refresh baada ya add/edit/delete inabadilisha data HAPO HAPO —
-    // page na scroll zinadumu (hakuna "kurudi tena").
-    final first = _users.isEmpty && _loading;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
     setState(() {
-      if (first) _loading = true;
-      _error = null;
+      if (_users.isEmpty && _loading) _loading = true;
     });
-    try {
-      final r =
-          await ApiService().adminUsers(params: _queryParams, useCache: false);
-      if (!mounted) return;
-      final raw = r.data;
-      final map = raw is Map ? raw : {};
+    await CachedRepository().loadPage(_kUsersKey,
+        () async =>
+            (await ApiService().adminUsers(params: _queryParams, useCache: false))
+                .data,
+        (data) async {
+      if (!mounted || data == null) return;
+      final map = data is Map ? data : const {};
       final list = (map['users'] ??
-          (raw is List ? raw : map['data'] ?? map['results'] ?? [])) as List;
+              (data is List ? data : map['data'] ?? map['results'] ?? const []))
+          as List;
       setState(() {
         _users = list;
         _total = (map['total'] as num?)?.toInt() ?? list.length;
         _loading = false;
       });
       _flashLive();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = friendlyError(e);
-        _loading = false;
-      });
-    }
+    });
+    if (!mounted) return;
+    if (_users.isEmpty && _loading) setState(() => _loading = false);
   }
 
   Future<void> _fetchPage(int page) async {
@@ -227,7 +226,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         _page = old;
         _pageLoading = false;
       });
-      _showMsg('Imeshindikana kupakia ukurasa. Jaribu tena.');
+      _showMsg('Imeshindikana kupakia ukurasa. Vuta chini kupakia tena.');
     }
   }
 
@@ -739,9 +738,12 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
               _searchRow(),
               const SizedBox(height: 14),
 
-              // ── Error / empty / timeline ──
-              if (_error != null)
-                _errorBox()
+              // ── Data haijapakuliwa / empty / timeline ──
+              if (!_loading && _users.isEmpty &&
+                  CachedRepository().readOrNull<dynamic>(_kUsersKey) == null)
+                const NoCachedDataWidget(
+                  hint: 'Vuta chini kupakia — orodha itahifadhiwa kwenye simu.',
+                )
               else if (!_loading && _users.isEmpty)
                 _emptyBox()
               else
@@ -977,27 +979,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     );
   }
 
-  // ── ERROR / EMPTY ──
-  Widget _errorBox() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(children: [
-        Icon(PhosphorIcons.cloudSlash(), size: 40, color: v2TextMutedOf(context)),
-        SizedBox(height: 10),
-        Text(_error!,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: v2TextMutedOf(context))),
-        const SizedBox(height: 12),
-        ElevatedButton.icon(
-          onPressed: _load,
-          icon: Icon(PhosphorIcons.arrowClockwise(), size: 15),
-          label: Text('Jaribu tena'),
-          style: ElevatedButton.styleFrom(
-              backgroundColor: v2AccentOf(context), foregroundColor: Colors.white),
-        ),
-      ]),
-    );
-  }
+  // ── ERROR ──
+  // (imetolewa — offline-first: data ya diski haibadiliki; ikiongeza online
+  // refresh inapita. Hii imebaki kama utafutaji wa internal, si skrini.)
 
   Widget _emptyBox() {
     return Container(

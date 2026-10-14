@@ -14,8 +14,10 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/no_cached_data_widget.dart';
 
 // ----------------------------------------------------------------------------
 // CONFIG: action button style on the expanded card.
@@ -356,8 +358,10 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
 
   // ── API halisi (inatumika records == null) ──
   bool _loading = false;
-  String? _error;
   List<CallRecord> _apiList = [];
+
+  /// OFFLINE-FIRST — funguo ya diski ya CachedRepository.
+  static const String _kKey = 'page:admin/contact-activity';
 
   /// Orodha inayotumika: records za nje (tests/zenye data) AU API halisi.
   List<CallRecord> get _all {
@@ -379,47 +383,41 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final res = await ApiService().getContactActivity(limit: 300);
-      if (!mounted) return;
-      final data = res.data;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
+    setState(() { _loading = _apiList.isEmpty; });
+    await CachedRepository().loadPage(
+        _kKey, () async => (await ApiService().getContactActivity(limit: 300)).data,
+        (data) async {
+      if (!mounted || data == null) return;
       final raw = data is List
           ? data
-          : (asMap(data)['contacts'] ?? asMap(data)['results'] as List? ?? []);
-      var rekodi = [
+          : (asMap(data)['contacts'] ?? asMap(data)['results'] as List? ?? const []);
+      final rekodi = [
         for (var i = 0; i < raw.length; i++)
           CallRecord.fromApi(asMap(raw[i]), i),
       ]..sort((a, b) => b.time.compareTo(a.time));
-
-      // ── 'Anaenda' (mkoa anaohamia) mara nyingi haipo kwenye payload ya
-      // contacts — tunaijaza kutoka GET /admin/users (namba ya simu = funguo).
-      if (rekodi
-          .any((r) => r.toDesiredMkoa.isEmpty || r.fromDesiredMkoa.isEmpty)) {
-        try {
-          final ur = await ApiService().adminUsers(params: {'limit': 500});
-          final users = (asMap(ur.data)['users'] as List?) ?? [];
-          rekodi = jazaMaeneoYaKuhamia(rekodi, users);
-        } catch (_) {
-          // Kujaza hii ni ziada; kadi zinabaki na '—' kama haikufanikiwa.
-        }
-      }
-
       setState(() {
         _apiList = rekodi;
         _loading = false;
         _page = 1;
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = friendlyError(e);
-      });
+    });
+    if (!mounted) return;
+    // 'Anaenda' (mkoa anaohamia) mara nyingi haipo kwenye payload ya
+    // contacts — tunaijaza kutoka GET /admin/users (namba = funguo).
+    if (_apiList
+        .any((r) => r.toDesiredMkoa.isEmpty || r.fromDesiredMkoa.isEmpty)) {
+      try {
+        final ur = await ApiService().adminUsers(params: {'limit': 500});
+        final users = (asMap(ur.data)['users'] as List?) ?? [];
+        final rekodi = jazaMaeneoYaKuhamia(_apiList, users);
+        if (mounted) setState(() => _apiList = rekodi);
+      } catch (_) {
+        // Kujaza hii ni ziada; kadi zinabaki na '—' kama haikufanikiwa.
+      }
     }
+    if (mounted && _loading) setState(() => _loading = false);
   }
 
   bool _matchesQuery(CallRecord r) {
@@ -477,28 +475,23 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
             const SizedBox(height: 12),
             _filters(),
             SizedBox(height: 12),
-            if (_loading)
+            if (_loading && _all.isEmpty)
               Padding(
                 padding: EdgeInsets.all(40),
                 child: Center(
                     child: CircularProgressIndicator(color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
               )
-            else if (_error != null) ...[
+            else if (!_loading && _all.isEmpty &&
+                CachedRepository().readOrNull<dynamic>(_kKey) == null)
+              // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
+              // (pull-to-refresh pekee; hakuna ikoni nyekundu wala "Jaribu tena").
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(_error!,
-                    textAlign: TextAlign.center,
-                    style:
-                        TextStyle(color: _C.muted_2(context), fontSize: 14)),
-              ),
-              Center(
-                child: OutlinedButton.icon(
-                  onPressed: _load,
-                  icon: const Icon(TablerIcons.refresh, size: 16),
-                  label: const Text('Jaribu tena'),
+                padding: const EdgeInsets.only(top: 60),
+                child: NoCachedDataWidget(
+                  hint: 'Vuta chini kupakia — rekodi zitahifadhiwa kwenye simu.',
                 ),
-              ),
-            ] else ...[
+              )
+            else ...[
               if (view.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(left: 2, bottom: 2),

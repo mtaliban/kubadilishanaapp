@@ -7,12 +7,14 @@
 
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 import '../../services/network_service.dart';
 import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/no_cached_data_widget.dart';
 import 'malipo_view.dart';
 
 class AdminPaymentsPage extends StatefulWidget {
@@ -24,9 +26,11 @@ class AdminPaymentsPage extends StatefulWidget {
 
 class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   bool _loading = true;
-  String? _error;
   List<Payment> _payments = [];
   int? _totalApprovedTzs;
+
+  /// OFFLINE-FIRST — funguo ya diski ya CachedRepository (orodha + jumla).
+  static const String _kKey = 'page:admin/payments';
 
   void _onWs(Map<String, dynamic> payload) {
     final type =
@@ -50,15 +54,15 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   }
 
   Future<void> _load() async {
-    if (_payments.isEmpty) setState(() { _loading = true; _error = null; });
-    try {
-      final res = await ApiService().adminAllDonations();
-      if (!mounted) return;
-      final d = res.data;
-      final map =
-          d is Map ? d as Map<String, dynamic> : <String, dynamic>{};
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
+    await CachedRepository().loadPage(
+        _kKey, () async => (await ApiService().adminAllDonations()).data,
+        (data) async {
+      if (!mounted || data == null) return;
+      final map = data is Map ? data : const <String, dynamic>{};
       final list =
-          (d is List ? d : (map['payments'] ?? map['results'] ?? []))
+          (data is List ? data : (map['payments'] ?? map['results'] ?? const []))
               as List;
       setState(() {
         _payments = list
@@ -69,10 +73,9 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
             (map['total_approved_tzs'] as num?)?.toInt();
         _loading = false;
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _loading = false; _error = friendlyError(e); });
-    }
+    });
+    if (!mounted) return;
+    if (_payments.isEmpty && _loading) setState(() => _loading = false);
   }
 
   /* ── Data mapping ── */
@@ -191,7 +194,8 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
+    final hasDisk = CachedRepository().readOrNull<dynamic>(_kKey) != null;
+    if (_loading && _payments.isEmpty && !hasDisk) {
       return Scaffold(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF0F172A)
@@ -205,42 +209,24 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
       );
     }
 
-    if (_error != null) {
+    if (_payments.isEmpty && !hasDisk) {
+      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
+      // (pull-to-refresh pekee; hakuna kitufe cha "Jaribu tena").
       return Scaffold(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF0F172A)
             : Colors.white,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child:
-                Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.cloud_off_rounded,
-                  size: 52,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Color(0xFF334155)
-                      : Color(0xFFCBD5E1)),
-              const SizedBox(height: 14),
-              const Text('Imeshindikana kupakia',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 6),
-              Text(_error!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      color: Color(0xFF5B6475), fontSize: 13)),
-              const SizedBox(height: 18),
-              FilledButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Jaribu tena'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF1959D6),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
+        body: RefreshIndicator(
+          onRefresh: _load,
+          color: const Color(0xFF1959D6),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 120),
+              NoCachedDataWidget(
+                hint: 'Vuta chini kupakia — malipo yatahifadhiwa kwenye simu.',
               ),
-            ]),
+            ],
           ),
         ),
       );
