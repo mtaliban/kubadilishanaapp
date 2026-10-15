@@ -6,12 +6,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
+import '../../services/cached_repository.dart';
 import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 import '../../widgets/app_toast.dart';
+import '../../widgets/no_cached_data_widget.dart';
 import '../../services/network_service.dart';
 import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
+
+// OFFLINE-FIRST — funguo ya diski ya maoni za watumiaji (admin).
+const _kFeedbackKey = 'page:admin/feedback';
 
 // ─── Rangi (design ya MaoniPage — kInk #243049 / kAc #1F5FD6 / kLine #E3E7EE) ─┐
 const _kBlue    = Color(0xFF1F5FD6);
@@ -66,8 +71,7 @@ class AdminFeedbackPage extends StatefulWidget {
 }
 
 class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
-  bool _loading = true;
-  String? _error;
+  bool _loading = true; // bado tuna diski KABISA
   List<dynamic> _all = [];
   List<dynamic> _filtered = [];
   final _searchCtrl = TextEditingController();
@@ -101,27 +105,24 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   }
 
   Future<void> _load() async {
-    // SILENT REFRESH: spinner TU wakati hAKUNA data bado — refresh za
-    // reply/delete/WS zinabadilisha list HAPO HAPO bila kukatiza mtumiaji.
-    final first = _all.isEmpty && _loading;
-    setState(() {
-      if (first) _loading = true;
-      _error = null;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: maoni ya diski yabaki.
+    if (_all.isEmpty) setState(() => _loading = true);
+    await CachedRepository().loadPage(
+        _kFeedbackKey, _fetchAll, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      _all = data is List
+          ? data
+          : (asMap(data)['items'] as List? ?? asMap(data)['results'] as List? ?? []);
+      _applyFilter(keepPage: true);
+      if (mounted) setState(() => _loading = false);
     });
-    try {
-      final res = await ApiService().adminListFeedback(status: '', q: '');
-      if (!mounted) return;
-      final data = res.data;
-      setState(() {
-        _all = data is List ? data : (data['items'] as List? ?? data['results'] as List? ?? []);
-        _applyFilter(keepPage: true);
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _loading = false; _error = friendlyError(e); });
-    }
+    if (mounted && _loading) setState(() => _loading = false);
   }
+
+  /// API ya ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchAll() async =>
+      (await ApiService().adminListFeedback(status: '', q: '')).data;
 
   bool _isReplied(dynamic m) =>
       m['reply'] != null || (m['admin_reply'] as String? ?? '').isNotEmpty;
@@ -271,7 +272,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   @override
   Widget build(BuildContext context) {
     final totalPages = (_filtered.length / _kPageSize).ceil().clamp(1, 9999);
-    final pageItems = _loading || _error != null
+    final pageItems = _loading || _all.isEmpty
         ? <dynamic>[]
         : _filtered.skip(_page * _kPageSize).take(_kPageSize).toList();
 
@@ -419,29 +420,22 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
 
                     // ── Loading / Error / Empty / Cards ──
                     if (_loading && _all.isEmpty)
-                      Padding(
+                      // Bado hakuna diski — NoCachedDataWidget (spinner
+                      // mtandaoni, download ikoni bila mtandao).
+                      const Padding(
                         padding: EdgeInsets.all(48),
-                        child: Center(child: CircularProgressIndicator(color: _kBlueT(context))),
+                        child: Center(child: NoCachedDataWidget()),
                       )
-                    else if (_error != null)
-                      Padding(
-                        padding: const EdgeInsets.all(48),
+                    else if (_all.isEmpty &&
+                        CachedRepository().readOrNull<dynamic>(_kFeedbackKey) == null)
+                      // HAKUNA data diski + API imeshindwa — widget MOYA ya
+                      // "haijapakuliwa" (pull-to-refresh pekee).
+                      const Padding(
+                        padding: EdgeInsets.all(48),
                         child: Center(
-                          child: Column(mainAxisSize: MainAxisSize.min, children: [
-                            Icon(PhosphorIcons.warningCircle(PhosphorIconsStyle.fill),
-                                color: _kIsDark(context) ? Color(0xFFF87171) : _kRed, size: 44),
-                            SizedBox(height: 12),
-                            ElevatedButton.icon(
-                              onPressed: _load,
-                              icon: Icon(PhosphorIcons.arrowClockwise(), size: 16),
-                              label: Text('Jaribu tena',
-                                  style: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w600,
-                                      color: Ad.card(context))),
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: _kBlueT(context), foregroundColor: Ad.card(context)),
-                            ),
-                          ]),
+                          child: NoCachedDataWidget(
+                            hint: 'Vuta chini kupakia — maoni yatahifadhiwa kwenye simu.',
+                          ),
                         ),
                       )
                     else if (_filtered.isEmpty)

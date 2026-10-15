@@ -3,10 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../services/cached_repository.dart';
 import '../utils/safe_cast.dart';
 import '../services/websocket_service.dart';
 import '../widgets/app_shell.dart';
+import '../widgets/no_cached_data_widget.dart';
 import 'user_dashboard_view.dart';
+
+// OFFLINE-FIRST — funguo za diski za ukurasa wa dashibodi ya mtumiaji.
+const _kBoardKey = 'page:dashboard/board';
+const _kRegionsKey = 'page:dashboard/regions';
+const _kTrueMatchesKey = 'page:dashboard/true-matches';
+const _kDashAnnouncementsKey = 'page:dashboard/announcements';
 
 const _kFreshMs = 30; // dakika — MPYA badge
 
@@ -137,12 +145,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// kichujio cha dashibodi (chips). Bila hii chips zinaonyesha mikoa
   /// ya wenzio waliofanana tu.
   Future<void> _loadRegions() async {
-    try {
-      final res = await ApiService().getRegions();
-      final raw = res.data;
-      final list = raw is List
-          ? raw
-          : ((raw is Map ? raw['regions'] ?? raw['data'] : null) as List? ?? []);
+    // OFFLINE-FIRST: mikoa za diski (papo hapo), kisha refresh nyuma ya pazia.
+    await CachedRepository().loadPage(
+        _kRegionsKey, _fetchRegions, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final list = data is List
+          ? data
+          : ((data is Map ? data['regions'] ?? data['data'] : null) as List? ?? []);
       if (!mounted) return;
       final names = <String>[];
       final ids = <String, int>{};
@@ -160,10 +169,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _allRegions = names;
         _regionIds.addAll(ids);
       });
-    } catch (_) {
-      // kimya — chips zitatumia mikoa ya peers (fallback ya ndani)
-    }
+    });
   }
+
+  /// API ya mikoa — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchRegions() async =>
+      (await ApiService().getRegions()).data;
 
   /// Wilaya zote za mkoa — API /locations/regions/{id}/districts.
   Future<void> _onRegionTap(String? name) async {
@@ -231,29 +242,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadBoard() async {
-    // SILENT REFRESH: spinner TU wakati board bado tupu — kubadilisha filter
-    // au WS event haisumbui orodha iliyoonekana (hakuna "page kuzunguka").
+    // OFFLINE-FIRST (na kuchuja): diski kwanza (papo hapo) kwa vichujio
+    // hivi — but table ni mkoa/wilaya ziwe katika key bando lazima hii.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: board ya diski/thaibiti inabaki.
+    final rid = _filterRegion == null ? null : _regionIds[_filterRegion];
+    final did = _filterDistrict == null ? null : _districtIds[_filterDistrict];
+    final key = rid == null && did == null
+        ? _kBoardKey
+        : '$_kBoardKey?r=$rid&d=$did';
     if (mounted && _candidates.isEmpty) setState(() => _loading = true);
-    try {
-      // Vichujio vya server: mkoa/wilaya vinafanywa kwenye API
-      // (source_region_id / district_id kwenye current_station ya kila mtu).
-      final rid = _filterRegion == null ? null : _regionIds[_filterRegion];
-      final did = _filterDistrict == null ? null : _districtIds[_filterDistrict];
-      final res = await ApiService().get('/matches/board',
-          queryParameters: {
-            'scope': 'incoming',
-            'limit': 100,
-            if (rid != null) 'source_region_id': rid,
-            if (did != null) 'district_id': did,
-            // Vichujio vinapotumika, sieredi Redis cache ya backend (5s) —
-            // vinginevyo inaweza kurudisha board ya kale YASIYOCHUJWA.
-            if (rid != null || did != null) 'bypass_cache': true,
-          });
-      final data = asMap(res.data);
+    await CachedRepository().loadPage(
+        key, () => _fetchBoard(rid, did), (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final dataMap = data as Map;
       if (mounted) {
         setState(() {
           // Sort: wapya (fresh) juu, kisha online, kama web sortFreshToTop
-          final raw = data['candidates'] ?? [];
+          final raw = dataMap['candidates'] ?? [];
           _candidates = [...raw]..sort((a, b) {
             final fa = _isFresh(a['created_at'] ?? a['joined_at']);
             final fb = _isFresh(b['created_at'] ?? b['joined_at']);
@@ -265,26 +270,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _loading = false;
         });
       }
-    } catch (_) {
-      if (mounted) { setState(() => _loading = false); }
-    }
+    });
+    if (mounted && _loading) setState(() => _loading = false);
+  }
+
+  /// API ya board — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchBoard(int? rid, int? did) async {
+    return (await ApiService().get('/matches/board',
+        queryParameters: {
+          'scope': 'incoming',
+          'limit': 100,
+          if (rid != null) 'source_region_id': rid,
+          if (did != null) 'district_id': did,
+          // Vichujio vinapotumika, sieredi Redis cache ya backend (5s) —
+          // vinginevyo inaweza kurudisha board ya kale YASIYOCHUJWA.
+          if (rid != null || did != null) 'bypass_cache': true,
+        })).data;
   }
 
   Future<void> _loadTrueMatches() async {
-    try {
-      final res = await ApiService().getTrueMatches(limit: 30);
-      final data = asMap(res.data);
-      if (mounted) setState(() => _trueMatches = data['matches'] ?? []);
-    } catch (_) {}
+    // OFFLINE-FIRST: diski kwanza (papo hapo; ile ile ya tab ya matches/true),
+    // kisha refresh nyuma ya pazia. API imeshindwa → skrini ibaki.
+    await CachedRepository().loadPage(
+        _kTrueMatchesKey, _fetchTrueMatches, (data) async {
+      if (!mounted || data == null) return;
+      if (mounted) {
+        setState(() => _trueMatches = asMap(data)['matches'] ?? []);
+      }
+    });
   }
 
+  /// API ya trueMatches — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchTrueMatches() async =>
+      (await ApiService().getTrueMatches(limit: 30)).data;
+
   Future<void> _loadAnnouncements() async {
-    try {
-      final res = await ApiService().getAnnouncements();
-      final data = asMap(res.data);
-      if (mounted) setState(() => _announcements = data['announcements'] ?? data['items'] ?? []);
-    } catch (_) {}
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    await CachedRepository().loadPage(
+        _kDashAnnouncementsKey, _fetchAnnouncements, (data) async {
+      if (!mounted || data == null) return;
+      if (mounted) {
+        setState(() => _announcements =
+            asMap(data)['announcements'] ?? asMap(data)['items'] ?? []);
+      }
+    });
   }
+
+  /// API ya matangazo — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchAnnouncements() async =>
+      (await ApiService().getAnnouncements()).data;
 
   void _setupRealtime() {
     final ws = WebSocketService();
@@ -440,7 +474,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: const [
                       SizedBox(height: 120),
-                      Center(child: CircularProgressIndicator()),
+                      Center(child: NoCachedDataWidget()),
                     ],
                   )
                 : UserDashboardView(

@@ -1,8 +1,14 @@
 /// User profile public view — shows identity, station, destinations, subjects.
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/cached_repository.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo ya diski ya wasifu wa mtumiaji mwingine
+// (funguo ni kwa userId — wasifu mwingine haichanganyikiwi na huu).
+String _kKey(String userId) => 'page:user/$userId';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
@@ -50,7 +56,7 @@ class UserProfileScreen extends StatefulWidget {
 class _UserProfileScreenState extends State<UserProfileScreen> {
   Map<String, dynamic>? _user;
   bool _loading = true;
-  String? _error;
+  // (offline-first: hakuna "Jaribu Tena" — diski + widget ya "haijapakuliwa")
 
   @override
   void initState() {
@@ -59,22 +65,21 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: wasifu wa diski inabaki.
+    if (_user == null) setState(() => _loading = true);
+    await CachedRepository().loadPage(_kKey(widget.userId),
+        () async => (await ApiService().get('/users/${widget.userId}')).data,
+        (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      if (mounted) {
+        setState(() {
+          _user = asMap(data);
+          _loading = false;
+        });
+      }
     });
-    try {
-      final res = await ApiService().get('/users/${widget.userId}');
-      setState(() {
-        _user = asMap(res.data);
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = friendlyError(e);
-        _loading = false;
-      });
-    }
+    if (mounted && _loading) setState(() => _loading = false);
   }
 
   @override
@@ -113,38 +118,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ]),
         ),
         Container(height: 1, color: _kGrey200Of(context)),
-        Expanded(child: _loading
-            ? const Center(child: CircularProgressIndicator(color: _kBlue))
-            : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 56, height: 56,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEE2E2),
-                            borderRadius: BorderRadius.circular(16)),
-                          child: const Center(child: Icon(Icons.error_outline, size: 26, color: Color(0xFFDC2626))),
-                        ),
-                        SizedBox(height: 14),
-                        Text('Hitilafu ya kupakia wasifu',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700Of(context))),
-                        SizedBox(height: 4),
-                        Text(_error!,
-                            style: TextStyle(fontSize: 11, color: _kGrey400Of(context)),
-                            textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: _load,
-                          icon: const Icon(Icons.refresh, size: 16),
-                          label: const Text('Jaribu Tena'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _kBlue, foregroundColor: Colors.white,
-                            minimumSize: const Size(140, 44),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
-                      ],
+        Expanded(child: _loading && _user == null
+            ? const Center(child: NoCachedDataWidget())
+            : _user == null
+                // HAKUNA data diski + API imeshindwa — widget MOYA ya
+                // "haijapakuliwa" (pull-to-refresh pekee).
+                ? const Center(
+                    child: NoCachedDataWidget(
+                      hint: 'Vuta chini kupakia, au subiri mtandao — wasifu '
+                          'utaonekana mara data itakapofika.',
                     ),
                   )
                 : _buildBody()),

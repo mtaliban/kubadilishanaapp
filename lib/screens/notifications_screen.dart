@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
+import '../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo ya diski ya arifa za mtumiaji.
+const _kNotifsKey = 'page:notifications';
 
 const _kBrand    = Color(0xFF1E40AF);
 const _kBrand50  = Color(0xFFEFF6FF);
@@ -54,16 +59,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _load() async {
-    try {
-      final res = await ApiService().getNotifications(limit: 100);
-      final data = res.data;
-      final List<dynamic> items =
-          data is List ? data : (data['notifications'] ?? data['items'] ?? []);
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: arifa za diski zibaki.
+    if (_notifications.isEmpty) setState(() => _loading = true);
+    await CachedRepository().loadPage(_kNotifsKey,
+        () async => (await ApiService().getNotifications(limit: 100)).data,
+        (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final List<dynamic> items = data is List
+          ? data
+          : (data['notifications'] ?? data['items'] ?? []) as List;
       if (mounted) setState(() { _notifications = items; _loading = false; });
-      try { await ApiService().markAllRead(); } catch (_) {}
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
-    }
+    });
+    if (mounted && _loading) setState(() => _loading = false);
+    // Soma (mark-all-read) NYUMA YA PAZIA — inapofanikiwa tu.
+    try { await ApiService().markAllRead(); } catch (_) {}
   }
 
   Future<void> _onTap(dynamic n) async {
@@ -158,14 +168,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           _summaryStrip(),
           Divider(height: 1, color: _kGrey200T(context)),
           Expanded(
-            child: _loading
+            child: _loading && _notifications.isEmpty
                 ? Center(child: SizedBox(width: 22, height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2, color: _kBrandT(context))))
-                : RefreshIndicator(
-                    onRefresh: _load,
-                    color: _kBrandT(context),
-                    child: _notifications.isEmpty ? _empty() : _list(),
-                  ),
+                : _notifications.isEmpty &&
+                        CachedRepository().readOrNull<dynamic>(_kNotifsKey) == null
+                    // HAKUNA data diski + API imeshindwa — widget MOYA ya
+                    // "haijapakuliwa" (pull-to-refresh pekee).
+                    ? const NoCachedDataWidget(
+                        hint: 'Vuta chini kupakia — arifa zitahifadhiwa kwenye simu.',
+                        onLoad: null,
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _load,
+                        color: _kBrandT(context),
+                        child: _notifications.isEmpty ? _empty() : _list(),
+                      ),
           ),
         ],
       ),

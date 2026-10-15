@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'admin_theme.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo ya diski ya matukio ya mfumo.
+const _kKey = 'page:admin/monitoring';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg = Color(0xFFEFF6FF);
@@ -21,42 +26,42 @@ class AdminMonitoringPage extends StatefulWidget {
 }
 
 class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
-  bool _loading = true;
-  String? _error;
+  bool _loading = true; // bado tuna diski KABISA
   List<dynamic> _events = [];
 
   @override
   void initState() {
     super.initState();
+    CachedRepository().addListener(_onRepoChange);
     _load();
   }
 
+  @override
+  void dispose() {
+    CachedRepository().removeListener(_onRepoChange);
+    super.dispose();
+  }
+
+  void _onRepoChange() {
+    if (mounted) setState(() {});
+  }
+
   Future<void> _load() async {
-    // SILENT REFRESH: spinner TU wakati orodha bado tupu — refresh (na
-    // clear events) haikati mtumiaji wala kurudisha scroll.
-    final first = _events.isEmpty && _loading;
-    setState(() {
-      if (first) _loading = true;
-      _error = null;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: matukio ya diski yabaki.
+    await CachedRepository().loadPage(_kKey,
+        () async => (await ApiService().adminGetMonitoring()).data, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      if (data is List) {
+        _events = data;
+      } else if (data is Map && data['events'] is List) {
+        _events = data['events'] as List;
+      } else {
+        _events = [];
+      }
+      if (mounted) setState(() => _loading = false);
     });
-    try {
-      final res = await ApiService().adminGetMonitoring();
-      if (!mounted) return;
-      final data = res.data;
-      setState(() {
-        if (data is List) {
-          _events = data;
-        } else if (data is Map && data['events'] is List) {
-          _events = data['events'] as List;
-        } else {
-          _events = [];
-        }
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _loading = false; _error = friendlyError(e); });
-    }
+    if (mounted && _loading) setState(() => _loading = false);
   }
 
   Color _dotColor(String? type) {
@@ -109,27 +114,18 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
           ),
           Divider(height: 1, color: Ad.border(context)),
           if (_loading && _events.isEmpty)
-            Expanded(child: Center(child: CircularProgressIndicator(color: _kBlue)))
-          else if (_error != null)
+            // Bado hakuna diski — NoCachedDataWidget huonyesha spinner mtandaoni
+            // na "download" ikoni bila mtandao.
+            const Expanded(child: Center(child: NoCachedDataWidget()))
+          else if (_events.isEmpty &&
+              CachedRepository().readOrNull<dynamic>(_kKey) == null)
+            // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
+            // (pull-to-refresh pekee; ikoni ya refresh juu pia inapakia).
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline, color: _kRed, size: 48),
-                    SizedBox(height: 12),
-                    Text('Kosa la kupakia', style: TextStyle(color: Ad.muted(context))),
-                    SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _load,
-                      icon: Icon(Icons.refresh),
-                      label: Text('Jaribu tena'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kBlue, foregroundColor: Ad.card(context),
-                      ),
-                    ),
-                  ],
-                ),
+              child: NoCachedDataWidget(
+                onLoad: _load,
+                hint: 'Gusa refresh juu, au subiri mtandao — matukio yataonekana '
+                    'mara data itakapofika.',
               ),
             )
           else if (_events.isEmpty)

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import '../screens/maoni_view.dart';
 import '../services/api_service.dart';
+import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../widgets/app_shell.dart';
+import '../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo ya diski ya maoni ya mtumiaji mwenyewe.
+const _kKey = 'page:my-feedback';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -39,11 +44,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Future<void> _load() async {
     if (!mounted) return;
-    // SILENT REFRESH: spinner TU wakati orodha bado tupu (kwanza kabisa).
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: maoni ya diski yabaki.
     if (_items.isEmpty) setState(() => _loading = true);
-    try {
-      final res = await ApiService().getMyFeedback();
-      final raw = res.data;
+    await CachedRepository().loadPage(
+        _kKey, _fetchFeedback, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final raw = data;
       List<dynamic> list = [];
       if (raw is Map) {
         list = (raw['items'] ?? raw['feedbacks'] ?? []) as List;
@@ -53,9 +60,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       if (mounted) {
         setState(() => _items = list.map(_toItem).toList());
       }
-    } catch (_) {}
+    });
     if (mounted) setState(() => _loading = false);
   }
+
+  /// API ya ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchFeedback() async =>
+      (await ApiService().getMyFeedback()).data;
 
   FeedbackItem _toItem(dynamic f) => FeedbackItem(
         id: '${f['id'] ?? ''}',
@@ -85,7 +96,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     return AppShell(
       tabIndex: 2,
       child: _loading && _items.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni,
+          // "download" ikoni bila mtandao).
+          ? const Center(child: NoCachedDataWidget())
           : RefreshIndicator(
               onRefresh: _load,
               child: MaoniView(

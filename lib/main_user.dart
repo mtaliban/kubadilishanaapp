@@ -15,6 +15,7 @@ import 'services/api_service.dart';
 import 'services/app_cache.dart';
 import 'services/app_navigator.dart';
 import 'services/cached_repository.dart';
+import 'services/network_service.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -124,6 +125,17 @@ void main() {
       await CachedRepository().warmUp();
     } catch (e) {
       _crashLog.add('[CacheRepo] $e');
+    }
+
+    // Anza huduma ya mtandao — inaangalia connectivity, inathibitisha kwa
+    // /health, na inayarifu banner ya juu ("Hakuna mtandao · data ya HH:mm").
+    // BILA HII: hali inabaki 'unknown' — banner haionyeshwi offline wala
+    // urudi wa mtandao hautafanyia kazi (APK ya user ilikuwa na hii!
+    // Staraha iliyosahaulishwa tangu kuanzishwa HUDUMA hii kwenye main.dart).
+    try {
+      NetworkService().start();
+    } catch (e) {
+      _crashLog.add('[Network] $e');
     }
 
     runApp(const _UserApp());

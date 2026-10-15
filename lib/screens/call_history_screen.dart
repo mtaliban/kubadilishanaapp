@@ -1,9 +1,14 @@
 /// Call/contact history screen — lists all logged contacts (/messages/calls).
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../config/theme.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo ya diski ya historia ya kupigiana ya mtumiaji.
+const _kCallsKey = 'page:user/call-history';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
@@ -34,8 +39,7 @@ class CallHistoryScreen extends StatefulWidget {
 class _CallHistoryScreenState extends State<CallHistoryScreen> {
   List<dynamic> _allCalls = [];
   List<dynamic> _filtered = [];
-  bool _loading = true;
-  String? _error;
+  bool _loading = true; // bado tuna diski KABISA
   String _filter = 'Zote';
 
   static const _filters = ['Zote', 'Simu', 'SMS', 'WhatsApp'];
@@ -59,14 +63,13 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final res = await ApiService().getCallHistory();
-      // Backend returns a plain list [], not a map {calls: [...]}
-      final raw = res.data;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: historia ya diski inabaki.
+    if (_allCalls.isEmpty) setState(() => _loading = true);
+    await CachedRepository().loadPage(
+        _kCallsKey, _fetchCalls, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final raw = data;
       final calls = raw is List ? raw : <dynamic>[];
       if (mounted) {
         setState(() {
@@ -75,15 +78,13 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
           _loading = false;
         });
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = friendlyError(e);
-          _loading = false;
-        });
-      }
-    }
+    });
+    if (mounted && _loading) setState(() => _loading = false);
   }
+
+  /// API ya ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchCalls() async =>
+      (await ApiService().getCallHistory()).data;
 
   void _applyFilter(String filter) {
     _filter = filter;
@@ -223,39 +224,16 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
 
           // Body
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 56, height: 56,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEE2E2),
-                                borderRadius: BorderRadius.circular(16)),
-                              child: const Center(child: Icon(Icons.error_outline, size: 26, color: Color(0xFFDC2626))),
-                            ),
-                            const SizedBox(height: 14),
-                            Text('Hitilafu ya kuunganisha',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kGrey700T(context))),
-                            const SizedBox(height: 4),
-                            Text(_error!,
-                                style: TextStyle(fontSize: 11, color: _kGrey400T(context)),
-                                textAlign: TextAlign.center),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: _load,
-                              icon: const Icon(Icons.refresh, size: 16),
-                              label: const Text('Jaribu Tena'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _kBlue, foregroundColor: Colors.white,
-                                minimumSize: const Size(140, 44),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
-                          ],
-                        ),
+            child: _loading && _allCalls.isEmpty
+                // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni,
+                // "download" ikoni bila mtandao).
+                ? const Center(child: NoCachedDataWidget())
+                : _allCalls.isEmpty &&
+                        CachedRepository().readOrNull<dynamic>(_kCallsKey) == null
+                    // HAKUNA data diski + API imeshindwa — widget MOYA ya
+                    // "haijapakuliwa" (pull-to-refresh pekee).
+                    ? const NoCachedDataWidget(
+                        hint: 'Vuta chini kupakia — historia zitahifadhiwa kwenye simu.',
                       )
                     : RefreshIndicator(
                         onRefresh: _load,

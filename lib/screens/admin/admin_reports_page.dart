@@ -18,8 +18,14 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo za diski za ukurasa wa Statistics/Reports.
+const _kReportsKey = 'page:admin/reports';
+const _kRefsKey = 'page:admin/reports/refs'; // regions + departments
 
 // ── Rangi (zinazolingana na esstranfer.com/admin) ───────────────────────────
 const _cBlue      = Color(0xFF1959D6);
@@ -114,8 +120,7 @@ class AdminReportsPage extends StatefulWidget {
 }
 
 class _AdminReportsPageState extends State<AdminReportsPage> {
-  bool _loading = true;
-  String? _error;
+  bool _loading = true; // bado tuna diski KABISA
   Map<String, dynamic> _data = {};
   Map<String, dynamic> _stats = {};
   List<dynamic> _notifs = []; // Matukio — getNotifications (kama web)
@@ -156,21 +161,28 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   // ── Data loading (API zote kama web) ────────────────────────────────────────
   Future<void> _loadRefs() async {
-    try {
-      final r = await ApiService().getRegions();
-      if (!mounted) return;
-      final raw = r.data;
-      setState(() => _regions = raw is List ? raw : (raw['regions'] ?? raw['data'] ?? []));
-    } catch (_) {}
-    try {
-      final r = await ApiService().adminListDepartments();
-      if (!mounted) return;
-      final raw = r.data;
-      final list = raw is List ? raw : (raw['departments'] ?? raw['data'] ?? []);
-      setState(() => _departments = list
-          .where((d) => '${d['is_active'] ?? d['active'] ?? true}' != 'false')
-          .toList());
-    } catch (_) {}
+    // OFFLINE-FIRST: mikoa/idara za diski (papo hapo), kisha refresh nyuma.
+    await CachedRepository().loadPage(_kRefsKey, _fetchRefs, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final b = data as Map;
+      setState(() {
+        _regions = b['regions'] ?? [];
+        _departments = ((b['departments'] ?? []) as List).where((d) =>
+            '${asMap(d)['is_active'] ?? asMap(d)['active'] ?? true}' != 'false').toList();
+      });
+    });
+  }
+
+  /// API za refs — huitwa na CachedRepository nyuma ya pazia.
+  Future<Map<String, dynamic>> _fetchRefs() async {
+    final r = await ApiService().getRegions();
+    final d = await ApiService().adminListDepartments();
+    final rawR = r.data;
+    final rawD = d.data;
+    return {
+      'regions': rawR is List ? rawR : (asMap(rawR)['regions'] ?? asMap(rawR)['data'] ?? []),
+      'departments': rawD is List ? rawD : (asMap(rawD)['departments'] ?? asMap(rawD)['data'] ?? []),
+    };
   }
 
   /// Matukio ya Hivi Karibuni — API ile ile inayotumiwa na web dashboard:
@@ -188,45 +200,44 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   }
 
   Future<void> _load({bool refresh = false}) async {
-    final firstLoad = _data.isEmpty;
-    setState(() { if (firstLoad) _loading = true; _error = null; });
-    try {
-      final r = await ApiService().adminStats();
-      if (!mounted) return;
-      setState(() => _stats = asMap(r.data));
-    } catch (_) {}
-    try {
-      final r = await ApiService().adminEvents(limit: 20);
-      if (!mounted) return;
-      final d = r.data;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: takwimu za diski zibaki.
+    if (_data.isEmpty) setState(() => _loading = true);
+    await CachedRepository().loadPage(
+        _kReportsKey, _fetchAll, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final b = data as Map;
+      _stats = asMap(b['stats']);
+      _data = asMap(b['reports']);
+      final d = b['events'];
       List raw = [];
       if (d is List) {
         raw = d;
       } else if (d is Map) {
         raw = (d['events'] as List?) ?? [];
       }
-      setState(() => _events = raw.where((e) {
-        final m = e as Map;
+      _events = raw.where((e) {
+        final m = asMap(e);
         final type = (m['event_type'] ?? m['type'] ?? '') as String;
         return !['user.presence', 'user.online', 'user.offline',
                  'user.connected', 'user.disconnected'].contains(type);
-      }).take(8).toList());
-    } catch (_) {}
-    try {
-      final res = await ApiService().adminReports(
-        days: 365,
-        region: _region,
-        category: _category,
-        level: _level,
-        refresh: refresh,
-      );
-      if (!mounted) return;
-      setState(() { _data = asMap(res.data); _loading = false; });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _error = friendlyError(e); if (firstLoad) _loading = false; });
-    }
+      }).take(8).toList();
+      setState(() => _loading = false);
+    });
     if (refresh) _loadNotifs();
+  }
+
+  /// API za ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
+  Future<Map<String, dynamic>> _fetchAll() async {
+    final s = await ApiService().adminStats();
+    final e = await ApiService().adminEvents(limit: 20);
+    final r = await ApiService().adminReports(
+      days: 365,
+      region: _region,
+      category: _category,
+      level: _level,
+    );
+    return {'stats': s.data, 'events': e.data, 'reports': r.data};
   }
 
   Future<void> _loadUsers({String q = ''}) async {
@@ -588,16 +599,17 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
               ),
             ),
             if (_loading)
+              // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni,
+              // "download" ikoni bila mtandao).
               const SliverFillRemaining(
                 hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator(color: _cBlue)),
+                child: Center(child: NoCachedDataWidget()),
               )
             else
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    if (_error != null) _errorBanner(),
                     if (_tab == 'users') _usersTab() else ..._overviewSections(),
                   ]),
                 ),
@@ -686,18 +698,6 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   }
 
   // ── Filter dropdown row (kama web) ─────────────────────────────────────────
-  Widget _errorBanner() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEE2E2),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Text('Imeshindikana kupakia takwimu zote — vichujio vinaendelea kufanya kazi.',
-          style: TextStyle(fontSize: 12.5, color: Color(0xFF991B1B))),
-    );
-  }
 
   // ═══ MATUKIO — getNotifications (API ile ile ya web) + fallback /admin/events
   Widget _activityList() {
@@ -907,7 +907,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
         ),
 
       // Kenye totals hakuna kitu — onyesha angalau stat tupu (totals kutoka adminStats)
-      if (grandTotal == 0 && byDept.isEmpty && _error == null)
+      if (grandTotal == 0 && byDept.isEmpty)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
           child: Center(

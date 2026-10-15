@@ -1,10 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../services/websocket_service.dart';
 import '../screens/wasifu_view.dart';
 import '../services/api_service.dart';
 import '../services/app_cache.dart';
+import '../services/cached_repository.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_shell.dart';
+import '../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo ya diski ya wasifu wa mtumiaji (profile + regions
+// + kada/masomo kwenye bundle moja).
+const String _kProfileKey = 'page:profile/me';
 
 
 
@@ -84,49 +92,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /* ---------- Data loading ---------- */
 
   Future<void> _load() async {
-    if (!mounted) return;
-    setState(() => _loading = true);
-    try {
-      final results = await Future.wait([
-        ApiService().getMyProfile().then((r) => r.data),
-        ApiService().getRegions().then((r) => r.data),
-      ]);
-      final profile = asMapOrNull(results[0]);
-      if (profile == null || !mounted) {
-        setState(() => _loading = false);
-        return;
-      }
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: wasifu wa diski inabaki.
+    await CachedRepository().loadPage(
+        _kProfileKey, _fetchProfileBundle, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski inabaki
+      final bundle = data as Map;
+      final profile = asMapOrNull(bundle['profile']);
+      if (profile == null) return; // diski isiwe na bundle bandia
       _raw = profile;
-
-      // Populate region list
-      final regs = _asList(results[1]).map((r) => asMap(r)).toList();
-      _regions = regs;
-      _regionIdFor.clear();
-      for (final r in _regions) {
-        _regionIdFor[r['name'].toString()] = r['id'] as int;
-      }
-
-      final category = profile['category']?.toString() ?? '';
-
-      // Load cadres + subjects concurrently with location pre-loading
-      final cs = profile['current_station'] as Map? ?? {};
-      final dests = profile['desired_destinations'] as List? ?? [];
-      final regionIds = <int>{};
-      if (cs['region_id'] is int) regionIds.add(cs['region_id'] as int);
-      for (final d in dests) {
-        if (d is Map && d['region_id'] is int) regionIds.add(d['region_id'] as int);
-      }
-
-      await Future.wait([
-        _loadCadresAndSubjects(category, profile['cadre_code']?.toString()),
-        ...regionIds.map(_ensureDistricts),
-      ]);
-
-      if (cs['district_id'] is int) {
-        await _ensureFacilities(cs['district_id'] as int, category);
-      }
-    } catch (_) {}
+      _applyBundleLookups(bundle);
+      if (mounted) setState(() => _loading = false);
+    });
+    if (!mounted) return;
+    // Mikoa/wilaya/vituo (dropdowns) → live backgrounds kama kawaida (vituo
+    // havihifadhiwi kwenye funguo moja — kila region/district ina funguo yake).
+    final profile = _raw;
+    if (profile == null) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
+    final category = profile['category']?.toString() ?? '';
+    final cs = profile['current_station'] as Map? ?? {};
+    final dests = profile['desired_destinations'] as List? ?? [];
+    final regionIds = <int>{};
+    if (cs['region_id'] is int) regionIds.add(cs['region_id'] as int);
+    for (final d in dests) {
+      if (d is Map && d['region_id'] is int) regionIds.add(d['region_id'] as int);
+    }
+    await Future.wait([
+      _loadCadresAndSubjects(category, profile['cadre_code']?.toString()),
+      ...regionIds.map(_ensureDistricts),
+    ]);
+    if (cs['district_id'] is int) {
+      await _ensureFacilities(cs['district_id'] as int, category);
+    }
     if (mounted) setState(() => _loading = false);
+  }
+
+  /// API za ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
+  Future<Map<String, dynamic>> _fetchProfileBundle() async {
+    final profile = await ApiService().getMyProfile().then((r) => r.data);
+    final regions = await ApiService().getRegions().then((r) => r.data);
+    return {'profile': profile, 'regions': regions, 'cadres': _cadres, 'subjects': _subjects};
+  }
+
+  /// Pakia wasifu mtandao ukiwako (inaandikwa diski kwanza kwenye
+  /// CachedRepository). Inaitwa na NoCachedDataWidget mtandao ukirudi.
+  Future<void> _loadSolo() => _load();
+
+  void _applyBundleLookups(Map bundle) {
+    final regs = _asList(bundle['regions']).map((r) => asMap(r)).toList();
+    _regions = regs;
+    _regionIdFor.clear();
+    for (final r in _regions) {
+      _regionIdFor[r['name'].toString()] = r['id'] as int;
+    }
+    final cList = _asList(bundle['cadres']).map((c) => asMap(c)).toList();
+    if (cList.isNotEmpty) {
+      _cadres = cList;
+      _kadaCodeFor.clear();
+      for (final c in _cadres) {
+        final display = (c['display_name'] ?? c['code'] ?? '').toString();
+        _kadaCodeFor[display] = (c['code'] ?? '').toString();
+      }
+    }
+    final sList = _asList(bundle['subjects']).map((s) => asMap(s)).toList();
+    if (sList.isNotEmpty) {
+      _subjects = sList;
+      _subjectCodeFor.clear();
+      for (final s in _subjects) {
+        final name = (s['name'] ?? s['code'] ?? '').toString();
+        _subjectCodeFor[name] = (s['code'] ?? name).toString();
+      }
+    }
   }
 
   Future<void> _loadCadresAndSubjects(String category, String? cadreCode) async {
@@ -336,7 +375,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (_raw == null) {
-      return AppShell(tabIndex: 3, child: const Center(child: Text('Imeshindikana kupakia')));
+      // Hakuna wasifu kwenye diski WALA kutoka API — widget MOYA ya "haijapakuliwa"
+      // (pull-to-refresh pekee; mtandao ukirudi, inajipakia yenyewe).
+      return AppShell(
+        tabIndex: 3,
+        child: NoCachedDataWidget(
+          hint: 'Vuta chini kupakia — wasifu wako utahifadhiwa kwenye simu.',
+          onLoad: () async {
+            await _loadSolo();
+          },
+        ),
+      );
     }
 
     // ── Mtumiaji wa kawaida → WasifuView ──────────────────────────────────────

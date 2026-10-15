@@ -391,15 +391,19 @@ void main() {
           reason: 'Maelezo ya hali tupu yanaonekana');
     });
 
-    testWidgets('API ikifeli (500) — hakuna crash, empty state inaonekana',
+    testWidgets('API ikifeli (500) — hakuna crash, widget ya "haijapakuliwa" inaonekana',
         (tester) async {
       routes.failNotifications = true;
       await tester.pumpWidget(wrapApp(const NotificationsScreen()));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('Hakuna arifa bado'), findsOneWidget,
-          reason: 'Error ya API haivunji app — inaonyesha hali ya tupu');
+      // OFFLINE-FIRST: API imeshindwa + hakuna diski → NoCachedDataWidget
+      // ("Data haijapakuliwa bado") — HAKUNA kosa wala "Jaribu tena".
+      expect(find.text('Data haijapakuliwa bado'), findsOneWidget,
+          reason: 'Error ya API haivunji app — hali rahisi ya "haijapakuliwa"');
+      expect(find.text('Jaribu tena'), findsNothing,
+          reason: 'Hakuna kitufe cha "Jaribu tena" — pull-to-refresh pekee');
       expect(tester.takeException(), isNull);
     });
   });

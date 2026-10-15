@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
+import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo za diski za kurusa za mipangano.
+const _kMyMatchesKey = 'page:matches/me';
+const _kTrueMatchesKey = 'page:matches/true';
 
 // ── Brand colors (same as web globals.css) ────────────────────────────────────
 const _kBlue      = Color(0xFF1E40AF);
@@ -189,31 +195,39 @@ class _MyMatchesTabState extends State<_MyMatchesTab>
   }
 
   Future<void> _load() async {
-    // SILENT REFRESH: spinner TU wakati bado hakuna matches — refresh za
-    // WS/pull zinasasisha orodha HAPO HAPO bila kuzunguka page.
-    final first = _matches.isEmpty && _loading;
-    setState(() {
-      if (first) _loading = true;
-      _error = null;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: matches za diski zibaki.
+    if (_matches.isEmpty) setState(() => _loading = true);
+    await CachedRepository().loadPage(
+        _kMyMatchesKey, _fetchMyMatches, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      if (mounted) {
+        setState(() {
+          _matches = asMap(data)['matches'] ?? [];
+          _loading = false;
+        });
+      }
     });
-    try {
-      final res  = await ApiService().get('/matches/me');
-      final data = asMap(res.data);
-      setState(() { _matches = data['matches'] ?? []; _loading = false; });
-    } catch (e) {
-      setState(() { _error = friendlyError(e); _loading = false; });
-    }
+    if (mounted && _loading) setState(() => _loading = false);
   }
+
+  /// API ya tab — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchMyMatches() async =>
+      (await ApiService().get('/matches/me')).data;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     if (_loading && _matches.isEmpty) {
-      return const Center(child: SizedBox(width: 24, height: 24,
-        child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue)));
+      // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni).
+      return const Center(child: NoCachedDataWidget());
     }
-    if (_error != null) {
-      return _ErrorState(onRetry: _load);
+    if (_matches.isEmpty &&
+        CachedRepository().readOrNull<dynamic>(_kMyMatchesKey) == null) {
+      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa".
+      return const NoCachedDataWidget(
+        hint: 'Vuta chini kupakia — matches zitahifadhiwa kwenye simu.',
+      );
     }
     return RefreshIndicator(
       onRefresh: _load, color: _kBlue,
@@ -336,15 +350,24 @@ class _RealMatchesTabState extends State<_RealMatchesTab>
   void initState() { super.initState(); _load(); }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final res  = await ApiService().get('/matches/true');
-      final data = asMap(res.data);
-      setState(() { _matches = data['matches'] ?? []; _loading = false; });
-    } catch (e) {
-      setState(() { _error = friendlyError(e); _loading = false; });
-    }
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    if (_matches.isEmpty) setState(() => _loading = true);
+    await CachedRepository().loadPage(
+        _kTrueMatchesKey, _fetchTrueMatches, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      if (mounted) {
+        setState(() {
+          _matches = asMap(data)['matches'] ?? [];
+          _loading = false;
+        });
+      }
+    });
+    if (mounted && _loading) setState(() => _loading = false);
   }
+
+  /// API ya tab — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchTrueMatches() async =>
+      (await ApiService().get('/matches/true')).data;
 
   List<dynamic> get _filtered {
     return _matches.where((m) {
@@ -370,11 +393,17 @@ class _RealMatchesTabState extends State<_RealMatchesTab>
     super.build(context);
     final filtered = _filtered;
 
-    if (_loading) {
-      return const Center(child: SizedBox(width: 24, height: 24,
-        child: CircularProgressIndicator(strokeWidth: 2, color: _kBlue)));
+    if (_loading && _matches.isEmpty) {
+      // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni).
+      return const Center(child: NoCachedDataWidget());
     }
-    if (_error != null) return _ErrorState(onRetry: _load);
+    if (_matches.isEmpty &&
+        CachedRepository().readOrNull<dynamic>(_kTrueMatchesKey) == null) {
+      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa".
+      return const NoCachedDataWidget(
+        hint: 'Vuta chini kupakia — matches sahihi zitahifadhiwa kwenye simu.',
+      );
+    }
 
     return RefreshIndicator(
       onRefresh: _load, color: _kBlue,
@@ -654,26 +683,5 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _ErrorState extends StatelessWidget {
-  final VoidCallback onRetry;
-  const _ErrorState({required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      const Icon(Icons.error_outline, size: 40, color: Color(0xFFDC2626)),
-      const SizedBox(height: 12),
-      const Text('Hitilafu ya kuunganisha', style: TextStyle(fontSize: 14, color: _kGrey700)),
-      const SizedBox(height: 12),
-      ElevatedButton.icon(
-        onPressed: onRetry,
-        icon: const Icon(Icons.refresh, size: 16),
-        label: const Text('Jaribu Tena'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _kBlue, foregroundColor: Colors.white,
-          minimumSize: const Size(140, 44),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-      ),
-    ]));
-  }
-}
+// (_ErrorState imeondolewa — offline-first: diski + NoCachedDataWidget,
+// pull-to-refresh pekee; hakuna "Jaribu Tena".)

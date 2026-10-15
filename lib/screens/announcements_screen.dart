@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
+import '../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo ya diski ya matangazo + historia yake.
+const _kAnnouncementsKey = 'page:announcements';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kGrey900 = Color(0xFF111827);
@@ -58,13 +63,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   Future<void> _load() async {
-    try {
-      final results = await Future.wait([
-        ApiService().getAnnouncements(),
-        ApiService().getNotifications(limit: 50),
-      ]);
-      final annData = results[0].data;
-      final notifData = results[1].data;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: matangazo ya diski yabaki.
+    await CachedRepository().loadPage(
+        _kAnnouncementsKey, _fetchBundle, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final b = data as Map;
+      final annData = b['announcements'];
+      final notifData = b['notifications'];
 
       List<dynamic> active = [];
       if (annData is Map) {
@@ -88,9 +94,17 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           _loading = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
-    }
+    });
+    if (mounted && _loading) setState(() => _loading = false);
+  }
+
+  /// API za ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
+  Future<Map<String, dynamic>> _fetchBundle() async {
+    final results = await Future.wait([
+      ApiService().getAnnouncements(),
+      ApiService().getNotifications(limit: 50),
+    ]);
+    return {'announcements': results[0].data, 'notifications': results[1].data};
   }
 
   List<dynamic> _deduplicate(List<dynamic> items, String titleKey, String bodyKey) {
@@ -207,11 +221,26 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
               const SizedBox(height: 20),
 
-              if (_loading)
+              if (_loading && _active.isEmpty && _history.isEmpty)
+                // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni,
+                // "download" ikoni bila mtandao).
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(40),
-                    child: CircularProgressIndicator(color: _kBlue),
+                    child: NoCachedDataWidget(),
+                  ),
+                )
+              else if (_active.isEmpty &&
+                  _history.isEmpty &&
+                  CachedRepository().readOrNull<dynamic>(_kAnnouncementsKey) == null)
+                // HAKUNA data diski + API imeshindwa — widget MOYA ya
+                // "haijapakuliwa" (pull-to-refresh pekee).
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(40),
+                    child: NoCachedDataWidget(
+                      hint: 'Vuta chini kupakia — matangazo yatahifadhiwa kwenye simu.',
+                    ),
                   ),
                 )
               else ...[

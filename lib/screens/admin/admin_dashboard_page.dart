@@ -2,8 +2,18 @@ import 'package:flutter/material.dart';
 import 'admin_theme.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo za diski za CachedRepository.
+//   page:admin/dashboard → {'stats','reports','events'} (bundle moja)
+//   page:admin/dashboard/users → orodha ya watumiaji (tab ya 2)
+//   page:admin/dashboard/depts → orodha ya idara (vichujio)
+const _kDashKey = 'page:admin/dashboard';
+const _kDashUsersKey = 'page:admin/dashboard/users';
+const _kDashDeptsKey = 'page:admin/dashboard/depts';
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 const _kBlue    = Color(0xFF1E40AF);
@@ -30,8 +40,7 @@ class AdminDashboardPage extends StatefulWidget {
 
 class _State extends State<AdminDashboardPage>
     with SingleTickerProviderStateMixin {
-  bool   _loading = true;
-  String? _error;
+  bool   _loading = true; // bado tuna diski KABISA
   Map<String, dynamic> _stats   = {};
   Map<String, dynamic> _reports = {};
   List<dynamic>        _events  = [];
@@ -51,6 +60,7 @@ class _State extends State<AdminDashboardPage>
   @override
   void initState() {
     super.initState();
+    CachedRepository().addListener(_onRepoChange);
     _tabCtrl = TabController(length: 2, vsync: this);
     _tabCtrl.addListener(() {
       if (!_tabCtrl.indexIsChanging &&
@@ -65,89 +75,102 @@ class _State extends State<AdminDashboardPage>
 
   @override
   void dispose() {
+    CachedRepository().removeListener(_onRepoChange);
     _tabCtrl.dispose();
     super.dispose();
+  }
+
+  void _onRepoChange() {
+    if (mounted) setState(() {});
   }
 
   // ── Data loading ────────────────────────────────────────────────────────────
 
   Future<void> _load() async {
-    // SILENT REFRESH: spinner TU kwanza kabisa (hakuna data) — refresh za
-    // baadaye zinasasisha namba HAPO HAPO bila page kuzunguka.
-    final first = _stats.isEmpty && _loading;
-    setState(() {
-      if (first) _loading = true;
-      _error = null;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
+    await CachedRepository().loadPage(_kDashKey, _fetchAll, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final m = data as Map;
+      setState(() {
+        _stats = asMapOrNull(m['stats']) ?? {};
+        _reports = asMapOrNull(m['reports']) ?? {};
+        final d = asMapOrNull(m['events']) ?? <String, dynamic>{};
+        // Kama web dashboard: chuja presence ("Mtumiaji ameingia mtandaoni")
+        // KABLA ya kuchukua 6 — matukio halisi (amejiunga, match, malipo...)
+        // yabakiye yanaonekana.
+        final all = (d['events'] as List?) ?? [];
+        _events = all.where((e) {
+          final ev = asMap(e);
+          final type = '${ev['event_type'] ?? ev['type'] ?? ''}';
+          return !['user.presence', 'user.online', 'user.offline',
+                   'user.connected', 'user.disconnected'].contains(type);
+        }).toList();
+        _loading = false;
+      });
     });
-    try {
-      final s = await ApiService().adminStats();
-      if (!mounted) return;
-      setState(() { _stats = asMapOrNull(s.data) ?? {}; _loading = false; });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _loading = false; _error = friendlyError(e); });
-    }
-    await _loadReports();
-    try {
-      final r = await ApiService().adminEvents(limit: 30);
-      if (!mounted) return;
-      final d = r.data as Map? ?? {};
-      // Kama web dashboard: chuja presence ("Mtumiaji ameingia mtandaoni")
-      // KABLA ya kuchukua 6 — matukio halisi (amejiunga, match, malipo...)
-      // yabakiye yanaonekana.
-      final all = (d['events'] as List?) ?? [];
-      setState(() => _events = all.where((e) {
-        final m = asMap(e);
-        final type = '${m['event_type'] ?? m['type'] ?? ''}';
-        return !['user.presence', 'user.online', 'user.offline',
-                 'user.connected', 'user.disconnected'].contains(type);
-      }).toList());
-    } catch (_) {}
+    await _loadDepts();
   }
 
-  Future<void> _loadReports() async {
-    try {
-      final r = await ApiService().adminReports(
-        region:   _region.isEmpty   ? null : _region,
-        category: _dept.isEmpty     ? null : _dept,
-        level:    _level.isEmpty    ? null : _level,
-        refresh:  true,
-      );
-      if (!mounted) return;
-      setState(() => _reports = asMapOrNull(r.data) ?? {});
-    } catch (_) {}
+  /// API za ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
+  Future<Map<String, dynamic>> _fetchAll() async {
+    final s = await ApiService().adminStats();
+    final r = await ApiService().adminReports(
+      region: _region.isEmpty   ? null : _region,
+      category: _dept.isEmpty   ? null : _dept,
+      level: _level.isEmpty     ? null : _level,
+    );
+    final e = await ApiService().adminEvents(limit: 30);
+    return {'stats': s.data, 'reports': r.data, 'events': e.data};
   }
+
+  /// Vichujio (mkoa/idara/ngazi) vimetofautisha — pakia bundle mpya (diski
+  /// kwanza kama kawaida, kisha refresh nyuma ya pazia).
+  Future<void> _loadReports() => _load();
 
   Future<void> _loadDepts() async {
-    try {
-      final r = await ApiService().adminListData('departments');
+    await CachedRepository().loadPage(_kDashDeptsKey,
+        () async => (await ApiService().adminListData('departments')).data,
+        (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      final d = data;
       if (!mounted) return;
-      final d = r.data;
       setState(() {
-        _departments = d is List ? d : ((d['results'] ?? d['items'] ?? []) as List);
+        _departments = d is List
+            ? d
+            : ((asMap(d)['results'] ?? asMap(d)['items'] ?? []) as List);
       });
-    } catch (_) {}
+    });
   }
 
   Future<void> _loadUsers({String? q}) async {
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Funguo ina utafutaji (q) — kila q ni funguo tofauti ya diski; utafutaji
+    // mpya bila diski unaonyesha "haijapakuliwa" hadi API ijibu.
+    final key = q == null || q.isEmpty ? _kDashUsersKey : '$_kDashUsersKey?q=$q';
     setState(() => _usersLoading = true);
-    try {
-      final p = <String, dynamic>{'limit': 100};
-      if (q != null && q.isNotEmpty) p['q'] = q;
-      final r = await ApiService().adminUsers(params: p, useCache: false);
-      if (!mounted) return;
-      final raw = r.data;
+    await CachedRepository().loadPage(key,
+        () async =>
+            (await ApiService().adminUsers(params: {'limit': 100, if (q != null && q.isNotEmpty) 'q': q})).data,
+        (data) async {
+      if (!mounted || data == null) {
+        if (mounted && CachedRepository().readOrNull<dynamic>(key) == null) {
+          setState(() => _usersLoading = false);
+        }
+        return; // API imeshindwa na hakuna diski → widget ya NoCachedData
+      }
+      final raw = data;
       final list = raw is List
           ? raw
-          : (raw['users'] ?? raw['data'] ?? raw['results'] ?? []) as List;
+          : (asMap(raw)['users'] ?? asMap(raw)['data'] ?? asMap(raw)['results'] ?? []) as List;
+      if (!mounted) return;
       setState(() {
         _usersList   = list;
-        _usersTotal  = (raw['total'] as num?)?.toInt() ?? list.length;
+        _usersTotal  = raw is Map ? ((raw['total'] as num?)?.toInt() ?? list.length) : list.length;
         _usersLoading = false;
       });
-    } catch (_) {
-      if (mounted) setState(() => _usersLoading = false);
-    }
+    });
+    if (mounted && _usersLoading) setState(() => _usersLoading = false);
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -210,24 +233,7 @@ class _State extends State<AdminDashboardPage>
             ),
 
             if (_loading && _stats.isEmpty)
-              const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator(color: _kBlue)))
-            else if (_error != null)
-              SliverFillRemaining(
-                child: Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.error_outline, color: _kRed, size: 48),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Jaribu tena'),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: _kBlue, foregroundColor: Colors.white),
-                    ),
-                  ]),
-                ),
-              )
+              const SliverFillRemaining(child: NoCachedDataWidget())
             else ...[
               // ── Top 3 Big cards ──────────────────────────────────────────
               SliverToBoxAdapter(

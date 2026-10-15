@@ -12,10 +12,12 @@
 // Data halisi: GET /messages/admin/contacts (ApiService.getContactActivity)
 // ============================================================================
 import 'package:flutter/material.dart';
-import 'admin_theme.dart';
 import 'package:flutter/services.dart';
+import 'admin_theme.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/no_cached_data_widget.dart';
 
 const _kPrimary = Color(0xFF1E40AF);
 const _kInk     = Color(0xFF0F172A);
@@ -123,16 +125,30 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
   final _searchCtrl = TextEditingController();
   final _scroll = ScrollController();
 
-  bool _loading = true;
-  String? _error;
+  static const String _kContactsKey = 'page:admin/contacts';
+
   List<Map<String, dynamic>> _all = [];
   String _channel = ''; // '' = zote, 'call' | 'sms' | 'whatsapp'
   String _query = '';
   int _shown = _kStep;
 
+  // Listener: data mpya (WS, pull-to-refresh...) → orodha ijisasishe.
+  int _cacheRev = 0;
+
+  // Ila ya lugha (SW pekee — EN ilikuwa sehemu ya ref ya kale).
   String t(String sw, String en) => sw;
 
-  int _countOf(String c) => _all.where((e) => (e['contact_type'] as String? ?? 'call') == c).length;
+  int _countOf(String c) =>
+      _all.where((e) => (e['contact_type'] as String? ?? 'call') == c).length;
+
+  @override
+  void initState() {
+    super.initState();
+    _all = _diskData();
+    _cacheRev = CachedRepository().revision;
+    CachedRepository().addListener(_onRepoChange);
+    _load();
+  }
 
   List<Map<String, dynamic>> get _filtered {
     final q = _query.trim().toLowerCase();
@@ -150,35 +166,38 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
     }).toList();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _load();
+  // ── OFFLINE-FIRST ────────────────────────────────────────────────────
+
+  List<Map<String, dynamic>> _diskData() {
+    final raw = CachedRepository().readOrNull<dynamic>(_kContactsKey);
+    if (raw is List) return raw.whereType<Map<String, dynamic>>().toList();
+    if (raw is Map) {
+      final contacts = (raw['contacts'] ?? raw['results']) as List?;
+      if (contacts != null) return contacts.whereType<Map<String, dynamic>>().toList();
+    }
+    return [];
   }
 
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    _scroll.dispose();
-    super.dispose();
+  void _onRepoChange() {
+    if (!mounted) return;
+    if (CachedRepository().revision != _cacheRev) {
+      _cacheRev = CachedRepository().revision;
+      setState(() => _all = _diskData());
+    }
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
-    try {
+    await CachedRepository().loadPage(_kContactsKey, () async {
       final res = await ApiService().getContactActivity(limit: 300);
-      if (!mounted) return;
-      final data = res.data;
+      return res.data;
+    }, (data) async {
+      if (!mounted || data == null) return;
       final raw = data is List ? data : ((data['contacts'] ?? data['results']) as List? ?? []);
       setState(() {
         _all = raw.whereType<Map<String, dynamic>>().toList();
-        _loading = false;
         _shown = _kStep;
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _loading = false; _error = friendlyError(e); });
-    }
+    });
   }
 
   void _setChannel(String c) => setState(() {
@@ -340,21 +359,18 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
             ),
             const SizedBox(height: 14),
 
-            if (!_loading && _error == null)
-              Text(
-                'Inaonyesha ${visible.length} kati ya ${filtered.length}',
-                style: const TextStyle(fontSize: 13, color: _kMuted),
-              ),
+            Text(
+              'Inaonyesha ${visible.length} kati ya ${filtered.length}',
+              style: const TextStyle(fontSize: 13, color: _kMuted),
+            ),
             const SizedBox(height: 10),
 
-            // ── Body ──
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.all(48),
-                child: Center(child: CircularProgressIndicator(color: _kPrimary)),
+            // ── Body (offline-first: diski kwanza; hakuna error state) ──
+            if (CachedRepository().readOrNull<dynamic>(_kContactsKey) == null)
+              NoCachedDataWidget(
+                hint: 'Vuta chini kupakia — mawasiliano yatahifadhiwa kwenye simu.',
+                onLoad: _load,
               )
-            else if (_error != null)
-              _ErrorState(onRetry: _load)
             else if (filtered.isEmpty)
               _EmptyState(onClear: _clearSearch)
             else ...[
@@ -603,39 +619,7 @@ class _PersonBlock extends StatelessWidget {
   }
 }
 
-class _ErrorState extends StatelessWidget {
-  final VoidCallback onRetry;
-  const _ErrorState({required this.onRetry});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Ad.card(context),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Ad.border(context)),
-      ),
-      child: Column(children: [
-        const Icon(Icons.cloud_off_rounded, size: 40, color: Color(0xFFCBD5E1)),
-        const SizedBox(height: 12),
-        const Text('Imeshindikana kupakia mawasiliano',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 14),
-        FilledButton.icon(
-          onPressed: onRetry,
-          icon: const Icon(Icons.refresh_rounded, size: 18),
-          label: const Text('Jaribu tena',
-              style: TextStyle(fontWeight: FontWeight.w700)),
-          style: FilledButton.styleFrom(
-            backgroundColor: _kPrimary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-        ),
-      ]),
-    );
-  }
-}
 
 class _EmptyState extends StatelessWidget {
   final VoidCallback onClear;

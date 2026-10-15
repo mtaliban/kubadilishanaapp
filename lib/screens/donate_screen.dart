@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../providers/auth_provider.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_shell.dart';
 import 'changia_view.dart';
+
+// OFFLINE-FIRST — funguo za diski za ukurasa wa donate (changia).
+const _kDonateInfoKey = 'page:donate/info';
+const _kDonateHistoryKey = 'page:donate/history';
 
 const _kAdminCall = '0763795801';
 const _kAdminWa = '255625607088';
@@ -36,20 +41,26 @@ class _DonateScreenState extends State<DonateScreen> {
   }
 
   Future<void> _loadInfo() async {
-    try {
-      final res = await ApiService().getDonationInfo();
-      final d = asMap(res.data);
+    // OFFLINE-FIRST: namba ya admin za diski (papo hapo), kisha refresh.
+    await CachedRepository().loadPage(
+        _kDonateInfoKey, _fetchInfo, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
       if (mounted) {
-        setState(() => _adminPhone = d['phone'] as String? ?? _kAdminCall);
+        setState(() => _adminPhone = asMap(data)['phone'] as String? ?? _kAdminCall);
       }
-    } catch (_) {}
+    });
   }
 
+  /// API ya info — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchInfo() async =>
+      (await ApiService().getDonationInfo()).data;
+
   Future<void> _loadHistory() async {
+    // OFFLINE-FIRST: historia za diski (papo hapo), kisha refresh nyuma ya pazia.
     if (mounted) setState(() => _loadingHistory = true);
-    try {
-      final res = await ApiService().getPaymentHistory();
-      final data = res.data;
+    await CachedRepository().loadPage(
+        _kDonateHistoryKey, _fetchHistory, (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
       if (mounted) {
         setState(() {
           if (data is Map) {
@@ -59,9 +70,14 @@ class _DonateScreenState extends State<DonateScreen> {
           }
         });
       }
-    } catch (_) {}
+    });
     if (mounted) setState(() => _loadingHistory = false);
   }
+
+  /// API ya historia — huitwa na CachedRepository nyuma ya pazia.
+  Future<dynamic> _fetchHistory() async =>
+      (await ApiService().getPaymentHistory()).data;
+
 
   void _setupRealtime() {
     WebSocketService().on('notification', _onWsNotification);

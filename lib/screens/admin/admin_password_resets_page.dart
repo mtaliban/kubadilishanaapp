@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'admin_theme.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/no_cached_data_widget.dart';
+
+// OFFLINE-FIRST — funguo za diski: kila status iwe na funguo yake.
+String _kKey(String status) => 'page:admin/password-resets/$status';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlueBg = Color(0xFFEFF6FF);
@@ -24,8 +29,7 @@ class AdminPasswordResetsPage extends StatefulWidget {
 class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
-  bool _loading = true;
-  String? _error;
+  bool _loading = true; // tab bado hakuna diski kabisa
   final Map<String, List<dynamic>> _cache = {};
 
   static const _tabs = ['pending', 'approved', 'rejected'];
@@ -50,23 +54,18 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
   Future<void> _loadTab() async => _load(_currentStatus);
 
   Future<void> _load(String status) async {
-    // SILENT REFRESH: spinner TU wakati tab haina data bado. Baada ya
-    // approve/reject, _cache imefutwa — data mpya inaingia bila kukatiza.
-    final first = !_cache.containsKey(status);
-    setState(() {
-      if (first) _loading = true;
-      _error = null;
+    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
+    // Ikishindwa (offline) — skrini HAKIBADILIKI: orodha ya diski inabaki.
+    if (!_cache.containsKey(status)) setState(() => _loading = true);
+    await CachedRepository().loadPage(_kKey(status),
+        () async =>
+            (await ApiService().adminListPasswordResets(status: status)).data,
+        (data) async {
+      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
+      _cache[status] = data is List ? data : (asMap(data)['results'] as List? ?? []);
+      if (mounted) setState(() => _loading = false);
     });
-    try {
-      final res = await ApiService().adminListPasswordResets(status: status);
-      if (!mounted) return;
-      final data = res.data;
-      _cache[status] = data is List ? data : (data['results'] as List? ?? []);
-      setState(() { _loading = false; });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _loading = false; _error = friendlyError(e); });
-    }
+    if (mounted && _loading) setState(() => _loading = false);
   }
 
   Future<void> _approve(String id) async {
@@ -75,6 +74,9 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
       if (!mounted) return;
       _cache.remove('pending');
       _cache.remove('approved');
+      // Diski ya tab mbili pia ifutwe — ifunguliwe tena ipakie data mpya.
+      CachedRepository().invalidateKey(_kKey('pending'));
+      CachedRepository().invalidateKey(_kKey('approved'));
       await _load('pending');
     } catch (e) {
       if (!mounted) return;
@@ -88,6 +90,9 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
       if (!mounted) return;
       _cache.remove('pending');
       _cache.remove('rejected');
+      // Diski ya tab mbili pia ifutwe — ifunguliwe tena ipakie data mpya.
+      CachedRepository().invalidateKey(_kKey('pending'));
+      CachedRepository().invalidateKey(_kKey('rejected'));
       await _load('pending');
     } catch (e) {
       if (!mounted) return;
@@ -162,25 +167,16 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
               controller: _tabCtrl,
               children: _tabs.map((status) {
                 if (_loading && !_cache.containsKey(status)) {
-                  return const Center(child: CircularProgressIndicator(color: _kBlue));
+                  // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni).
+                  return NoCachedDataWidget(onLoad: () => _load(status));
                 }
-                if (_error != null && !_cache.containsKey(status)) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.error_outline, color: _kRed, size: 48),
-                        SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: () { _cache.remove(status); _load(status); },
-                          icon: Icon(Icons.refresh),
-                          label: Text('Jaribu tena'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _kBlue, foregroundColor: Ad.card(context),
-                          ),
-                        ),
-                      ],
-                    ),
+                if (_cache[status] == null &&
+                    CachedRepository().readOrNull<dynamic>(_kKey(status)) == null) {
+                  // HAKUNA data diski + API imeshindwa — widget MOYA ya
+                  // "haijapakuliwa" (pull-to-refresh pekee).
+                  return NoCachedDataWidget(
+                    onLoad: () => _load(status),
+                    hint: 'Vuta chini kupakia, au subiri mtandao — maombi yataonekana.',
                   );
                 }
                 final items = _cache[status] ?? [];

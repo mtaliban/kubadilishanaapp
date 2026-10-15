@@ -1,9 +1,13 @@
 /// Settings screen — notification preferences and followed regions.
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/cached_repository.dart';
 import '../config/theme.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_toast.dart';
+
+// OFFLINE-FIRST — funguo za diski za ukurasa wa mipangilio.
+const _kSettingsKey = 'page:settings'; // notification_prefs + regions + followed
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kBlue50  = Color(0xFFEFF6FF);
@@ -59,27 +63,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ── Notification Prefs ───────────────────────────────────────────────────
 
   Future<void> _loadNotifPrefs() async {
+    // OFFLINE-FIRST: prefs za diski (papo hapo) kutoka wasifu, kisha refresh
+    // nyuma ya pazia. API imeshindwa → skrini inabaki na kwa diski.
     setState(() => _notifLoading = true);
-    try {
-      final res = await ApiService().getMyProfile();
-      final data = asMap(res.data);
-      final prefs = asMap(data['notification_prefs']);
-      setState(() {
-        _notifPrefs = {
-          'new_matches': prefs['new_matches'] as bool? ?? true,
-          'messages': prefs['messages'] as bool? ?? true,
-        };
-        _notifLoading = false;
-      });
-    } catch (_) {
-      setState(() => _notifLoading = false);
-    }
+    await CachedRepository().loadPage(
+        'page:profile/me', _fetchPrefs, (data) async {
+      if (!mounted || data == null) {
+        if (mounted) setState(() => _notifLoading = false);
+        return; // API imeshindwa → diski ibaki
+      }
+      final prefs = asMap(asMap(data)['notification_prefs']);
+      if (mounted) {
+        setState(() {
+          _notifPrefs = {
+            'new_matches': prefs['new_matches'] as bool? ?? true,
+            'messages': prefs['messages'] as bool? ?? true,
+          };
+          _notifLoading = false;
+        });
+      }
+    });
+    if (mounted && _notifLoading) setState(() => _notifLoading = false);
   }
+
+  /// API ya wasifu — huitwa na CachedRepository nyuma ya pazia.
+  /// Inatumia funguo ile ile ya wasifu: bundle moja ya diski inawaka prefs.
+  Future<dynamic> _fetchPrefs() async =>
+      (await ApiService().getMyProfile()).data;
 
   Future<void> _saveNotifPrefs() async {
     setState(() => _notifSaving = true);
     try {
       await ApiService().updateNotificationPrefs(_notifPrefs);
+      // Diski ya wasifu (prefs zimemo) ifutwe — ifunguliwe tena ipakie mpya.
+      CachedRepository().invalidateKey('page:profile/me');
       if (mounted) {
         AppToast.success('Mipangilio ya arifa imehifadhiwa');
       }
@@ -95,19 +112,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ── Followed Regions ─────────────────────────────────────────────────────
 
   Future<void> _loadRegions() async {
+    // OFFLINE-FIRST: mikoa + zilizofuatwa za diski (papo hapo), kisha
+    // refresh nyuma ya pazia. API imeshindwa → skrini inabaki na diski.
     setState(() => _regionsLoading = true);
-    try {
-      final results = await Future.wait([
-        ApiService().getRegions(),
-        ApiService().get('/users/me/followed-regions'),
-      ]);
+    await CachedRepository().loadPage(
+        _kSettingsKey, _fetchFollowedBundle, (data) async {
+      if (!mounted || data == null) {
+        if (mounted) setState(() => _regionsLoading = false);
+        return; // API imeshindwa → diski ibaki
+      }
 
-      final regionsRes = results[0];
-      final followedRes = results[1];
-
+      final b = data as Map;
       // Parse all regions — could be List or Map with 'regions' key
       List<Map<String, dynamic>> regions = [];
-      final regData = regionsRes.data;
+      final regData = b['regions'];
       if (regData is List) {
         regions = regData.map(asMap).toList();
       } else if (regData is Map) {
@@ -116,20 +134,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       // Parse followed region ids
-      final followedData = asMap(followedRes.data);
+      final followedData = asMap(b['followed']);
       final followedList =
           (followedData['followed_regions'] as List<dynamic>?) ?? [];
       final ids =
           asList(followedList).whereType<Map>().map((r) => r['region_id']).toSet();
 
-      setState(() {
-        _allRegions = regions;
-        _followedRegionIds = ids;
-        _regionsLoading = false;
-      });
-    } catch (_) {
-      setState(() => _regionsLoading = false);
-    }
+      if (mounted) {
+        setState(() {
+          _allRegions = regions;
+          _followedRegionIds = ids;
+          _regionsLoading = false;
+        });
+      }
+    });
+    if (mounted && _regionsLoading) setState(() => _regionsLoading = false);
+  }
+
+  /// API za followed regions — huitwa na CachedRepository nyuma ya pazia.
+  Future<Map<String, dynamic>> _fetchFollowedBundle() async {
+    final results = await Future.wait([
+      ApiService().getRegions(),
+      ApiService().get('/users/me/followed-regions'),
+    ]);
+    return {'regions': results[0].data, 'followed': results[1].data};
   }
 
   Future<void> _saveFollowedRegions() async {
@@ -138,6 +166,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await ApiService().put('/users/me/followed-regions', data: {
         'region_ids': _followedRegionIds.toList(),
       });
+      // Diski ya settings ifutwe — ifunguliwe tena ipakie mpya.
+      CachedRepository().invalidateKey(_kSettingsKey);
       if (mounted) {
         AppToast.success('Mikoa iliyofuatwa imehifadhiwa');
       }
