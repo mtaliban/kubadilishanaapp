@@ -17,6 +17,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/page_skeleton.dart';
 import '../../services/websocket_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
@@ -840,9 +841,10 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
   Widget build(BuildContext context) {
     final hasDisk = CachedRepository().readOrNull<dynamic>(kMaoniCacheKey) != null;
     if (_loading && _items.isEmpty) {
+      // KANUNI: KAMWE spinner — kijivu (skeleton) tu, hata mara ya kwanza.
       return Scaffold(
         backgroundColor: _C.scaffoldOf(context),
-        body: const Center(child: CircularProgressIndicator(color: _C.blue)),
+        body: const PageSkeleton(rows: 6),
       );
     }
     if (_items.isEmpty && !hasDisk) {

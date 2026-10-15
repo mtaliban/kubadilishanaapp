@@ -9,6 +9,7 @@ import '../../config/theme.dart';
 import '../../services/api_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
+import '../../widgets/page_skeleton.dart';
 import '../../widgets/select_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1409,8 +1410,9 @@ class _State extends State<AdminUsersPage> {
               ),
               // ── Body ───────────────────────────────────────────────────
               if (_loading)
+                // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
                 const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator(color: _blue)))
+                    child: PageSkeleton(rows: 5))
               else if (_error != null)
                 SliverFillRemaining(
                   child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [

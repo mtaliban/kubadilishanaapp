@@ -6,6 +6,7 @@ import '../services/websocket_service.dart';
 import '../providers/auth_provider.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_shell.dart';
+import '../widgets/page_skeleton.dart';
 import 'changia_view.dart';
 
 // OFFLINE-FIRST — funguo za diski za ukurasa wa donate (changia).
@@ -161,13 +162,9 @@ class _DonateScreenState extends State<DonateScreen> {
       child: RefreshIndicator(
         onRefresh: _loadHistory,
         child: _loadingHistory && _history.isEmpty
-            ? ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: CircularProgressIndicator()),
-                ],
-              )
+            // KANUNI: KAMWE spinner — kijivu (skeleton) tu, hata mara ya
+            // kwanza baada ya install.
+            ? const PageSkeleton(rows: 4)
             : ChangiaView(
                 payNumber: _adminPhone,
                 defaultAmount: 2500,

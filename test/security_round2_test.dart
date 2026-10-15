@@ -119,8 +119,8 @@ void main() {
   });
 
   group('2. LOGOUT — session isolation kamili', () {
-    testWidgets('logout inafuta token, cache na badges — mtumiaji mpya hana'
-        ' data za wa zamani', (tester) async {
+    testWidgets('logout inaondoa token + badges; cache ya diski INABAKI',
+        (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final recorder = _HeaderRecorder();
       ApiService.dioForTest(ApiService()).httpClientAdapter = recorder;
@@ -136,8 +136,14 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('kv_token'), isNull,
           reason: 'Token imefutwa kwenye storage (logout kamili)');
-      expect(AppCache().get('/matches/board'), isNull,
-          reason: 'Cache ya session ya zamani imefutwa');
+      // KANUNI YA OFFLINE-FIRST (cache-endeleu): logout HAIKUfuti cache ya
+      // diski — mtumiaji yuleyule akirudi akuingia eti, kurusa zinaonyesha
+      // data zake PAPO HAPO (hakuna skeleton/loading, hata baada ya miaka 10).
+      // Isolation ya akaunti inafanyika kwa login — mtumiaji MWINGINE anapo-
+      // ingia, _clearCachesIfDifferentUser ndiye inayofuta diski.
+      expect(AppCache().get('/matches/board'), isNotNull,
+          reason: 'Cache ya diski haiifutiwa logout — mtumiaji yuleyule '
+              'anarejea kwa data zake papo hapo');
     });
 
     test('WS listener za session ya zamani zinafutwa na logout', () async {

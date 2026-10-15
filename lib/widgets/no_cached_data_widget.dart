@@ -15,6 +15,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../services/network_service.dart';
+import 'page_skeleton.dart';
 
 class NoCachedDataWidget extends StatefulWidget {
   const NoCachedDataWidget({super.key, this.onLoad, this.hint});
@@ -70,47 +71,52 @@ class _NoCachedDataWidgetState extends State<NoCachedDataWidget> {
     unawaited(widget.onLoad!());
   }
 
+  // KANUNI YA APP: KAMWE spinner — hata hii hali ya "haijapakuliwa".
+  // Mtumiaji anaona kijivu (skeleton) + maandishi mafupi tu.
+  // SingleChildScrollView (BILA LayoutBuilder — LayoutBuilder hairuhusu
+  // intrinsic dimensions zinazohitajika na SliverFillRemaining/hasScrollBody).
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Center(
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          if (!NetworkService().isOnline) ...[
-            Icon(Icons.download_for_offline_outlined,
-                size: 44,
-                color: dark ? const Color(0xFF334155) : const Color(0xFF9AA7B8)),
-          ] else ...[
-            const SizedBox(
-              width: 34,
-              height: 34,
-              child: CircularProgressIndicator(strokeWidth: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (!NetworkService().isOnline) Icon(
+              Icons.download_for_offline_outlined,
+              size: 40,
+              color: dark ? const Color(0xFF334155) : const Color(0xFF9AA7B8),
             ),
+            const SizedBox(height: 12),
+            Text(
+              'Data haijapakuliwa bado',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: dark ? const Color(0xFFE5E7EB) : const Color(0xFF33415C),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.hint ??
+                  'Vuta chini (pull-to-refresh) kupakia, au subiri '
+                      'mtandao — data itaonekana mara itakapofika.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12.5,
+                height: 1.45,
+                color: dark ? const Color(0xFFA8B1C1) : const Color(0xFF7B8794),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const PageSkeleton(rows: 2, scrollable: false),
           ],
-          const SizedBox(height: 12),
-          Text(
-            'Data haijapakuliwa bado',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: dark ? const Color(0xFFE5E7EB) : const Color(0xFF33415C),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            widget.hint ??
-                'Vuta chini (pull-to-refresh) kupakia, au subiri '
-                    'mtandao — data itaonekana mara itakapofika.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.45,
-              color: dark ? const Color(0xFFA8B1C1) : const Color(0xFF7B8794),
-            ),
-          ),
-        ]),
+        ),
       ),
     );
   }

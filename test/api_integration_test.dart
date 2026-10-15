@@ -230,7 +230,7 @@ void main() {
       expect(cache.get('/matches/me'), isNull, reason: 'TTL imeisha');
     });
 
-    test('AuthProvider.logout() inafuta cache yote + badge counts', () async {
+    test('AuthProvider.logout() inaendelea cache + badge counts', () async {
       final cache = AppCache();
       cache.set('/users/me', {'full_name': 'Zamani'});
       final badges = AdminBadgeService();
@@ -240,8 +240,12 @@ void main() {
       final auth = AuthProvider();
       await auth.logout();
 
-      expect(cache.get('/users/me'), isNull,
-          reason: 'logout lazima ifute AppCache — data za zamani zisibaki');
+      // KANUNI YA OFFLINE-FIRST (cache-endeleu): logout HAIKUfuti cache —
+      // mtumiaji yuleyule akir⁠udingia tena kurusa zinaonyesha data zake PAPO
+      // HAPO (hakuna skeleton/loading; isolation ya akaunti iko login).
+      expect(cache.get('/users/me'), isNotNull,
+          reason: 'Cache ya diski haiifutiwa logout — inafutwa tu ukipya '
+              'mtumiaji mwingine atakaingia (_clearCachesIfDifferentUser)');
       expect(badges.payments, 0, reason: 'Badges za admin ziwekwe sifuri');
       expect(badges.feedback, 0);
     });

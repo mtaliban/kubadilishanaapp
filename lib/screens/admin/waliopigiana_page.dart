@@ -18,6 +18,7 @@ import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/page_skeleton.dart';
 
 // ----------------------------------------------------------------------------
 // CONFIG: action button style on the expanded card.
@@ -483,10 +484,10 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
             _filters(),
             SizedBox(height: 12),
             if (_loading && _all.isEmpty)
-              Padding(
-                padding: EdgeInsets.all(40),
-                child: Center(
-                    child: CircularProgressIndicator(color: _C.of(context, _C.blue, Color(0xFF7AA7FF)))),
+              // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
+              const Padding(
+                padding: EdgeInsets.all(8),
+                child: PageSkeleton(rows: 4, scrollable: false),
               )
             else if (!_loading && _all.isEmpty &&
                 CachedRepository().readOrNull<dynamic>(_kKey) == null)

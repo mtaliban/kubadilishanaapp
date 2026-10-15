@@ -23,6 +23,7 @@ import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/page_skeleton.dart';
 
 // ----------------------------------------------------------------------------
 // Colors (from the approved mockup)
@@ -2271,8 +2272,8 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
       );
     }
     if (_data == null) {
-      return Center(
-          child: CircularProgressIndicator(color: _C.blue2(context)));
+      // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
+      return const PageSkeleton(rows: 4);
     }
     return StatisticsPage(
       data: _data!, // kamwe null hapa — guards hapo juu

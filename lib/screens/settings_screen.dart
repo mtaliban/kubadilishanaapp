@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/cached_repository.dart';
+import '../widgets/page_skeleton.dart';
 import '../config/theme.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_toast.dart';
@@ -227,9 +228,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
             ),
             child: _notifLoading
+                // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
                 ? const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Center(child: CircularProgressIndicator(color: _kBlue)),
+                    padding: EdgeInsets.all(16),
+                    child: PageSkeleton(rows: 2, scrollable: false),
                   )
                 : Column(children: [
                     _buildNotifSwitch(key: 'new_matches', title: 'Mechi Zimepatikana', subtitle: 'Pokea arifa unapopata mechi mpya'),
@@ -270,9 +272,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 2))],
             ),
             child: _regionsLoading
+                // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
                 ? const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Center(child: CircularProgressIndicator(color: _kBlue)),
+                    padding: EdgeInsets.all(16),
+                    child: PageSkeleton(rows: 3, scrollable: false),
                   )
                 : Column(children: [
                     if (_allRegions.isEmpty)

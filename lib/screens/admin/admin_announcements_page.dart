@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'admin_theme.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
+import '../../widgets/page_skeleton.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
 import 'admin_users_v2_theme.dart';
@@ -1127,13 +1128,15 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
 
   Widget _historiaView() {
     if (_loading) {
+      // KANUNI: KAMWE spinner — kijivu (skeleton) tu, hata mara ya kwanza.
       return ListView(
         key: const ValueKey('historia'),
         controller: _scroll,
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: const [
-          SizedBox(height: 60),
-          Center(child: CircularProgressIndicator(color: _cPrimary)),
+          SizedBox(height: 12),
+          PageSkeleton(rows: 4, scrollable: false),
         ],
       );
     }

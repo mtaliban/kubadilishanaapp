@@ -1,6 +1,7 @@
 // Auth state — login, register, logout, session persistence, admin 2FA.
 import 'package:dio/dio.dart' show DioException;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/admin_badge_service.dart';
 import '../services/api_service.dart';
 import '../services/app_cache.dart';
@@ -118,14 +119,15 @@ class AuthProvider extends ChangeNotifier {
       _user = AuthUser.fromJson(data);
       await _api.saveUserData(data);
       notifyListeners();
-    } on DioException catch (e) {
+      } on DioException catch (e) {
       // 401 pekee inamaanisha session ilishaisha kweli.
-      if (e.response?.statusCode == 401) {
+      if (
+e.response?.statusCode == 401) {
         await _api.removeToken();
         await _api.clearUserData();
         _user = null;
-        AppCache().clear();
-        CachedRepository().clearAll();
+        // KANUNI: cache ya diski INABAKI — mtumiaji yuleyule akirindinga,
+        // kurusa zinaonyesha data zake papo hapo (hakuna kijivu/skeleton).
         AdminBadgeService().reset();
         notifyListeners();
         appNavigatorKey.currentState
@@ -180,12 +182,13 @@ class AuthProvider extends ChangeNotifier {
           notifyListeners();
         }).catchError((Object e) async {
           // Kosa la 401 peke yake linatoa logout — kosa la mtandao linaachiwa
-          if (e is DioException && e.response?.statusCode == 401) {
+          if (
+e is DioException &&
+e.response?.statusCode == 401) {
             await _api.removeToken();
             await _api.clearUserData();
             _user = null;
-            AppCache().clear();
-            CachedRepository().clearAll();
+            // KANUNI: cache ya diski INABAKI (login ya baadaye = papo hapo).
             AdminBadgeService().reset();
             notifyListeners();
             appNavigatorKey.currentState
@@ -270,6 +273,10 @@ class AuthProvider extends ChangeNotifier {
       }
       await _api.saveToken(token);
       _user = AuthUser.fromJson(data);
+      // KANUNI YA CACHE-ENDELEU: diski ifutwe TU akaunti mwingine inapoingia
+      // (mtumiaji yuleyule akirudia login — kurusa zinaonyesha data papo hapo).
+      await _clearCachesIfDifferentUser(
+          '${data['id'] ?? data['user_id'] ?? ''}');
       _setupRealtime();
       pendingOtpPhone = null;
       pendingAdminEmail = null;
@@ -306,6 +313,9 @@ class AuthProvider extends ChangeNotifier {
       if (data['access_token'] != null) {
         await _api.saveToken(data['access_token'] as String);
         _user = AuthUser.fromJson(data);
+        // KANUNI YA CACHE-ENDELEU: diski ifutwe TU akaunti mwingine.
+        await _clearCachesIfDifferentUser(
+            '${data['id'] ?? data['user_id'] ?? ''}');
         _setupRealtime();
         pendingAdminEmail = null;
         _loading = false;
@@ -336,6 +346,10 @@ class AuthProvider extends ChangeNotifier {
       final token = data['access_token'] as String;
       await _api.saveToken(token);
       _user = AuthUser.fromJson(data);
+      // KANUNI YA CACHE-ENDELEU: diski ifutwe TU akaunti mwingine inapoingia
+      // (mtumiaji yuleyule akirudia login — kurusa zinaonyesha data papo hapo).
+      await _clearCachesIfDifferentUser(
+          '${data['id'] ?? data['user_id'] ?? ''}');
       _setupRealtime();
       pendingAdminEmail = null;
       _loading = false;
@@ -373,6 +387,10 @@ class AuthProvider extends ChangeNotifier {
       }
       await _api.saveToken(token);
       _user = AuthUser.fromJson(data);
+      // KANUNI YA CACHE-ENDELEU: diski ifutwe TU akaunti mwingine inapoingia
+      // (mtumiaji yuleyule akirudia login — kurusa zinaonyesha data papo hapo).
+      await _clearCachesIfDifferentUser(
+          '${data['id'] ?? data['user_id'] ?? ''}');
       _setupRealtime();
       pendingOtpPhone = null;
       _loading = false;
@@ -421,16 +439,35 @@ class AuthProvider extends ChangeNotifier {
     pendingAdminEmail = null;
     await _api.removeToken();
     await _api.clearUserData(); // futa data ya mtumiaji iliyohifadhiwa
-    // ── ISOLATION YA SESSION ──
-    // Cache yote ya GET (profiles, matches, admin lists, regions...) inafutwa
-    // ili mtumiaji mpya asiweze kuona data za aliyekuwa hapo awali (TTL ya
-    // cache ni dakika 2-30 — bila hii data za zamani zingerejea kwa screen).
-    AppCache().clear();
-    CachedRepository().clearAll();
+    // ── KANUNI YA CACHE-ENDELEU ──
+    // Logout HAIKUFUTI cache ya GET (profiles, matches, orodha, regions...).
+    // Mtumiaji yuleyule akirightingia/login tena — kurusa zitaonyesha data zake
+    // PAPO HAPO kutoka diski (hakuna loading, hata baada ya miaka 10).
+    // CLeaning inafanyika TU wakati mtumiaji MWINGINE anapoingia (isolation ya
+    // akaunti) — tazama _clearCachesIfDifferentUser.
     // Badges za admin (payments/feedback counts) ziwekwe sifuri.
     AdminBadgeService().stop();
     AdminBadgeService().reset();
     notifyListeners();
+  }
+
+  /// Isolation ya akaunti: cache IFUTWE TU mtumiaji MWINGINE anapoingia.
+  /// Hii inaendeshwa wakati wa login — sio logout — hivyo ulogout-setting
+  /// ya mtumiaji yuleyule haihuii data yake ya diski.
+  static const String _kLastUserId = 'cache_last_user_id';
+
+  Future<void> _clearCachesIfDifferentUser(String userId) async {
+    if (userId.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final last = prefs.getString(_kLastUserId);
+      if (last != null && last != userId) {
+        // Mtumiaji mwingine — diski ifutwe (asiwahi kiona data ya mwingine).
+        AppCache().clear();
+        CachedRepository().clearAll();
+      }
+      await prefs.setString(_kLastUserId, userId);
+    } catch (_) {}
   }
 
   void updateUser(AuthUser updated) {
