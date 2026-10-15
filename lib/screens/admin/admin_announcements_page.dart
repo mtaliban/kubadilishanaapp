@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'admin_theme.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
 import 'admin_users_v2_theme.dart';
@@ -217,6 +218,9 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — historia ya diski KWA FRAME YA KWANZA (hakuna
+    // spring); refresh ya mtandaoni iko nyuma ya pazia.
+    CachedRepository().hydrate(_kAnnKey, _applyDisk);
     _load();
     _loadWasikilizaji();
     _kichwaCtrl.addListener(_onFieldChange);
@@ -239,34 +243,43 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
 
   // ═══════════════════════ DATA (API halisi) ═══════════════════════
 
+  static const String _kAnnKey = 'page:admin/announcements';
+
+  /// Diski/API → historia (SYNC: diski kwenye frame ya kwanza, hakuna spring;
+  /// data mpya ikija inabadilisha kimya). Kosa la mtandao HALIONEKANI —
+  /// diski inabaki (banner juu ndilo laonyesha hali ya mtandao).
+  void _applyDisk(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final map = data is List ? <String, dynamic>{} : asMap(data);
+    final rawList = data is List
+        ? data
+        : (map['announcements'] as List? ?? map['results'] as List? ?? []);
+    setState(() {
+      _list = rawList.map((e) => Tangazo.fromJson(asMap(e))).toList();
+      _loading = false;
+      final pages = _pagesFor(_filteredCount);
+      if (_page > pages) _page = pages;
+    });
+  }
+
   Future<void> _load() async {
-    // SILENT REFRESH: spinner TU wakati orodha bado tupu.
+    // SILENT REFRESH: spinner TU wakati orodha bado tupu (diski hakuna bado).
     final first = _list.isEmpty && _loading;
     setState(() {
       if (first) _loading = true;
       _loadError = null;
     });
-    try {
-      final res = await ApiService().adminListAnnouncements();
-      if (!mounted) return;
-      final data = res.data;
-      final map = data is List ? <String, dynamic>{} : asMap(data);
-      final rawList = data is List
-          ? data
-          : (map['announcements'] as List? ?? map['results'] as List? ?? []);
-      setState(() {
-        _list = rawList.map((e) => Tangazo.fromJson(asMap(e))).toList();
-        _loading = false;
-        final pages = _pagesFor(_filteredCount);
-        if (_page > pages) _page = pages;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _loadError = friendlyError(e);
-      });
+    await CachedRepository().refresh(_kAnnKey,
+        () async => (await ApiService().adminListAnnouncements()).data);
+    if (!mounted) return;
+    final raw = CachedRepository().readOrNull<dynamic>(_kAnnKey);
+    if (raw == null) {
+      // Diski + API zote tupu (mtumiaji hajawahi kupata historia mtandaoni)
+      // — onaisha spinner; view tupu/tuma + pull-to-refresh zinabaki.
+      if (_loading) setState(() => _loading = false);
+      return;
     }
+    _applyDisk(raw);
   }
 
   /// Makundi (idara) + idadi za watumiaji kwa kila kundi (kutoka /admin/stats)

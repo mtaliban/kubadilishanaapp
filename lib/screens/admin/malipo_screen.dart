@@ -30,6 +30,7 @@ import 'package:flutter/services.dart';
 import '../../services/admin_badge_service.dart';
 import '../../services/api_service.dart';
 import '../../services/network_service.dart';
+import '../../services/cached_repository.dart';
 import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
@@ -1572,24 +1573,46 @@ class ApiMalipoController extends MalipoController {
           w.isEmpty ? w : w[0].toUpperCase() + w.substring(1).toLowerCase())
       .join(' ');
 
-  /// PAKIA malipo yote kutoka API, halafu gawanya kurasa. Inaitwa na page
-  /// (ukifungua) na shell (WS event).
+  /// DISKI PAPO HAPO: historia ya malipo iliyohifadhiwa inaonyeshwa MARA
+  /// MOJA (frame ya kwanza, hakuna spinner) — data mpya ikija mtandaoni
+  /// ukurasa unajisasisha kimya (kanuni ya "diski kwanza, refresh nyuma").
+  static const String _kMalipoKey = 'page:admin/malipo';
+
+  void hydrateFromDisk() {
+    final raw = CachedRepository().readOrNull<dynamic>(_kMalipoKey);
+    if (raw == null) return;
+    final list = raw is List
+        ? raw
+        : (asMap(raw)['payments'] as List? ??
+            asMap(raw)['results'] as List? ??
+            const []);
+    _all = [for (final e in list) _map(asMap(e))];
+    _recompute();
+    notifyListeners();
+  }
+
+  /// PAKIA malipo yote: diski kwanza (papo hapo), kisha refresh nyuma ya
+  /// pazia. Inaitwa na page (ukifungua) na shell (WS event).
   Future<void> load() async {
     if (_busy) return;
+    hydrateFromDisk();
     _busy = true;
     try {
-      final res = await ApiService().adminAllDonations();
-      final data = res.data;
-      final raw = data is List
-          ? data
-          : (asMap(data)['payments'] as List? ??
-              asMap(data)['results'] as List? ??
-              const []);
-      _all = [for (final e in raw) _map(asMap(e))];
-      _recompute();
-      notifyListeners();
-    } catch (e) {
-      AppToast.error(friendlyError(e));
+      await CachedRepository().refresh(_kMalipoKey,
+          () async => (await ApiService().adminAllDonations()).data);
+      final raw = CachedRepository().readOrNull<dynamic>(_kMalipoKey);
+      if (raw != null) {
+        final list = raw is List
+            ? raw
+            : (asMap(raw)['payments'] as List? ??
+                asMap(raw)['results'] as List? ??
+                const []);
+        _all = [for (final e in list) _map(asMap(e))];
+        _recompute();
+        notifyListeners();
+      }
+    } catch (_) {
+      // OFFLINE-FIRST: kosa halionekani — data ya diski inabaki (banner juu).
     } finally {
       _busy = false;
     }
@@ -1704,6 +1727,8 @@ class _AdminMalipoScreenPageState extends State<AdminMalipoScreenPage> {
   void initState() {
     super.initState();
     _controller = ApiMalipoController();
+    // DISKI KWA FRAME YA KWANZA — hakuna spinner, mtandao hauhusiki.
+    _controller.hydrateFromDisk();
     _controller.load();
     WebSocketService().on('notification', _onWs);
   }
