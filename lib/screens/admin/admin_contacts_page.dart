@@ -144,9 +144,10 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
   @override
   void initState() {
     super.initState();
-    _all = _diskData();
+    _all = _diskData(); // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring).
     _cacheRev = CachedRepository().revision;
     CachedRepository().addListener(_onRepoChange);
+    CachedRepository().hydrate(_kContactsKey, _applyContacts);
     _load();
   }
 
@@ -190,13 +191,15 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
     await CachedRepository().loadPage(_kContactsKey, () async {
       final res = await ApiService().getContactActivity(limit: 300);
       return res.data;
-    }, (data) async {
-      if (!mounted || data == null) return;
-      final raw = data is List ? data : ((data['contacts'] ?? data['results']) as List? ?? []);
-      setState(() {
-        _all = raw.whereType<Map<String, dynamic>>().toList();
-        _shown = _kStep;
-      });
+    }, _applyContacts);
+  }
+
+  void _applyContacts(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final raw = data is List ? data : ((data['contacts'] ?? data['results']) as List? ?? []);
+    setState(() {
+      _all = raw.whereType<Map<String, dynamic>>().toList();
+      _shown = _kStep;
     });
   }
 

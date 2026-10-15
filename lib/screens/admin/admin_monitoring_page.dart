@@ -33,6 +33,8 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
   void initState() {
     super.initState();
     CachedRepository().addListener(_onRepoChange);
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    CachedRepository().hydrate(_kKey, _applyMonitoring);
     _load();
   }
 
@@ -49,19 +51,23 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: matukio ya diski yabaki.
-    await CachedRepository().loadPage(_kKey,
-        () async => (await ApiService().adminGetMonitoring()).data, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      if (data is List) {
-        _events = data;
-      } else if (data is Map && data['events'] is List) {
-        _events = data['events'] as List;
-      } else {
-        _events = [];
-      }
-      if (mounted) setState(() => _loading = false);
-    });
+    await CachedRepository()
+        .loadPage(_kKey,
+            () async => (await ApiService().adminGetMonitoring()).data,
+            _applyMonitoring);
     if (mounted && _loading) setState(() => _loading = false);
+  }
+
+  void _applyMonitoring(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    if (data is List) {
+      _events = data;
+    } else if (data is Map && data['events'] is List) {
+      _events = data['events'] as List;
+    } else {
+      _events = [];
+    }
+    setState(() => _loading = false);
   }
 
   Color _dotColor(String? type) {

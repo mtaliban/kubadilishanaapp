@@ -29,9 +29,30 @@ class _DonateScreenState extends State<DonateScreen> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    final repo = CachedRepository();
+    repo.hydrate(_kDonateInfoKey, _applyDonateInfo);
+    repo.hydrate(_kDonateHistoryKey, _applyHistory);
     _loadInfo();
     _loadHistory();
     _setupRealtime();
+  }
+
+  void _applyDonateInfo(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    setState(() => _adminPhone = asMap(data)['phone'] as String? ?? _kAdminCall);
+  }
+
+  void _applyHistory(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    setState(() {
+      if (data is Map) {
+        _history = data['items'] ?? data['payments'] ?? [];
+      } else if (data is List) {
+        _history = data;
+      }
+      _loadingHistory = false;
+    });
   }
 
   @override
@@ -42,13 +63,7 @@ class _DonateScreenState extends State<DonateScreen> {
 
   Future<void> _loadInfo() async {
     // OFFLINE-FIRST: namba ya admin za diski (papo hapo), kisha refresh.
-    await CachedRepository().loadPage(
-        _kDonateInfoKey, _fetchInfo, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      if (mounted) {
-        setState(() => _adminPhone = asMap(data)['phone'] as String? ?? _kAdminCall);
-      }
-    });
+    await CachedRepository().loadPage(_kDonateInfoKey, _fetchInfo, _applyDonateInfo);
   }
 
   /// API ya info — huitwa na CachedRepository nyuma ya pazia.
@@ -58,19 +73,7 @@ class _DonateScreenState extends State<DonateScreen> {
   Future<void> _loadHistory() async {
     // OFFLINE-FIRST: historia za diski (papo hapo), kisha refresh nyuma ya pazia.
     if (mounted) setState(() => _loadingHistory = true);
-    await CachedRepository().loadPage(
-        _kDonateHistoryKey, _fetchHistory, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      if (mounted) {
-        setState(() {
-          if (data is Map) {
-            _history = data['items'] ?? data['payments'] ?? [];
-          } else if (data is List) {
-            _history = data;
-          }
-        });
-      }
-    });
+    await CachedRepository().loadPage(_kDonateHistoryKey, _fetchHistory, _applyHistory);
     if (mounted) setState(() => _loadingHistory = false);
   }
 

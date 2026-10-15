@@ -29,8 +29,23 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    CachedRepository().hydrate(_kKey, _applyPeople);
     _loadRegions();
     _load();
+  }
+
+  void _applyPeople(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final list = data is List
+        ? data
+        : ((data['users'] ?? data['results'] ?? data['data'] ?? const [])
+            as List);
+    setState(() {
+      _people =
+          list.whereType<Map<String, dynamic>>().map(_mapPerson).toList();
+      _loading = false;
+    });
   }
 
   Future<void> _loadRegions() async {
@@ -58,18 +73,7 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
         _kKey,
         () async =>
             (await ApiService().adminUsersWithMatches(limit: 500)).data,
-        (data) async {
-      if (!mounted || data == null) return;
-      final list = data is List
-          ? data
-          : ((data['users'] ?? data['results'] ?? data['data'] ?? const [])
-              as List);
-      setState(() {
-        _people =
-            list.whereType<Map<String, dynamic>>().map(_mapPerson).toList();
-        _loading = false;
-      });
-    });
+        _applyPeople);
     if (!mounted) return;
     if (_people.isEmpty && _loading) setState(() => _loading = false);
   }

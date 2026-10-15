@@ -32,8 +32,23 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — data ya diski KWA FRAME YA KWANZA (hakuna spring);
+    // refresh mtandaoni iko nyuma ya pazia.
+    CachedRepository().hydrate(_kKey, _applyMaoni);
     _load();
     WebSocketService().on('notification', _onWs);
+  }
+
+  void _applyMaoni(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final raw = data;
+    List<dynamic> list = [];
+    if (raw is Map) {
+      list = (raw['items'] ?? raw['feedbacks'] ?? []) as List;
+    } else if (raw is List) {
+      list = raw;
+    }
+    setState(() => _items = list.map(_toItem).toList());
   }
 
   @override
@@ -47,20 +62,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: maoni ya diski yabaki.
     if (_items.isEmpty) setState(() => _loading = true);
-    await CachedRepository().loadPage(
-        _kKey, _fetchFeedback, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final raw = data;
-      List<dynamic> list = [];
-      if (raw is Map) {
-        list = (raw['items'] ?? raw['feedbacks'] ?? []) as List;
-      } else if (raw is List) {
-        list = raw;
-      }
-      if (mounted) {
-        setState(() => _items = list.map(_toItem).toList());
-      }
-    });
+    await CachedRepository().loadPage(_kKey, _fetchFeedback, _applyMaoni);
     if (mounted) setState(() => _loading = false);
   }
 

@@ -156,27 +156,41 @@ class CachedRepository extends ChangeNotifier {
     }();
   }
 
-  /// Msaada kwa kurusa: soma diski mara moja (synchronous) + refresh
-  /// nyuma ya pazia. [apply] huitwa na data ya diski (au null) mara moja,
-  /// kisha tena na data mpya kama API ilifaulu.
+  /// Msaada kwa kurusa: soma diski PAPO HAPO (synchronous) na GAZA data
+  /// kwenye ukurasa mara moja. Itwa kwenye initState() ya ukurasa — kabla
+  /// ya frame ya kwanza. Data ya diski inaonekana MARA MOJA, hakuna spinner
+  /// hata milisekunde moja, hata mtandao ukiwa mbaya.
   ///
-  /// Ukurasa: `await CachedRepository().loadPage(key, fetch, apply)` kwenye
-  /// _load(); apply inabadilisha widgets no — hakuna spinner kuukatiza mtumiaji.
+  /// Kama hakuna data diski: hautagawa (ukurasa unaonyesha NoCachedDataWidget
+  /// na pull-to-refresh pekee).
+  void hydrate(String key, void Function(dynamic data) apply) {
+    final cached = readOrNull<dynamic>(key);
+    if (cached == null) return;
+    apply(cached);
+  }
+
+  /// Pakia ukurasa: 1) diski mara moja (synchronous — frame ya kwanza),
+  /// 2) refresh NYUMA YA PAZIA (data mpya inagusa diski na ukurasa
+  /// unajisasisha kimya — hakuna spinner inayoonekana kamwe).
+  ///
+  /// [apply] lazima iwe SYNC (void) — inaitwa hata kabla ya frame ya kwanza.
   Future<void> loadPage(
     String key,
     Future<dynamic> Function() fetch,
-    FutureOr<void> Function(dynamic data) apply,
+    void Function(dynamic data) apply,
   ) async {
-    // 1) Diski — PAPO HAPO (data ama null).
+    // 1) Diski — PAPO HAPO, kabla ya frame (data AMA NULL — ukurasa unaamua).
     final cached = readOrNull<dynamic>(key);
-    await apply(cached);
+    apply(cached);
     // 2) Refresh nyuma ya pazia — ikifaulu apply() tena na data mpya.
-    final rev0 = revision;
-    await refresh(key, fetch);
-    if (revision != rev0) {
-      final fresh = readOrNull<dynamic>(key);
-      if (fresh != null && !identical(fresh, cached)) await apply(fresh);
-    }
+    unawaited(() async {
+      final rev0 = revision;
+      await refresh(key, fetch);
+      if (revision != rev0) {
+        final fresh = readOrNull<dynamic>(key);
+        if (fresh != null && fresh != cached) apply(fresh);
+      }
+    }());
   }
 
   // ── Boot ─────────────────────────────────────────────────────────────────

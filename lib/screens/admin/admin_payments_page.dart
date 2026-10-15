@@ -43,8 +43,27 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    CachedRepository().hydrate(_kKey, _applyPayments);
     _load();
     WebSocketService().on('notification', _onWs);
+  }
+
+  void _applyPayments(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final map = data is Map ? data : const <String, dynamic>{};
+    final list =
+        (data is List ? data : (map['payments'] ?? map['results'] ?? const []))
+            as List;
+    setState(() {
+      _payments = list
+          .whereType<Map<String, dynamic>>()
+          .map(_mapPayment)
+          .toList();
+      _totalApprovedTzs =
+          (map['total_approved_tzs'] as num?)?.toInt();
+      _loading = false;
+    });
   }
 
   @override
@@ -56,24 +75,9 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
-    await CachedRepository().loadPage(
-        _kKey, () async => (await ApiService().adminAllDonations()).data,
-        (data) async {
-      if (!mounted || data == null) return;
-      final map = data is Map ? data : const <String, dynamic>{};
-      final list =
-          (data is List ? data : (map['payments'] ?? map['results'] ?? const []))
-              as List;
-      setState(() {
-        _payments = list
-            .whereType<Map<String, dynamic>>()
-            .map(_mapPayment)
-            .toList();
-        _totalApprovedTzs =
-            (map['total_approved_tzs'] as num?)?.toInt();
-        _loading = false;
-      });
-    });
+    await CachedRepository()
+        .loadPage(_kKey, () async => (await ApiService().adminAllDonations()).data,
+        _applyPayments);
     if (!mounted) return;
     if (_payments.isEmpty && _loading) setState(() => _loading = false);
   }

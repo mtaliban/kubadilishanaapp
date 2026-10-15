@@ -146,14 +146,24 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    final repo = CachedRepository();
+    repo.hydrate(_kReportsKey, _applyReports);
+    repo.hydrate(_kRefsKey, _applyRefs);
+    CachedRepository().addListener(_onRepoChange);
     _load();
     _loadRefs();
     _loadUsers();
     _loadNotifs();
   }
 
+  void _onRepoChange() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    CachedRepository().removeListener(_onRepoChange);
     _usersCtrl.dispose();
     _usersDebounce?.cancel();
     super.dispose();
@@ -162,14 +172,16 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
   // ── Data loading (API zote kama web) ────────────────────────────────────────
   Future<void> _loadRefs() async {
     // OFFLINE-FIRST: mikoa/idara za diski (papo hapo), kisha refresh nyuma.
-    await CachedRepository().loadPage(_kRefsKey, _fetchRefs, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final b = data as Map;
-      setState(() {
-        _regions = b['regions'] ?? [];
-        _departments = ((b['departments'] ?? []) as List).where((d) =>
-            '${asMap(d)['is_active'] ?? asMap(d)['active'] ?? true}' != 'false').toList();
-      });
+    await CachedRepository().loadPage(_kRefsKey, _fetchRefs, _applyRefs);
+  }
+
+  void _applyRefs(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final b = data as Map;
+    setState(() {
+      _regions = b['regions'] ?? [];
+      _departments = ((b['departments'] ?? []) as List).where((d) =>
+          '${asMap(d)['is_active'] ?? asMap(d)['active'] ?? true}' != 'false').toList();
     });
   }
 
@@ -203,28 +215,30 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: takwimu za diski zibaki.
     if (_data.isEmpty) setState(() => _loading = true);
-    await CachedRepository().loadPage(
-        _kReportsKey, _fetchAll, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final b = data as Map;
-      _stats = asMap(b['stats']);
-      _data = asMap(b['reports']);
-      final d = b['events'];
-      List raw = [];
-      if (d is List) {
-        raw = d;
-      } else if (d is Map) {
-        raw = (d['events'] as List?) ?? [];
-      }
-      _events = raw.where((e) {
-        final m = asMap(e);
-        final type = (m['event_type'] ?? m['type'] ?? '') as String;
-        return !['user.presence', 'user.online', 'user.offline',
-                 'user.connected', 'user.disconnected'].contains(type);
-      }).take(8).toList();
-      setState(() => _loading = false);
-    });
+    await CachedRepository()
+        .loadPage(_kReportsKey, _fetchAll, _applyReports);
     if (refresh) _loadNotifs();
+  }
+
+  void _applyReports(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final b = data as Map;
+    _stats = asMap(b['stats']);
+    _data = asMap(b['reports']);
+    final d = b['events'];
+    List raw = [];
+    if (d is List) {
+      raw = d;
+    } else if (d is Map) {
+      raw = (d['events'] as List?) ?? [];
+    }
+    _events = raw.where((e) {
+      final m = asMap(e);
+      final type = (m['event_type'] ?? m['type'] ?? '') as String;
+      return !['user.presence', 'user.online', 'user.offline',
+               'user.connected', 'user.disconnected'].contains(type);
+    }).take(8).toList();
+    setState(() => _loading = false);
   }
 
   /// API za ukurasa huu — huitwa na CachedRepository nyuma ya pazia.

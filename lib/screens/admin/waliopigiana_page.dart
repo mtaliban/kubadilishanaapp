@@ -372,7 +372,11 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.records == null) _load();
+    if (widget.records == null) {
+      // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+      CachedRepository().hydrate(_kKey, _applyRecords);
+      _load();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) => widget.onOpened?.call());
   }
 
@@ -388,21 +392,7 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
     setState(() { _loading = _apiList.isEmpty; });
     await CachedRepository().loadPage(
         _kKey, () async => (await ApiService().getContactActivity(limit: 300)).data,
-        (data) async {
-      if (!mounted || data == null) return;
-      final raw = data is List
-          ? data
-          : (asMap(data)['contacts'] ?? asMap(data)['results'] as List? ?? const []);
-      final rekodi = [
-        for (var i = 0; i < raw.length; i++)
-          CallRecord.fromApi(asMap(raw[i]), i),
-      ]..sort((a, b) => b.time.compareTo(a.time));
-      setState(() {
-        _apiList = rekodi;
-        _loading = false;
-        _page = 1;
-      });
-    });
+        _applyRecords);
     if (!mounted) return;
     // 'Anaenda' (mkoa anaohamia) mara nyingi haipo kwenye payload ya
     // contacts — tunaijaza kutoka GET /admin/users (namba = funguo).
@@ -418,6 +408,23 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
       }
     }
     if (mounted && _loading) setState(() => _loading = false);
+  }
+
+  /// Diski/API → rekodi (SYNC: diski kwenye frame ya kwanza, hakuna spring).
+  void _applyRecords(dynamic data) {
+    if (data == null) return;
+    final raw = data is List
+        ? data
+        : (asMap(data)['contacts'] ?? asMap(data)['results'] as List? ?? const []);
+    final rekodi = [
+      for (var i = 0; i < raw.length; i++)
+        CallRecord.fromApi(asMap(raw[i]), i),
+    ]..sort((a, b) => b.time.compareTo(a.time));
+    setState(() {
+      _apiList = rekodi;
+      _loading = false;
+      _page = 1;
+    });
   }
 
   bool _matchesQuery(CallRecord r) {

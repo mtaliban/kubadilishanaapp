@@ -83,6 +83,11 @@ class _AdminDataPageState extends State<AdminDataPage>
     for (final t in _types) {
       _searchCtrls[t] = TextEditingController()..addListener(() => setState(() {}));
     }
+    // DISKI PAPO HAPO — kila type ya diski KWA FRAME YA KWANZA (hakuna spring).
+    for (final t in _types) {
+      CachedRepository().hydrate('page:admin/data/$t',
+          (data) => _applyType(t, data));
+    }
     _loadType('subjects');
     _loadType('regions');
     WebSocketService().on('data.changed', _onWsDataChanged);
@@ -125,23 +130,22 @@ class _AdminDataPageState extends State<AdminDataPage>
       _errors[type] = null;
     });
     await CachedRepository().loadPage('page:admin/data/$type',
-        () async => (await ApiService().adminListData(type)).data, (data) async {
-      if (!mounted || data == null) return;
-      final list = data is List
-          ? data
-          : ((data['results'] ?? data['items'] ?? data['users'] ??
-                  data['data'] ?? []) as List);
-      setState(() {
-        _cache[type] = list;
-        _loading[type] = false;
-        _errors[type] = null;
-      });
+        () async => (await ApiService().adminListData(type)).data,
+        (data) => _applyType(type, data));
+  }
+
+  /// Diski/API → list ya type (SYNC: frame ya kwanza, hakuna spring).
+  void _applyType(String type, dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final list = data is List
+        ? data
+        : ((data['results'] ?? data['items'] ?? data['users'] ??
+                data['data'] ?? []) as List);
+    setState(() {
+      _cache[type] = list;
+      _loading[type] = false;
+      _errors[type] = null;
     });
-    if (!mounted) return;
-    if ((_cache[type] ?? const []).isEmpty && (_loading[type] ?? false)) {
-      // Diski + API zote tupu — onaisha spinner; NoCachedDataWidget itaonyeshwa.
-      setState(() { _loading[type] = false; });
-    }
   }
 
   List<dynamic> _filtered(String type) {

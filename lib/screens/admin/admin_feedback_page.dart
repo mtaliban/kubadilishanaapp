@@ -91,6 +91,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    CachedRepository().hydrate(_kFeedbackKey, _applyFeedback);
     _load();
     _searchCtrl.addListener(_applyFilter);
     WebSocketService().on('notification', _onWs);
@@ -108,21 +110,24 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: maoni ya diski yabaki.
     if (_all.isEmpty) setState(() => _loading = true);
-    await CachedRepository().loadPage(
-        _kFeedbackKey, _fetchAll, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      _all = data is List
-          ? data
-          : (asMap(data)['items'] as List? ?? asMap(data)['results'] as List? ?? []);
-      _applyFilter(keepPage: true);
-      if (mounted) setState(() => _loading = false);
-    });
+    await CachedRepository()
+        .loadPage(_kFeedbackKey, _fetchAll, _applyFeedback);
     if (mounted && _loading) setState(() => _loading = false);
   }
 
   /// API ya ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
   Future<dynamic> _fetchAll() async =>
       (await ApiService().adminListFeedback(status: '', q: '')).data;
+
+  /// Diski/API → maoni (SYNC: frame ya kwanza, hakuna spring).
+  void _applyFeedback(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    _all = data is List
+        ? data
+        : (asMap(data)['items'] as List? ?? asMap(data)['results'] as List? ?? []);
+    _applyFilter(keepPage: true);
+    setState(() => _loading = false);
+  }
 
   bool _isReplied(dynamic m) =>
       m['reply'] != null || (m['admin_reply'] as String? ?? '').isNotEmpty;

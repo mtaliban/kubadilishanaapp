@@ -191,23 +191,26 @@ class _MyMatchesTabState extends State<_MyMatchesTab>
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — diski ilihifadhiwa hapo MRUNGU (frame ya KWANZA,
+    // hakuna spring). Refresh ya mtandaoni inaendelea nyuma ya pazia.
+    CachedRepository().hydrate(_kMyMatchesKey, _applyMatches);
     _load();
+  }
+
+  void _applyMatches(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    setState(() {
+      _matches = asMap(data)['matches'] ?? [];
+      _loading = false;
+    });
   }
 
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: matches za diski zibaki.
     if (_matches.isEmpty) setState(() => _loading = true);
-    await CachedRepository().loadPage(
-        _kMyMatchesKey, _fetchMyMatches, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      if (mounted) {
-        setState(() {
-          _matches = asMap(data)['matches'] ?? [];
-          _loading = false;
-        });
-      }
-    });
+    await CachedRepository()
+        .loadPage(_kMyMatchesKey, _fetchMyMatches, _applyMatches);
     if (mounted && _loading) setState(() => _loading = false);
   }
 
@@ -347,21 +350,26 @@ class _RealMatchesTabState extends State<_RealMatchesTab>
   bool get wantKeepAlive => true;
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    // DISKI PAPO HAPO — frame ya KWANZA, hakuna spring.
+    CachedRepository().hydrate(_kTrueMatchesKey, _applyTrueMatches);
+    _load();
+  }
+
+  void _applyTrueMatches(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    setState(() {
+      _matches = asMap(data)['matches'] ?? [];
+      _loading = false;
+    });
+  }
 
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     if (_matches.isEmpty) setState(() => _loading = true);
-    await CachedRepository().loadPage(
-        _kTrueMatchesKey, _fetchTrueMatches, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      if (mounted) {
-        setState(() {
-          _matches = asMap(data)['matches'] ?? [];
-          _loading = false;
-        });
-      }
-    });
+    await CachedRepository()
+        .loadPage(_kTrueMatchesKey, _fetchTrueMatches, _applyTrueMatches);
     if (mounted && _loading) setState(() => _loading = false);
   }
 

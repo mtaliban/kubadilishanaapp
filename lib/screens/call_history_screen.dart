@@ -51,9 +51,21 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — historia ya diski KWA FRAME YA KWANZA (hakuna spring).
+    CachedRepository().hydrate(_kCallsKey, _applyCalls);
     _load();
     // Mtumiaji akipigiwa simu/SMS/WhatsApp, historia inajisasisha PAPO HAPO
     WebSocketService().on('contact.activity', _onWs);
+  }
+
+  void _applyCalls(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final calls = data is List ? data : <dynamic>[];
+    setState(() {
+      _allCalls = calls;
+      _applyFilter(_filter);
+      _loading = false;
+    });
   }
 
   @override
@@ -66,19 +78,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: historia ya diski inabaki.
     if (_allCalls.isEmpty) setState(() => _loading = true);
-    await CachedRepository().loadPage(
-        _kCallsKey, _fetchCalls, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final raw = data;
-      final calls = raw is List ? raw : <dynamic>[];
-      if (mounted) {
-        setState(() {
-          _allCalls = calls;
-          _applyFilter(_filter);
-          _loading = false;
-        });
-      }
-    });
+    await CachedRepository().loadPage(_kCallsKey, _fetchCalls, _applyCalls);
     if (mounted && _loading) setState(() => _loading = false);
   }
 

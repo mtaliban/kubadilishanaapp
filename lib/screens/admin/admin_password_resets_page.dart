@@ -40,7 +40,19 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
     super.initState();
     _tabCtrl = TabController(length: 3, vsync: this);
     _tabCtrl.addListener(() { if (!_tabCtrl.indexIsChanging) _loadTab(); });
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    CachedRepository().hydrate(_kKey('pending'),
+        (data) => _applyTab('pending', data));
     _load('pending');
+  }
+
+  void _applyTab(String status, dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final list = data is List
+        ? data
+        : (asMap(data)['results'] as List? ?? []);
+    _cache[status] = list;
+    setState(() => _loading = false);
   }
 
   @override
@@ -60,11 +72,7 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
     await CachedRepository().loadPage(_kKey(status),
         () async =>
             (await ApiService().adminListPasswordResets(status: status)).data,
-        (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      _cache[status] = data is List ? data : (asMap(data)['results'] as List? ?? []);
-      if (mounted) setState(() => _loading = false);
-    });
+        (data) => _applyTab(status, data));
     if (mounted && _loading) setState(() => _loading = false);
   }
 

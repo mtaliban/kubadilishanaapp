@@ -42,9 +42,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — data ya diski KWA FRAME YA KWANZA, hakuna spring
+    // hata milisekunde moja (kanuni ya WhatsApp). Refresh mtandaoni ni nyuma
+    // ya pazia; data mpya ikija ukurasa unajisasisha kimya.
+    CachedRepository().hydrate(_kNotifsKey, _applyNotifs);
     _load();
     WebSocketService().on('notification', _onWs);
     WebSocketService().on('notification.new', _onWs);
+  }
+
+  void _applyNotifs(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final List<dynamic> items = data is List
+        ? data
+        : (data['notifications'] ?? data['items'] ?? []) as List;
+    setState(() { _notifications = items; _loading = false; });
   }
 
   void _onWs(Map<String, dynamic> _) {
@@ -64,13 +76,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (_notifications.isEmpty) setState(() => _loading = true);
     await CachedRepository().loadPage(_kNotifsKey,
         () async => (await ApiService().getNotifications(limit: 100)).data,
-        (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final List<dynamic> items = data is List
-          ? data
-          : (data['notifications'] ?? data['items'] ?? []) as List;
-      if (mounted) setState(() { _notifications = items; _loading = false; });
-    });
+        _applyNotifs);
     if (mounted && _loading) setState(() => _loading = false);
     // Soma (mark-all-read) NYUMA YA PAZIA — inapofanikiwa tu.
     try { await ApiService().markAllRead(); } catch (_) {}

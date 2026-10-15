@@ -45,9 +45,40 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — matangazo ya diski KWA FRAME YA KWANZA (hakuna
+    // spring, hakuna kusubiri mtandao). Refresh iko nyuma ya pazia.
+    CachedRepository().hydrate(_kAnnouncementsKey, _applyAnnouncements);
     _load();
     WebSocketService().on('announcement', _onAnnouncement);
     WebSocketService().on('announcement.new', _onAnnouncement);
+  }
+
+  void _applyAnnouncements(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final b = data as Map;
+    final annData = b['announcements'];
+    final notifData = b['notifications'];
+
+    List<dynamic> active = [];
+    if (annData is Map) {
+      active = (annData['announcements'] ?? annData['items'] ?? []) as List;
+    } else if (annData is List) {
+      active = annData;
+    }
+
+    List<dynamic> notifs = [];
+    if (notifData is Map) {
+      notifs = (notifData['notifications'] ?? notifData['items'] ?? []) as List;
+    } else if (notifData is List) {
+      notifs = notifData;
+    }
+    final hist = notifs.where((n) => n['type'] == 'announcement').toList();
+
+    setState(() {
+      _active = _deduplicate(active, 'title', 'message');
+      _history = _deduplicate(hist, 'title', 'body');
+      _loading = false;
+    });
   }
 
   void _onAnnouncement(Map<String, dynamic> _) {
@@ -65,36 +96,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: matangazo ya diski yabaki.
-    await CachedRepository().loadPage(
-        _kAnnouncementsKey, _fetchBundle, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final b = data as Map;
-      final annData = b['announcements'];
-      final notifData = b['notifications'];
-
-      List<dynamic> active = [];
-      if (annData is Map) {
-        active = (annData['announcements'] ?? annData['items'] ?? []) as List;
-      } else if (annData is List) {
-        active = annData;
-      }
-
-      List<dynamic> notifs = [];
-      if (notifData is Map) {
-        notifs = (notifData['notifications'] ?? notifData['items'] ?? []) as List;
-      } else if (notifData is List) {
-        notifs = notifData;
-      }
-      final hist = notifs.where((n) => n['type'] == 'announcement').toList();
-
-      if (mounted) {
-        setState(() {
-          _active = _deduplicate(active, 'title', 'message');
-          _history = _deduplicate(hist, 'title', 'body');
-          _loading = false;
-        });
-      }
-    });
+    await CachedRepository()
+        .loadPage(_kAnnouncementsKey, _fetchBundle, _applyAnnouncements);
     if (mounted && _loading) setState(() => _loading = false);
   }
 

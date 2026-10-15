@@ -136,6 +136,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO: kurusa zote nne — kwenye frame ya KWANZA mtumiaji
+    // anaona data iliyohifadhiwa; hakuna spring/spinner hata milisekunde
+    // moja, na hakuna kusubiri mtandao. Data mpya inaingia nyuma ya pazia.
+    final repo = CachedRepository();
+    repo.hydrate(_kRegionsKey, _applyRegions);
+    repo.hydrate(_kBoardKey, _applyBoard);
+    repo.hydrate(_kTrueMatchesKey, _applyTrueMatches);
+    repo.hydrate(_kDashAnnouncementsKey, _applyDashboardAnnouncements);
     _loadInit();
     _loadRegions();
     _setupRealtime();
@@ -144,32 +152,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Mikoa YOTE ya Tanzania kutoka /locations/regions — kwa ajili ya
   /// kichujio cha dashibodi (chips). Bila hii chips zinaonyesha mikoa
   /// ya wenzio waliofanana tu.
+  void _applyRegions(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final list = data is List
+        ? data
+        : ((data is Map ? data['regions'] ?? data['data'] : null) as List? ?? []);
+    final names = <String>[];
+    final ids = <String, int>{};
+    for (final r in list) {
+      if (r is! Map) continue;
+      final name = '${r['name'] ?? r['region_name'] ?? ''}'.trim();
+      if (name.isEmpty) continue;
+      final id = int.tryParse('${r['id'] ?? r['region_id'] ?? ''}');
+      if (id == null) continue;
+      names.add(name);
+      ids[name] = id;
+    }
+    names.sort();
+    setState(() {
+      _allRegions = names;
+      _regionIds.addAll(ids);
+    });
+  }
+
   Future<void> _loadRegions() async {
     // OFFLINE-FIRST: mikoa za diski (papo hapo), kisha refresh nyuma ya pazia.
-    await CachedRepository().loadPage(
-        _kRegionsKey, _fetchRegions, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final list = data is List
-          ? data
-          : ((data is Map ? data['regions'] ?? data['data'] : null) as List? ?? []);
-      if (!mounted) return;
-      final names = <String>[];
-      final ids = <String, int>{};
-      for (final r in list) {
-        if (r is! Map) continue;
-        final name = '${r['name'] ?? r['region_name'] ?? ''}'.trim();
-        if (name.isEmpty) continue;
-        final id = int.tryParse('${r['id'] ?? r['region_id'] ?? ''}');
-        if (id == null) continue;
-        names.add(name);
-        ids[name] = id;
-      }
-      names.sort();
-      setState(() {
-        _allRegions = names;
-        _regionIds.addAll(ids);
-      });
-    });
+    await CachedRepository().loadPage(_kRegionsKey, _fetchRegions, _applyRegions);
   }
 
   /// API ya mikoa — huitwa na CachedRepository nyuma ya pazia.
@@ -230,9 +238,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadInit() async {
-    // Refresh user profile first to ensure currentStation is populated
+    // KANUNI YA OFFLINE-FIRST: usISUBIRI mtandao kabla ya kurasa!
+    // refreshUser (API ya profile) inaendelea NYUMA YA PAZIA — diski
+    // inaonyeshwa MARA MOJA na board/matches/matangazo hazikaguliwi.
+    // Iliapo kosa la 401 pekee ndipo AuthProvider inayachukua logout.
     if (mounted) {
-      await context.read<AuthProvider>().refreshUser();
+      final auth = context.read<AuthProvider>();
+      unawaited(auth.refreshUser());
     }
     await Future.wait([
       _loadBoard(),
@@ -251,27 +263,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? _kBoardKey
         : '$_kBoardKey?r=$rid&d=$did';
     if (mounted && _candidates.isEmpty) setState(() => _loading = true);
-    await CachedRepository().loadPage(
-        key, () => _fetchBoard(rid, did), (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final dataMap = data as Map;
-      if (mounted) {
-        setState(() {
-          // Sort: wapya (fresh) juu, kisha online, kama web sortFreshToTop
-          final raw = dataMap['candidates'] ?? [];
-          _candidates = [...raw]..sort((a, b) {
-            final fa = _isFresh(a['created_at'] ?? a['joined_at']);
-            final fb = _isFresh(b['created_at'] ?? b['joined_at']);
-            if (fa != fb) return fa ? -1 : 1;
-            final oa = a['online'] == true, ob = b['online'] == true;
-            if (oa != ob) return oa ? -1 : 1;
-            return 0;
-          });
-          _loading = false;
-        });
-      }
-    });
+    await CachedRepository()
+        .loadPage(key, () => _fetchBoard(rid, did), _applyBoard);
     if (mounted && _loading) setState(() => _loading = false);
+  }
+
+  /// Board ya diski/API — SYNC: diski inaonyeshwa kwenye frame ya kwanza.
+  void _applyBoard(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final dataMap = data as Map;
+    setState(() {
+      // Sort: wapya (fresh) juu, kisha online, kama web sortFreshToTop
+      final raw = dataMap['candidates'] ?? [];
+      _candidates = [...raw]..sort((a, b) {
+        final fa = _isFresh(a['created_at'] ?? a['joined_at']);
+        final fb = _isFresh(b['created_at'] ?? b['joined_at']);
+        if (fa != fb) return fa ? -1 : 1;
+        final oa = a['online'] == true, ob = b['online'] == true;
+        if (oa != ob) return oa ? -1 : 1;
+        return 0;
+      });
+      _loading = false;
+    });
   }
 
   /// API ya board — huitwa na CachedRepository nyuma ya pazia.
@@ -291,13 +304,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadTrueMatches() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo; ile ile ya tab ya matches/true),
     // kisha refresh nyuma ya pazia. API imeshindwa → skrini ibaki.
-    await CachedRepository().loadPage(
-        _kTrueMatchesKey, _fetchTrueMatches, (data) async {
-      if (!mounted || data == null) return;
-      if (mounted) {
-        setState(() => _trueMatches = asMap(data)['matches'] ?? []);
-      }
-    });
+    await CachedRepository()
+        .loadPage(_kTrueMatchesKey, _fetchTrueMatches, _applyTrueMatches);
+  }
+
+  void _applyTrueMatches(dynamic data) {
+    if (data == null) return;
+    setState(() => _trueMatches = asMap(data)['matches'] ?? []);
   }
 
   /// API ya trueMatches — huitwa na CachedRepository nyuma ya pazia.
@@ -306,14 +319,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadAnnouncements() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
-    await CachedRepository().loadPage(
-        _kDashAnnouncementsKey, _fetchAnnouncements, (data) async {
-      if (!mounted || data == null) return;
-      if (mounted) {
-        setState(() => _announcements =
-            asMap(data)['announcements'] ?? asMap(data)['items'] ?? []);
-      }
-    });
+    await CachedRepository()
+        .loadPage(_kDashAnnouncementsKey, _fetchAnnouncements,
+            _applyDashboardAnnouncements);
+  }
+
+  void _applyDashboardAnnouncements(dynamic data) {
+    if (data == null) return;
+    setState(() => _announcements =
+        asMap(data)['announcements'] ?? asMap(data)['items'] ?? []);
   }
 
   /// API ya matangazo — huitwa na CachedRepository nyuma ya pazia.

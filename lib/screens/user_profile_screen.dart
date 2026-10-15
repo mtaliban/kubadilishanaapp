@@ -61,7 +61,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — wasifu wa diski KWA FRAME YA KWANZA (hakuna spring);
+    // refresh mtandaoni iko nyuma ya pazia.
+    CachedRepository().hydrate(_kKey(widget.userId), _applyUser);
     _load();
+  }
+
+  void _applyUser(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    setState(() {
+      _user = asMap(data);
+      _loading = false;
+    });
   }
 
   Future<void> _load() async {
@@ -70,15 +81,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     if (_user == null) setState(() => _loading = true);
     await CachedRepository().loadPage(_kKey(widget.userId),
         () async => (await ApiService().get('/users/${widget.userId}')).data,
-        (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      if (mounted) {
-        setState(() {
-          _user = asMap(data);
-          _loading = false;
-        });
-      }
-    });
+        _applyUser);
     if (mounted && _loading) setState(() => _loading = false);
   }
 

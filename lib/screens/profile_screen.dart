@@ -68,6 +68,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — wasifu KWA FRAME YA KWANZA (hakuna spring).
+    CachedRepository().hydrate(_kProfileKey, _applyProfileBundle);
     _load();
     WebSocketService().on('user.updated_by_admin', _onWs);
     // LIVE: admin ameongeza mkoa/wilaya/kituo → profile ipakie upya PAPO HAPO
@@ -91,19 +93,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /* ---------- Data loading ---------- */
 
+  /// Diski PAPO HAPO — wasifu wa diski kwenye frame ya KWANZA (hakuna
+  /// spring, hakuna kusubiri mtandao). Itwa kwenye initState.
+  void _applyProfileBundle(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski inabaki
+    final bundle = data as Map;
+    final profile = asMapOrNull(bundle['profile']);
+    if (profile == null) return; // diski isiwe na bundle bandia
+    _raw = profile;
+    _applyBundleLookups(bundle);
+    setState(() => _loading = false);
+  }
+
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: wasifu wa diski inabaki.
-    await CachedRepository().loadPage(
-        _kProfileKey, _fetchProfileBundle, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski inabaki
-      final bundle = data as Map;
-      final profile = asMapOrNull(bundle['profile']);
-      if (profile == null) return; // diski isiwe na bundle bandia
-      _raw = profile;
-      _applyBundleLookups(bundle);
-      if (mounted) setState(() => _loading = false);
-    });
+    await CachedRepository()
+        .loadPage(_kProfileKey, _fetchProfileBundle, _applyProfileBundle);
     if (!mounted) return;
     // Mikoa/wilaya/vituo (dropdowns) → live backgrounds kama kawaida (vituo
     // havihifadhiwi kwenye funguo moja — kila region/district ina funguo yake).

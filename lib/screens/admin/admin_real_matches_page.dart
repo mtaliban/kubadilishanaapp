@@ -30,8 +30,24 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    CachedRepository().hydrate(_kKey, _applyPairs);
     _loadRegions();
     _load();
+  }
+
+  void _applyPairs(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final list = data is List
+        ? data
+        : ((data['matches'] ?? data['results'] ?? const []) as List);
+    setState(() {
+      _pairs = list
+          .whereType<Map<String, dynamic>>()
+          .map(_mapPair)
+          .toList();
+      _loading = false;
+    });
   }
 
   Future<void> _loadRegions() async {
@@ -55,21 +71,9 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
-    await CachedRepository().loadPage(
-        _kKey, () async => (await ApiService().adminRealMatches(limit: 500)).data,
-        (data) async {
-      if (!mounted || data == null) return;
-      final list = data is List
-          ? data
-          : ((data['matches'] ?? data['results'] ?? const []) as List);
-      setState(() {
-        _pairs = list
-            .whereType<Map<String, dynamic>>()
-            .map(_mapPair)
-            .toList();
-        _loading = false;
-      });
-    });
+    await CachedRepository()
+        .loadPage(_kKey, () async => (await ApiService().adminRealMatches(limit: 500)).data,
+        _applyPairs);
     if (!mounted) return;
     if (_pairs.isEmpty && _loading) setState(() => _loading = false);
   }

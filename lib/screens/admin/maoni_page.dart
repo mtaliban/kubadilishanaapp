@@ -768,6 +768,8 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    CachedRepository().hydrate(kMaoniCacheKey, _applyMaoniDisk);
     _load();
     WebSocketService().on('notification', _onWs);
   }
@@ -776,6 +778,30 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
   void dispose() {
     WebSocketService().off('notification', _onWs);
     super.dispose();
+  }
+
+  // DISKI/API → maoni (SYNC: frame ya kwanza, hakuna spring).
+  void _applyMaoniDisk(dynamic data) {
+    if (data == null) return;
+    final list = data is List
+        ? data
+        : (data is Map
+            ? (data['items'] as List? ??
+                data['results'] as List? ??
+                const [])
+            : const <dynamic>[]);
+    final items = <Maoni>[];
+    for (final it in list) {
+      if (it is! Map) continue;
+      final m = Map<String, dynamic>.from(it);
+      final maoni = _maoniFromFeedback(m, _fallbackCounter++);
+      _apiIds[maoni.id] = (m['id'] ?? m['_id'] ?? '').toString();
+      items.add(maoni);
+    }
+    setState(() {
+      _items = items;
+      _loading = false;
+    });
   }
 
   Future<void> _load() async {
@@ -787,28 +813,7 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
     await CachedRepository().loadPage(
         kMaoniCacheKey,
         () async => (await ApiService().adminListFeedback(status: '', q: '')).data,
-        (data) async {
-      if (!mounted || data == null) return;
-      final list = data is List
-          ? data
-          : (data is Map
-              ? (data['items'] as List? ??
-                  data['results'] as List? ??
-                  const [])
-              : const <dynamic>[]);
-      final items = <Maoni>[];
-      for (final it in list) {
-        if (it is! Map) continue;
-        final m = Map<String, dynamic>.from(it);
-        final maoni = _maoniFromFeedback(m, _fallbackCounter++);
-        _apiIds[maoni.id] = (m['id'] ?? m['_id'] ?? '').toString();
-        items.add(maoni);
-      }
-      setState(() {
-        _items = items;
-        _loading = false;
-      });
-    });
+        _applyMaoniDisk);
     if (!mounted) return;
     if (_items.isEmpty && _loading) setState(() => _loading = false);
   }

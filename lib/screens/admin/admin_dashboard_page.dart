@@ -61,6 +61,11 @@ class _State extends State<AdminDashboardPage>
   void initState() {
     super.initState();
     CachedRepository().addListener(_onRepoChange);
+    // DISKI PAPO HAPO — dashibodi na idara kwenye frame ya KWANZA
+    // (hakuna spring, hakuna kusubiri mtandao).
+    final repo = CachedRepository();
+    repo.hydrate(_kDashKey, _applyDash);
+    repo.hydrate(_kDashDeptsKey, _applyDepts);
     _tabCtrl = TabController(length: 2, vsync: this);
     _tabCtrl.addListener(() {
       if (!_tabCtrl.indexIsChanging &&
@@ -89,27 +94,30 @@ class _State extends State<AdminDashboardPage>
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
-    await CachedRepository().loadPage(_kDashKey, _fetchAll, (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final m = data as Map;
-      setState(() {
-        _stats = asMapOrNull(m['stats']) ?? {};
-        _reports = asMapOrNull(m['reports']) ?? {};
-        final d = asMapOrNull(m['events']) ?? <String, dynamic>{};
-        // Kama web dashboard: chuja presence ("Mtumiaji ameingia mtandaoni")
-        // KABLA ya kuchukua 6 — matukio halisi (amejiunga, match, malipo...)
-        // yabakiye yanaonekana.
-        final all = (d['events'] as List?) ?? [];
-        _events = all.where((e) {
-          final ev = asMap(e);
-          final type = '${ev['event_type'] ?? ev['type'] ?? ''}';
-          return !['user.presence', 'user.online', 'user.offline',
-                   'user.connected', 'user.disconnected'].contains(type);
-        }).toList();
-        _loading = false;
-      });
-    });
+    await CachedRepository().loadPage(_kDashKey, _fetchAll, _applyDash);
     await _loadDepts();
+  }
+
+  /// Diski/API → dashibodi (SYNC: frame ya kwanza, hakuna spring).
+  void _applyDash(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final m = data as Map;
+    setState(() {
+      _stats = asMapOrNull(m['stats']) ?? {};
+      _reports = asMapOrNull(m['reports']) ?? {};
+      final d = asMapOrNull(m['events']) ?? <String, dynamic>{};
+      // Kama web dashboard: chuja presence ("Mtumiaji ameingia mtandaoni")
+      // KABLA ya kuchukua 6 — matukio halisi (amejiunga, match, malipo...)
+      // yabakiye yanaonekana.
+      final all = (d['events'] as List?) ?? [];
+      _events = all.where((e) {
+        final ev = asMap(e);
+        final type = '${ev['event_type'] ?? ev['type'] ?? ''}';
+        return !['user.presence', 'user.online', 'user.offline',
+                 'user.connected', 'user.disconnected'].contains(type);
+      }).toList();
+      _loading = false;
+    });
   }
 
   /// API za ukurasa huu — huitwa na CachedRepository nyuma ya pazia.
@@ -129,17 +137,19 @@ class _State extends State<AdminDashboardPage>
   Future<void> _loadReports() => _load();
 
   Future<void> _loadDepts() async {
-    await CachedRepository().loadPage(_kDashDeptsKey,
-        () async => (await ApiService().adminListData('departments')).data,
-        (data) async {
-      if (!mounted || data == null) return; // API imeshindwa → diski ibaki
-      final d = data;
-      if (!mounted) return;
-      setState(() {
-        _departments = d is List
-            ? d
-            : ((asMap(d)['results'] ?? asMap(d)['items'] ?? []) as List);
-      });
+    await CachedRepository()
+        .loadPage(_kDashDeptsKey,
+            () async => (await ApiService().adminListData('departments')).data,
+            _applyDepts);
+  }
+
+  void _applyDepts(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final d = data;
+    setState(() {
+      _departments = d is List
+          ? d
+          : ((asMap(d)['results'] ?? asMap(d)['items'] ?? []) as List);
     });
   }
 

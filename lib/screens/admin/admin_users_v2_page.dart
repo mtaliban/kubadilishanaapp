@@ -84,6 +84,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — watumiaji wa diski KWA FRAME YA KWANZA (hakuna
+    // spring); refresh ya mtandaoni iko nyuma ya pazia.
+    CachedRepository().hydrate(_kUsersKey, _applyUsers);
     _load();
     _loadRefs();
     _search.addListener(_onSearch);
@@ -146,6 +149,19 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     } catch (_) {}
   }
 
+  /// Diski/API → watumiaji (SYNC: frame ya kwanza, hakuna spring).
+  void _applyUsers(dynamic data) {
+    final map = data is Map ? data : const {};
+    final list = (map['users'] ??
+            (data is List ? data : map['data'] ?? map['results'] ?? const []))
+        as List;
+    setState(() {
+      _users = list;
+      _total = (map['total'] as num?)?.toInt() ?? list.length;
+      _loading = false;
+    });
+  }
+
   Map<String, dynamic> get _queryParams {
     final q = _search.text.trim();
     return {
@@ -171,19 +187,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         () async =>
             (await ApiService().adminUsers(params: _queryParams, useCache: false))
                 .data,
-        (data) async {
-      if (!mounted || data == null) return;
-      final map = data is Map ? data : const {};
-      final list = (map['users'] ??
-              (data is List ? data : map['data'] ?? map['results'] ?? const []))
-          as List;
-      setState(() {
-        _users = list;
-        _total = (map['total'] as num?)?.toInt() ?? list.length;
-        _loading = false;
-      });
-      _flashLive();
-    });
+        _applyUsers);
     if (!mounted) return;
     if (_users.isEmpty && _loading) setState(() => _loading = false);
   }

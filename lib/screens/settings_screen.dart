@@ -56,8 +56,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
+    final repo = CachedRepository();
+    repo.hydrate('page:profile/me', _applyNotifPrefs);
+    repo.hydrate(_kSettingsKey, _applySettings);
     _loadNotifPrefs();
     _loadRegions();
+  }
+
+  void _applyNotifPrefs(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final prefs = asMap(asMap(data)['notification_prefs']);
+    setState(() {
+      _notifPrefs = {
+        'new_matches': prefs['new_matches'] as bool? ?? true,
+        'messages': prefs['messages'] as bool? ?? true,
+      };
+      _notifLoading = false;
+    });
+  }
+
+  void _applySettings(dynamic data) {
+    if (data == null) return; // API imeshindwa → diski ibaki
+    final b = data as Map;
+    // Parse all regions — could be List or Map with 'regions' key
+    List<Map<String, dynamic>> regions = [];
+    final regData = b['regions'];
+    if (regData is List) {
+      regions = regData.map(asMap).toList();
+    } else if (regData is Map) {
+      final list = regData['regions'] ?? regData['items'] ?? [];
+      regions = asList(list).map(asMap).toList();
+    }
+
+    // Parse followed region ids
+    final followedData = asMap(b['followed']);
+    final followedList =
+        (followedData['followed_regions'] as List<dynamic>?) ?? [];
+    final ids =
+        asList(followedList).whereType<Map>().map((r) => r['region_id']).toSet();
+
+    setState(() {
+      _allRegions = regions;
+      _followedRegionIds = ids;
+      _regionsLoading = false;
+    });
   }
 
   // ── Notification Prefs ───────────────────────────────────────────────────
@@ -66,23 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // OFFLINE-FIRST: prefs za diski (papo hapo) kutoka wasifu, kisha refresh
     // nyuma ya pazia. API imeshindwa → skrini inabaki na kwa diski.
     setState(() => _notifLoading = true);
-    await CachedRepository().loadPage(
-        'page:profile/me', _fetchPrefs, (data) async {
-      if (!mounted || data == null) {
-        if (mounted) setState(() => _notifLoading = false);
-        return; // API imeshindwa → diski ibaki
-      }
-      final prefs = asMap(asMap(data)['notification_prefs']);
-      if (mounted) {
-        setState(() {
-          _notifPrefs = {
-            'new_matches': prefs['new_matches'] as bool? ?? true,
-            'messages': prefs['messages'] as bool? ?? true,
-          };
-          _notifLoading = false;
-        });
-      }
-    });
+    await CachedRepository().loadPage('page:profile/me', _fetchPrefs, _applyNotifPrefs);
     if (mounted && _notifLoading) setState(() => _notifLoading = false);
   }
 
@@ -115,39 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // OFFLINE-FIRST: mikoa + zilizofuatwa za diski (papo hapo), kisha
     // refresh nyuma ya pazia. API imeshindwa → skrini inabaki na diski.
     setState(() => _regionsLoading = true);
-    await CachedRepository().loadPage(
-        _kSettingsKey, _fetchFollowedBundle, (data) async {
-      if (!mounted || data == null) {
-        if (mounted) setState(() => _regionsLoading = false);
-        return; // API imeshindwa → diski ibaki
-      }
-
-      final b = data as Map;
-      // Parse all regions — could be List or Map with 'regions' key
-      List<Map<String, dynamic>> regions = [];
-      final regData = b['regions'];
-      if (regData is List) {
-        regions = regData.map(asMap).toList();
-      } else if (regData is Map) {
-        final list = regData['regions'] ?? regData['items'] ?? [];
-        regions = asList(list).map(asMap).toList();
-      }
-
-      // Parse followed region ids
-      final followedData = asMap(b['followed']);
-      final followedList =
-          (followedData['followed_regions'] as List<dynamic>?) ?? [];
-      final ids =
-          asList(followedList).whereType<Map>().map((r) => r['region_id']).toSet();
-
-      if (mounted) {
-        setState(() {
-          _allRegions = regions;
-          _followedRegionIds = ids;
-          _regionsLoading = false;
-        });
-      }
-    });
+    await CachedRepository().loadPage(_kSettingsKey, _fetchFollowedBundle, _applySettings);
     if (mounted && _regionsLoading) setState(() => _regionsLoading = false);
   }
 

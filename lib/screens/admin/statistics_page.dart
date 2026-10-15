@@ -1780,6 +1780,8 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
   void initState() {
     super.initState();
     CachedRepository().addListener(_onRepoChange);
+    // DISKI PAPO HAPO — takwimu za diski KWA FRAME YA KWANZA (hakuna spring).
+    CachedRepository().hydrate(_kStatsKey, _applyStats);
     _load();
   }
 
@@ -1800,31 +1802,33 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
   // ignore: unused_element
   bool get _loading => CachedRepository().readOrNull<dynamic>(_kStatsKey) == null;
 
+  /// Diski/API → takwimu (SYNC: frame ya kwanza, hakuna spring).
+  void _applyStats(dynamic data) {
+    if (data == null) return; // hakuna diski + API imeshindwa → skrini isiwe mpya
+    final statsMap = asMap((data as Map)['stats']);
+    final reportsMap = asMap(data['reports']);
+    final eventsMap = asMap(data['events']);
+    // Kama web dashboard: chuja presence ("Mtumiaji ameingia mtandaoni")
+    // KABLA ya kuchukua 6 — matukio halisi (amejiunga, match, malipo...)
+    // yabakiye yanaonekana.
+    final eventsAll = asList(eventsMap['events']);
+    final events = eventsAll.where((ev) {
+      final m = asMap(ev);
+      final type = '${m['event_type'] ?? m['type'] ?? ''}';
+      return !['user.presence', 'user.online', 'user.offline',
+               'user.connected', 'user.disconnected'].contains(type);
+    }).toList();
+    final data0 = _buildStats(statsMap, reportsMap, events);
+    if (data0 == null) return; // hakuna takwimu halisi bado — diski isiwe na data bandia
+    setState(() {
+      _data = data0;
+      _diskOk = true;
+    });
+  }
+
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
-    await CachedRepository().loadPage(_kStatsKey, _fetchAll, (data) async {
-      if (!mounted) return;
-      if (data == null) return; // hakuna diski + API imeshindwa → skrini isiwe mpya
-      final statsMap = asMap((data as Map)['stats']);
-      final reportsMap = asMap(data['reports']);
-      final eventsMap = asMap(data['events']);
-      // Kama web dashboard: chuja presence ("Mtumiaji ameingia mtandaoni")
-      // KABLA ya kuchukua 6 — matukio halisi (amejiunga, match, malipo...)
-      // yabakiye yanaonekana.
-      final eventsAll = asList(eventsMap['events']);
-      final events = eventsAll.where((ev) {
-        final m = asMap(ev);
-        final type = '${m['event_type'] ?? m['type'] ?? ''}';
-        return !['user.presence', 'user.online', 'user.offline',
-                 'user.connected', 'user.disconnected'].contains(type);
-      }).toList();
-      final data0 = _buildStats(statsMap, reportsMap, events);
-      if (data0 == null) return; // hakuna takwimu halisi bado — diski isiwe na data bandia
-      setState(() {
-        _data = data0;
-        _diskOk = true;
-      });
-    });
+    await CachedRepository().loadPage(_kStatsKey, _fetchAll, _applyStats);
     if (!mounted) return;
     // Kama diski na API zote mbili hazikutoa takwimu halisi — onyesha hali
     // "haijapakuliwa" (pull-to-refresh pekee). Error inaondolewa kwenye skrini.
