@@ -75,6 +75,32 @@ class CachedRepository extends ChangeNotifier {
   /// Kama kuna data yoyote iliyohifadhiwa kwenye diski.
   bool get hasAnyData => AppCache().hasAny || _updatedAt.isNotEmpty;
 
+  // ── KUANDIKA (kwa screens zinazo-paginate wenyewe) ─────────────────────────────
+
+  /// Funguo ya cache ya ukurasa maalum wa orodha: "<base>@p<n>" + fingerprint
+  /// ya vichujio (search/kategoria n.k.). Kurusa zinazo-paginate (users v2
+  /// n.k.) zinatumia hii — kila ukurasa uliowahi kutembelewa unahifadhiwa
+  /// kwenye diski, hivyo Next/Ifuatayo inafunguka KUTOKA DISKI hata offline.
+  static String pagedKey(String base, int page, {String? filterHint}) {
+    final f = (filterHint ?? '').trim();
+    return f.isEmpty ? '$base@p$page' : '$base@p$page@${Uri.encodeComponent(f)}';
+  }
+
+  /// Andika data kwenye diski PAPO HAPO (bila kupiga API) na arifa
+  /// (notifyListeners) — screens zote zinazotumia funguo hii zitasasishwa
+  /// (revision). Inaitwa na kurusa zinazo-paginate wenyewe:
+  /// SCREEN >>> CACHE >>> BASI (API inaitwa tu kupakua data; kila kitu
+  /// kinachoonyeshwa kwenye skrini kimetoka kwenye cache).
+  void write(String key, dynamic data) {
+    if (data == null) return;
+    AppCache().set(key, data, ttl: _diskTtl);
+    final now = DateTime.now();
+    _updatedAt[key] = now;
+    _persistUpdatedAt(key, now);
+    _revision++;
+    notifyListeners();
+  }
+
   // ── KUSOMA (diski pekee — haipigi API) ───────────────────────────────────
 
   /// Soma data iliyohifadhiwa kwenye diski — PAPO HAPO (synchronous).

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/select_sheet.dart';
 import 'admin_users_v2_theme.dart';
@@ -298,15 +299,28 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     _bootstrap();
   }
 
+  /// DISKI-KWANZA kwa nyaraka za fomu (idara/kada/masomo/wilaya/vituo):
+  ///  1) soma cache PAPO HAPO (sync — fomu haina kusubiri mtandao),
+  ///  2) refresh NYUMA YA PAZIA — data mpya ikitoka INAINGIA CACHE kwanza
+  ///     (CachedRepository), ndipo fomu isome kutoka huko.
+  /// Offline: data ya diski inabaki — hakuna fldi tupu.
+  Future<void> _loadRef(
+      String key, Future<dynamic> Function() fetch, void Function(dynamic) apply) async {
+    final cached = CachedRepository().readOrNull<dynamic>(key);
+    if (cached != null) apply(cached);
+    await CachedRepository().refresh(key, fetch);
+    if (!mounted) return;
+    final fresh = CachedRepository().readOrNull<dynamic>(key);
+    if (fresh != null && !identical(fresh, cached)) {
+      setState(() => apply(fresh));
+    }
+  }
+
   Future<void> _bootstrap() async {
-    try {
-      final r = await ApiService().adminListDepartments();
-      final raw = r.data;
-      if (!mounted) return;
-      setState(() => _departments = raw is List
-          ? raw
-          : (raw['results'] ?? raw['items'] ?? raw['data'] ?? []));
-    } catch (_) {}
+    await _loadRef('ref:admin/departments',
+        () async => (await ApiService().adminListDepartments()).data,
+        (raw) => _departments =
+            raw is List ? raw : (raw['results'] ?? raw['items'] ?? raw['data'] ?? []));
     await _loadCadres();
     if (_category == 'education') await _loadSubjects();
     if (_regionId != null) await _loadDistricts();
@@ -315,47 +329,36 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
 
   Future<void> _loadCadres() async {
     if (_category.isEmpty) return;
-    try {
-      final r = await ApiService().getCadres(category: _category);
-      final raw = r.data;
-      if (!mounted) return;
-      setState(
-          () => _cadres = raw is List ? raw : (raw['cadres'] ?? raw['data'] ?? []));
-    } catch (_) {}
+    await _loadRef(
+        'ref:admin/cadres/$_category',
+        () async => (await ApiService().getCadres(category: _category)).data,
+        (raw) => _cadres = raw is List ? raw : (raw['cadres'] ?? raw['data'] ?? []));
   }
 
   Future<void> _loadSubjects() async {
     if (_category != 'education') return;
-    try {
-      final r = await ApiService().getSubjects(level: 'Primary');
-      final raw = r.data;
-      if (!mounted) return;
-      setState(() =>
-          _subjects = raw is List ? raw : (raw['subjects'] ?? raw['data'] ?? []));
-    } catch (_) {}
+    await _loadRef(
+        'ref:admin/subjects',
+        () async => (await ApiService().getSubjects(level: 'Primary')).data,
+        (raw) => _subjects = raw is List ? raw : (raw['subjects'] ?? raw['data'] ?? []));
   }
 
   Future<void> _loadDistricts() async {
     if (_regionId == null) return;
-    try {
-      final r = await ApiService().getDistricts(_regionId!);
-      final raw = r.data;
-      if (!mounted) return;
-      setState(() =>
-          _districts = raw is List ? raw : (raw['districts'] ?? raw['data'] ?? []));
-    } catch (_) {}
+    await _loadRef(
+        'ref:admin/districts/$_regionId',
+        () async => (await ApiService().getDistricts(_regionId!)).data,
+        (raw) => _districts = raw is List ? raw : (raw['districts'] ?? raw['data'] ?? []));
   }
 
   Future<void> _loadFacilities() async {
     if (_districtId == null) return;
-    try {
-      final r =
-          await ApiService().getFacilities(_districtId!, category: _category);
-      final raw = r.data;
-      if (!mounted) return;
-      setState(() => _facilities =
-          raw is List ? raw : (raw['facilities'] ?? raw['data'] ?? []));
-    } catch (_) {}
+    await _loadRef(
+        'ref:admin/facilities/$_districtId/$_category',
+        () async =>
+            (await ApiService().getFacilities(_districtId!, category: _category)).data,
+        (raw) => _facilities =
+            raw is List ? raw : (raw['facilities'] ?? raw['data'] ?? []));
   }
 
   String _deptLabel() {
@@ -526,10 +529,18 @@ class _V2UserFormScreenState extends State<V2UserFormScreen> {
     );
     if (mkoa == null || mkoa.id == null) return;
     List<dynamic> dists = [];
+    final dKey = 'ref:admin/districts/${mkoa.id}';
+    // DISKI KWANZA — wilaya za mkoa huu zinazohifadhiwa zinaonekana PAPO HAPO.
+    final dCached = CachedRepository().readOrNull<dynamic>(dKey);
+    if (dCached != null) {
+      dists = dCached is List ? dCached : (dCached['districts'] ?? dCached['data'] ?? []);
+    }
+    // MTANDAO NYUMA YA PAZIA — mpya ikifika INAINGIA CACHE kisha hapa (rename).
     try {
       final r = await ApiService().getDistricts(int.parse(mkoa.id!));
       final raw = r.data;
       dists = raw is List ? raw : (raw['districts'] ?? raw['data'] ?? []);
+      CachedRepository().write(dKey, raw);
     } catch (_) {}
     String? distId;
     String? distName;

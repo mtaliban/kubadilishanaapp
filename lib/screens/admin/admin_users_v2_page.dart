@@ -177,6 +177,25 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     };
   }
 
+  /// Ulaini wa vichujio (search/kategoria/status/eneo) — hutumika kupanga
+  /// funguo ya kache ya kila ukurasa (ukurasa ule ule wa vichujio mbalimbali
+  /// unahifadhiwa kwa funguo tofauti).
+  String get _filterFp => [
+        _search.text.trim(),
+        _category,
+        _status ?? '',
+        _regionId ?? '',
+        _districtId ?? '',
+        _facilityId ?? '',
+        _subjectCode ?? '',
+      ].join('·');
+
+  /// Funguo ya kache ya ukurasa ULIPO HIVI — SCREEN >>> CACHE >>> BASI:
+  /// kila ukurasa uliowahi kutembelewa unahifadhiwa kwenye diski, hivyo
+  /// Next/Iliopita/Ifuatayo zinathibitishwa KUTOKA DISKI hata offline.
+  String get _pageCacheKey =>
+      CachedRepository.pagedKey(_kUsersKey, _page, filterHint: _filterFp);
+
   Future<void> _load() async {
     // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
     // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
@@ -188,27 +207,43 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
             (await ApiService().adminUsers(params: _queryParams, useCache: false))
                 .data,
         _applyUsers);
+    // Data iliyohifadhiwa kwenye diski (ingia yo yote ya ukurasa)
+    // iandikwe pia kwenye funguo ya ukurasa huu — Next/Ifuatayo ya
+    // Offline italitema hapo.
+    final disk = CachedRepository().readOrNull<dynamic>(_kUsersKey);
+    if (disk != null) CachedRepository().write(_pageCacheKey, disk);
     if (!mounted) return;
     if (_users.isEmpty && _loading) setState(() => _loading = false);
   }
 
   Future<void> _fetchPage(int page) async {
     if (page < 0) return;
-    // SILENT pagination: hakuna spinner ya kukatiza — orodha ya kale inabaki
-    // hadi ukurasa mpya ifike (Next/Ifuatayo haiweki page "inazunguka").
-    setState(() => _pageLoading = true);
     final old = _page;
-    _page = page;
+    setState(() => _page = page); // _queryParams/zinazotegemea _page zisomwe baaada tu
+    final cacheKey = CachedRepository.pagedKey(_kUsersKey, page, filterHint: _filterFp);
+
+    // ── 1. DISKI PAPO HAPO — SCREEN >>> CACHE >>> BASI. Ukurasa uliowahi
+    // kutembelewa unaonekana MUDA HUU (frame ya moja, hakuna mtandao).
+    final cached = CachedRepository().readOrNull<dynamic>(cacheKey);
+    if (cached != null) {
+      // Onyesha kutoka diski MARA MOJA — hakuna kusubiri mtandao.
+      _applyUsers(cached);
+      if (_scrollCtrl.hasClients) _scrollCtrl.jumpTo(0);
+      setState(() => _pageLoading = false);
+    }
+
+    // ── 2. MTANDAO NYUMA YA PAZIA — data mpya IKIINGIA CACHE KISHA SCREEN
+    // (kama ulivyoomba: data mpya iingie kache, ndio ipitishwe kwa skrini).
     try {
-      // useCache:false — kila ukurasa upye data halisi kutoka server
-      // (skip/limit za backend zinafanya kazi; cache isirudishe ukurasa wa kale).
-      final r =
-          await ApiService().adminUsers(params: _queryParams, useCache: false);
+      final r = await ApiService()
+          .adminUsers(params: _queryParams, useCache: false);
       if (!mounted) return;
       final raw = r.data;
       final map = raw is Map ? raw : {};
       final list = (map['users'] ??
           (raw is List ? raw : map['data'] ?? map['results'] ?? [])) as List;
+      // ANDIKA CACHE KWANZA — ndio screen isome kutoka huko:
+      CachedRepository().write(cacheKey, raw);
       setState(() {
         _users = list;
         // _total inasasishwa KILA wakati — idadi ya watumiaji inaweza
@@ -219,18 +254,26 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       });
       // Nenda juu ya orodha — mtumiaji aone users wa ukurasa mpya kuanzia
       // mwanzo (badala ya kukaa chini ambapo alibonyeza kitufe).
-      if (mounted && _scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(0,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut);
-      }
+      if (!mounted || !_scrollCtrl.hasClients) return;
+      _scrollCtrl.animateTo(0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut);
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _page = old;
-        _pageLoading = false;
-      });
-      _showMsg('Imeshindikana kupakia ukurasa. Vuta chini kupakia tena.');
+      if (cached != null) {
+        // UKURASA ULIOWAHI KUTEMBELEWA — data ya diski inaonekana bado;
+        // hakuna kosa linalonuka skrini (hakuna kubadilisha chochote).
+        setState(() => _pageLoading = false);
+      } else {
+        // Hakuna cache YA UKURASA HUU + mtandao mbaya — rudi ukurasa ule ule
+        // wa awali na eleza kwa upole (data ya diski inabaki salama).
+        setState(() {
+          _page = old;
+          _pageLoading = false;
+        });
+        _showMsg('Ukurasa huu haukuhifadhiwa kwenye cache bado — ukia na '
+            'mtandao itajihifadhi yenyewe na kutembea hata kizima mtandao.');
+      }
     }
   }
 
