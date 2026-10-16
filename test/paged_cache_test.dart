@@ -97,4 +97,56 @@ void main() {
       expect(updated['users'].length, 3);
     });
   });
+
+  group('syncAll — FULL-SYNC (pages ZOTE kwa diski)', () {
+    test('inapakia kurasa zote (skip loop) kisha inaandika diski MOJO',
+        () async {
+      final repo = CachedRepository();
+      final key = 'page:f/editors@p';
+      final faked = <String, Map<String, dynamic>>{};
+      final fakes = List.generate(950, (i) => {'_id': '$i', 'name': 'u$i'});
+      faked[key] = {'users': fakes};
+
+      final progress = <int>[];
+      await repo.syncAll(key,
+          limit: 200,
+          fetchPage: (limit, skip) async => <String, dynamic>{
+                'users': fakes.sublist(
+                    skip, (skip + limit).clamp(0, fakes.length)),
+              },
+          pack: (all) => {'users': all, 'total': all.length},
+          onProgress: (soFar) => progress.add(soFar.length));
+
+      final packed = repo.readOrNull<dynamic>(key) as Map;
+      expect(packed['total'], 950);
+      expect((packed['users'] as List).length, 950);
+      expect(progress.last, greaterThanOrEqualTo(950));
+    });
+
+    test('fetchPage yenye kosa (API pekee) — diski inabaki salama',
+        () async {
+      final repo = CachedRepository();
+      repo.write('page:f/x@p', {'users': [1]});
+      await repo.syncAll('page:f/x@p',
+          fetchPage: (limit, skip) async => throw Exception('mtandao'));
+      // Diski HAIBADILIKI (kanuni ya offline-first):
+      final data = repo.readOrNull<dynamic>('page:f/x@p') as Map;
+      expect(data['users'], [1]);
+    });
+
+    test('inamaliza kurasa mpya hituni (dedup kwa id)', () async {
+      final repo = CachedRepository();
+      final key = 'page:dedup';
+      final page0 = List.generate(50, (i) => {'_id': '$i'});
+      await repo.syncAll(key,
+          limit: 50,
+          maxItems: 300,
+          // Server inarudisha ukurasa ULE ULE kila skip (hakuna skip effect):
+          fetchPage: (limit, skip) async => page0,
+          pack: (all) => {'users': all});
+      final packed = repo.readOrNull<dynamic>(key) as Map;
+      // Hakuna marudio ya mitihani ule ule — verification ya dedup:
+      expect((packed['users'] as List).length, 50);
+    });
+  });
 }

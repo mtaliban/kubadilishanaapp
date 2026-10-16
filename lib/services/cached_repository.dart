@@ -101,6 +101,83 @@ class CachedRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── FULL-SYNC (kurasa ZOTE kwa orodha moja) ─────────────────────────────────────
+
+  /// FULL-SYNC — piga API kurasa ZOTE (limit/skip loop) hadi orodha KAMILI
+  /// imekamilika, KISHA andika diski PAPO HAPO (mapendekezo MOJA).
+  /// SCREEN >>> CACHE >>> BASI: ukurasa unafungua kache ile ile; pagination
+  /// inakuwa slice ya ndani ya orodha kamili — pages zote zina chapu tu,
+  /// online/offline sawa. Vichujio/search pia vinafanywa NDANI ya orodha
+  /// hii (hakuna API ya vichujio).
+  ///
+  /// [fetchPage] inarudisha ukurasa mmoja wa API kwa (limit, skip).
+  /// [pack] inaunganisha orodha kamili kwenye muundo wa diski (default: list).
+  /// [onProgress] inaitwa na orodha kwa kiasi kila ukurasa unapoandikwa —
+  /// skrini inaonyesha yake kwa kundi moja moja (frame ya kwanza!) na kisha.
+  /// Kigezo kuu: kila kitu KINATOKEA kwenye CACHE kwanza, kisha SCREEN.
+  Future<void> syncAll(
+    String key, {
+    required Future<dynamic> Function(int limit, int skip) fetchPage,
+    dynamic Function(List<dynamic> all)? pack,
+    void Function(List<dynamic> soFar)? onProgress,
+    int limit = 200,
+    int maxItems = 20000,
+  }) async {
+    // Request MOJA kwa funguo (pull-to-refresh/WS badgelia... zote
+    // zinashirikisha sikanu moja ya kupakia).
+    var f = _inflight[key];
+    if (f == null) {
+      f = () async {
+        try {
+          final all = <dynamic>[];
+          final seen = <String>{};
+          String sig(dynamic e) => e is Map
+              ? '${e['_id'] ?? e['user_id'] ?? e['id'] ?? e['phone_primary'] ?? all.length}'
+              : '$e';
+          for (var skip = 0; all.length < maxItems; skip += limit) {
+            final raw = await fetchPage(limit, skip);
+            final page = _asList(raw);
+            if (page.isEmpty) break;
+            // Dedup guard — data iliyoonekana TAYARI hairudishwi (server isiyo-
+            // tumia skip, fight ya data ya kukua kati ya kurusa, run_to_test
+            // fakes) — haiwezi kutuma data MARADUFU kwenye diski. Jembe kamili
+            // la ukurasa huu kinachunguza hapa (BILA short-circuit ya every).
+            final fresh = <dynamic>[];
+            for (final e in page) {
+              if (seen.add(sig(e))) fresh.add(e);
+            }
+            if (fresh.isEmpty) break; // ukurasa ule ule — simamisha.
+            all.addAll(fresh);
+            onProgress?.call(List<dynamic>.unmodifiable(all));
+            if (page.length < limit) break;
+          }
+          if (all.isNotEmpty) {
+            write(key, pack?.call(all) ?? all);
+          }
+        } finally {
+          _inflight.remove(key);
+        }
+      }();
+      _inflight[key] = f;
+    }
+    try {
+      await f;
+    } catch (_) {
+      // Kosa la API/mtandao — diski inabaki salama (kanuni ya offline-first).
+    }
+  }
+
+  static List<dynamic> _asList(dynamic raw) {
+    if (raw is List) return raw;
+    if (raw is Map) {
+      for (final k in const ['users', 'data', 'results', 'items', 'records']) {
+        final v = raw[k];
+        if (v is List) return v;
+      }
+    }
+    return const [];
+  }
+
   // ── KUSOMA (diski pekee — haipigi API) ───────────────────────────────────
 
   /// Soma data iliyohifadhiwa kwenye diski — PAPO HAPO (synchronous).

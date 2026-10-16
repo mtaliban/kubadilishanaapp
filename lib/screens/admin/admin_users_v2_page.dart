@@ -35,6 +35,10 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   int _total = 0;
   bool _live = false;
 
+  /// Orodha KAMILI ya watumiaji (FULL-SYNC kutoka diski) — pagination
+  /// inakuwa slice ya ndani ya hii (SCREEN >>> CACHE >>> BASI).
+  List<dynamic> _all = [];
+
   /// OFFLINE-FIRST: orodha ya mwisho ya watumiaji, kutoka kwenye diski.
   /// Nani anaonekana kwenye _users — bila API _errorNun alozList
   /// aka data diski ipo, orodha inaonekana mara moja.
@@ -115,8 +119,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     if (mounted) setState(() {});
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 450), () {
+      // Search inaf improvedia NDANI ya cache — hakuna mtandao, hakuna loading.
       _page = 0;
-      _load();
+      _applyPage();
     });
   }
 
@@ -150,130 +155,132 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   }
 
   /// Diski/API → watumiaji (SYNC: frame ya kwanza, hakuna spring).
+  /// Data kamili inaingia _all; slice ya ukurasa inatolewa na _applyPage().
   void _applyUsers(dynamic data) {
     final map = data is Map ? data : const {};
     final list = (map['users'] ??
             (data is List ? data : map['data'] ?? map['results'] ?? const []))
         as List;
     setState(() {
-      _users = list;
-      _total = (map['total'] as num?)?.toInt() ?? list.length;
+      _all = List<dynamic>.from(list);
       _loading = false;
     });
+    _applyPage();
   }
 
-  Map<String, dynamic> get _queryParams {
-    final q = _search.text.trim();
-    return {
-      'limit': _pageSize,
-      'skip': _page * _pageSize,
-      if (q.isNotEmpty) 'q': q,
-      if (_category.isNotEmpty) 'category': _category,
-      if (_status != null) 'status': _status!,
-      if (_regionId != null) 'region_id': _regionId,
-      if (_districtId != null) 'district_id': _districtId,
-      if (_facilityId != null) 'facility_id': _facilityId,
-      if (_subjectCode != null) 'subject': _subjectCode,
-    };
-  }
+  // ── SCREEN >>> CACHE >>> BASI — PAGES ZOTE KWA DISKI ─────────────────────
+  // FULL-SYNC inapakia watumiaji WOTE (limit 200, skip loop) kwenye diski
+  // MOJO. Pagination inakuwa slice YA NDANI ya orodha hii:
+  //   • Kila ukurasa unachapu (frame moja) — hakuna mtandao, hakuna spinner.
+  //   • Ukizima data — pages ZOTE 1..N zinaonekana (zilizohifadhiwa).
+  //   • Vichujio + search — vinafanyika NDANI ya cache (hakuna API).
 
-  /// Ulaini wa vichujio (search/kategoria/status/eneo) — hutumika kupanga
-  /// funguo ya kache ya kila ukurasa (ukurasa ule ule wa vichujio mbalimbali
-  /// unahifadhiwa kwa funguo tofauti).
-  String get _filterFp => [
-        _search.text.trim(),
-        _category,
-        _status ?? '',
-        _regionId ?? '',
-        _districtId ?? '',
-        _facilityId ?? '',
-        _subjectCode ?? '',
-      ].join('·');
-
-  /// Funguo ya kache ya ukurasa ULIPO HIVI — SCREEN >>> CACHE >>> BASI:
-  /// kila ukurasa uliowahi kutembelewa unahifadhiwa kwenye diski, hivyo
-  /// Next/Iliopita/Ifuatayo zinathibitishwa KUTOKA DISKI hata offline.
-  String get _pageCacheKey =>
-      CachedRepository.pagedKey(_kUsersKey, _page, filterHint: _filterFp);
-
-  Future<void> _load() async {
-    // OFFLINE-FIRST: diski kwanza (papo hapo), kisha refresh nyuma ya pazia.
-    // Ikishindwa (offline) — skrini HAKIBADILIKI: data ya diski inabaki.
-    setState(() {
-      if (_users.isEmpty && _loading) _loading = true;
-    });
-    await CachedRepository().loadPage(_kUsersKey,
-        () async =>
-            (await ApiService().adminUsers(params: _queryParams, useCache: false))
-                .data,
-        _applyUsers);
-    // Data iliyohifadhiwa kwenye diski (ingia yo yote ya ukurasa)
-    // iandikwe pia kwenye funguo ya ukurasa huu — Next/Ifuatayo ya
-    // Offline italitema hapo.
-    final disk = CachedRepository().readOrNull<dynamic>(_kUsersKey);
-    if (disk != null) CachedRepository().write(_pageCacheKey, disk);
-    if (!mounted) return;
-    if (_users.isEmpty && _loading) setState(() => _loading = false);
-  }
-
-  Future<void> _fetchPage(int page) async {
-    if (page < 0) return;
-    final old = _page;
-    setState(() => _page = page); // _queryParams/zinazotegemea _page zisomwe baaada tu
-    final cacheKey = CachedRepository.pagedKey(_kUsersKey, page, filterHint: _filterFp);
-
-    // ── 1. DISKI PAPO HAPO — SCREEN >>> CACHE >>> BASI. Ukurasa uliowahi
-    // kutembelewa unaonekana MUDA HUU (frame ya moja, hakuna mtandao).
-    final cached = CachedRepository().readOrNull<dynamic>(cacheKey);
-    if (cached != null) {
-      // Onyesha kutoka diski MARA MOJA — hakuna kusubiri mtandao.
-      _applyUsers(cached);
-      if (_scrollCtrl.hasClients) _scrollCtrl.jumpTo(0);
-      setState(() => _pageLoading = false);
+  /// Vichujio vyote vinafanywa NDANI ya cache — hakuna mtandao kabisa.
+  List<dynamic> get _filtered {
+    final q = _search.text.trim().toLowerCase();
+    if (q.isEmpty &&
+        _category.isEmpty &&
+        _status == null &&
+        _regionId == null &&
+        _districtId == null &&
+        _facilityId == null &&
+        _subjectCode == null) {
+      return _all;
     }
 
-    // ── 2. MTANDAO NYUMA YA PAZIA — data mpya IKIINGIA CACHE KISHA SCREEN
-    // (kama ulivyoomba: data mpya iingie kache, ndio ipitishwe kwa skrini).
-    try {
-      final r = await ApiService()
-          .adminUsers(params: _queryParams, useCache: false);
-      if (!mounted) return;
-      final raw = r.data;
-      final map = raw is Map ? raw : {};
-      final list = (map['users'] ??
-          (raw is List ? raw : map['data'] ?? map['results'] ?? [])) as List;
-      // ANDIKA CACHE KWANZA — ndio screen isome kutoka huko:
-      CachedRepository().write(cacheKey, raw);
-      setState(() {
-        _users = list;
-        // _total inasasishwa KILA wakati — idadi ya watumiaji inaweza
-        // kuongezeka/kupungua (mf. wamefutwa) na Next/Ifuatayo itumie
-        // hesabu mpya (skip+limit < total).
-        _total = (map['total'] as num?)?.toInt() ?? _total;
-        _pageLoading = false;
-      });
-      // Nenda juu ya orodha — mtumiaji aone users wa ukurasa mpya kuanzia
-      // mwanzo (badala ya kukaa chini ambapo alibonyeza kitufe).
-      if (!mounted || !_scrollCtrl.hasClients) return;
+    return _all.where((u) {
+      final m = u is Map ? u : <dynamic, dynamic>{};
+      if (q.isNotEmpty) {
+        final hay = '${m['full_name'] ?? ''} ${m['phone_primary'] ?? ''} '
+                '${m['cadre_display'] ?? m['cadre_code'] ?? ''}'
+            .toLowerCase();
+        if (!hay.contains(q)) return false;
+      }
+      if (_category.isNotEmpty && '${m['category'] ?? ''}' != _category) {
+        return false;
+      }
+      if (_status != null &&
+          '${m['status'] ?? 'active'}'.toLowerCase() !=
+              _status!.toLowerCase()) {
+        return false;
+      }
+      final st = (m['current_station'] as Map?) ?? const {};
+      if (_regionId != null && '${st['region_id'] ?? ''}' != '$_regionId') {
+        return false;
+      }
+      if (_districtId != null &&
+          '${st['district_id'] ?? ''}' != '$_districtId') {
+        return false;
+      }
+      if (_facilityId != null &&
+          '${st['facility_id'] ?? ''}' != '$_facilityId') {
+        return false;
+      }
+      if (_subjectCode != null) {
+        final subs = (m['subjects'] as List?) ?? const [];
+        final ok = subs.any((s) => s is Map
+            ? '${s['code'] ?? s['subject_code'] ?? s['name'] ?? ''}' ==
+                _subjectCode
+            : '$s' == _subjectCode);
+        if (!ok) return false;
+      }
+      return true;
+    }).toList(growable: false);
+  }
+
+  /// Ukurasa wa sasa = slice YA NDANI ya orodha kamili (SCREEN >> CACHE).
+  void _applyPage() {
+    if (!mounted) return;
+    final filtered = _filtered;
+    final total = filtered.length;
+    final maxPage = total == 0 ? 0 : (total - 1) ~/ _pageSize;
+    final page = _page.clamp(0, maxPage);
+    final start = page * _pageSize;
+    setState(() {
+      if (page != _page) _page = page;
+      _total = total;
+      _users = start >= total
+          ? <dynamic>[]
+          : filtered.sublist(start, (start + _pageSize).clamp(0, total));
+      _loading = false;
+      _pageLoading = false;
+    });
+  }
+
+  Future<void> _load() async {
+    // FULL-SYNC: pages ZOTE (limit 200 mfululizo) → DISKI → SCREEN.
+    // Skrini haitenzi kamwe: kila kitu kinaonyeshwa kutoka cache (hydrate,
+    // onProgress, write) — SCREEN >>> CACHE >>> BASI. Ikishindikana
+    // (offline) skrini HAKIBADILIKI: data ya diski inabaki kama ilivyo.
+    await CachedRepository().syncAll(
+      _kUsersKey,
+      fetchPage: (limit, skip) async => (await ApiService()
+              .adminUsers(params: {'limit': limit, 'skip': skip}, useCache: false))
+          .data,
+      pack: (all) => {'users': all, 'total': all.length},
+      onProgress: (soFar) {
+        if (!mounted) return;
+        setState(() => _all = List<dynamic>.from(soFar));
+        _applyPage();
+      },
+    );
+    if (!mounted) return;
+    final fresh = CachedRepository().readOrNull<dynamic>(_kUsersKey);
+    if (fresh != null) _applyUsers(fresh);
+  }
+
+  void _fetchPage(int page) {
+    if (page < 0) return;
+    // SCREEN >>> CACHE >>> BASI: ukurasa unatoka slice ya ndani ya orodha
+    // iliyohifadhiwa diski — PAPO HAPO (frame moja), hakuna mtandao,
+    // hakuna spinner, inafanya kazi hata kizima data.
+    if (page == _page) return;
+    _page = page;
+    _applyPage();
+    if (_scrollCtrl.hasClients) {
       _scrollCtrl.animateTo(0,
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut);
-    } catch (_) {
-      if (!mounted) return;
-      if (cached != null) {
-        // UKURASA ULIOWAHI KUTEMBELEWA — data ya diski inaonekana bado;
-        // hakuna kosa linalonuka skrini (hakuna kubadilisha chochote).
-        setState(() => _pageLoading = false);
-      } else {
-        // Hakuna cache YA UKURASA HUU + mtandao mbaya — rudi ukurasa ule ule
-        // wa awali na eleza kwa upole (data ya diski inabaki salama).
-        setState(() {
-          _page = old;
-          _pageLoading = false;
-        });
-        _showMsg('Ukurasa huu haukuhifadhiwa kwenye cache bado — ukia na '
-            'mtandao itajihifadhi yenyewe na kutembea hata kizima mtandao.');
-      }
     }
   }
 
@@ -298,7 +305,8 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       _subjectCode = null; _subjectName = null;
       _page = 0;
     });
-    _load();
+    // Vichujio vinafanywa NDANI ya orodha kamili — PAPO HAPO, hakuna mtandao.
+    _applyPage();
   }
 
   // ── HELPERS ─────────────────────────────────────────────────────────────
@@ -620,8 +628,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
             _subjectName = null;
           }
         });
+        // Vichujio vinafanywa NDANI ya orodha kamili — PAPO HAPO (hakuna mtandao).
         _page = 0;
-        _load();
+        _applyPage();
       },
     );
   }
@@ -654,8 +663,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   }
 
   void _applySheetFilters() {
+    // Vichujio vinafanywa NDANI ya orodha kamili — PAPO HAPO (cache ndiyo screen).
     _page = 0;
-    _load();
+    _applyPage();
   }
 
   // ── TRASH SHEET ─────────────────────────────────────────────────────────
