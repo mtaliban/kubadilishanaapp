@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
-import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 import 'match_view.dart';
 
 class AdminRealMatchesPage extends StatefulWidget {
@@ -165,33 +165,18 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final hasDisk = CachedRepository().readOrNull<dynamic>(_kKey) != null;
     if (_loading && _pairs.isEmpty && !hasDisk) {
+      // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
       return Scaffold(
         backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
-        body: Center(
-          child: CircularProgressIndicator(
-              color: dark ? const Color(0xFF5FD49A) : const Color(0xFF0F7A52)),
-        ),
+        body: const WenzaoSkeleton(),
       );
     }
 
     if (_pairs.isEmpty && !hasDisk) {
-      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
-      // (pull-to-refresh pekee; huwezi "Jaribu tena" button).
+      // HAKUNA data diski + API imeshindwa — skeleton MOYA (pull-to-refresh pekee).
       return Scaffold(
         backgroundColor: dark ? const Color(0xFF0F172A) : Colors.white,
-        body: RefreshIndicator(
-          onRefresh: _load,
-          color: dark ? const Color(0xFF5FD49A) : const Color(0xFF0F7A52),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: const [
-              SizedBox(height: 120),
-              NoCachedDataWidget(
-                hint: 'Vuta chini kupakia — matches za kweli zitahifadhiwa kwenye simu.',
-              ),
-            ],
-          ),
-        ),
+        body: const WenzaoSkeleton(),
       );
     }
 

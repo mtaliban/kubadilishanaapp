@@ -4,7 +4,7 @@ import '../services/api_service.dart';
 import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../widgets/app_shell.dart';
-import '../widgets/no_cached_data_widget.dart';
+import '../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo ya diski ya maoni ya mtumiaji mwenyewe.
 const _kKey = 'page:my-feedback';
@@ -98,9 +98,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     return AppShell(
       tabIndex: 2,
       child: _loading && _items.isEmpty
-          // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni,
-          // "download" ikoni bila mtandao).
-          ? const Center(child: NoCachedDataWidget())
+          // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
+          ? const MaoniSkeleton(showComposer: false)
           : RefreshIndicator(
               onRefresh: _load,
               child: MaoniView(

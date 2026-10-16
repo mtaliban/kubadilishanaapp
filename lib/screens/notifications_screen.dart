@@ -3,7 +3,7 @@ import '../services/api_service.dart';
 import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../widgets/no_cached_data_widget.dart';
-import '../widgets/page_skeleton.dart';
+import '../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo ya diski ya arifa za mtumiaji.
 const _kNotifsKey = 'page:notifications';
@@ -177,7 +177,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Expanded(
             child: _loading && _notifications.isEmpty
                 // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
-                ? const PageSkeleton(rows: 5)
+                ? const WatumiajiSkeleton(count: 5)
                 : _notifications.isEmpty &&
                         CachedRepository().readOrNull<dynamic>(_kNotifsKey) == null
                     // HAKUNA data diski + API imeshindwa — widget MOYA ya

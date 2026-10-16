@@ -5,6 +5,7 @@ import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo ya diski ya matukio ya mfumo.
 const _kKey = 'page:admin/monitoring';
@@ -120,18 +121,16 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
           ),
           Divider(height: 1, color: Ad.border(context)),
           if (_loading && _events.isEmpty)
-            // Bado hakuna diski — NoCachedDataWidget huonyesha spinner mtandaoni
-            // na "download" ikoni bila mtandao.
-            const Expanded(child: Center(child: NoCachedDataWidget()))
+            // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
+            const Expanded(child: TakwimuSkeleton())
           else if (_events.isEmpty &&
               CachedRepository().readOrNull<dynamic>(_kKey) == null)
-            // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
-            // (pull-to-refresh pekee; ikoni ya refresh juu pia inapakia).
+            // HAKUNA data diski + API imeshindwa — skeleton MOYA
+            // (refresh juu pia inapakia).
             Expanded(
               child: NoCachedDataWidget(
                 onLoad: _load,
-                hint: 'Gusa refresh juu, au subiri mtandao — matukio yataonekana '
-                    'mara data itakapofika.',
+                skeleton: const TakwimuSkeleton(),
               ),
             )
           else if (_events.isEmpty)

@@ -7,7 +7,7 @@ import '../services/cached_repository.dart';
 import '../utils/safe_cast.dart';
 import '../services/websocket_service.dart';
 import '../widgets/app_shell.dart';
-import '../widgets/no_cached_data_widget.dart';
+import '../widgets/skeletons.dart';
 import 'user_dashboard_view.dart';
 
 // OFFLINE-FIRST — funguo za diski za ukurasa wa dashibodi ya mtumiaji.
@@ -484,13 +484,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: RefreshIndicator(
             onRefresh: () => Future.wait([_loadBoard(), _loadTrueMatches()]),
             child: (_loading && _candidates.isEmpty)
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
-                      SizedBox(height: 120),
-                      Center(child: NoCachedDataWidget()),
-                    ],
-                  )
+                ? const DashibodiSkeleton()
                 : UserDashboardView(
                     me: me,
                     peers: peers,

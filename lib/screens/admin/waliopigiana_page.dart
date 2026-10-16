@@ -17,8 +17,7 @@ import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
-import '../../widgets/no_cached_data_widget.dart';
-import '../../widgets/page_skeleton.dart';
+import '../../widgets/skeletons.dart';
 
 // ----------------------------------------------------------------------------
 // CONFIG: action button style on the expanded card.
@@ -487,17 +486,15 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
               // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
               const Padding(
                 padding: EdgeInsets.all(8),
-                child: PageSkeleton(rows: 4, scrollable: false),
+                child: WenzaoSkeleton(count: 2),
               )
             else if (!_loading && _all.isEmpty &&
                 CachedRepository().readOrNull<dynamic>(_kKey) == null)
-              // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
-              // (pull-to-refresh pekee; hakuna ikoni nyekundu wala "Jaribu tena").
+              // HAKUNA data diski + API imeshindwa — skeleton MOYA
+              // (pull-to-refresh pekee).
               Padding(
                 padding: const EdgeInsets.only(top: 60),
-                child: NoCachedDataWidget(
-                  hint: 'Vuta chini kupakia — rekodi zitahifadhiwa kwenye simu.',
-                ),
+                child: WenzaoSkeleton(count: 2),
               )
             else ...[
               if (view.isNotEmpty)

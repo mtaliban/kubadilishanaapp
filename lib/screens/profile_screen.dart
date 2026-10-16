@@ -9,7 +9,7 @@ import '../services/cached_repository.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_shell.dart';
 import '../widgets/no_cached_data_widget.dart';
-import '../widgets/page_skeleton.dart';
+import '../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo ya diski ya wasifu wa mtumiaji (profile + regions
 // + kada/masomo kwenye bundle moja).
@@ -379,7 +379,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       // KANUNI: KAMWE spinner — kijivu (skeleton) tu, hata mara ya kwanza.
-      return const AppShell(tabIndex: 3, child: PageSkeleton(rows: 5));
+      return const AppShell(tabIndex: 3, child: WasifuSkeleton());
     }
 
     if (_raw == null) {

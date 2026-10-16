@@ -4,7 +4,7 @@ import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
-import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo za diski: kila status iwe na funguo yake.
 String _kKey(String status) => 'page:admin/password-resets/$status';
@@ -175,17 +175,13 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
               controller: _tabCtrl,
               children: _tabs.map((status) {
                 if (_loading && !_cache.containsKey(status)) {
-                  // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni).
-                  return NoCachedDataWidget(onLoad: () => _load(status));
+                  // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
+                  return WatumiajiSkeleton(count: 4);
                 }
                 if (_cache[status] == null &&
                     CachedRepository().readOrNull<dynamic>(_kKey(status)) == null) {
-                  // HAKUNA data diski + API imeshindwa — widget MOYA ya
-                  // "haijapakuliwa" (pull-to-refresh pekee).
-                  return NoCachedDataWidget(
-                    onLoad: () => _load(status),
-                    hint: 'Vuta chini kupakia, au subiri mtandao — maombi yataonekana.',
-                  );
+                  // HAKUNA data diski + API imeshindwa — skeleton MOYA.
+                  return WatumiajiSkeleton(count: 4);
                 }
                 final items = _cache[status] ?? [];
                 if (items.isEmpty) {

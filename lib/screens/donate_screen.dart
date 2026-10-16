@@ -6,7 +6,7 @@ import '../services/websocket_service.dart';
 import '../providers/auth_provider.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_shell.dart';
-import '../widgets/page_skeleton.dart';
+import '../widgets/skeletons.dart';
 import 'changia_view.dart';
 
 // OFFLINE-FIRST — funguo za diski za ukurasa wa donate (changia).
@@ -164,7 +164,7 @@ class _DonateScreenState extends State<DonateScreen> {
         child: _loadingHistory && _history.isEmpty
             // KANUNI: KAMWE spinner — kijivu (skeleton) tu, hata mara ya
             // kwanza baada ya install.
-            ? const PageSkeleton(rows: 4)
+            ? const ChangiaSkeleton()
             : ChangiaView(
                 payNumber: _adminPhone,
                 defaultAmount: 2500,

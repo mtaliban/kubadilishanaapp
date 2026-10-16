@@ -16,8 +16,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
-import '../../widgets/no_cached_data_widget.dart';
-import '../../widgets/page_skeleton.dart';
+import '../../widgets/skeletons.dart';
 import '../../services/websocket_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
@@ -844,27 +843,15 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
       // KANUNI: KAMWE spinner — kijivu (skeleton) tu, hata mara ya kwanza.
       return Scaffold(
         backgroundColor: _C.scaffoldOf(context),
-        body: const PageSkeleton(rows: 6),
+        body: const MaoniSkeleton(),
       );
     }
     if (_items.isEmpty && !hasDisk) {
-      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa"
+      // HAKUNA data diski + API imeshindwa — skeleton ya ukurasa
       // (pull-to-refresh pekee; hakuna kitufe cha "Jaribu tena", hakuna ikoni nyekundu).
       return Scaffold(
         backgroundColor: _C.scaffoldOf(context),
-        body: RefreshIndicator(
-          onRefresh: _load,
-          color: _C.blue,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: const [
-              SizedBox(height: 120),
-              NoCachedDataWidget(
-                hint: 'Vuta chini kupakia — maoni yatahifadhiwa kwenye simu.',
-              ),
-            ],
-          ),
-        ),
+        body: const MaoniSkeleton(),
       );
     }
     return MaoniPage(

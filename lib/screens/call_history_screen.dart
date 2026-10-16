@@ -5,7 +5,7 @@ import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../config/theme.dart';
 import '../widgets/app_toast.dart';
-import '../widgets/no_cached_data_widget.dart';
+import '../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo ya diski ya historia ya kupigiana ya mtumiaji.
 const _kCallsKey = 'page:user/call-history';
@@ -225,16 +225,12 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
           // Body
           Expanded(
             child: _loading && _allCalls.isEmpty
-                // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni,
-                // "download" ikoni bila mtandao).
-                ? const Center(child: NoCachedDataWidget())
+                // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
+                ? const WatumiajiSkeleton(count: 5)
                 : _allCalls.isEmpty &&
                         CachedRepository().readOrNull<dynamic>(_kCallsKey) == null
-                    // HAKUNA data diski + API imeshindwa — widget MOYA ya
-                    // "haijapakuliwa" (pull-to-refresh pekee).
-                    ? const NoCachedDataWidget(
-                        hint: 'Vuta chini kupakia — historia zitahifadhiwa kwenye simu.',
-                      )
+                    // HAKUNA data diski + API imeshindwa — skeleton MOYA.
+                    ? const WatumiajiSkeleton(count: 5)
                     : RefreshIndicator(
                         onRefresh: _load,
                         child: _filtered.isEmpty

@@ -7,7 +7,7 @@ import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
-import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 import 'admin_delete_user_dialog.dart';
 import 'admin_filter_users_sheet.dart';
 import 'admin_users_v2_screens.dart';
@@ -798,9 +798,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
               // ── Data haijapakuliwa / empty / timeline ──
               if (!_loading && _users.isEmpty &&
                   CachedRepository().readOrNull<dynamic>(_kUsersKey) == null)
-                const NoCachedDataWidget(
-                  hint: 'Vuta chini kupakia — orodha itahifadhiwa kwenye simu.',
-                )
+                const WatumiajiSkeleton()
               else if (!_loading && _users.isEmpty)
                 _emptyBox()
               else

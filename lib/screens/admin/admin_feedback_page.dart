@@ -9,7 +9,7 @@ import '../../services/admin_badge_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 import '../../widgets/app_toast.dart';
-import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 import '../../services/network_service.dart';
 import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
@@ -425,23 +425,17 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
 
                     // ── Loading / Error / Empty / Cards ──
                     if (_loading && _all.isEmpty)
-                      // Bado hakuna diski — NoCachedDataWidget (spinner
-                      // mtandaoni, download ikoni bila mtandao).
+                      // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
                       const Padding(
-                        padding: EdgeInsets.all(48),
-                        child: Center(child: NoCachedDataWidget()),
+                        padding: EdgeInsets.all(8),
+                        child: MaoniSkeleton(),
                       )
                     else if (_all.isEmpty &&
                         CachedRepository().readOrNull<dynamic>(_kFeedbackKey) == null)
-                      // HAKUNA data diski + API imeshindwa — widget MOYA ya
-                      // "haijapakuliwa" (pull-to-refresh pekee).
+                      // HAKUNA data diski + API imeshindwa — skeleton MOYA.
                       const Padding(
-                        padding: EdgeInsets.all(48),
-                        child: Center(
-                          child: NoCachedDataWidget(
-                            hint: 'Vuta chini kupakia — maoni yatahifadhiwa kwenye simu.',
-                          ),
-                        ),
+                        padding: EdgeInsets.all(8),
+                        child: MaoniSkeleton(),
                       )
                     else if (_filtered.isEmpty)
                       Padding(

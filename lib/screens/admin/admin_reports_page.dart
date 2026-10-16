@@ -21,7 +21,7 @@ import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
-import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo za diski za ukurasa wa Statistics/Reports.
 const _kReportsKey = 'page:admin/reports';
@@ -613,11 +613,10 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
               ),
             ),
             if (_loading)
-              // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni,
-              // "download" ikoni bila mtandao).
+              // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
               const SliverFillRemaining(
                 hasScrollBody: false,
-                child: Center(child: NoCachedDataWidget()),
+                child: TakwimuSkeleton(),
               )
             else
               SliverPadding(

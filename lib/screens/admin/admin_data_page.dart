@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
-import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 import '../../services/websocket_service.dart';
 import '../../widgets/app_toast.dart';
 import 'admin_idara_dialogs.dart';
@@ -645,18 +645,16 @@ class _AdminDataPageState extends State<AdminDataPage>
             ),
           ),
           if (loading && !hasDisk)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator(color: _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue)),
-            )
-          else if (!hasDisk && !loading)
-            // HAKUNA data diski + API imeshtindwa — widget MOYA ya "haijapakuliwa"
-            // (pull-down kupakia; mtandao ukirudi onRefresh hauffanikwaji).
+            // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
             const SliverFillRemaining(
               hasScrollBody: false,
-              child: NoCachedDataWidget(
-                hint: 'Vuta chini kupakia — data itahifadhiwa hata ukiwa offline.',
-              ),
+              child: DataListSkeleton(),
+            )
+          else if (!hasDisk && !loading)
+            // HAKUNA data diski + API imeshtindwa — skeleton MOYA (pull-down kupakia).
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: DataListSkeleton(),
             )
           else if (filtered.isEmpty)
             SliverFillRemaining(

@@ -18,6 +18,7 @@ import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 
 const _kPrimary = Color(0xFF1E40AF);
 const _kInk     = Color(0xFF0F172A);
@@ -373,6 +374,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
               NoCachedDataWidget(
                 hint: 'Vuta chini kupakia — mawasiliano yatahifadhiwa kwenye simu.',
                 onLoad: _load,
+                skeleton: const WatumiajiSkeleton(count: 5),
               )
             else if (filtered.isEmpty)
               _EmptyState(onClear: _clearSearch)

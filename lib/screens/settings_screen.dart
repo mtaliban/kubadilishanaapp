@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/cached_repository.dart';
-import '../widgets/page_skeleton.dart';
+import '../widgets/skeletons.dart';
 import '../config/theme.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_toast.dart';
@@ -231,7 +231,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
                 ? const Padding(
                     padding: EdgeInsets.all(16),
-                    child: PageSkeleton(rows: 2, scrollable: false),
+                    child: WatumiajiSkeleton(count: 2, showChips: true),
                   )
                 : Column(children: [
                     _buildNotifSwitch(key: 'new_matches', title: 'Mechi Zimepatikana', subtitle: 'Pokea arifa unapopata mechi mpya'),
@@ -275,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
                 ? const Padding(
                     padding: EdgeInsets.all(16),
-                    child: PageSkeleton(rows: 3, scrollable: false),
+                    child: WatumiajiSkeleton(count: 3, showChips: true),
                   )
                 : Column(children: [
                     if (_allRegions.isEmpty)

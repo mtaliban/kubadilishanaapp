@@ -18,7 +18,11 @@ import '../services/network_service.dart';
 import 'page_skeleton.dart';
 
 class NoCachedDataWidget extends StatefulWidget {
-  const NoCachedDataWidget({super.key, this.onLoad, this.hint});
+  /// Kama imetolewa — badala ya maandishi ya "haijapakuliwa", skeleton halisi
+  /// ya ukurasa inaonyeshwa (muundo kama ukurasa halisi, kama YouTube).
+  final Widget? skeleton;
+
+  const NoCachedDataWidget({super.key, this.onLoad, this.hint, this.skeleton});
 
   /// Pakia data (n.k. CachedRepository().refresh(...)) — inaitwa ndani ya
   /// initState kama mtandao upo (au mtandao ukirudi).
@@ -77,6 +81,7 @@ class _NoCachedDataWidgetState extends State<NoCachedDataWidget> {
   // intrinsic dimensions zinazohitajika na SliverFillRemaining/hasScrollBody).
   @override
   Widget build(BuildContext context) {
+    if (widget.skeleton != null) return widget.skeleton!;
     final dark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       physics: const ClampingScrollPhysics(),

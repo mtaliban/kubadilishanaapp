@@ -15,6 +15,7 @@ import '../../services/offline_queue.dart';
 import '../../services/websocket_service.dart';
 import '../../widgets/app_toast.dart';
 import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 import 'malipo_view.dart';
 
 class AdminPaymentsPage extends StatefulWidget {
@@ -204,12 +205,8 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF0F172A)
             : Colors.white,
-        body: Center(
-          child: CircularProgressIndicator(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF7AA7FF)
-                  : const Color(0xFF1959D6)),
-        ),
+        // KANUNI: KAMWE spinner — skeleton ya malipo tu.
+        body: const MalipoSkeleton(),
       );
     }
 

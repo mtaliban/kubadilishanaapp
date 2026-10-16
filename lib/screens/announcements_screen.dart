@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
-import '../widgets/no_cached_data_widget.dart';
+import '../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo ya diski ya matangazo + historia yake.
 const _kAnnouncementsKey = 'page:announcements';
@@ -225,27 +225,23 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               const SizedBox(height: 20),
 
               if (_loading && _active.isEmpty && _history.isEmpty)
-                // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni,
-                // "download" ikoni bila mtandao).
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(40),
-                    child: NoCachedDataWidget(),
-                  ),
-                )
+              // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: MatangazoSkeleton(count: 3),
+                ),
+              )
               else if (_active.isEmpty &&
                   _history.isEmpty &&
                   CachedRepository().readOrNull<dynamic>(_kAnnouncementsKey) == null)
-                // HAKUNA data diski + API imeshindwa — widget MOYA ya
-                // "haijapakuliwa" (pull-to-refresh pekee).
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(40),
-                    child: NoCachedDataWidget(
-                      hint: 'Vuta chini kupakia — matangazo yatahifadhiwa kwenye simu.',
-                    ),
-                  ),
-                )
+              // HAKUNA data diski + API imeshindwa — skeleton MOYA.
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: MatangazoSkeleton(count: 3),
+                ),
+              )
               else ...[
                 // ── MPYA heading ──
                 Row(children: [

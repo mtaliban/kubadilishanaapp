@@ -5,7 +5,7 @@ import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
-import '../../widgets/no_cached_data_widget.dart';
+import '../../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo za diski za CachedRepository.
 //   page:admin/dashboard → {'stats','reports','events'} (bundle moja)
@@ -243,7 +243,7 @@ class _State extends State<AdminDashboardPage>
             ),
 
             if (_loading && _stats.isEmpty)
-              const SliverFillRemaining(child: NoCachedDataWidget())
+              const SliverFillRemaining(child: TakwimuSkeleton())
             else ...[
               // ── Top 3 Big cards ──────────────────────────────────────────
               SliverToBoxAdapter(

@@ -7,7 +7,7 @@ import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_toast.dart';
-import '../widgets/no_cached_data_widget.dart';
+import '../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo za diski za kurusa za mipangano.
 const _kMyMatchesKey = 'page:matches/me';
@@ -222,15 +222,13 @@ class _MyMatchesTabState extends State<_MyMatchesTab>
   Widget build(BuildContext context) {
     super.build(context);
     if (_loading && _matches.isEmpty) {
-      // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni).
-      return const Center(child: NoCachedDataWidget());
+      // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
+      return const DashibodiSkeleton(count: 4);
     }
     if (_matches.isEmpty &&
         CachedRepository().readOrNull<dynamic>(_kMyMatchesKey) == null) {
-      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa".
-      return const NoCachedDataWidget(
-        hint: 'Vuta chini kupakia — matches zitahifadhiwa kwenye simu.',
-      );
+      // HAKUNA data diski + API imeshindwa — skeleton MOYA.
+      return const DashibodiSkeleton(count: 4);
     }
     return RefreshIndicator(
       onRefresh: _load, color: _kBlue,
@@ -402,15 +400,13 @@ class _RealMatchesTabState extends State<_RealMatchesTab>
     final filtered = _filtered;
 
     if (_loading && _matches.isEmpty) {
-      // Bado hakuna diski — NoCachedDataWidget (spinner mtandaoni).
-      return const Center(child: NoCachedDataWidget());
+      // KANUNI: KAMWE spinner — skeleton ya ukurasa tu.
+      return const DashibodiSkeleton(count: 4);
     }
     if (_matches.isEmpty &&
         CachedRepository().readOrNull<dynamic>(_kTrueMatchesKey) == null) {
-      // HAKUNA data diski + API imeshindwa — widget MOYA ya "haijapakuliwa".
-      return const NoCachedDataWidget(
-        hint: 'Vuta chini kupakia — matches sahihi zitahifadhiwa kwenye simu.',
-      );
+      // HAKUNA data diski + API imeshindwa — skeleton MOYA.
+      return const DashibodiSkeleton(count: 4);
     }
 
     return RefreshIndicator(

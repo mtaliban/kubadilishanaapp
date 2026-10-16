@@ -23,7 +23,7 @@ import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/no_cached_data_widget.dart';
-import '../../widgets/page_skeleton.dart';
+import '../../widgets/skeletons.dart';
 
 // ----------------------------------------------------------------------------
 // Colors (from the approved mockup)
@@ -2264,16 +2264,17 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
   @override
   Widget build(BuildContext context) {
     if (_data == null && !_diskOk) {
-      // Diski hamna takwimu halisi + API imeshindwa/bado — widget MOYA ya
-      // "haijapakuliwa" (pull-to-refresh pekee).
+      // Diski hamna takwimu halisi + API imeshindwa/bado — skeleton ya ukurasa
+      // (muundo halisi, kama YouTube) + _load inaungwa nje.
       return NoCachedDataWidget(
         hint: 'Takwimu zitapakia mtandao ukifungua ukurasa.',
         onLoad: _load,
+        skeleton: const TakwimuSkeleton(),
       );
     }
     if (_data == null) {
       // KANUNI: KAMWE spinner — kijivu (skeleton) tu.
-      return const PageSkeleton(rows: 4);
+      return const TakwimuSkeleton();
     }
     return StatisticsPage(
       data: _data!, // kamwe null hapa — guards hapo juu
