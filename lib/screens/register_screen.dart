@@ -1348,23 +1348,15 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
           ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          // RESPONSIVE: kwenye simu ndogo + font kubwa, maeneo mawili ya chini
-          // (Rudi/Ingia na kitufe) hayakitosheki mstari mmoja — kwenye upana
-          // mdogo: column (left juu, kitufe chini). Hakuna overflow.
-          child: LayoutBuilder(
-            builder: (context, box) => box.maxWidth < 340
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [left, const SizedBox(height: 10), right],
-                  )
-                : SizedBox(
-                    width: double.infinity,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [Flexible(child: left), right],
-                    ),
-                  ),
+          // FLEX DAIMA: link ('Rudi'/'Una akaunti? Ingia') na kitufe
+          // ('Endelea'/'Najisajili') viko kwenye mstari MMOJA kwenye simu zote —
+          // Expanded inafunga link hivyo hakuna overflow hata upana 320 + font 2.0.
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: Align(alignment: Alignment.centerLeft, child: left)),
+              right,
+            ],
           ),
         ),
       ],

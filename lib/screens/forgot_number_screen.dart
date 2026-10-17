@@ -18,12 +18,12 @@ class _C {
   // Bluu ya APP kama kitufe cha 'Jisajili' (AppTheme.primary = #1E40AF) —
   // SIYO bluu-bahari (#2878D6) ya awali.
   static const primary = Color(0xFF1E40AF);
-  static const primaryDark = Color(0xFF1D4ED8);
+
   static const text = Color(0xFF111111);
   static const body = Color(0xFF555555);
   static const hint = Color(0xFF8A8A8A);
   static const line = Color(0xFFE6E6E6);
-  static const inputBorder = Color(0xFFBFDBFE);
+  static const inputBorder = Color(0xFF93C5FD);
   static const copyBorder = Color(0xFFDADADA);
   static const okBg = Color(0xFFE3F4E1);
   static const ok = Color(0xFF1B6B1B);
@@ -288,7 +288,7 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
           decoration: InputDecoration(
             hintText: 'Mfano: Amani Selemani',
             hintStyle: const TextStyle(fontSize: 13, color: _C.hint, height: 1.2),
-            prefixIcon: const Icon(TablerIcons.user_circle, size: 17, color: _C.primaryDark),
+            prefixIcon: const Icon(TablerIcons.user_circle, size: 22, color: _C.primary),
             prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             contentPadding: const EdgeInsets.fromLTRB(0, 8, 10, 8),
             enabledBorder: _border(hasError ? _C.error : _C.inputBorder),
@@ -389,7 +389,7 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
       Text(t, style: const TextStyle(fontSize: 12, color: _C.body, height: 1.4));
 
   Widget _fieldLabel(IconData icon, String t) => Row(children: [
-        Icon(icon, size: 14, color: _C.primaryDark),
+        Icon(icon, size: 16, color: _C.primary),
         const SizedBox(width: 5),
         Expanded(
           child: Text(t,
@@ -404,7 +404,7 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Icon(icon, size: 13, color: _C.primaryDark),
+            Icon(icon, size: 15, color: _C.primary),
             const SizedBox(width: 5),
             Text(label, style: const TextStyle(fontSize: 11, color: _C.hint)),
           ]),
@@ -420,7 +420,7 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
       );
 
   Widget _copyButton() {
-    final c = _copied ? _C.ok : _C.primaryDark;
+    final c = _copied ? _C.ok : _C.primary;
     return Material(
       color: _copied ? _C.okBg : Colors.white,
       shape: RoundedRectangleBorder(
@@ -440,7 +440,7 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
                 key: ValueKey(_copied),
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(_copied ? TablerIcons.check : TablerIcons.copy, size: 13, color: c),
+                  Icon(_copied ? TablerIcons.check : TablerIcons.copy, size: 15, color: c),
                   const SizedBox(width: 4),
                   Text(_copied ? 'Imenakiliwa' : 'Nakili',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c)),
@@ -470,14 +470,14 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 13, color: _C.primaryDark),
+            Icon(icon, size: 15, color: _C.primary),
             const SizedBox(width: 4),
             Flexible(
               child: Text(t,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700, color: _C.primaryDark)),
+                      fontSize: 12, fontWeight: FontWeight.w700, color: _C.primary)),
             ),
           ]),
         ),
@@ -507,7 +507,7 @@ class _ForgotNumberCardState extends State<ForgotNumberCard> {
               : Row(mainAxisSize: MainAxisSize.min, children: [
                   Text(t, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                   const SizedBox(width: 5),
-                  const Icon(TablerIcons.arrow_right, size: 13),
+                  const Icon(TablerIcons.arrow_right, size: 15),
                 ]),
         ),
       );
