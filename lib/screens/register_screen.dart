@@ -1348,12 +1348,23 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
           ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          // LAYOUT ILIYOTAKA: link ('Una akaunti? Ingia' ama 'Rudi') JUU,
-          // kitufe ('Endelea'/'Najisajili') CHINI yake — siyo nusu flex.
-          // Kitufe kinabaki kidogo (32px) na kikongoja kushoto.
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [left, const SizedBox(height: 10), right],
+          // RESPONSIVE: kwenye simu ndogo + font kubwa, maeneo mawili ya chini
+          // (Rudi/Ingia na kitufe) hayakitosheki mstari mmoja — kwenye upana
+          // mdogo: column (left juu, kitufe chini). Hakuna overflow.
+          child: LayoutBuilder(
+            builder: (context, box) => box.maxWidth < 340
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [left, const SizedBox(height: 10), right],
+                  )
+                : SizedBox(
+                    width: double.infinity,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [Flexible(child: left), right],
+                    ),
+                  ),
           ),
         ),
       ],
@@ -2242,8 +2253,8 @@ class _SearchBoxState extends State<_SearchBox> {
 }
 
 /// Kitufe kidogo cha bluu.
-/// square = true  -> mraba mdogo wenye kona laini (Endelea), urefu 32.
-/// square = false -> umbo la duara kamili (Najisajili), urefu 32.
+/// square = true  -> mraba mdogo wenye kona laini (Endelea), urefu 36.
+/// square = false -> umbo la duara kamili (Najisajili), urefu 34.
 class _ActionButton extends StatelessWidget {
   final String label;
   final IconData? leading;
@@ -2273,7 +2284,7 @@ class _ActionButton extends StatelessWidget {
         customBorder: shape,
         onTap: onTap,
         child: SizedBox(
-          height: 32,
+          height: square ? 36 : 34,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
