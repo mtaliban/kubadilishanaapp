@@ -33,6 +33,11 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   bool _loading = true;
   List<dynamic> _users = [];
   int _total = 0;
+
+  /// Jumla ya KWELI kutoka API ('total' ya /admin/users) — inaonekana MARA
+  /// MOJA ukurasa ukiwa unafunguka. Full-sync ya nyuma (pages 200-kwa-200)
+  /// inajaza orodha tu — namba HAISOMI/KUCOUNT (200→600→1600) tena.
+  int? _apiTotal;
   bool _live = false;
 
   /// Orodha KAMILI ya watumiaji (FULL-SYNC kutoka diski) — pagination
@@ -163,6 +168,13 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         as List;
     setState(() {
       _all = List<dynamic>.from(list);
+      // DISKI: jumla ya KWELI iliyohifadhiwa (total) — inaonekana kwenye
+      // frame ya KWANZA, kabla ya API kufungua.
+      final t = map['total'];
+      if (t is num) {
+        final tv = t.toInt();
+        if (tv > 0 && tv >= _all.length) _apiTotal = tv;
+      }
       _loading = false;
     });
     _applyPage();
@@ -228,6 +240,20 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     }).toList(growable: false);
   }
 
+  /// Namba ya stats card: jumla ya KWELI (API ya ukurasa wa kwanza ama diski)
+  /// pale vichujio havipo — thamani moja, hakuna kuhesabu kutoka 0. Vichujio
+  /// vikipita, tunarudisha idadi ya orodha iliyochujwa (kama mwanzo).
+  int get _displayTotal {
+    final hasFilters = _search.text.trim().isNotEmpty ||
+        _category.isNotEmpty ||
+        _status != null ||
+        _regionId != null ||
+        _districtId != null ||
+        _facilityId != null ||
+        _subjectCode != null;
+    return (!hasFilters && _apiTotal != null) ? _apiTotal! : _total;
+  }
+
   /// Ukurasa wa sasa = slice YA NDANI ya orodha kamili (SCREEN >> CACHE).
   void _applyPage() {
     if (!mounted) return;
@@ -254,9 +280,21 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     // (offline) skrini HAKIBADILIKI: data ya diski inabaki kama ilivyo.
     await CachedRepository().syncAll(
       _kUsersKey,
-      fetchPage: (limit, skip) async => (await ApiService()
-              .adminUsers(params: {'limit': limit, 'skip': skip}, useCache: false))
-          .data,
+      fetchPage: (limit, skip) async {
+        final res = await ApiService()
+            .adminUsers(params: {'limit': limit, 'skip': skip}, useCache: false);
+        // Jumla ya KWELI inajulikana kutoka ukurasa wa KWANZA ('total') —
+        // pima & onyesha PAPO HAPO; sehemu zilizobaki (200→1600) ni
+        // mtandao nyuma ya pazia tu, namba haabadiliki tena.
+        if (skip == 0 && mounted && res.data is Map) {
+          final t = (res.data as Map)['total'];
+          final tv = t is num ? t.toInt() : null;
+          if (tv != null && tv > 0 && tv != _apiTotal) {
+            setState(() => _apiTotal = tv);
+          }
+        }
+        return res.data;
+      },
       pack: (all) => {'users': all, 'total': all.length},
       onProgress: (soFar) {
         if (!mounted) return;
@@ -403,6 +441,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       setState(() {
         _users.removeWhere((u) => _uid(u) == id);
         _total = (_total - 1).clamp(0, 1 << 30).toInt();
+        if (_apiTotal != null) {
+          _apiTotal = (_apiTotal! - 1).clamp(0, 1 << 30).toInt();
+        }
         _trash.addAll(removed.map(asMap));
       });
       _showMsg('$name amefutwa');
@@ -828,7 +869,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         Expanded(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(v2FmtNum(_total),
+            Text(v2FmtNum(_displayTotal),
                 style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w900,
@@ -1160,34 +1201,142 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   }
 
   // ── SKELETON ──
+  // Skeleton ya Watumiaji = UTAMBO ULEULE wa ukurasa halisi (muundo na pimo):
+  // stats card (namba + 'Watumiaji Wote' + pill/duara 58×58), search + funnel,
+  // kadi za timeline (dot + jina/kada + muda + pill), na row ya kurasa.
+  // Bone/SkeletonScope = kung'aa + ku-move kama upepo (shimmer) kama skeletons
+  // zingine zote za app.
   Widget _buildSkeleton() {
+    Widget cardBone({EdgeInsets? padding, required Widget child}) => Container(
+          padding: padding ?? const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: v2SurfaceOf(context),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: v2BorderOf(context), width: 0.8),
+          ),
+          child: child,
+        );
+
+    // Kadi ya mstari wa timeline (dot + jina/kada + muda + pill ya hali).
+    Widget rowCard() => cardBone(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Bone.circle(34),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Bone(widthFactor: 0.55, height: 15),
+                  SizedBox(height: 6),
+                  Bone(widthFactor: 0.36, height: 12),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Bone(width: 52, height: 10),
+                SizedBox(height: 6),
+                Bone(width: 62, height: 22, radius: 11),
+              ],
+            ),
+          ]),
+        );
+
     return ListView(
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
       children: [
-        Container(
-          height: 108,
-          decoration: BoxDecoration(
-            color: v2BorderOf(context).withValues(alpha: .4),
-            borderRadius: BorderRadius.circular(18),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-          decoration: BoxDecoration(
-              color: v2SurfaceOf(context), borderRadius: BorderRadius.circular(16)),
+        SkeletonScope(
           child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                      color: v2BorderOf(context).withValues(alpha: .5),
-                      borderRadius: BorderRadius.circular(8)),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Stats card — namba kubwa, lebo, pill + duara 58×58 ──
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: v2SurfaceOf(context),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: v2BorderOf(context), width: 0.8),
                 ),
-                const SizedBox(height: 16),
-                for (int i = 0; i < _pageSize; i++) const V2SkeletonCard(),
-              ]),
+                child: Row(children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Bone(width: 96, height: 34, radius: 10),
+                        const SizedBox(height: 6),
+                        const Bone(width: 112, height: 13),
+                        const SizedBox(height: 12),
+                        Row(children: const [
+                          Bone(width: 64, height: 24, radius: 12),
+                          SizedBox(width: 10),
+                          Bone(width: 34, height: 22, radius: 8),
+                        ]),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Bone(width: 58, height: 58, radius: 16),
+                ]),
+              ),
+              const SizedBox(height: 10),
+              // ── Search + funnel ──
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                decoration: BoxDecoration(
+                  color: v2SurfaceOf(context),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Expanded(child: Bone(height: 40, radius: 8)),
+                      const SizedBox(width: 8),
+                      const Bone(width: 40, height: 40, radius: 8),
+                    ]),
+                    const SizedBox(height: 14),
+                    for (var i = 0; i < _pageSize; i++) ...[
+                      rowCard(),
+                      const SizedBox(height: 2),
+                    ],
+                    const SizedBox(height: 10),
+                    // ── Ukurasa N / M ──
+                    Container(
+                      padding: const EdgeInsets.only(top: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                            top: BorderSide(
+                                color: v2BorderOf(context), width: 0.5)),
+                      ),
+                      child: Row(children: [
+                        // Flexible+FittedBox: haikiuki kwenye simu ndogo 320
+                        // (kama row halisi ya kurasa).
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: const Bone(width: 104, height: 38, radius: 19),
+                          ),
+                        ),
+                        const Spacer(),
+                        const Bone(width: 44, height: 13),
+                        const Spacer(),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: const Bone(width: 118, height: 38, radius: 19),
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

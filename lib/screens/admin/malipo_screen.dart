@@ -36,6 +36,7 @@ import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
+import '../../widgets/skeletons.dart';
 
 // ───────────────────────── RANGI ─────────────────────────
 class _C {
@@ -173,6 +174,10 @@ class MalipoController extends ChangeNotifier {
   int pendingCount;
   int completedCount;
   int rejectedCount;
+
+  /// UKURASA UNAPAKIWA na hakuna data yoyote (disi/add ya bure) —
+  /// skrini inaonyesha skeleton (kung'aa + ku-move kama upepo) badala ya "hakuna".
+  bool loading = false;
   int completedAmount;
   int pendingAmount;
   int page;
@@ -431,6 +436,10 @@ class _MalipoScreenState extends State<MalipoScreen> {
           animation: _c,
           builder: (context, _) {
             final list = _visible();
+            // HAKUNA data kabisa + API bado inapakia — skeleton ya malipo
+            // (muundo uleule: header, duara, tiles, tiketi, kurasa) yenye
+            // shimmer kama skeletons zingine zote za app.
+            if (_c.loading && _c.items.isEmpty) return _skeleton();
             return ListView(
               padding: const EdgeInsets.only(bottom: 20),
               children: [
@@ -669,6 +678,131 @@ class _MalipoScreenState extends State<MalipoScreen> {
       ]),
     );
   }
+
+  // ───────────────────────── SKELETON ─────────────────────────
+  // Skeleton ya Malipo = UTAMBO ULEULE wa ukurasa halisi: header ("Malipo" +
+  // Live + duara ya search 40), duara la takwimu, tiles 3, lebo ya siku +
+  // tiketi 4, na mistari ya kurasa. Bone/SkeletonScope = kung'aa + ku-move
+  // kama upepo (shimmer) — kama skeletons zingine zote za app.
+  Widget _skeleton() => ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 20),
+        children: [
+          SkeletonScope(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // Header: title + Live + duara ya search 40.
+              const Padding(
+                padding: EdgeInsets.fromLTRB(14, 16, 14, 0),
+                child: Row(children: [
+                  Bone(width: 92, height: 26, radius: 8),
+                  SizedBox(width: 10),
+                  Bone.circle(10),
+                  Spacer(),
+                  Bone.circle(40),
+                ]),
+              ),
+              // Duara la takwimu juu.
+              const Padding(
+                padding: EdgeInsets.only(top: 14, bottom: 4),
+                child: Center(child: Bone.circle(168)),
+              ),
+              // Tiles 3 (Imekamilika / Inasubiri / Imekataliwa).
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                child: Row(children: [
+                  _skelTile(),
+                  const SizedBox(width: 8),
+                  _skelTile(),
+                  const SizedBox(width: 8),
+                  _skelTile(),
+                ]),
+              ),
+              // Lebo ya siku + hesabu zake.
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Row(children: [
+                  Bone(width: 64, height: 12),
+                  Spacer(),
+                  Bone(width: 40, height: 12),
+                ]),
+              ),
+              // Tiketi 4 za kijivu (jina/kodi + kiasi + vitufe).
+              for (var i = 0; i < 4; i++) _skelTicket(),
+              // Kurasa: Iliyopita / ukurasa / Inayofuata.
+              const Padding(
+                padding: EdgeInsets.fromLTRB(14, 4, 14, 0),
+                child: Row(children: [
+                  Expanded(child: Bone(height: 38, radius: 19)),
+                  SizedBox(width: 10),
+                  Bone(width: 48, height: 13),
+                  SizedBox(width: 10),
+                  Expanded(child: Bone(height: 38, radius: 19)),
+                ]),
+              ),
+            ]),
+          ),
+        ],
+      );
+
+  Widget _skelTile() => Expanded(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(6, 10, 6, 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _C.borderStrongT(context), width: 0.6),
+          ),
+          child: Column(children: [
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
+              Bone.circle(8),
+              SizedBox(width: 6),
+              Bone(width: 38, height: 12),
+            ]),
+            const SizedBox(height: 4),
+            const Bone(width: 22, height: 20),
+            const SizedBox(height: 4),
+            const Bone(width: 44, height: 10),
+          ]),
+        ),
+      );
+
+  Widget _skelTicket() => Container(
+        margin: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: _C.surfaceT(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.borderT(context), width: 0.5),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Bone(widthFactor: 0.58, height: 16),
+                  SizedBox(height: 8),
+                  Bone(widthFactor: 0.4, height: 12),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Bone(width: 76, height: 20),
+                SizedBox(height: 8),
+                Bone(width: 44, height: 12),
+              ],
+            ),
+          ]),
+          const SizedBox(height: 12),
+          Row(children: [
+            const Expanded(child: Bone(height: 36, radius: 18)),
+            const SizedBox(width: 10),
+            const Bone.circle(36),
+          ]),
+        ]),
+      );
 
   // ───────────────────────── TIKETI ─────────────────────────
   List<Widget> _tickets(List<Malipo> list) {
@@ -1620,6 +1754,8 @@ class ApiMalipoController extends MalipoController {
     if (_busy) return;
     hydrateFromDisk();
     _busy = true;
+    loading = true;
+    notifyListeners(); // skeleton ikiona mara moja (items bado tupu)
     try {
       await CachedRepository().refresh(_kMalipoKey,
           () async => (await ApiService().adminAllDonations()).data);
@@ -1638,6 +1774,10 @@ class ApiMalipoController extends MalipoController {
       // OFFLINE-FIRST: kosa halionekani — data ya diski inabaki (banner juu).
     } finally {
       _busy = false;
+      if (loading) {
+        loading = false;
+        notifyListeners();
+      }
     }
   }
 
