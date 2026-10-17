@@ -294,6 +294,8 @@ class _AdminDataPageState extends State<AdminDataPage>
 
       case 'cadres':
         if (!_cache.containsKey('departments')) await _loadType('departments');
+        // Async-gap: ukurasa unaweza kuwa umetoka — usitumie context tena.
+        if (!mounted) return;
         final depts = asList(_cache['departments']).map(asMap).toList();
         final idaraList = depts
             .map((d) => (code: d['code'] as String? ?? '', name: d['name'] as String? ?? ''))
@@ -322,6 +324,8 @@ class _AdminDataPageState extends State<AdminDataPage>
 
       case 'districts':
         if (!_cache.containsKey('regions')) await _loadType('regions');
+        // Async-gap: ukurasa unaweza kuwa umetoka — usitumie context tena.
+        if (!mounted) return;
         final regionsList = asList(_cache['regions']).map(asMap).toList();
         final mikoa = regionsList
             .map((r) => (id: r['id']?.toString() ?? '', name: r['name'] as String? ?? ''))
@@ -338,6 +342,8 @@ class _AdminDataPageState extends State<AdminDataPage>
 
       case 'facilities':
         if (!_cache.containsKey('regions')) await _loadType('regions');
+        // Async-gap: ukurasa unaweza kuwa umetoka — usitumie context tena.
+        if (!mounted) return;
         final regionsList = asList(_cache['regions']).map(asMap).toList();
         final mikoa = regionsList
             .map((r) => (id: r['id']?.toString() ?? '', name: r['name'] as String? ?? ''))

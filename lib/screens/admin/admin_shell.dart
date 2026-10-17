@@ -271,13 +271,17 @@ class _AdminShellState extends State<AdminShell> {
   }
 
   Future<void> _logout() async {
-    if (Navigator.of(context).canPop()) Navigator.pop(context);
+    // ASKISHA subiri dialog imetoka — usitumie context tena baada ya await
+    // (aut-dismiss/mtumiaji akibadili ukurasa — async-gap crash).
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final nav = Navigator.of(context);
+    if (nav.canPop()) nav.pop();
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => const _LogoutDialog(),
     );
     if (ok != true) return;
-    await Provider.of<AuthProvider>(context, listen: false).logout();
+    await auth.logout();
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, '/login');
   }
