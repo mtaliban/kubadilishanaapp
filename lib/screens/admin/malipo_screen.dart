@@ -177,6 +177,7 @@ class MalipoController extends ChangeNotifier {
   int pendingAmount;
   int page;
   int pages;
+  MalipoStatus? filter;
   Malipo? _undoBefore;
 
   MalipoController({
@@ -242,6 +243,13 @@ class MalipoController extends ChangeNotifier {
   Future<void> loadPage(int p) async {
     page = p.clamp(1, pages);
     notifyListeners();
+  }
+
+  /// Weka chujio cha hali (pending/completed/rejected au null = yote).
+  /// Upagaji wa API controller unahesabiwa kutoka kwenye orodha ILIYOCHUJWA —
+  /// badilisha kwenye override yako kama unahitaji ku-refresh.
+  Future<void> setFilter(MalipoStatus? s) async {
+    filter = s;
   }
 }
 
@@ -333,7 +341,8 @@ class _MalipoScreenState extends State<MalipoScreen> {
       _openId = null;
       _rejectId = null;
     });
-    _c.loadPage(1);
+    // Chujio kimoja tu — controller inapanga ukurasa ndani ya orodha iliyochujwa.
+    _c.setFilter(_filter);
   }
 
   void _toggleOpen(String id) {
@@ -491,7 +500,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
                 _openId = null;
                 _rejectId = null;
               });
-              _c.loadPage(1);
+              _c.setFilter(null);
             } else {
               _select(s);
             }
@@ -1128,7 +1137,7 @@ class _MalipoScreenState extends State<MalipoScreen> {
                   _search.clear();
                   _searchOpen = false;
                 });
-                _c.loadPage(1);
+                _c.setFilter(null);
               },
               child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 18, vertical: 11),
@@ -1541,10 +1550,24 @@ class ApiMalipoController extends MalipoController {
 
   int _pagesFor(int n) => (n / _kMalipoPerPage).ceil().clamp(1, 9999);
 
+  List<Malipo> _filteredAll() =>
+      filter == null ? _all : _all.where((m) => m.status == filter).toList();
+
   void _applyPage() {
-    final start = ((page - 1) * _kMalipoPerPage).clamp(0, _all.length);
-    final end = (start + _kMalipoPerPage).clamp(0, _all.length);
-    items = _all.sublist(start, end);
+    final list = _filteredAll();
+    final start = ((page - 1) * _kMalipoPerPage).clamp(0, list.length);
+    final end = (start + _kMalipoPerPage).clamp(0, list.length);
+    items = list.sublist(start, end);
+  }
+
+  /// Chujio kibadiime — ukurasa unaanza UPYA (1) na pages zinahesabiwa
+  /// kutoka kwa orodha iliyochujwa (mf. zilizokataliwa tu), si malipo yote.
+  @override
+  Future<void> setFilter(MalipoStatus? s) async {
+    filter = s;
+    page = 1;
+    _recompute();
+    notifyListeners();
   }
 
   Malipo _map(Map<String, dynamic> m) {
@@ -1626,7 +1649,7 @@ class ApiMalipoController extends MalipoController {
         _all.where((m) => m.status == MalipoStatus.completed).fold(0, (s, m) => s + m.amount);
     pendingAmount =
         _all.where((m) => m.status == MalipoStatus.pending).fold(0, (s, m) => s + m.amount);
-    pages = _pagesFor(_all.length);
+    pages = _pagesFor(_filteredAll().length);
     if (page > pages) page = pages;
     _applyPage();
   }

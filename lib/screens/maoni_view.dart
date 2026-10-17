@@ -47,7 +47,11 @@ class MaoniView extends StatefulWidget {
     this.onSend,
     this.onBack,
     this.pageSize = 5,
-    this.maxLength = 500,
+    // 2000 = kikomo HALISI cha backend (app/modules/feedback/routes.py:
+    // message max_length=2000). Zamani ilikuwa 500 — ujumbe mrefu ulikatwa
+    // katikati ya maneno kwenye kisanduku na mtumiaji lazima atume maoni
+    // mengi anayojirudia-rudia.  Sasa ujumbe WOTE unaingia kwa ujumbe moja.
+    this.maxLength = 2000,
     this.toastBottom = 16,
   });
 
@@ -244,10 +248,12 @@ class _MaoniViewState extends State<MaoniView> {
             ),
           ]),
           const SizedBox(height: 8),
+          // maxLines: null — kisanduku kinakua kulingana na ujumbe; ujumbe WOTE
+          // unaonekana pale juu wakati unakokota (haujikatwa 8-mishale iliyofungwa).
           TextField(
             controller: msgCtrl,
             minLines: 4,
-            maxLines: 8,
+            maxLines: null,
             maxLength: widget.maxLength,
             textCapitalization: TextCapitalization.sentences,
             style: TextStyle(color: c.text, fontSize: 14),

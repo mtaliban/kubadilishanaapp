@@ -400,10 +400,10 @@ class _MatangazoScreenState extends State<MatangazoScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 16, 14, 0),
                 child: Row(
-                  // Icon ya matangazo — kama ya drawer (bell-ringing) ya Phosphor.
-                  // (const imeondolewa: PhosphorIcons.* ni functions, siyo const.)
+                  // Icon ya matangazo — ile ile ya DRAWER (speakerphone),
+                  // kwa hiyo inafanana na menyu ya kushoto kwa ukurasa wote.
                   children: [
-                    Icon(PhosphorIcons.bellRinging(), size: 26, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
+                    Icon(TablerIcons.speakerphone, size: 26, color: _C.of(context, _C.blue, Color(0xFF7AA7FF))),
                     const SizedBox(width: 10),
                     Text('Matangazo',
                         style: TextStyle(

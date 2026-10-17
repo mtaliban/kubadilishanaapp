@@ -17,11 +17,10 @@
 //   )
 //
 // Skeleton zilizomo:
-//   Admin app : TakwimuSkeleton, WenzaoSkeleton, WatumiajiSkeleton,
-//               MatangazoSkeleton, DataListSkeleton (Idara, Masomo, Kada,
-//               Mikoa, Wilaya, Vituo), MalipoSkeleton, AdminWasifuSkeleton
-//   User app  : DashibodiSkeleton, ChangiaSkeleton, MaoniSkeleton,
-//               WasifuSkeleton
+//   Admin app : TakwimuSkeleton, WenzaoSkeleton, DataListSkeleton (Idara, Masomo,
+//               Kada, Mikoa, Wilaya, Vituo), MalipoSkeleton, AdminWasifuSkeleton
+//   User app  : DashibodiSkeleton, ChangiaSkeleton, MaoniSkeleton, WasifuSkeleton
+//               (zimenakiliwa kutoka kwenye picha halisi za kurasa za user app)
 
 import 'package:flutter/material.dart';
 
@@ -150,7 +149,32 @@ class Bone extends StatelessWidget {
   }
 }
 
-/// Kadi yenye mstari wa pembeni, kama kadi halisi za app.class _SkCard extends StatelessWidget {  const _SkCard({    required this.child,    this.padding = const EdgeInsets.all(16),    this.margin = const EdgeInsets.only(bottom: 12),  });  final Widget child;  final EdgeInsets padding;  final EdgeInsets margin;  @override  Widget build(BuildContext context) => Container(        clipBehavior: Clip.hardEdge,        decoration: BoxDecoration(          borderRadius: BorderRadius.circular(22),          border: Border.all(color: _border(context)),        ),        margin: margin,        padding: padding,        child: child,      );}/// Mstari wa vitone (kama kwenye tiketi na kadi za watu).class _Dashed extends StatelessWidget {
+/// Kadi yenye mstari wa pembeni, kama kadi halisi za app.
+class _SkCard extends StatelessWidget {
+  const _SkCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.margin = const EdgeInsets.only(bottom: 12),
+  });
+
+  final Widget child;
+  final EdgeInsets padding;
+  final EdgeInsets margin;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        margin: margin,
+        padding: padding,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: _border(context)),
+        ),
+        child: child,
+      );
+}
+
+/// Mstari wa vitone (kama kwenye tiketi na kadi za watu).
+class _Dashed extends StatelessWidget {
   const _Dashed();
 
   @override
@@ -173,16 +197,20 @@ class Bone extends StatelessWidget {
 
 /// Ukurasa wa skeleton: haubadiliki urefu, haupindi (hakuna overflow).
 class _SkPage extends StatelessWidget {
-  const _SkPage({required this.children});
+  const _SkPage({
+    required this.children,
+    this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 24),
+  });
 
   final List<Widget> children;
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) => SkeletonScope(
         child: ClipRect(
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: padding,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: children,
@@ -213,11 +241,9 @@ class SkeletonSwitcher extends StatelessWidget {
         duration: const Duration(milliseconds: 300),
         switchInCurve: Curves.easeOut,
         switchOutCurve: Curves.easeIn,
-        child: ClipRect(
-          child: loading
-              ? KeyedSubtree(key: const ValueKey('skeleton'), child: skeleton)
-              : KeyedSubtree(key: const ValueKey('content'), child: child),
-        ),
+        child: loading
+            ? KeyedSubtree(key: const ValueKey('skeleton'), child: skeleton)
+            : KeyedSubtree(key: const ValueKey('content'), child: child),
       );
 }
 
@@ -253,11 +279,11 @@ class TakwimuSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SingleChildScrollView(scrollDirection: Axis.horizontal, physics: const NeverScrollableScrollPhysics(), child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Row(children: [
                 Bone.circle(12),
                 SizedBox(width: 8),
                 Bone(width: 130, height: 12),
-              ])),
+              ]),
               _gh(14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -295,11 +321,11 @@ class TakwimuSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SingleChildScrollView(scrollDirection: Axis.horizontal, physics: const NeverScrollableScrollPhysics(), child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Row(children: [
                 Bone(width: 44, height: 44, radius: 14),
                 SizedBox(width: 12),
                 Bone(width: 170, height: 18),
-              ])),
+              ]),
               _gh(16),
               for (var i = 0; i < 3; i++) ...[
                 const Row(children: [
@@ -364,137 +390,38 @@ class WenzaoSkeleton extends StatelessWidget {
                 ]),
                 _gh(14),
                 const _Dashed(),
-                _gh(14),                const Row(children: [
+                _gh(14),
+                const Row(children: [
                   Bone.circle(14),
                   SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Bone(widthFactor: 0.42, height: 10),
-                        SizedBox(height: 6),
-                        Bone(widthFactor: 0.8, height: 18),
-                        SizedBox(height: 6),
-                        Bone(widthFactor: 0.62, height: 12),
-                      ],
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Bone(width: 60, height: 10),
+                      SizedBox(height: 6),
+                      Bone(width: 120, height: 18),
+                      SizedBox(height: 6),
+                      Bone(width: 90, height: 12),
+                    ],
                   ),
                 ]),
-                _gh(12),                const Row(children: [
+                _gh(12),
+                const Row(children: [
                   Bone.circle(14),
                   SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Bone(widthFactor: 0.55, height: 10),
-                        SizedBox(height: 6),
-                        Bone(widthFactor: 0.85, height: 18),
-                        SizedBox(height: 6),
-                        Bone(widthFactor: 0.62, height: 12),
-                      ],
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Bone(width: 80, height: 10),
+                      SizedBox(height: 6),
+                      Bone(width: 130, height: 18),
+                      SizedBox(height: 6),
+                      Bone(width: 90, height: 12),
+                    ],
                   ),
                 ]),
                 _gh(14),
                 const Bone(width: double.infinity, height: 42, radius: 14),
-              ],
-            ),
-          ),
-      ]);
-}
-
-/// Watumiaji (admin): kichujio, kutafuta, kadi za watu kwa jumla.
-class WatumiajiSkeleton extends StatelessWidget {
-  const WatumiajiSkeleton({super.key, this.count = 4, this.showChips = false});
-  final int count;
-  final bool showChips;
-
-  @override
-  Widget build(BuildContext context) => _SkPage(children: [
-        const Row(children: [
-          Expanded(child: Bone(height: 46, radius: 16)),
-          SizedBox(width: 12),
-          Bone(width: 46, height: 46, radius: 16),
-        ]),
-        _gh(12),
-        const Bone(width: double.infinity, height: 46, radius: 23),
-        if (showChips) ...[
-          _gh(12),          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              physics: const NeverScrollableScrollPhysics(),
-              children: const [
-                Bone(width: 96, height: 40, radius: 20),
-                SizedBox(width: 10),
-                Bone(width: 110, height: 40, radius: 20),
-                SizedBox(width: 10),
-                Bone(width: 92, height: 40, radius: 20),
-              ],
-            ),
-          ),
-        ],
-        _gh(16),
-        const Bone(width: 130, height: 12),
-        _gh(14),
-        for (var i = 0; i < count; i++)
-          _SkCard(
-            padding: const EdgeInsets.all(12),
-            child: Row(children: [
-              const Bone.circle(48),
-              _gw(12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Bone(widthFactor: 0.6, height: 15),
-                    _gh(8),
-                    const Bone(widthFactor: 0.42, height: 12),
-                  ],
-                ),
-              ),
-              _gw(10),
-              const Bone(width: 70, height: 28, radius: 14),
-            ]),
-          ),
-      ]);
-}
-
-/// Matangazo: kadi zenye kichwa, tarehe/aina na ujumbe.
-class MatangazoSkeleton extends StatelessWidget {
-  const MatangazoSkeleton({super.key, this.count = 3, this.showFab = false});
-  final int count;
-  final bool showFab;
-
-  @override
-  Widget build(BuildContext context) => _SkPage(children: [
-        const Row(children: [
-          Bone(width: 110, height: 18),
-          Spacer(),
-          Bone(width: 96, height: 40, radius: 20),
-        ]),
-        _gh(14),
-        for (var i = 0; i < count; i++)
-          _SkCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(children: [
-                  Bone(width: 60, height: 26, radius: 13),
-                  SizedBox(width: 10),
-                  Bone(width: 90, height: 12),
-                  Spacer(),
-                  Bone(width: 20, height: 20, radius: 6),
-                ]),
-                _gh(12),
-                const Bone(widthFactor: 0.85, height: 16),
-                _gh(10),
-                const Bone(width: double.infinity, height: 12),
-                _gh(8),
-                const Bone(width: double.infinity, height: 12),
-                _gh(8),
-                const Bone(widthFactor: 0.5, height: 12),
               ],
             ),
           ),
@@ -666,23 +593,16 @@ class MalipoSkeleton extends StatelessWidget {
               _gh(14),
               const _Dashed(),
               _gh(14),
-              const Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Bone(widthFactor: 0.66, height: 16),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Bone.circle(38),
-                  SizedBox(width: 10),
-                  Bone(width: 104, height: 34, radius: 8),
-                ],
-              ),
+              // Mstari wa mlolongo wa tiketi — Bone wa kwanza ni Expanded:
+              // upana kamili haikiidani na simu 320 (254px kwaunda).
+              const Row(children: [
+                Expanded(child: Bone(height: 16)),
+                Bone.circle(38),
+                SizedBox(width: 10),
+                Bone.circle(38),
+                SizedBox(width: 10),
+                Bone(width: 104, height: 34, radius: 8),
+              ]),
             ],
           ),
         ),
@@ -733,97 +653,209 @@ class AdminWasifuSkeleton extends StatelessWidget {
 
 /* ═══════════════════════ USER APP ═══════════════════════ */
 
-/// Dashibodi: kadi za watu zenye Anatoka -> Anataka, masomo, uzoefu, vitufe 3.
+/// Dashibodi: kadi ya karibu, muhtasari wa Wakitokea -> Wanahamia, vichujio
+/// (Wanakotoka, Wilaya, Shule, Masomo), kadi za watu, na kurasa (Iliyopita/
+/// Inayofuata).
 class DashibodiSkeleton extends StatelessWidget {
-  const DashibodiSkeleton({super.key, this.count = 3});
+  const DashibodiSkeleton({super.key, this.count = 2});
   final int count;
+
+  Widget _chips(List<double> widths) => SizedBox(
+        height: 42,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            for (final w in widths) ...[
+              Bone(width: w, height: 42, radius: 21),
+              const SizedBox(width: 10),
+            ],
+          ],
+        ),
+      );
+
+  Widget _person() => const _SkCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Bone.circle(52),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Bone(widthFactor: 0.62, height: 16),
+                    SizedBox(height: 8),
+                    Bone(widthFactor: 0.42, height: 12),
+                  ],
+                ),
+              ),
+              SizedBox(width: 12),
+              Bone(width: 84, height: 30, radius: 15),
+            ]),
+            SizedBox(height: 14),
+            Row(children: [
+              Bone(width: 78, height: 30, radius: 15),
+              SizedBox(width: 10),
+              Expanded(child: Bone(widthFactor: 0.72, height: 14)),
+            ]),
+            SizedBox(height: 14),
+            _Dashed(),
+            SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Bone(width: 60, height: 10),
+                      SizedBox(height: 7),
+                      Bone(width: 104, height: 20),
+                      SizedBox(height: 7),
+                      Bone(width: 80, height: 12),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 26),
+                  child: Bone(width: 40, height: 12, radius: 6),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Bone(width: 60, height: 10),
+                      SizedBox(height: 7),
+                      Bone(width: 84, height: 20),
+                      SizedBox(height: 7),
+                      Bone(width: 80, height: 12),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 14),
+            Row(children: [
+              Bone(width: 56, height: 12),
+              SizedBox(width: 10),
+              Bone(width: 52, height: 30, radius: 15),
+              SizedBox(width: 8),
+              Bone(width: 52, height: 30, radius: 15),
+            ]),
+            SizedBox(height: 10),
+            Bone(width: 150, height: 28, radius: 14),
+            SizedBox(height: 16),
+            Row(children: [
+              Expanded(child: Bone(height: 54, radius: 14)),
+              SizedBox(width: 10),
+              Expanded(child: Bone(height: 54, radius: 14)),
+              SizedBox(width: 10),
+              Expanded(child: Bone(height: 54, radius: 14)),
+            ]),
+          ],
+        ),
+      );
 
   @override
   Widget build(BuildContext context) => _SkPage(children: [
-        for (var i = 0; i < count; i++)
-          _SkCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        // Kadi ya karibu (picha, jina, hali ya malipo, cheo, mahali)
+        const _SkCard(
+          child: Row(children: [
+            Bone.circle(64),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Expanded(child: Bone(widthFactor: 0.8, height: 18)),
+                    SizedBox(width: 8),
+                    Bone(width: 76, height: 26, radius: 13),
+                  ]),
+                  SizedBox(height: 10),
+                  Row(children: [
+                    Bone.circle(14),
+                    SizedBox(width: 8),
+                    Expanded(child: Bone(widthFactor: 0.9, height: 13)),
+                  ]),
+                  SizedBox(height: 8),
+                  Row(children: [
+                    Bone.circle(14),
+                    SizedBox(width: 8),
+                    Bone(width: 120, height: 13),
+                  ]),
+                ],
+              ),
+            ),
+          ]),
+        ),
+        // Muhtasari: Wakitokea -> idadi ya wenzako -> Wanahamia
+        const _SkCard(
+          padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Row(children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Bone(width: 66, height: 10),
+                  SizedBox(height: 8),
+                  Row(children: [
+                    Bone.circle(18),
+                    SizedBox(width: 8),
+                    Bone(width: 70, height: 18),
+                  ]),
+                ],
+              ),
+            ),
+            Column(
               children: [
-                const Row(children: [
-                  Bone.circle(52),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Bone(widthFactor: 0.6, height: 16),
-                        SizedBox(height: 8),
-                        Bone(widthFactor: 0.42, height: 12),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Bone(width: 92, height: 30, radius: 15),
-                ]),
-                _gh(14),
-                const Row(children: [
-                  Bone(width: 78, height: 30, radius: 15),
-                  SizedBox(width: 10),
-                  Expanded(child: Bone(widthFactor: 0.7, height: 14)),
-                ]),
-                _gh(14),
-                const _Dashed(),
-                _gh(14),
-                const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Bone(width: 60, height: 10),
-                          SizedBox(height: 7),
-                          Bone(width: 110, height: 20),
-                          SizedBox(height: 7),
-                          Bone(width: 80, height: 12),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(top: 26),
-                      child: Bone(width: 44, height: 12, radius: 6),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Bone(width: 60, height: 10),
-                          SizedBox(height: 7),
-                          Bone(width: 90, height: 20),
-                          SizedBox(height: 7),
-                          Bone(width: 80, height: 12),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                _gh(14),
-                const SingleChildScrollView(scrollDirection: Axis.horizontal, physics: const NeverScrollableScrollPhysics(), child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Bone(width: 56, height: 12),
-                  SizedBox(width: 10),
-                  Bone(width: 52, height: 30, radius: 15),
-                  SizedBox(width: 8),
-                  Bone(width: 52, height: 30, radius: 15),
-                ])),
-                _gh(10),
-                const Bone(width: 150, height: 28, radius: 14),
-                _gh(16),
-                const Row(children: [
-                  Expanded(child: Bone(height: 56, radius: 14)),
-                  SizedBox(width: 10),
-                  Expanded(child: Bone(height: 56, radius: 14)),
-                  SizedBox(width: 10),
-                  Expanded(child: Bone(height: 56, radius: 14)),
-                ]),
+                Bone(width: 44, height: 24, radius: 12),
+                SizedBox(height: 8),
+                Bone(width: 56, height: 10, radius: 5),
+                SizedBox(height: 8),
+                Bone(width: 48, height: 10),
               ],
             ),
-          ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Bone(width: 76, height: 10),
+                  SizedBox(height: 8),
+                  Bone(width: 64, height: 18),
+                ],
+              ),
+            ),
+          ]),
+        ),
+        _gh(6),
+        // Wanakotoka: vichupo vya mikoa + Wilaya/Shule
+        const Bone(width: 110, height: 16),
+        _gh(10),
+        _chips(const [58, 92, 128, 90]),
+        _gh(10),
+        const Row(children: [
+          Expanded(child: Bone(height: 46, radius: 16)),
+          SizedBox(width: 12),
+          Expanded(child: Bone(height: 46, radius: 16)),
+        ]),
+        _gh(16),
+        // Masomo
+        const Bone(width: 70, height: 16),
+        _gh(10),
+        _chips(const [56, 150, 104, 80]),
+        _gh(16),
+        for (var i = 0; i < count; i++) _person(),
+        // Kurasa: Iliyopita / 1 / 5 / Inayofuata
+        const Row(children: [
+          Bone(width: 112, height: 44, radius: 22),
+          Spacer(),
+          Bone(width: 44, height: 14),
+          Spacer(),
+          Bone(width: 128, height: 44, radius: 22),
+        ]),
       ]);
 }
 
@@ -843,17 +875,18 @@ class ChangiaSkeleton extends StatelessWidget {
           SizedBox(height: 16),
         ],
       );
+
   @override
   Widget build(BuildContext context) => _SkPage(children: [
         _SkCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SingleChildScrollView(scrollDirection: Axis.horizontal, physics: const NeverScrollableScrollPhysics(), child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Row(children: [
                 Bone.circle(26),
                 SizedBox(width: 10),
                 Bone(width: 150, height: 16),
-              ])),
+              ]),
               _gh(14),
               const Row(children: [
                 Expanded(
@@ -877,11 +910,11 @@ class ChangiaSkeleton extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SingleChildScrollView(scrollDirection: Axis.horizontal, physics: const NeverScrollableScrollPhysics(), child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Row(children: [
                   Bone.circle(26),
                   SizedBox(width: 10),
                   Bone(width: 170, height: 16),
-                ])),
+                ]),
                 _gh(16),
                 _field(),
                 _field(),
@@ -895,26 +928,21 @@ class ChangiaSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SingleChildScrollView(scrollDirection: Axis.horizontal, physics: const NeverScrollableScrollPhysics(), child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Row(children: [
                 Bone.circle(24),
                 SizedBox(width: 10),
                 Bone(width: 150, height: 16),
-              ])),
+              ]),
               _gh(14),
-              SizedBox(
-                height: 44,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: const [
-                    Bone(width: 84, height: 44, radius: 22),
-                    SizedBox(width: 10),
-                    Bone(width: 110, height: 44, radius: 22),
-                    SizedBox(width: 10),
-                    Bone(width: 110, height: 44, radius: 22),
-                  ],
-                ),
-              ),
+              // Pills 3 za historia ya malipo — Expanded kila moja: zinaendana
+              // na simu ndogo 320 (kuzubandika bone fixed 324 > 254px kwaunda).
+              const Row(children: [
+                Expanded(child: Bone(height: 44, radius: 22)),
+                SizedBox(width: 10),
+                Expanded(child: Bone(height: 44, radius: 22)),
+                SizedBox(width: 10),
+                Expanded(child: Bone(height: 44, radius: 22)),
+              ]),
               _gh(16),
               const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -958,8 +986,14 @@ class ChangiaSkeleton extends StatelessWidget {
                       ],
                     ),
                   ),
+                  SizedBox(width: 12),
+                  Bone(width: 8, height: 14, radius: 4),
                 ]),
-                if (i == 0) _gh(14),
+                if (i == 0) ...[
+                  _gh(14),
+                  Container(height: 1, color: _border(context)),
+                  _gh(14),
+                ],
               ],
             ],
           ),
@@ -982,11 +1016,11 @@ class MaoniSkeleton extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SingleChildScrollView(scrollDirection: Axis.horizontal, physics: const NeverScrollableScrollPhysics(), child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Row(children: [
                   Bone.circle(20),
                   SizedBox(width: 10),
                   Bone(width: 120, height: 16),
-                ])),
+                ]),
                 _gh(14),
                 const Bone(width: double.infinity, height: 110, radius: 18),
                 _gh(14),
@@ -1010,10 +1044,10 @@ class MaoniSkeleton extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  const Bone(width: 112, height: 28, radius: 14),
-                  const Spacer(),
-                  const Expanded(child: Bone(widthFactor: 1, height: 12)),
+                const Row(children: [
+                  Flexible(child: Bone(width: 112, height: 28, radius: 14)),
+                  Spacer(),
+                  Flexible(child: Bone(width: 100, height: 12)),
                 ]),
                 _gh(14),
                 Row(
@@ -1107,11 +1141,11 @@ class WasifuSkeleton extends StatelessWidget {
             children: [
               const Bone(width: 80, height: 11),
               _gh(14),
-              const SingleChildScrollView(scrollDirection: Axis.horizontal, physics: const NeverScrollableScrollPhysics(), child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Row(children: [
                 Bone(width: 84, height: 34, radius: 17),
                 SizedBox(width: 10),
                 Bone(width: 70, height: 34, radius: 17),
-              ])),
+              ]),
             ],
           ),
         ),
@@ -1131,15 +1165,110 @@ class WasifuSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Bone(width: 160, height: 11),
+              const Bone(width: 140, height: 11),
               _gh(14),
-              const Row(children: [
-                Bone.circle(36),
-                SizedBox(width: 12),
-                Expanded(child: Bone(height: 62, radius: 16)),
-              ]),
+              const Bone(width: double.infinity, height: 66, radius: 16),
             ],
           ),
         ),
+      ]);
+}
+
+/* ═══════════════ MWONGEZO WA ADMIN (wa kurasa nyingine) ═══════════════ */
+
+class WatumiajiSkeleton extends StatelessWidget {
+  const WatumiajiSkeleton({super.key, this.count = 4, this.showChips = false});
+  final int count;
+  final bool showChips;
+
+  @override
+  Widget build(BuildContext context) => _SkPage(children: [
+        const Row(children: [
+          Expanded(child: Bone(height: 46, radius: 16)),
+          SizedBox(width: 12),
+          Bone(width: 46, height: 46, radius: 16),
+        ]),
+        _gh(12),
+        const Bone(width: double.infinity, height: 46, radius: 23),
+        if (showChips) ...[
+          _gh(12),
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              children: const [
+                Bone(width: 96, height: 40, radius: 20),
+                SizedBox(width: 10),
+                Bone(width: 110, height: 40, radius: 20),
+                SizedBox(width: 10),
+                Bone(width: 92, height: 40, radius: 20),
+              ],
+            ),
+          ),
+        ],
+        _gh(16),
+        const Bone(width: 130, height: 12),
+        _gh(14),
+        for (var i = 0; i < count; i++)
+          _SkCard(
+            padding: const EdgeInsets.all(12),
+            child: Row(children: [
+              const Bone.circle(48),
+              _gw(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Bone(widthFactor: 0.6, height: 15),
+                    _gh(8),
+                    const Bone(widthFactor: 0.42, height: 12),
+                  ],
+                ),
+              ),
+              _gw(10),
+              const Bone(width: 70, height: 28, radius: 14),
+            ]),
+          ),
+      ]);
+}
+
+/// Matangazo: kadi zenye kichwa, tarehe/aina na ujumbe.
+class MatangazoSkeleton extends StatelessWidget {
+  const MatangazoSkeleton({super.key, this.count = 3, this.showFab = false});
+  final int count;
+  final bool showFab;
+
+  @override
+  Widget build(BuildContext context) => _SkPage(children: [
+        const Row(children: [
+          Bone(width: 110, height: 18),
+          Spacer(),
+          Bone(width: 96, height: 40, radius: 20),
+        ]),
+        _gh(14),
+        for (var i = 0; i < count; i++)
+          _SkCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(children: [
+                  Bone(width: 60, height: 26, radius: 13),
+                  SizedBox(width: 10),
+                  Bone(width: 90, height: 12),
+                  Spacer(),
+                  Bone(width: 20, height: 20, radius: 6),
+                ]),
+                _gh(12),
+                const Bone(widthFactor: 0.85, height: 16),
+                _gh(10),
+                const Bone(width: double.infinity, height: 12),
+                _gh(8),
+                const Bone(width: double.infinity, height: 12),
+                _gh(8),
+                const Bone(widthFactor: 0.5, height: 12),
+              ],
+            ),
+          ),
       ]);
 }

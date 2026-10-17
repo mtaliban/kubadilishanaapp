@@ -9,7 +9,6 @@ import '../../services/app_navigator.dart' show adminPageNotifier;
 import '../../widgets/admin_top_bar.dart';
 import '../../widgets/app_drawer.dart' show AppDrawer, CountBadge, NavItem;
 import '../../widgets/app_toast.dart';
-import '../../widgets/network_banner.dart';
 import '../../widgets/queue_banner.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_users_v2_page.dart';
@@ -350,7 +349,6 @@ class _AdminShellState extends State<AdminShell> {
           });
         }
         return Column(children: [
-          const NetworkBanner(),
           const QueueBanner(),
           Expanded(child: widget.child ?? _pageFor(_idx)),
         ]);
@@ -436,6 +434,8 @@ class _LogoutDialog extends StatelessWidget {
     const border = Color(0xFFD1D5DB);
 
     return Dialog(
+      // NYEUPE — tema daima; surface ya theme ilionekana bluu.
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 260),

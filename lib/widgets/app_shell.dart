@@ -11,7 +11,6 @@ import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../config/theme.dart';
 import 'app_toast.dart';
-import 'network_banner.dart';
 import 'user_top_bar.dart';
 
 const _kAdminPhone = '0763795801';
@@ -358,9 +357,6 @@ class _AppShellState extends State<AppShell> {
                 onNavigate: (page) => _navigateTab(page.index),
                 onLogout: _logout,
               ),
-
-              // ══ NETWORK BANNER — offline/connecting/online ══════════════════
-              const NetworkBanner(),
 
               // ══ CONTENT ══════════════════════════════════════════════════════
               Expanded(child: widget.child),
