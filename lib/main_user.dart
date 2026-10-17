@@ -34,6 +34,7 @@ import 'screens/user_profile_screen.dart';
 import 'screens/call_history_screen.dart';
 import 'screens/settings_screen.dart';
 import 'widgets/app_shell.dart' show LanguageProvider, ThemeProvider;
+import 'widgets/network_pill.dart';
 
 // "Wilaya yeyote" — lebo maalum ya lengo (tazama: register_screen.dart)
 const String kWilayaAny = 'Wilaya yeyote';
@@ -188,6 +189,13 @@ class _UserAppState extends State<_UserApp> {
         navigatorKey: appNavigatorKey,
         title: 'Kubadilishana',
         debugShowCheckedModeBanner: false,
+        // MTANDAO-PILL: kidonge cha hali ya mtandao juu ya kurasa zote —
+        // umekatika (njano) → unaunganika (bluu) → umeunganishwa (kijani).
+        // Tazama widgets/network_pill.dart.
+        builder: (context, child) => NetworkPillOverlay(
+          controller: netPill,
+          child: child ?? const SizedBox.shrink(),
+        ),
         // DARK/LIGHT: ThemeProvider.toggle() inabadilisha app nzima.
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

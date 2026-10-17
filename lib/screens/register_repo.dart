@@ -16,7 +16,7 @@
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 import 'register_screen.dart' show RegistrationRepository, RegistrationData,
-    RegOption, EduLevel, RegTargetData;
+    RegOption, EduLevel, RegTargetData, RegisterException;
 
 class RealRegistrationRepository implements RegistrationRepository {
   final ApiService _api = ApiService();
@@ -261,7 +261,15 @@ class RealRegistrationRepository implements RegistrationRepository {
       'desired_destinations': destinations,
     };
 
-    await AuthProvider().register(payload);
+    // DAAIMI ULIZA MATOKEO: hata kama API imeshindwa (409 namba imetumika,
+    // 422 kada siyo sahihi, n.k.), submit HAIFAA kutoka na mtumiaji aondoke
+    // akiwa "amejisajili" kumbe hakuna akaunti iliyorekodiwa. Ndiyo sababu
+    // waliosajiliwa hawakuonekana kwenye orodha ya admin.
+    final ok = await AuthProvider().register(payload);
+    if (!ok) {
+      throw RegisterException(
+          AuthProvider().error ?? 'Imeshindikana kujisajili. Jaribu tena.');
+    }
   }
 }
 

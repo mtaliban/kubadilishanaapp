@@ -15,10 +15,13 @@
 //   )
 // ============================================================================
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
+
+import '../widgets/app_toast.dart' show AppToast, friendlyError;
 
 // ============================================================================
 // RANGI (badilisha hapa tu kama unataka bluu nyingine)
@@ -216,6 +219,16 @@ abstract class RegistrationRepository {
   Future<void> submit(RegistrationData data);
 }
 
+/// Kosa la usajili lenye UJUMBE HALISI — inatupwa na repo (register_repo.dart)
+/// ujumbe wa backend (namba imetumika, kada isiyo sahihi n.k.) ukionyeshwa kama
+/// ulivyo kwenye skrini ya usajili. Sio ujumbe generic.
+class RegisterException implements Exception {
+  final String message;
+  RegisterException(this.message);
+  @override
+  String toString() => message;
+}
+
 // ============================================================================
 // PAGE
 // ============================================================================
@@ -275,6 +288,12 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
   bool _finished = false;
   bool _submitting = false;
   String? _error;
+  // Makosa ya kila uga wa 'Taarifa' — yanaonyeshwa CHINI ya uga husika,
+  // sio ujumbe mmoja wa jina pekee. Yote hujifuta (auto-dismiss).
+  String? _nameError;
+  String? _phoneError;
+  String? _waError;
+  Timer? _errorTimer;
   String? _open; // dropdown iliyo wazi
   String? _edit; // orodha inayobadilishwa
 
@@ -309,11 +328,27 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
 
   @override
   void dispose() {
+    _errorTimer?.cancel();
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _waCtrl.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  /// Kosa linajiondoa lenyewe — mtumiaji hakubaki na ujumbe uleule muda
+  /// mrefu (tazama footer + maeneo ya uga).
+  void _scheduleErrorDismiss() {
+    _errorTimer?.cancel();
+    _errorTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      setState(() {
+        _error = null;
+        _nameError = null;
+        _phoneError = null;
+        _waError = null;
+      });
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -539,6 +574,8 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
         controller: _nameCtrl,
         keyboardType: TextInputType.name,
         capitalization: TextCapitalization.words,
+        onChanged: (_) => setState(() => _nameError = null),
+        errorText: _nameError,
       ),
       _label('Namba ya simu'),
       _UnderlineField(
@@ -547,7 +584,8 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
         controller: _phoneCtrl,
         keyboardType: TextInputType.phone,
         onChanged: (v) => _checkPhone(v, false),
-        underlineColor: _statusColor(_phoneStatus),
+        underlineColor: _phoneError != null ? _C.danger : _statusColor(_phoneStatus),
+        errorText: _phoneError,
       ),
       _PhoneStatusRow(status: _phoneStatus),
       _label('Namba ya WhatsApp'),
@@ -557,7 +595,8 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
         controller: _waCtrl,
         keyboardType: TextInputType.phone,
         onChanged: (v) => _checkPhone(v, true),
-        underlineColor: _statusColor(_waStatus),
+        underlineColor: _waError != null ? _C.danger : _statusColor(_waStatus),
+        errorText: _waError,
       ),
       _PhoneStatusRow(status: _waStatus),
     ];
@@ -568,6 +607,9 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     final id = wa ? ++_waReq : ++_phoneReq;
     if (digits.length < 10) {
       setState(() {
+        // Mtumiaji ameanza kurekebisha — kosa liondoke mara moja.
+        _phoneError = null;
+        _waError = null;
         if (wa) {
           _waStatus = _PhoneStatus.idle;
         } else {
@@ -578,8 +620,10 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     }
     setState(() {
       if (wa) {
+        _waError = null;
         _waStatus = _PhoneStatus.checking;
       } else {
+        _phoneError = null;
         _phoneStatus = _PhoneStatus.checking;
       }
     });
@@ -1332,6 +1376,8 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     final err = _validate();
     if (err != null) {
       setState(() => _error = err);
+      // Kosa linaonyeshwa, kisha HUJIFUTA (auto-dismiss) — hakikubaki muda mrefu.
+      _scheduleErrorDismiss();
       return;
     }
     if (_step < _steps.length - 1) {
@@ -1353,15 +1399,21 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
     final w = _waCtrl.text.replaceAll(RegExp(r'\D'), '');
     switch (key) {
       case 'Taarifa':
-        if (_nameCtrl.text.trim().isEmpty) return 'Andika jina lako kamili.';
-        if (p.length < 10 || _phoneStatus == _PhoneStatus.taken) {
-          return 'Weka namba ya simu isiyotumika.';
+        // Kila uga tupu una ujumbe WAKE, unaoonyeshwa chini ya uga husika —
+        // sio "jina lako kamili" daima. Yote yaliyoachwa yapate alama.
+        _nameError = _nameCtrl.text.trim().isEmpty ? 'Jaza jina lako kamili.' : null;
+        _phoneError = p.isEmpty
+            ? 'Jaza namba ya simu (mf. 07xxxxxxxx).'
+            : (p.length < 10 ? 'Namba ya simu si kamili.' : (_phoneStatus == _PhoneStatus.taken ? 'Namba hii imetumika.' : null));
+        _waError = w.isEmpty
+            ? 'Jaza namba ya WhatsApp (mf. 07xxxxxxxx).'
+            : (w.length < 10 ? 'Namba ya WhatsApp si kamili.' : (_waStatus == _PhoneStatus.taken ? 'Namba hii imetumika.' : null));
+        if (_phoneError == null && _phoneStatus == _PhoneStatus.checking ||
+            _waError == null && _waStatus == _PhoneStatus.checking) {
+          return 'Subiri, tunakagua namba za simu.';
         }
-        if (w.length < 10 || _waStatus == _PhoneStatus.taken) {
-          return 'Weka namba ya WhatsApp isiyotumika.';
-        }
-        if (_phoneStatus == _PhoneStatus.checking || _waStatus == _PhoneStatus.checking) {
-          return 'Subiri, tunakagua namba.';
+        if (_nameError != null || _phoneError != null || _waError != null) {
+          return 'Jaza taarifa zote ulizoacha wazi (ona maeneo yenye alama chini).';
         }
         return null;
       case 'Idara':
@@ -1431,13 +1483,19 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
         _submitting = false;
         _finished = true;
       });
+      // TOAST YA MAFANIKIO — mtindo uleule wa tosti za app (AppToast).
+      AppToast.success('Hongera ${data.name.split(' ').first}, umefanikiwa kujisajili!');
       widget.onFinished?.call(data);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _submitting = false;
-        _error = 'Imeshindikana kujisajili. Jaribu tena.';
+        // Kosa HALISI (namba imetumika, kada isiyo sahihi, n.k.) — sio ujumbe
+        // generic; tuonyeshe kama ulivyo kutoka backend, kisha tosti pia.
+        _error = e is RegisterException ? e.message : friendlyError(e);
       });
+      AppToast.error(_error!);
+      _scheduleErrorDismiss();
     }
   }
 
@@ -1978,6 +2036,10 @@ class _UnderlineField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final Color? underlineColor;
 
+  /// Kosa la uga husika (namba si kamili, imetumika, imeachwa wazi n.k.) —
+  /// si null: mcatiano ukuwe mekundu na ujumbe uonekane chini ya uga huu.
+  final String? errorText;
+
   const _UnderlineField({
     required this.icon,
     required this.hint,
@@ -1986,43 +2048,65 @@ class _UnderlineField extends StatelessWidget {
     this.capitalization = TextCapitalization.none,
     this.onChanged,
     this.underlineColor,
+    this.errorText,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: underlineColor ?? _C.borderStrong, width: 2),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: _C.blue),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              keyboardType: keyboardType,
-              textCapitalization: capitalization,
-              onChanged: onChanged,
-              style: const TextStyle(fontSize: 15, color: _C.text),
-              decoration: InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                filled: false,
-                hintText: hint,
-                hintStyle: const TextStyle(fontSize: 15, color: _C.textMuted),
-                contentPadding: const EdgeInsets.symmetric(vertical: 6),
-              ),
+    return Column(children: [
+      Container(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: errorText != null
+                  ? _C.danger
+                  : (underlineColor ?? _C.borderStrong),
+              width: 2,
             ),
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: _C.blue),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                keyboardType: keyboardType,
+                textCapitalization: capitalization,
+                onChanged: onChanged,
+                style: const TextStyle(fontSize: 15, color: _C.text),
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  hintText: hint,
+                  hintStyle: const TextStyle(fontSize: 15, color: _C.textMuted),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    );
+      // KOSA CHINI YA UGA HUSIKA — mtumiaji anajua wazi uga gani kumekosea.
+      if (errorText != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Row(children: [
+              const Icon(RegIcons.bad, size: 14, color: _C.danger),
+              const SizedBox(width: 5),
+              Text(errorText!,
+                  style: const TextStyle(fontSize: 12, color: _C.danger)),
+            ]),
+          ),
+        ),
+    ]);
   }
 }
 
