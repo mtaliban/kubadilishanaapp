@@ -355,8 +355,6 @@ class _AppShellState extends State<AppShell> {
               UserTopBar(
                 name: user?.fullName ?? '',
                 currentPage: UserPage.values[widget.tabIndex.clamp(0, 3)],
-                lang: LanguageProvider().lang,
-                onLangChanged: (l) => setState(() => LanguageProvider().setLang(l)),
                 onNavigate: (page) => _navigateTab(page.index),
                 onLogout: _logout,
               ),

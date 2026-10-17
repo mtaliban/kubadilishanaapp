@@ -39,8 +39,6 @@
 //     appBar: UserTopBar(
 //       name: user.name,
 //       currentPage: UserPage.wasifu,
-//       lang: 'sw',
-//       onLangChanged: (l) => ...,
 //       onNavigate: (page) => ...,   // badilisha tab / Navigator
 //       onLogout: () async => ...,   // futa token, rudi kwenye login
 //     ),
@@ -60,8 +58,6 @@ enum UserPage { dashibodi, changia, maoni, wasifu }
 class UserTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String name;
   final UserPage currentPage;
-  final String lang; // 'sw' au 'en'
-  final ValueChanged<String> onLangChanged;
   final ValueChanged<UserPage> onNavigate;
   final Future<void> Function() onLogout;
   final bool confirmLogout;
@@ -70,8 +66,6 @@ class UserTopBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.name,
     required this.currentPage,
-    required this.lang,
-    required this.onLangChanged,
     required this.onNavigate,
     required this.onLogout,
     this.confirmLogout = true,
@@ -106,9 +100,6 @@ class UserTopBar extends StatelessWidget implements PreferredSizeWidget {
               const SizedBox(width: 10),
               // 3. Duara la jina: la kuonyesha tu, halibonyezeki
               _Avatar(c: c, name: name),
-              const SizedBox(width: 10),
-              // 4. Lugha
-              _LangSwitch(c: c, lang: lang, onChanged: onLangChanged),
             ],
           ),
         ),
@@ -348,48 +339,6 @@ class _ThemeSwitch extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _LangSwitch extends StatelessWidget {
-  final _TC c;
-  final String lang;
-  final ValueChanged<String> onChanged;
-  const _LangSwitch({required this.c, required this.lang, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    Widget seg(String code, String label) {
-      final on = lang == code;
-      return GestureDetector(
-        onTap: on ? null : () => onChanged(code),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: BoxDecoration(
-            color: on ? c.card : Colors.transparent,
-            borderRadius: BorderRadius.circular(7),
-            border: on ? Border.all(color: c.borderStrong, width: .5) : null,
-          ),
-          child: Text(label,
-              style: TextStyle(
-                  color: on ? c.blue : c.muted, fontSize: 12, fontWeight: FontWeight.w600)),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: c.soft,
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: c.border, width: .5),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        seg('sw', 'SW'),
-        seg('en', 'EN'),
-      ]),
     );
   }
 }
