@@ -295,11 +295,15 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Import watumiaji',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         color: c.text,
                         fontSize: 17,
                         fontWeight: FontWeight.w600)),
                 Text('Ongeza watumiaji wengi kwa faili la Excel',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: c.muted, fontSize: 12)),
               ],
             ),
@@ -578,8 +582,14 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: c.border)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      // RESPONSIVE: vitufe 'Ghairi' + 'Anza kuingiza' kwenye font kubwa
+      // (2.0) hazikutosheka mstari mmoja — Wrap inavunja mstari badala ya
+      // Row ikibeyuka (overflow).
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 6,
+        runSpacing: 6,
         children: [
           SizedBox(
             height: 30,
@@ -596,7 +606,6 @@ class _ImportUsersPageState extends State<ImportUsersPage> {
               child: const Text('Ghairi'),
             ),
           ),
-          const SizedBox(width: 6),
           Opacity(
             opacity: canImport || importing ? 1 : .45,
             child: _TonalButton(
@@ -763,7 +772,15 @@ class _FileCard extends StatelessWidget {
               ],
             ),
           ),
-          trailing,
+          // RESPONSIVE: kitufe cha 'Pakua' ('Imepakuliwa' kwenye font kubwa
+          // ~200px) — Flexible + FittedBox: kitufe punguzwa kidogo badala ya
+          // pembeni ya jina kubeyuka.
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: trailing,
+            ),
+          ),
         ],
       ),
     );

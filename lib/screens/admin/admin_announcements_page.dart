@@ -3,6 +3,7 @@ import 'admin_theme.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/skeletons.dart';
+import '../../widgets/tight_title.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
 import 'admin_users_v2_theme.dart';
@@ -608,48 +609,55 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
       child: Row(
         children: [
-          const Expanded(
-            child: Text('Matangazo',
-                style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: _cText,
-                    letterSpacing: -0.5)),
-          ),
-          Material(
-            color: _cTint,
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
+          // RESPONSIVE: 'Matangazo' kwenye font kubwa — FittedBox badala ya
+          // Expanded ikibeyuka (kitufe cha 'Historia' hakiwezi pungua).
+          TightTitle('Matangazo',
+              style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: _cText,
+                  letterSpacing: -0.5)),
+          // RESPONSIVE: kitufe pia kipunguze (Flexible + FittedBox) — kwenye
+          // simu 320 na font 1.5/2.0 kinapungua badala ya kubeyuka nje (25-right).
+          Flexible(
+            child: Material(
+              color: _cTint,
               borderRadius: BorderRadius.circular(20),
-              onTap: () => setState(() {
-                _historia = !_historia;
-                _page = 1;
-                _confirmId = null;
-              }),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: _historia
-                      ? const [
-                          Icon(Icons.arrow_back, size: 16, color: _cPrimary),
-                          SizedBox(width: 6),
-                          Text('Rudi',
-                              style: TextStyle(
-                                  color: _cPrimary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14)),
-                        ]
-                      : [
-                          Text('Historia (${_list.length})',
-                              style: const TextStyle(
-                                  color: _cPrimary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14)),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.arrow_forward,
-                              size: 16, color: _cPrimary),
-                        ],
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => setState(() {
+                  _historia = !_historia;
+                  _page = 1;
+                  _confirmId = null;
+                }),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: _historia
+                          ? const [
+                              Icon(Icons.arrow_back, size: 16, color: _cPrimary),
+                              SizedBox(width: 6),
+                              Text('Rudi',
+                                  style: TextStyle(
+                                      color: _cPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14)),
+                            ]
+                          : [
+                              Text('Historia (${_list.length})',
+                                  style: const TextStyle(
+                                      color: _cPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14)),
+                              const SizedBox(width: 6),
+                              const Icon(Icons.arrow_forward,
+                                  size: 16, color: _cPrimary),
+                            ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -709,16 +717,23 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: sel ? a.color : _cBorder, width: 1.4),
         ),
+        // RESPONSIVE: font kubwa + simu ndogo — lebo inakatwa (FittedBox)
+        // badala ya kubeyuka nje ya Wrap (1.3/7.6-right kwenye 320).
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(a.icon, size: 16, color: sel ? Colors.white : a.color),
             const SizedBox(width: 6),
-            Text(a.label,
-                style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: sel ? Colors.white : _cText)),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(a.label,
+                    style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: sel ? Colors.white : _cText)),
+              ),
+            ),
           ],
         ),
       ),

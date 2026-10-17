@@ -667,9 +667,13 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(children: [
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.55,
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      // RESPONSIVE: badala ya kara ya ukubwa/caption urefu wa hakika (55%) —
+      // font ikikua (1.5/2.0) maudhui husogea chini badala ya kufurajia nje.
+      // Center + Padding inaonyesha wazi upanaa wa kuvaa.
+      Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 160),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(
             width: 64, height: 64,
             decoration: BoxDecoration(color: _kGrey100, borderRadius: BorderRadius.circular(18)),
@@ -682,6 +686,7 @@ class _EmptyState extends StatelessWidget {
               style: const TextStyle(fontSize: 12, color: _kGrey400),
               textAlign: TextAlign.center)),
         ]),
+        ),
       ),
     ]);
   }

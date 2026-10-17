@@ -185,14 +185,33 @@ class _AdminPasswordResetsPageState extends State<AdminPasswordResetsPage>
                 }
                 final items = _cache[status] ?? [];
                 if (items.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.lock_outline, color: Ad.muted(context), size: 48),
-                        SizedBox(height: 12),
-                        Text('Hakuna maombi', style: TextStyle(color: Ad.muted(context))),
-                      ],
+                  // RESPONSIVE: hali tupu inayosogeika badala ya overflow —
+                  // font kubwa ikienda chini kuliko eneo inasogeka bado
+                  // CENTERED (ConstrainedBox minHeight + Center).
+                  return LayoutBuilder(
+                    builder: (_, box) => SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints:
+                            BoxConstraints(minHeight: box.maxHeight),
+                        child: Center(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.lock_outline,
+                                    color: Ad.muted(context), size: 48),
+                                SizedBox(height: 12),
+                                Text('Hakuna maombi',
+                                    style: TextStyle(
+                                        color: Ad.muted(context))),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 }

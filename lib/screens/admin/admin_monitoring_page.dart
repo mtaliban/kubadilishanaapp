@@ -135,14 +135,28 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
             )
           else if (_events.isEmpty)
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.info_outline, color: Ad.muted(context), size: 48),
-                    SizedBox(height: 12),
-                    Text('Hakuna matukio', style: TextStyle(color: Ad.muted(context))),
-                  ],
+              // RESPONSIVE: hali tupu inayosogeika badala ya overflow —
+              // font kubwa ikiwa ndefu kuliko eneo inasogeka bila kufuata
+              // (ConstrainedBox minHeight + Center — hakuna SizedBox infinity).
+              child: LayoutBuilder(
+                builder: (_, box) => SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: box.maxHeight),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.info_outline, color: Ad.muted(context), size: 48),
+                            SizedBox(height: 12),
+                            Text('Hakuna matukio', style: TextStyle(color: Ad.muted(context))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             )

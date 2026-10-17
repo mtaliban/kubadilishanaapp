@@ -17,6 +17,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/skeletons.dart';
+import '../../widgets/tight_title.dart';
 import '../../services/websocket_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
@@ -371,7 +372,9 @@ class _MaoniPageState extends State<MaoniPage> {
           children: [
             Row(
               children: [
-                Text('Maoni',
+                // RESPONSIVE: 'Maoni' kwenye font kubwa — FittedBox badala ya
+                // Row ikibeyuka (LiveDot + 'Live' haziwezi pungua).
+                TightTitle('Maoni',
                     style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w500,
@@ -518,6 +521,9 @@ class _MaoniPageState extends State<MaoniPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // RESPONSIVE: nukuu + hali — kwenye font kubwa (2.0) 'Haijajibiwa'
+          // haki-tooshi pamoja na nukuu kwenye mstari mmoja: hali inapunguka
+          // (ellipsis) badala ya Row ikibeyuka (overflow).
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -526,7 +532,7 @@ class _MaoniPageState extends State<MaoniPage> {
                 child:
                     Text('\u201C', style: _serif(30, color: _C.blueLinkOf(context), height: 1)),
               ),
-              _status(m.answered),
+              Flexible(child: _status(m.answered)),
             ],
           ),
           // RANGI DARK-AWARE: default ya _serif ilikuwa _C.body (meusi hardcoded)
@@ -559,12 +565,16 @@ class _MaoniPageState extends State<MaoniPage> {
                     ? _C.greenOf(context)
                     : _C.redOf(context)),
           const SizedBox(width: 5),
-          Text(
-            answered ? 'Imejibiwa' : 'Haijajibiwa',
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: answered ? _C.greenDarkOf(context) : _C.redOf(context)),
+          Flexible(
+            child: Text(
+              answered ? 'Imejibiwa' : 'Haijajibiwa',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: answered ? _C.greenDarkOf(context) : _C.redOf(context)),
+            ),
           ),
         ],
       );
@@ -687,8 +697,11 @@ class _MaoniPageState extends State<MaoniPage> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
           border: Border(top: BorderSide(color: _C.lineOf(context)))),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      // RESPONSIVE: kurasa nyingi + font kubwa — Wrap inavunja mstari
+      // badala ya Row ikibeyuka (overflow).
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           InkWell(
             onTap: canPrev ? () => _goToPage(page - 1) : null,

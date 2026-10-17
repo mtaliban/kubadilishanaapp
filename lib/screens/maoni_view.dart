@@ -229,12 +229,19 @@ class _MaoniViewState extends State<MaoniView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // RESPONSIVE: simu 320 + font 2.0 — maandishi yanapungua kupitia
+          // FittedBox badala ya kubeyuka nje ya kadi (67-right).
           Row(children: [
             Icon(TablerIcons.pencil, size: 16, color: c.blue),
             const SizedBox(width: 6),
-            Text('Ujumbe wako',
-                style: TextStyle(
-                    color: c.text, fontSize: 14, fontWeight: FontWeight.w600)),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text('Ujumbe wako',
+                    style: TextStyle(
+                        color: c.text, fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
+            ),
           ]),
           const SizedBox(height: 8),
           TextField(
@@ -384,20 +391,29 @@ class _FeedbackCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // RESPONSIVE: Pill + 'ago' zote.mbili huweza kupungua (Flexible +
+            // FittedBox) — simu 320 na font 2.0 hazivujishi tena (67-right).
             Row(children: [
-              ans
-                  ? _Pill(
-                      label: 'Yamejibiwa',
-                      icon: TablerIcons.circleCheck,
-                      fg: c.green,
-                      bg: c.greenBg)
-                  : _Pill(
-                      label: 'Inasubiri jibu',
-                      icon: TablerIcons.clock,
-                      fg: c.amber,
-                      bg: c.amberBg),
+              Flexible(
+                child: ans
+                    ? _Pill(
+                        label: 'Yamejibiwa',
+                        icon: TablerIcons.circleCheck,
+                        fg: c.green,
+                        bg: c.greenBg)
+                    : _Pill(
+                        label: 'Inasubiri jibu',
+                        icon: TablerIcons.clock,
+                        fg: c.amber,
+                        bg: c.amberBg),
+              ),
               const Spacer(),
-              Text(ago, style: TextStyle(color: c.muted, fontSize: 12)),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(ago, style: TextStyle(color: c.muted, fontSize: 12)),
+                ),
+              ),
             ]),
             const SizedBox(height: 8),
 
@@ -502,11 +518,19 @@ class _Pill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
         decoration:
             BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+        // RESPONSIVE: font kubwa + simu ndogo — Text inakata vizuri
+        // (FittedBox scaleDown) ili Pill isibeyuke nje ya kadi.
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
-          Text(label,
-              style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label,
+                  style: TextStyle(
+                      color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
+            ),
+          ),
         ]),
       );
 }

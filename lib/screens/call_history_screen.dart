@@ -345,12 +345,17 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.12),
       children: [
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.55,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        Center(
+          child: Padding(
+            // FONT KUWA: kala fixed height ya 55% — content (font 2.0) inaweza
+            // kuitokea. Center + Padding inarekodi content height halisa.
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
               Container(
                 width: 64, height: 64,
                 decoration: BoxDecoration(
@@ -371,6 +376,7 @@ class _EmptyState extends StatelessWidget {
                 style: TextStyle(fontSize: 12, color: _kGrey400T(context)),
                 textAlign: TextAlign.center),
             ],
+          ),
           ),
         ),
       ],

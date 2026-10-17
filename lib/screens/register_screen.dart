@@ -1347,13 +1347,24 @@ class _RegistrationFlowPageState extends State<RegistrationFlowPage> {
             child: Text(_error!, style: const TextStyle(fontSize: 13, color: _C.danger)),
           ),
         Padding(
-          padding: const EdgeInsets.only(top: 16),            child: SizedBox(
-            width: double.infinity,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [Flexible(child: left), right],
-            ),
+          padding: const EdgeInsets.only(top: 16),
+          // RESPONSIVE: kwenye simu ndogo + font kubwa, maeneo mawili ya chini
+          // (Rudi/Ingia na kitufe) hayakitosheki mstari mmoja — kwenye upana
+          // mdogo: column (left juu, kitufe chini). Hakuna overflow.
+          child: LayoutBuilder(
+            builder: (context, box) => box.maxWidth < 340
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [left, const SizedBox(height: 10), right],
+                  )
+                : SizedBox(
+                    width: double.infinity,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [Flexible(child: left), right],
+                    ),
+                  ),
           ),
         ),
       ],

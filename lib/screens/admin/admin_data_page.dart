@@ -3,6 +3,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/skeletons.dart';
+import '../../widgets/tight_title.dart';
 import '../../services/websocket_service.dart';
 import '../../widgets/app_toast.dart';
 import 'admin_idara_dialogs.dart';
@@ -586,11 +587,12 @@ class _AdminDataPageState extends State<AdminDataPage>
                   alignment: Alignment.center,
                   child: Icon(PhosphorIcons.database(PhosphorIconsStyle.fill), color: _kIsDark(context) ? const Color(0xFF7AA7FF) : _kBlue, size: 26),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
+                const SizedBox(width: 12),                  Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
-                      Text('Data',
+                      // RESPONSIVE: 'Data' kwenye font kubwa — FittedBox badala ya
+                      // Row ikibeyuka (Live Chip haiwezi pungua).
+                      TightTitle('Data',
                           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _kInk(context))),
                       const SizedBox(width: 8),
                       Container(

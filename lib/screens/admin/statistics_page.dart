@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
 import '../../services/api_service.dart';
+import '../../widgets/tight_title.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/no_cached_data_widget.dart';
@@ -392,12 +393,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text('Statistics',
+            // RESPONSIVE: 'Statistics' ni neno MOJA ndefu — font kubwa (2.0)
+            // hakitoshi Expanded pekee; FittedBox (bila Flexible — kichwa
+            // kiko NDANI ya Expanded, wapinga ParentDataWidget error).
+            child: TightTitle.fitted('Statistics',
                 style: TextStyle(
                     fontSize: 24, fontWeight: FontWeight.w500, color: _C.title2(context))),
           ),
-          Flexible(
-            child: Container(
+          // PILL: isiflexible — inapata nafasi yake kamili (Live dot + neno);
+          // kichwa (TightTitle) ndiyo kinakunywa nafasi iliyobaki.
+          const SizedBox(width: 10),
+          Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: _C.greenBg2(context),
@@ -413,7 +419,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 ],
               ),
             ),
-          ),
         ],
       );
 

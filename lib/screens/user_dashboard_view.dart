@@ -296,6 +296,9 @@ class _UserDashboardViewState extends State<UserDashboardView>
     return _Card(
       c: c,
       padding: const EdgeInsets.all(12),
+      // RESPONSIVE: pill ya malipo iko NDANI ya Expanded (mstari wa 'Karibu') —
+      // simu ndogo + font kubwa Row ya wima [avatar, middle, pill] haikitoshi:
+      // pill inasogea chini badala ya Row kubeyuka (overflow).
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -305,9 +308,32 @@ class _UserDashboardViewState extends State<UserDashboardView>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Karibu, $first',
-                    style: TextStyle(
-                        color: c.text, fontSize: 15, fontWeight: FontWeight.w600)),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text('Karibu, $first',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              color: c.text,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(width: 8),
+                    me.paid
+                        ? _Pill(
+                            label: 'Umelipa',
+                            icon: TablerIcons.receipt,
+                            fg: c.green,
+                            bg: c.greenBg)
+                        : _Pill(
+                            label: 'Haujalipa',
+                            icon: TablerIcons.receiptOff,
+                            fg: c.red,
+                            bg: c.redBg),
+                  ],
+                ),
                 const SizedBox(height: 2),
                 _IconText(c: c, icon: id.icon, iconColor: fg, text: kadaLine),
                 _IconText(
@@ -317,17 +343,6 @@ class _UserDashboardViewState extends State<UserDashboardView>
               ],
             ),
           ),
-          me.paid
-              ? _Pill(
-                  label: 'Umelipa',
-                  icon: TablerIcons.receipt,
-                  fg: c.green,
-                  bg: c.greenBg)
-              : _Pill(
-                  label: 'Haujalipa',
-                  icon: TablerIcons.receiptOff,
-                  fg: c.red,
-                  bg: c.redBg),
         ],
       ),
     );
