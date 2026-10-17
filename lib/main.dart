@@ -63,8 +63,7 @@ Future<PackageInfo?> _loadPackageInfo() async {
 
 /// Mstari "Toleo 1.0.9+9" — huru kwenye screens za makosa.
 class _VersionLine extends StatelessWidget {
-  const _VersionLine({this.light = false});
-  final bool light;
+  const _VersionLine();
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<PackageInfo?>(
@@ -76,8 +75,7 @@ class _VersionLine extends StatelessWidget {
           padding: const EdgeInsets.only(top: 12),
           child: Text('Toleo ${v.version}+${v.buildNumber}',
               style: TextStyle(
-                  fontSize: 12,
-                  color: light ? Colors.grey.shade500 : Colors.red.shade300)),
+                  fontSize: 12, color: Colors.red.shade300)),
         );
       },
     );
@@ -155,9 +153,17 @@ void main() {
   }, (error, stack) {
     _crashLog.add('[Zone] $error\n$stack');
     if (!_uiShown) {
-      // Kosa kabla ya frame ya kwanza (runApp haijafanikiwa) — onyesha skrini ya kosa.
+      // Kosa kabla ya frame ya kwanza (runApp haijafanikiwa).
+      // MTANDAO: kosa la mtandao HALIONYESHICI skrini ya zamani ya
+      // "Hakuna mtandao / Jaribu tena" — app inafunguliwa kwa flow ya
+      // MPYA: kurasa za cache (offline-first) + banner/pill ya mtandao
+      // zinazoonyesha hali (kama WhatsApp). Hakuna full-screen ya kuzima.
       try {
-        runApp(_ErrorApp(error.toString()));
+        if (_ErrorWidget._isNetworkError(error.toString())) {
+          runApp(const KubadilishanaApp());
+        } else {
+          runApp(_ErrorApp(error.toString()));
+        }
       } catch (_) {}
     }
     // App iko ndani tayari: USIRUDIE runApp — banner/toasts zinashughulikia offline.
@@ -261,34 +267,9 @@ class _ErrorApp extends StatelessWidget {
   const _ErrorApp(this.message);
   @override
   Widget build(BuildContext context) {
-    // Kosa la mtandao (DNS/SocketException) — ujumbe wa kirafiki + Jaribu tena.
-    if (_ErrorWidget._isNetworkError(message)) {
-      return MaterialApp(
-        home: Scaffold(
-          backgroundColor: Colors.white,
-          body: SafeArea(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.wifi_off_rounded, size: 64, color: Colors.grey.shade500),
-                  const SizedBox(height: 20),
-                  const Text('Hakuna mtandao',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: () => main(),
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Jaribu tena'),
-                  ),
-                  const _VersionLine(light: true),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+    //NOTE: Tawi la MTANDAO la "Hakuna mtandao / Jaribu tena" LIMEONDOTWA
+    //kabisa — makosa ya mtandao hayafiki humu tena (zone handler inafungua
+    //app kwa flow ya mpya ya cache + banner). Hii inabaki na makosa ya kweli.
     // Kosa lingine — ujumbe wa kirafiki + Jaribu tena; maelezo ya kiufundi
     // yamebaki chini (bado yanapatikana kwa screenshot kwa msanidi).
     return MaterialApp(

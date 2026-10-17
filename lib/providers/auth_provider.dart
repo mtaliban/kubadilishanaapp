@@ -551,6 +551,19 @@ e.response?.statusCode == 401) {
       final status = response?.statusCode;
       final detail = response?.data?['detail'];
       if (detail is String) {
+        // KOSA ZA KAWAIDA ZA KUJISAJILI — zitusi Kiswahili chanya:
+        if (detail.contains('already registered')) {
+          return 'Namba hii tayari imesajiliwa kwenye app. '
+              'Ingia kwenye akaunti yako, au tumia namba nyingine.';
+        }
+        if (detail.contains('Idara hii ina kada') ||
+            detail.contains('Unknown cadre_code')) {
+          return 'Kada/cheo ulilochagua halipatikani. '
+              'Rudi hatua ya Kada/cheo na uchague tena.';
+        }
+        if (detail.contains('chagua masomo 2')) {
+          return 'Lazima uchague masomo 2 kwa kada yako.';
+        }
         // 503 = SMS/email OTP service haijasanidiwa (env vars za EC2) —
         // ujumbe wa backend ni wazi; tuonyeshe kama ulivyo.
         if (detail.contains('haujasanidiwa') || detail.contains('haikutumwa')) {

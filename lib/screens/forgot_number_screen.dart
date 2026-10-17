@@ -15,13 +15,15 @@ import '../services/api_service.dart';
 class _C {
   static const pageBg = Colors.white;
   static const cardBorder = Color(0xFFEDEDED);
-  static const primary = Color(0xFF2878D6);
-  static const primaryDark = Color(0xFF1B4F9C);
+  // Bluu ya APP kama kitufe cha 'Jisajili' (AppTheme.primary = #1E40AF) —
+  // SIYO bluu-bahari (#2878D6) ya awali.
+  static const primary = Color(0xFF1E40AF);
+  static const primaryDark = Color(0xFF1D4ED8);
   static const text = Color(0xFF111111);
   static const body = Color(0xFF555555);
   static const hint = Color(0xFF8A8A8A);
   static const line = Color(0xFFE6E6E6);
-  static const inputBorder = Color(0xFF8AB6EC);
+  static const inputBorder = Color(0xFFBFDBFE);
   static const copyBorder = Color(0xFFDADADA);
   static const okBg = Color(0xFFE3F4E1);
   static const ok = Color(0xFF1B6B1B);
