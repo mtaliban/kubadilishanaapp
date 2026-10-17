@@ -226,6 +226,10 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
               SizedBox(height: 120),
               NoCachedDataWidget(
                 hint: 'Vuta chini kupakia — malipo yatahifadhiwa kwenye simu.',
+                // Skeleton ya malipo — muundo kama ukurasa halisi (kama Takwimu),
+                // si fomu tupu ya 'haijapakuliwa'. Soli ikirudi, data inajipakia
+                // yenyewe, na API ikifaufa, soli iaachwa kwa wakati wa ukurasa.
+                skeleton: MalipoSkeleton(),
               ),
             ],
           ),

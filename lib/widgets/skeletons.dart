@@ -1084,94 +1084,161 @@ class MaoniSkeleton extends StatelessWidget {
 
 /// Wasifu (user app): kadi ya picha na jina, Mawasiliano, Masomo,
 /// Kituo cha sasa, Ninataka kwenda.
+/// ═══════════════ WASIFU (USER APP) ═══════════════
+/// Skeleton ya Wasifu = UTAMBO ULEULE wa WasifuView halisi (muundo na pimo):
+/// header (icon 40 + "Wasifu wangu" + Hariri), kadi ya duara 64/jina/pills,
+/// MAWASILIANO (mstari icon+lebo+thamani), KITUO CHA SASA,
+/// na NINATAKA KWENDA (duara-namba + mkoa/wilaya) — upana/tu urefu uo vadilihinisha?
 class WasifuSkeleton extends StatelessWidget {
   const WasifuSkeleton({super.key});
 
-  Widget _infoRow() => const Row(children: [
-        Bone(width: 40, height: 40, radius: 12),
-        SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Bone(width: 100, height: 11),
-              SizedBox(height: 8),
-              Bone(widthFactor: 0.65, height: 16),
-            ],
-          ),
+  // Kadi ya ukurasa (radius 16, pembeni — kama _Card ya WasifuView).
+  Widget _card(BuildContext c, Widget child) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+        decoration: BoxDecoration(
+          color: _isDark(c) ? const Color(0xFF181D26) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _border(c)),
         ),
-      ]);
+        child: child,
+      );
+
+  // Lebo ya sehemu ("MAWASILIANO" — herufi ndogo, ya juu-kushoto).
+  Widget _sectionTitle(double w) => Bone(width: w, height: 9, radius: 4);
+
+  // Mstari wa taarifa: icon 32×32 + lebo ndogo + thamani (kama _InfoRow).
+  Widget _infoRow() => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(children: [
+          const Bone(width: 32, height: 32, radius: 9),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Bone(width: 74, height: 10, radius: 5),
+                SizedBox(height: 5),
+                Bone(widthFactor: 0.62, height: 14),
+              ],
+            ),
+          ),
+        ]),
+      );
+
+  // Mstari wa KITUO (huenda Hospitali/kituo uka-pm). Habare hakuna duara-yamwisho.
+  Widget _kituoRow() => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(children: [
+          const Bone(width: 32, height: 32, radius: 9),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Bone(width: 86, height: 10, radius: 5),
+                SizedBox(height: 5),
+                Bone(widthFactor: 0.5, height: 14),
+              ],
+            ),
+          ),
+        ]),
+      );
 
   @override
-  Widget build(BuildContext context) => _SkPage(children: [
-        _SkCard(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          child: const Column(
-            children: [
-              Bone.circle(96),
-              SizedBox(height: 16),
-              Bone(width: 230, height: 20),
-              SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+  Widget build(BuildContext context) => _SkPage(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+        children: [
+          // Header — "Wasifu wangu" + kitufe cha Hariri.
+          const Row(children: [
+            Bone(width: 40, height: 40, radius: 12),
+            SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Bone(width: 80, height: 30, radius: 15),
-                  SizedBox(width: 10),
-                  Bone(width: 150, height: 30, radius: 15),
+                  Bone(widthFactor: 0.34, height: 14),
+                  SizedBox(height: 6),
+                  Bone(widthFactor: 0.26, height: 10),
                 ],
               ),
-            ],
+            ),
+            Bone(width: 84, height: 32, radius: 8),
+          ]),
+          const SizedBox(height: 10),
+
+          // Picha ya duara + jina + nguzo (idara na kada).
+          _card(
+            context,
+            const Column(children: [
+              Bone.circle(64),
+              SizedBox(height: 8),
+              Bone(width: 170, height: 17, radius: 8),
+              SizedBox(height: 6),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  Bone(width: 78, height: 20, radius: 999),
+                  Bone(width: 96, height: 20, radius: 999),
+                ],
+              ),
+            ]),
           ),
-        ),
-        _SkCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Bone(width: 110, height: 11),
-              _gh(16),
+
+          // MAWASILIANO
+          _card(
+            context,
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _sectionTitle(104),
               _infoRow(),
-              _gh(16),
               _infoRow(),
-            ],
+            ]),
           ),
-        ),
-        _SkCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Bone(width: 80, height: 11),
-              _gh(14),
-              const Row(children: [
-                Bone(width: 84, height: 34, radius: 17),
-                SizedBox(width: 10),
-                Bone(width: 70, height: 34, radius: 17),
-              ]),
-            ],
+
+          // KITUO CHA SASA
+          _card(
+            context,
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _sectionTitle(130),
+              _kituoRow(),
+              _kituoRow(),
+            ]),
           ),
-        ),
-        _SkCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Bone(width: 130, height: 11),
-              _gh(16),
-              _infoRow(),
-              _gh(16),
-              _infoRow(),
-            ],
+
+          // NINATAKA KWENDA — kadi 2 za chaguo (mkoa/wilaya).
+          _card(
+            context,
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _sectionTitle(150),
+              Container(
+                margin: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _isDark(context) ? const Color(0xFF212833) : const Color(0xFFF1F3F7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(children: [
+                  Bone.circle(24),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Bone(widthFactor: 0.42, height: 13),
+                        SizedBox(height: 5),
+                        Bone(widthFactor: 0.28, height: 11),
+                      ],
+                    ),
+                  ),
+                  Bone(width: 18, height: 18, radius: 6),
+                ]),
+              ),
+            ]),
           ),
-        ),
-        _SkCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Bone(width: 140, height: 11),
-              _gh(14),
-              const Bone(width: double.infinity, height: 66, radius: 16),
-            ],
-          ),
-        ),
-      ]);
+        ],
+      );
 }
 
 /* ═══════════════ MWONGEZO WA ADMIN (wa kurasa nyingine) ═══════════════ */

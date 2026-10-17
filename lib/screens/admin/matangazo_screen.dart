@@ -1120,6 +1120,19 @@ DateTime _matangazoDate(dynamic iso) {
   }
 }
 
+/// Orodha ya matangazo kutoka raw ya API/diski. GET /admin/announcements
+/// inarudisha Map (k.m. {"announcements": [...], "total": n}) kama web —
+/// zamani code ilikataza isipo kuwa List, hivyo historia ya app ilikuwa
+/// TUPU wakati web ina matangazo. Sasa fomu mbili zote zinakubaliwa.
+List<dynamic> _announcementsFrom(dynamic raw) {
+  if (raw is List) return raw;
+  if (raw is Map) {
+    return ((raw['announcements'] ?? raw['results'] ?? raw['items']) as List?) ??
+        const <dynamic>[];
+  }
+  return const <dynamic>[];
+}
+
 TangazoType _typeFromApi(String? v) => switch (v) {
       'warning' => TangazoType.onyo,
       'success' => TangazoType.mafanikio,
@@ -1219,19 +1232,18 @@ class ApiMatangazoController extends MatangazoController {
       await CachedRepository().refresh(kMatangazoCacheKey,
           () async => (await ApiService().adminListAnnouncements()).data);
       final raw = CachedRepository().readOrNull<dynamic>(kMatangazoCacheKey);
-      if (raw is List && raw.isNotEmpty) {
-        _all = [
-          for (final e in raw)
-            Tangazo(
-              id: (asMap(e)['announcement_id'] ?? asMap(e)['id'] ?? '')
-                  .toString(),
-              title: asMap(e)['title']?.toString() ?? '',
-              type: _typeFromApi(asMap(e)['type']?.toString()),
-              date: _matangazoDate(asMap(e)['created_at']),
-              message: asMap(e)['message']?.toString() ?? '',
-            ),
-        ];
-      }
+      final apiList = raw == null ? const <dynamic>[] : _announcementsFrom(raw);
+      _all = [
+        for (final e in apiList)
+          Tangazo(
+            id: (asMap(e)['announcement_id'] ?? asMap(e)['id'] ?? '')
+                .toString(),
+            title: asMap(e)['title']?.toString() ?? '',
+            type: _typeFromApi(asMap(e)['type']?.toString()),
+            date: _matangazoDate(asMap(e)['created_at']),
+            message: asMap(e)['message']?.toString() ?? '',
+          ),
+      ];
       total = _all.length;
       pages = _pagesFor(_all.length);
       page = 1;
@@ -1250,9 +1262,9 @@ class ApiMatangazoController extends MatangazoController {
   /// HAPO HAPO — API ikifaulu, historia mpya inabadilisha hii bila spinner.
   void _applyDisk(dynamic data) {
     final raw = data;
-    if (raw is! List) return;
+    if (raw == null) return;
     _all = [
-      for (final e in raw)
+      for (final e in _announcementsFrom(raw))
         Tangazo(
           id: (asMap(e)['announcement_id'] ?? asMap(e)['id'] ?? '').toString(),
           title: asMap(e)['title']?.toString() ?? '',

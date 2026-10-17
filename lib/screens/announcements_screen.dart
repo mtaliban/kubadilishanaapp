@@ -6,6 +6,10 @@ import '../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo ya diski ya matangazo + historia yake.
 const _kAnnouncementsKey = 'page:announcements';
+// Kumbukumbu ya matangazo yaliyopita ("ZILIZOPITA") — simu inayotumia app
+// inahifadhi yenyewe; ukurasa haunapoteza historia hata kama API ya arifa
+// haikutoa tangazo (au mpumiaji ameshaisoma/kuifuta). Upeo wa kumbukumbu 60.
+const _kSeenHistoryKey = 'page:announcements:history';
 
 const _kBlue    = Color(0xFF1E40AF);
 const _kGrey900 = Color(0xFF111827);
@@ -36,6 +40,8 @@ class AnnouncementsScreen extends StatefulWidget {
 class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   List<dynamic> _active = [];
   List<dynamic> _history = [];
+  // Ripoti za tangazo zilizohifadhiwa simu (Map yenye id/title/body/created_at).
+  List<dynamic> _diskHistory = [];
   bool _loading = true;
   final Set<String> _dismissing = {};
   final Set<String> _expandedHistory = {};
@@ -47,6 +53,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     super.initState();
     // DISKI PAPO HAPO — matangazo ya diski KWA FRAME YA KWANZA (hakuna
     // spring, hakuna kusubiri mtandao). Refresh iko nyuma ya pazia.
+    final saved = CachedRepository().readOrNull<dynamic>(_kSeenHistoryKey);
+    if (saved is List) _diskHistory = saved.whereType<Map>().toList();
     CachedRepository().hydrate(_kAnnouncementsKey, _applyAnnouncements);
     _load();
     WebSocketService().on('announcement', _onAnnouncement);
@@ -76,9 +84,85 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
     setState(() {
       _active = _deduplicate(active, 'title', 'message');
-      _history = _deduplicate(hist, 'title', 'body');
+      _history = _buildAnnouncementHistory(active, notifs, hist);
       _loading = false;
     });
+  }
+
+  /// Ripoti ya kisanduku kimoja (tangazo au arifa) — fomu za API zote.
+  Map<String, String> _recordOf(dynamic a) {
+    final m = a is Map ? a : const <String, dynamic>{};
+    final msg = (m['message'] ?? '').toString();
+    return <String, String>{
+      'id': (m['announcement_id'] ?? m['notification_id'] ?? m['id'] ?? m['_id'] ?? '')
+          .toString(),
+      'title': (m['title'] ?? '').toString(),
+      'body': msg.isEmpty ? (m['body'] ?? '').toString() : msg,
+      'created_at': (m['created_at'] ?? m['occurred_at'] ?? '').toString(),
+    };
+  }
+
+  /// Arifa inayoehusu tangazo? Aina ya API huwa 'announcement'/'Announcement';
+  /// baadhi ni ndani ya mtoaji wa data (data.type). Tunakubali yote hayo.
+  bool _isAnnouncement(dynamic n) {
+    final m = n is Map ? n : const <String, dynamic>{};
+    final data = m['data'] is Map ? m['data'] as Map : const <String, dynamic>{};
+    final type = '${m['type'] ?? data['type'] ?? ''}'.toLowerCase();
+    return type.contains('announc');
+  }
+
+  /// Mkusanyiko wa "ZILIZOPITA": kumbukumbu ya simu ( vecth diski), arifa
+  /// za API zinazohusu tangazo, na matangazo ya sasa yote. Tangazo linalo
+  /// bado kwenye "MPYA" halionekani mbili — linaondolewa kabisa kutoka
+  /// kwenye historia mpaka liondoke kwenye "MPYA" (tenena au likurudishwe).
+  List<dynamic> _buildAnnouncementHistory(
+      List<dynamic> active, List<dynamic> notifs, List<dynamic> typedNotifs) {
+    final seen = <String, Map<String, String>>{};
+
+    void put(dynamic item) {
+      final r = _recordOf(item);
+      if (r['title']!.trim().isEmpty && r['body']!.trim().isEmpty) return;
+      final key = '${r['title']}|${r['body']}';
+      final old = seen[key];
+      final cur = DateTime.tryParse(r['created_at']!) ?? DateTime(0);
+      final prior = old == null
+          ? DateTime(0)
+          : (DateTime.tryParse(old['created_at']!) ?? DateTime(0));
+      if (old == null || cur.isAfter(prior)) seen[key] = r;
+    }
+
+    for (final saved in _diskHistory) {
+      put(saved);
+    } // kumbukumbu ya simu — HAIKOMI hata offline
+    for (final n in notifs.where((e) => _isAnnouncement(e))) {
+      put(n);
+    }
+    for (final n in typedNotifs) {
+      put(n);
+    }
+    for (final a in active) {
+      put(a);
+    } // tangazo la sasa limejulikana pia
+
+    // Zilizo bado kwenye "MPYA" hazioneshwi hapa — ziondoke kwenye historia.
+    final activeKeys = <String>{
+      for (final a in active) if (a is Map) ...[
+        '${_recordOf(a)['title']}|${_recordOf(a)['body']}',
+      ],
+    };
+
+    final merged = seen.values
+        .where((r) => !activeKeys.contains('${r['title']}|${r['body']}'))
+        .toList();
+    merged.sort((a, b) {
+      final aD = DateTime.tryParse(a['created_at']!) ?? DateTime(0);
+      final bD = DateTime.tryParse(b['created_at']!) ?? DateTime(0);
+      return bD.compareTo(aD); // mpya juu
+    });
+
+    _diskHistory = List.of(merged.take(60));
+    CachedRepository().write(_kSeenHistoryKey, _diskHistory);
+    return merged;
   }
 
   void _onAnnouncement(Map<String, dynamic> _) {

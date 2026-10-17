@@ -389,6 +389,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         tabIndex: 3,
         child: NoCachedDataWidget(
           hint: 'Vuta chini kupakia — wasifu wako utahifadhiwa kwenye simu.',
+          // Skeleton kama ukurasa halisi — si PageSkeleton ya jumla.
+          skeleton: const WasifuSkeleton(),
           onLoad: () async {
             await _loadSolo();
           },

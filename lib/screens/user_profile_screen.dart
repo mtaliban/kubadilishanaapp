@@ -5,6 +5,7 @@ import '../services/cached_repository.dart';
 import '../utils/safe_cast.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/no_cached_data_widget.dart';
+import '../widgets/skeletons.dart';
 
 // OFFLINE-FIRST — funguo ya diski ya wasifu wa mtumiaji mwingine
 // (funguo ni kwa userId — wasifu mwingine haichanganyikiwi na huu).
@@ -122,7 +123,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
         Container(height: 1, color: _kGrey200Of(context)),
         Expanded(child: _loading && _user == null
-            ? const Center(child: NoCachedDataWidget())
+            // KANUNI: KAMWE spinner — skeleton kamili ya wasifu (kijivu
+            // unaocelejumbua), SI PageSkeleton ya jumla yenye mishale mipya.
+            ? const Center(child: WasifuSkeleton())
             : _user == null
                 // HAKUNA data diski + API imeshindwa — widget MOYA ya
                 // "haijapakuliwa" (pull-to-refresh pekee).
@@ -130,6 +133,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     child: NoCachedDataWidget(
                       hint: 'Vuta chini kupakia, au subiri mtandao — wasifu '
                           'utaonekana mara data itakapofika.',
+                      skeleton: WasifuSkeleton(),
                     ),
                   )
                 : _buildBody()),
