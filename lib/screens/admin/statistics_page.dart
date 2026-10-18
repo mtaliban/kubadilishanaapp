@@ -22,6 +22,7 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import '../../services/api_service.dart';
 import '../../widgets/tight_title.dart';
 import '../../services/cached_repository.dart';
+import '../../services/websocket_service.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/no_cached_data_widget.dart';
 import '../../widgets/skeletons.dart';
@@ -1786,6 +1787,11 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
   void initState() {
     super.initState();
     CachedRepository().addListener(_onRepoChange);
+    // LIVE: mtumiaji mpya / uliofutwa / edit ya admin — takwimu zipande
+    // PAPO HAPO kama Users page (zisibadiliki kati yake).
+    // Kumbuka: backend inatuma mtumiaji mpya kwa ADMIN kama 'notification'
+    // (type=user.registered) — event raw haipiti kwa admin.
+    WebSocketService().on('notification', _onWsUsers);
     // DISKI PAPO HAPO — takwimu za diski KWA FRAME YA KWANZA (hakuna spring).
     CachedRepository().hydrate(_kStatsKey, _applyStats);
     _load();
@@ -1793,8 +1799,20 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
 
   @override
   void dispose() {
+    WebSocketService().off('notification', _onWsUsers);
     CachedRepository().removeListener(_onRepoChange);
     super.dispose();
+  }
+
+  void _onWsUsers(Map<String, dynamic> payload) {
+    final type = (payload['event'] ?? payload['type'])?.toString() ?? '';
+    if (type == 'user.registered' ||
+        type == 'user.updated_by_admin' ||
+        type == 'user.removed' ||
+        type == 'user.changed' ||
+        type == 'data.changed') {
+      _load();
+    }
   }
 
   /// Ghafla-data: CachedRepository ikirundika data mpya kwenye diski

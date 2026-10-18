@@ -103,6 +103,11 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     WebSocketService().on('user.updated_by_admin', _onWsUsers);
     WebSocketService().on('user.removed', _onWsUsers);
     WebSocketService().on('data.changed', _onWsUsers);
+    // FIX: mtumiaji mpya hana fanout raw kwa ADMIN — backend inamtumea tu
+    // 'notification' (type=user.registered). Bila hii, list ya Users page
+    // ilinyamaza mpaka event nyingine (edit ya admin mwenenzako) au refresh.
+    // _onWsUsers inasoma payload['type'] — inafitana na types zote hapa.
+    WebSocketService().on('notification', _onWsUsers);
   }
 
   @override
@@ -111,6 +116,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     WebSocketService().off('user.updated_by_admin', _onWsUsers);
     WebSocketService().off('user.removed', _onWsUsers);
     WebSocketService().off('data.changed', _onWsUsers);
+    WebSocketService().off('notification', _onWsUsers);
     _debounce?.cancel();
     _msgTimer?.cancel();
     _liveTimer?.cancel();
