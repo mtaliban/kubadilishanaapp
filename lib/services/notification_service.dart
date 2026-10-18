@@ -290,7 +290,7 @@ class NotificationService {
       // onTokenRefresh imesikilizwa mara moja ndani ya init — hapa ni
       // ku-register tu (server inatumia $addToSet, ku-rudiana ni salama).
     } catch (_) {
-      // Token imeshindikana (mtandao n.k.) — tajaribu tena mtandao ukirejea.
+      // Token imeshindikana (mtandao n.k.) — tajaribu tena mtandao ukireja.
       _tokenNeedsRetry = true;
     }
   }
@@ -304,7 +304,7 @@ class NotificationService {
     });
   }
 
-  /// Iitwa mara moja wakati wa init — mtandao ukirejea (offline → online)
+  /// Iitwa mara moja wakati wa init — mtandao ukireja (offline → online)
   /// jaribio la token linalyochelewa linapigwa papo hapo (FIX: token
   /// ilipatikana mara moja tu, hakuna retry wala kusikiliza mtandao).
   void initNetworkListener() {
@@ -331,7 +331,22 @@ class NotificationService {
   }
 
   Future<void> _registerToken(String token) async {
-    try { await ApiService().registerFcmToken(token); } catch (_) {}
+    try {
+      await ApiService().registerFcmToken(token);
+      _tokenNeedsRetry = false;
+    } catch (_) {
+      // USAJILI WA TOKEN IMESHINDIKANA (offline / hitilafu ndogo) — USIIMIMIZE!
+      //
+      // catch (_){} ya zamani ilificha kosa kabisa: token haikuwahi kuingia
+      // kwenye server, hivyo apps zingine WSHN zinaonekana kwenye app
+      // (WebSocket badges) lakini push haifiki simu — ndiyo kasoro halisi
+      // mtumiaji anaionayo: "badge ina namba, arifa haipo".
+      //
+      // Sas'i: alama _tokenNeedsRetry ili kujaribu tena mara hizi mbili:
+      //  1) mtandao ukireja (NetworkService.addOnlineListener), au
+      //  2) marudio ya _ensurePermissionAndToken (login mpya / retry).
+      _tokenNeedsRetry = true;
+    }
   }
 
   // ── Kuonyesha arifa ───────────────────────────────────────────────────────

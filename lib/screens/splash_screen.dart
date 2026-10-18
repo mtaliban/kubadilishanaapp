@@ -48,6 +48,17 @@ class _SplashScreenState extends State<SplashScreen>
     final sw = Stopwatch()..start();
     final loggedIn = await auth.restoreSession();
     if (!mounted) return;
+
+    // UMEINGIA: nenda MOJA KWA MOJA ndani ya app — hakuna kusubiri splash.
+    // Splash kamili (sekunde 3) inabaki tu kwa HAJAINGIA: install mpya
+    // au baada ya logout. Simu ikizimwa au app ikiliyo-zimwa, ikifunguliwa
+    // tena na mtumiaji ambaye BADO ameingia, inatoka ndani ya app papo hapo.
+    if (loggedIn) {
+      setState(() => _isLoggedIn = true);
+      _navigate();
+      return;
+    }
+
     final remaining = _minDur.inMilliseconds - sw.elapsedMilliseconds;
     if (remaining > 0) await Future.delayed(Duration(milliseconds: remaining));
     if (!mounted) return;
