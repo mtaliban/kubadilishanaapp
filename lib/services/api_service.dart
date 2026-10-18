@@ -407,10 +407,16 @@ class ApiService {
       get('/admin/badges', useCache: false);
   Future<Response> adminMarkPageSeen(String page) =>
       post('/admin/pages/seen', data: {'page': page});
+  /// Bila cache — malipo ya SMS mpya inayofika lazima yajitokeze kwenye
+  /// "Pending" PAPO HAPO. Hapo awali cache ya dakika 2 ilipita kabla ya
+  /// event ya WS: reload ya WS/badge ilirudisha data ya zamani kutoka cache
+  /// na malipo yanachelewa kuonekana hadi TTL ife (kasoro halisi).
+  /// DISKI PAPO HAPO inabaki — CachedRepository.loadPage/refresh inaonyesha
+  /// historia ya diski kwanza, kisha data halisi ya server huwa inafuata.
   Future<Response> adminAllDonations({String? status}) =>
       get('/payments/admin/all',
           queryParameters: status != null ? {'status': status} : null,
-          cacheTtl: _ttlShort);
+          useCache: false);
   Future<Response> adminApproveDonation(String orderId, {String? note}) async {
     AppCache().invalidatePrefix('/payments/admin');
     return post('/payments/admin/$orderId/approve', data: {'note': note});

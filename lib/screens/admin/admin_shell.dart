@@ -152,7 +152,8 @@ class AdminShell extends StatefulWidget {
   State<AdminShell> createState() => _AdminShellState();
 }
 
-class _AdminShellState extends State<AdminShell> {
+class _AdminShellState extends State<AdminShell>
+    with WidgetsBindingObserver {
   int _idx = 9;
   int? _lastClearedIdx; // Kufuatilia ukurasa uliofutwa badge — sio kila rebuild
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -161,6 +162,7 @@ class _AdminShellState extends State<AdminShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _badges.start();
     LanguageProvider().addListener(_onLangChange);
     adminPageNotifier.addListener(_onFcmTap);
@@ -185,8 +187,18 @@ class _AdminShellState extends State<AdminShell> {
     _go(page);
   }
 
+  /// App ikitoka foreground (au hivi karibuni ikifunguliwa tena), hebu
+  /// badges zipimwe UPYA MARA MOJA — si kusubiri poll ya sekunde 45.
+  /// Admin akitenda kambi nyingine (approve kwenye WEB) na arudi app,
+  /// namba zinaonyesha hali ya sasa badala ya kubaki zamani.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _badges.refresh();
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _badges.stop();
     LanguageProvider().removeListener(_onLangChange);
     adminPageNotifier.removeListener(_onFcmTap);

@@ -272,6 +272,7 @@ e.response?.statusCode == 401) {
         return false;
       }
       await _api.saveToken(token);
+      _ensurePushToken(); // arifa: POST /auth/fcm-token sasa ina Bearer token
       _user = AuthUser.fromJson(data);
       // KANUNI YA CACHE-ENDELEU: diski ifutwe TU akaunti mwingine inapoingia
       // (mtumiaji yuleyule akirudia login — kurusa zinaonyesha data papo hapo).
@@ -312,6 +313,7 @@ e.response?.statusCode == 401) {
       // Kama ingeweza kurudi token moja kwa moja (haipaswi kutokea):
       if (data['access_token'] != null) {
         await _api.saveToken(data['access_token'] as String);
+        _ensurePushToken();
         _user = AuthUser.fromJson(data);
         // KANUNI YA CACHE-ENDELEU: diski ifutwe TU akaunti mwingine.
         await _clearCachesIfDifferentUser(
@@ -345,6 +347,7 @@ e.response?.statusCode == 401) {
       final data = asMap(res.data);
       final token = data['access_token'] as String;
       await _api.saveToken(token);
+      _ensurePushToken(); // arifa: POST /auth/fcm-token sasa ina Bearer token
       _user = AuthUser.fromJson(data);
       // KANUNI YA CACHE-ENDELEU: diski ifutwe TU akaunti mwingine inapoingia
       // (mtumiaji yuleyule akirudia login — kurusa zinaonyesha data papo hapo).
@@ -386,6 +389,7 @@ e.response?.statusCode == 401) {
         return false;
       }
       await _api.saveToken(token);
+      _ensurePushToken(); // arifa: POST /auth/fcm-token sasa ina Bearer token
       _user = AuthUser.fromJson(data);
       // KANUNI YA CACHE-ENDELEU: diski ifutwe TU akaunti mwingine inapoingia
       // (mtumiaji yuleyule akirudia login — kurusa zinaonyesha data papo hapo).
@@ -417,6 +421,7 @@ e.response?.statusCode == 401) {
       final token = responseData['access_token'] as String?;
       if (token != null) {
         await _api.saveToken(token);
+        _ensurePushToken();
         _user = AuthUser.fromJson(responseData);
         _setupRealtime();
       }
@@ -533,6 +538,15 @@ e.response?.statusCode == 401) {
       if (type.isEmpty || type == 'pong') return;
       _notif.showFromEvent(event);
     });
+  }
+
+  /// Sahalina push token kwenye server KILA mara auth inaboboka (login /
+  /// register / OTP). Bila hii: init ya NotificationService inaendesha tu
+  /// sekunde 5 baada ya kufungua app — kabla login haijaiva — hivyo POST
+  /// /auth/fcm-token inashindwa kimya, server inaona "no_tokens", na
+  /// app inaonyesha badge (WebSocket) ILA push haishai simu kamwe.
+  void _ensurePushToken() {
+    _notif.init().catchError((_) {});
   }
 
   bool _isNetworkError(dynamic e) {

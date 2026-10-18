@@ -26,7 +26,20 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final type = (payload['type'] ??
             (payload['data'] is Map ? payload['data']['type'] : null))
         ?.toString();
-    if (type == 'feedback.replied' && mounted) _load();
+    if (type == 'feedback.replied' && mounted) {
+      _load();
+      // Jibu limeonekana kwenye ukurasa huu MOJA KWA MOJA — alama notification
+      // kama SOHWI; vinginevyo badge ya juu inabaki ("soma si sikale") hadi
+      // user afungue screen ya arifa mwenyewe. ID ipo kwenye payload ya WS
+      // (na ndani ya 'data').
+      final nid = payload['notification_id'] ??
+          (payload['data'] is Map
+              ? (payload['data'] as Map)['notification_id']
+              : null);
+      if (nid != null && nid.toString().isNotEmpty) {
+        ApiService().markNotificationRead(nid.toString()).catchError((_) {});
+      }
+    }
   }
 
   @override
