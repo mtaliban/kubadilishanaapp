@@ -15,9 +15,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show MethodChannel, rootBundle;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'admin_otp_inbox.dart';
@@ -214,6 +217,12 @@ class NotificationService {
         ));
       } catch (_) {}
 
+      // BATTERY OPTIMIZATION (Android): simu nyingi (MIUI/Oppo/Samsung)
+      // hazinzi background apps → FCM push haifikia wakati app imefungwa
+      // (badge kwenye DB, arifa hapana). Tunaomba system dialog ya
+      // "Ruhusu kufanya kazi bila optimization" — MARA MOJA tu kwa app.
+      _ensureBatteryExemption();
+
       // Token refresh: sikiliza MARA MOJA tu — kila _ensurePermissionAndToken
       // inayofuata (login mpya / retry) isiongeze listener nyingine.
       try {
@@ -257,6 +266,28 @@ class NotificationService {
     // isajili upya — vinginevyo push hazifiki hadi app ifunguliwe upya
     // (kasoro halisi: init ya zamani ilipita kimya kwa logins za pili).
     await _ensurePermissionAndToken();
+  }
+
+  static const MethodChannel _batteryChannel =
+      MethodChannel('kubadilishana/battery');
+
+  /// Omba App-standby exemption (Doze whitelist) — ARIFA ZA BACKGROUND
+  /// HAZIFIKI kwenye simu nyingi bila hii. Dialog ya mfumo huonyeshwa
+  /// mara MMOJA tu (bendera kwenye SharedPreferences), mtumiaji akikubali
+  /// app inaingia kwenye whitelist na push zinafika hata app imefungwa.
+  Future<void> _ensureBatteryExemption() async {
+    if (!Platform.isAndroid) return;
+    try {
+      final needs = await _batteryChannel
+          .invokeMethod<bool>('isIgnoringBatteryOptimizations');
+      if (needs != true) return; // tayari kwenye whitelist
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool('battery_prompt_shown') == true) return;
+      await prefs.setBool('battery_prompt_shown', true);
+      await _batteryChannel.invokeMethod('requestIgnoreBatteryOptimizations');
+    } catch (_) {
+      // Channel haipo (simu pekee) au simu imekataa — siyo kosa kizuia app.
+    }
   }
 
   /// Ruhusa ya POST_NOTIFICATIONS (Android 13+) + token ya FCM.

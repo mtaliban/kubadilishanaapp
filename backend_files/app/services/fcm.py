@@ -211,7 +211,25 @@ async def send_push_with_id(
                 for token in batch_tokens
             ]
 
-            response = await messaging.send_each_async(messages)
+            # RETRY — makosa ya MUDA (network ya Google, 5xx, QUOTA/UNAVAILABLE)
+            # yanaweza kufanya ukurasa wa backend-usimamizi: umesema push imetuma
+            # (badge kwenye DB) ila simu HAIPOKEI (kasoro halisi: background
+            # kwenye Doze). RETRY: jaribu hadi mara 3 (backoff 0.5s/1.5s) kwenye
+            # exception — sasa kwa app-mapendeda kwenye simu, FCM ina-restore.
+            response = None
+            for attempt in range(3):
+                try:
+                    response = await messaging.send_each_async(messages)
+                    break
+                except Exception as exc:
+                    if attempt == 2:
+                        raise
+                    logger.warning("[FCM] send attempt %d failed (retrying): %s", attempt + 1, exc)
+                    import asyncio
+                    await asyncio.sleep(0.5 * (attempt + 1))
+
+            if response is None:
+                raise Exception("send_each_async returned nothing after retries")
             sent_count += response.success_count
 
             # Collect failed tokens for cleanup
