@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/skeletons.dart';
@@ -785,10 +786,17 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
     CachedRepository().hydrate(kMaoniCacheKey, _applyMaoniDisk);
     _load();
     WebSocketService().on('notification', _onWs);
+    // LIVE — AdminLiveSync: feedback.new (mtumiaji ameandika) + feedback.
+    // replied (>jibu la admin mwenenzako) — orodha inapakia upya PAPO HAPO.
+    _liveSub = AdminLiveSync().listen(
+        {'feedback.new', 'feedback.replied'}, () => _load());
   }
+
+  AdminLiveTicket? _liveSub;
 
   @override
   void dispose() {
+    _liveSub?.call();
     WebSocketService().off('notification', _onWs);
     super.dispose();
   }

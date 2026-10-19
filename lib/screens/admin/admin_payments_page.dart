@@ -6,6 +6,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../services/admin_badge_service.dart';
@@ -41,6 +42,8 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
     }
   }
 
+  AdminLiveTicket? _liveSub;
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +51,12 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
     CachedRepository().hydrate(_kKey, _applyPayments);
     _load();
     WebSocketService().on('notification', _onWs);
+    // LIVE — AdminLiveSync: aina ZOTE za malipo (submitted/message/reply +
+    // approved/rejected) — reload PAPO HAPO (cached envelope inapita aidha).
+    _liveSub = AdminLiveSync().listen(
+        {'payment.submitted', 'payment.message', 'payment.reply',
+         'payment.approved', 'payment.rejected'},
+        () => _load());
   }
 
   void _applyPayments(dynamic data) {
@@ -69,6 +78,7 @@ class _AdminPaymentsPageState extends State<AdminPaymentsPage> {
 
   @override
   void dispose() {
+    _liveSub?.call();
     WebSocketService().off('notification', _onWs);
     super.dispose();
   }

@@ -4,6 +4,7 @@ import 'admin_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
 import '../../services/cached_repository.dart';
@@ -81,12 +82,16 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   Map<String, String>? _flash;
 
   // ── LIVE halisi: WS inaita _load() maoni mapya yanapofika ──
-  // (Bila hii "LIVE" ilikuwa ni maandishi tu — maoni mapya yangeonekana
+  // (Bila hii "LIVE" ilikuwa ni maandishi tu — maoni mapya yangetekwenya
   //  baada ya refresh mwenyewe tu.)
   void _onWs(Map<String, dynamic> payload) {
     final type = (payload['type'] ?? payload['event'])?.toString() ?? '';
-    if (type == 'feedback.new' && mounted) _load();
+    if (type == 'feedback.new' || type == 'feedback.replied') {
+      if (mounted) _load();
+    }
   }
+
+  AdminLiveTicket? _liveSub;
 
   @override
   void initState() {
@@ -96,10 +101,15 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     _load();
     _searchCtrl.addListener(_applyFilter);
     WebSocketService().on('notification', _onWs);
+    // LIVE — AdminLiveSync: feedback.new (mtumiaji ameandika) + feedback.
+    // replied (jibu la admin mwenenzako) — orodha inayopja upya PAPO HAPO.
+    _liveSub = AdminLiveSync().listen(
+        {'feedback.new', 'feedback.replied'}, () => _load());
   }
 
   @override
   void dispose() {
+    _liveSub?.call();
     WebSocketService().off('notification', _onWs);
     _searchCtrl.dispose();
     _scroll.dispose();

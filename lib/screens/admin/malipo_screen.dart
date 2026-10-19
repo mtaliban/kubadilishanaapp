@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../services/admin_badge_service.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/network_service.dart';
 import '../../services/cached_repository.dart';
@@ -1878,6 +1879,7 @@ class AdminMalipoScreenPage extends StatefulWidget {
 
 class _AdminMalipoScreenPageState extends State<AdminMalipoScreenPage> {
   late final ApiMalipoController _controller;
+  AdminLiveTicket? _liveSub;
 
   void _onWs(Map<String, dynamic> payload) {
     final type = (payload['type'] ?? payload['event'])?.toString() ?? '';
@@ -1894,10 +1896,19 @@ class _AdminMalipoScreenPageState extends State<AdminMalipoScreenPage> {
     _controller.hydrateFromDisk();
     _controller.load();
     WebSocketService().on('notification', _onWs);
+    // LIVE — AdminLiveSync: aina zote za malipo (nia submits reply kwa
+    // mtumiaji wako, pamoja na approved/rejected ya media ya mtumiaji
+    // wako wa kawaida — kwenda admin page: malipo comment for LIVE,
+    // bila kusubiri kutoka/kurudi ukurasa).
+    _liveSub = AdminLiveSync().listen(
+        {'payment.submitted', 'payment.message', 'payment.reply',
+         'payment.approved', 'payment.rejected'},
+        () => _controller.load());
   }
 
   @override
   void dispose() {
+    _liveSub?.call();
     WebSocketService().off('notification', _onWs);
     super.dispose();
   }
