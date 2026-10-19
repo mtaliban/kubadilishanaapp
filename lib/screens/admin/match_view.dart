@@ -11,6 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../services/api_service.dart';
+import '../../services/cached_repository.dart';
+
 /* ============================================================
    MODELS
    ============================================================ */
@@ -101,11 +104,40 @@ class _MatchViewState extends State<MatchView> {
   int page = 0;
   late Set<String> starred = {...widget.starredIds};
 
+  // Kada ZOTE za API (Data page/KADA) — dropdown inaonyesha zote
+  // (diski papo hapo + refresh nyuma ya pazia), sio kada za pairs tu.
+  List<dynamic> _cadres = [];
+
   @override
   void initState() {
     super.initState();
     _qCtrl.addListener(() => setState(() => page = 0));
     _sCtrl.addListener(() => setState(() => page = 0));
+
+    // Kada zote za API — kanuni ile ile ya Data page: diski PAPO HAPO
+    // (frame ya kwanza, hata offline) kisha refresh NYUMA YA PAZIA.
+    CachedRepository().hydrate('page:admin/data/cadres', _applyCadres);
+    CachedRepository().loadPage(
+        'page:admin/data/cadres',
+        () async => (await ApiService().adminListData('cadres')).data,
+        _applyCadres);
+  }
+
+  /// Diski/API → list ya kada (SYNC — frame ya kwanza, hakuna spinner).
+  void _applyCadres(dynamic data) {
+    if (data == null) return; // API imeshindwa → data ya diski ibaki
+    final list = data is List
+        ? data
+        : ((data['results'] ?? data['items'] ?? data['data'] ?? []) as List);
+    setState(() => _cadres = list);
+  }
+
+  /// Icon ya kada (pairs fallback) — icon ya idara yake (kama Wenzao).
+  IconData _pairKadaIcon(String k) {
+    for (final p in widget.pairs) {
+      if (p.kada == k) return _idaraInfo(p.idara).icon;
+    }
+    return TablerIcons.idBadge2;
   }
 
   @override
@@ -198,8 +230,8 @@ class _MatchViewState extends State<MatchView> {
     final v = await _sheet(
       title: 'Chagua mkoa',
       allLabel: 'Mikoa yote',
-      icon: TablerIcons.map2,
-      options: [for (final r in _mkoaOptions) (r, r)],
+      allIcon: TablerIcons.map2,
+      options: [for (final r in _mkoaOptions) (r, r, TablerIcons.mapPin)],
       current: mkoa,
     );
     if (v == null) return;
@@ -213,8 +245,11 @@ class _MatchViewState extends State<MatchView> {
     final v = await _sheet(
       title: 'Chagua idara',
       allLabel: 'Idara zote',
-      icon: TablerIcons.building,
-      options: [for (final k in _idaraOptions) (k, _idaraInfo(k).label)],
+      allIcon: TablerIcons.layoutGrid,
+      options: [
+        for (final k in _idaraOptions)
+          (k, _idaraInfo(k).label, _idaraInfo(k).icon),
+      ],
       current: idara,
     );
     if (v == null) return;
@@ -228,11 +263,34 @@ class _MatchViewState extends State<MatchView> {
   }
 
   Future<void> _pickKada() async {
+    // Kada ZOTE za API — icons + DATA sawa na Data page/KADA:
+    // education → chalkboard, wengine → stethoscope. Kama API bado
+    // (offline/kwanza): kada za pairs zinaonyeshwa (fallback).
+    final opts = <(String, String, IconData)>[];
+    final seen = <String>{};
+    for (final raw in _cadres) {
+      final m = raw is Map ? raw : null;
+      if (m == null) continue;
+      final display = (m['display_name'] ?? m['name'] ?? '').toString();
+      if (display.isEmpty || !seen.add(display)) continue;
+      final cat = (m['category'] ?? '').toString().toLowerCase();
+      if (idara != null && _idaraKey(cat) != idara) continue;
+      opts.add((
+        display,
+        display,
+        cat == 'education'
+            ? TablerIcons.chalkboard
+            : TablerIcons.stethoscope,
+      ));
+    }
+    for (final k in _kadaOptions) {
+      if (seen.add(k)) opts.add((k, k, _pairKadaIcon(k)));
+    }
     final v = await _sheet(
       title: 'Chagua kada',
       allLabel: 'Kada zote',
-      icon: TablerIcons.idBadge2,
-      options: [for (final k in _kadaOptions) (k, k)],
+      allIcon: TablerIcons.idBadge2,
+      options: opts,
       current: kada,
     );
     if (v == null) return;
@@ -245,8 +303,8 @@ class _MatchViewState extends State<MatchView> {
   Future<String?> _sheet({
     required String title,
     required String allLabel,
-    required IconData icon,
-    required List<(String, String)> options,
+    required IconData allIcon,
+    required List<(String, String, IconData)> options,
     String? current,
   }) {
     final c = _XC.of(context);
@@ -259,8 +317,7 @@ class _MatchViewState extends State<MatchView> {
       builder: (_) => _PickerSheet(
         c: c,
         title: title,
-        icon: icon,
-        options: [(_all, allLabel), ...options],
+        options: [(_all, allLabel, allIcon), ...options],
         current: current ?? _all,
       ),
     );
@@ -371,8 +428,19 @@ class _MatchViewState extends State<MatchView> {
                           color: c.text,
                           fontSize: 17,
                           fontWeight: FontWeight.w600)),
-                  Text('$count match zilizopatikana',
-                      style: TextStyle(color: c.muted, fontSize: 12)),
+                  // NAMBA KUBWA (kama Waliopata wenzao): namba 17 w800
+                  // rangi ya kijani + maelezo 12.5 — ilikuwa 12 ndogo yote.
+                  Text.rich(TextSpan(children: [
+                    TextSpan(
+                        text: '$count',
+                        style: TextStyle(
+                            color: c.green,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800)),
+                    TextSpan(
+                        text: '  match zilizopatikana',
+                        style: TextStyle(color: c.muted, fontSize: 12.5)),
+                  ])),
                 ]),
           ),
           if (widget.live)
@@ -1358,14 +1426,12 @@ class _MXDestSheet extends StatelessWidget {
 class _PickerSheet extends StatefulWidget {
   final _XC c;
   final String title;
-  final IconData icon;
-  final List<(String, String)> options;
+  final List<(String, String, IconData)> options; // (thamani, jina, icon)
   final String current;
 
   const _PickerSheet({
     required this.c,
     required this.title,
-    required this.icon,
     required this.options,
     required this.current,
   });
@@ -1445,7 +1511,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                 shrinkWrap: true,
                 padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
                 children: [
-                  for (final (value, label) in list)
+                  for (final (value, label, icon) in list)
                     Builder(builder: (_) {
                       final on = value == widget.current;
                       return InkWell(
@@ -1459,7 +1525,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(children: [
-                            Icon(widget.icon, size: 17, color: c.blue),
+                            Icon(icon, size: 17, color: c.blue),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(label,
