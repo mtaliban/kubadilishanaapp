@@ -903,15 +903,17 @@ class _ScoreRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 44,
-        height: 44,
+        // NAMBA KUBWA KIDOGO (kasoro ya mtumiaji): duara + % ilikuwa ndogo
+        // (44px / font 11) — sas' duara 52px na namba 14 w700, juu wazi.
+        width: 52,
+        height: 52,
         child: Stack(alignment: Alignment.center, children: [
           SizedBox(
-            width: 44,
-            height: 44,
+            width: 52,
+            height: 52,
             child: CircularProgressIndicator(
               value: (score.clamp(0, 100)) / 100,
-              strokeWidth: 4,
+              strokeWidth: 4.5,
               strokeCap: StrokeCap.round,
               color: color,
               backgroundColor: track,
@@ -920,8 +922,8 @@ class _ScoreRing extends StatelessWidget {
           Text('$score%',
               style: TextStyle(
                   color: text,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600)),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700)),
         ]),
       );
 }

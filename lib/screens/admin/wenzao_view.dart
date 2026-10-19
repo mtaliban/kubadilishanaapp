@@ -265,8 +265,17 @@ class _WenzaoViewState extends State<WenzaoView> {
             hint: 'Tafuta kwa jina, namba, kada au wilaya'),
         Padding(
           padding: const EdgeInsets.fromLTRB(2, 12, 2, 10),
-          child: Text('Inaonyesha ${slice.length} kati ya ${list.length}',
-              style: TextStyle(color: c.muted, fontSize: 12)),
+          child: Text.rich(TextSpan(children: [
+            TextSpan(
+                text: '${slice.length}',
+                style: TextStyle(
+                    color: c.text,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700)),
+            TextSpan(
+                text: ' kati ya ${list.length} inaonekana',
+                style: TextStyle(color: c.muted, fontSize: 12)),
+          ])),
         ),
         if (slice.isEmpty)
           _empty(c)
@@ -297,8 +306,19 @@ class _WenzaoViewState extends State<WenzaoView> {
                       color: c.text,
                       fontSize: 17,
                       fontWeight: FontWeight.w600)),
-              Text('$count watu wamepata wenzao',
-                  style: TextStyle(color: c.muted, fontSize: 12)),
+              // NAMBA KUBWA KIDOGO (kasoro ya mtumiaji): idadi ilikuwa ndogo
+              // (mboto 12) — sasa namba kuwa 17 w800 + maelezo 12.5.
+              Text.rich(TextSpan(children: [
+                TextSpan(
+                    text: '$count',
+                    style: TextStyle(
+                        color: c.green,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800)),
+                TextSpan(
+                    text: '  watu wamepata wenzao',
+                    style: TextStyle(color: c.muted, fontSize: 12.5)),
+              ])),
             ]),
           ),
           if (widget.live)
