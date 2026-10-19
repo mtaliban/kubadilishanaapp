@@ -37,8 +37,26 @@ import 'websocket_service.dart' show resolveNotificationEventType;
 /// Lazima iwe top-level — inasajiliwa na Android mpangilio wa app ikiwa imufungwa.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Background isolate: ni ishara kwa Android layer kuwa handler ipo.
-  // Data-only pushes zinashughulikiwa hapa kama inahitajika.
+  // KASORO ILIYOKUWA: handler hii haifanyi chochote — DATA-ONLY push kwenye
+  // background isolate ilifika KIMYA (Android tray inaonyesha payload ya
+  // notification pekee; data-only zilisimama kwenye app). SASA: isolate ya
+  // background inaanzisha flutter_local_notifications yake na KUONYESHA arifa
+  // (channels 3 zile zile — Ujumbe/Mechi/Matangazo, sauti + vibration).
+  // NB: notification != null → Android/FCM tray inaonyesha yenyewe (app
+  // interactive au killed kabisa) — tunaruhusu system, KAMWE tunagongana.
+  if (message.notification != null) return;
+  try {
+    final data = message.data;
+    if (data.isEmpty) return;
+    final type = data['type']?.toString() ?? '';
+    if (type == 'admin.otp') return; // code ya admin — inbox ya app inaonyesha
+
+    final svc = NotificationService();
+    await svc.initForBackgroundIsolate();
+    svc._showFromData(data); // title/body kutoka data (subscriber inatuma)
+  } catch (_) {
+    // Background isolate yenye shida — arifa ya system payload inaweza kubaki.
+  }
 }
 
 // ─── Canvas large icon cache ──────────────────────────────────────────────────
@@ -258,6 +276,46 @@ class NotificationService {
     // isajili upya — vinginevyo push hazifiki hadi app ifunguliwe upya
     // (kasoro halisi: init ya zamani ilipita kimya kwa logins za pili).
     await _ensurePermissionAndToken();
+  }
+
+  /// INIT ya background isolate (FCM data-only ikija app ikimagana):
+  /// plugin + channels 3 tu — BILA listeners (WS/network) — isolate hii
+  /// inaisha mara handler imemaliza.
+  Future<void> initForBackgroundIsolate() async {
+    if (_initialized) return;
+    _initialized = true;
+    try {
+      const initSettings = InitializationSettings(
+        android: AndroidInitializationSettings('ic_notification'),
+      );
+      await _localNotifications.initialize(initSettings);
+      final android = _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      await android?.createNotificationChannel(const AndroidNotificationChannel(
+        'kubadilishana_messages_v2', 'Ujumbe',
+        description: 'Ujumbe mpya kutoka kwa wenzako',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      ));
+      await android?.createNotificationChannel(const AndroidNotificationChannel(
+        'kubadilishana_matches_v2', 'Mechi',
+        description: 'Mechi mpya zilizopatikana',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      ));
+      await android?.createNotificationChannel(const AndroidNotificationChannel(
+        'kubadilishana_general_v2', 'Matangazo',
+        description: 'Matangazo na taarifa za jumla',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      ));
+    } catch (_) {
+      _initialized = false; // jaribu tena arifa inayofuata
+    }
   }
 
   static const MethodChannel _batteryChannel =

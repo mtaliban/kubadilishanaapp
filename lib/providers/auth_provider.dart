@@ -211,7 +211,12 @@ e.response?.statusCode == 401) {
       return true;
     }
     try {
-      final res = await _api.getMe();
+      // SPLASH HAITANGUZI ATHARI YA MTANDAO: getMe huu unaweza kudumu splash
+      // mpaka dio-timeout yake (mtandao wa polepole) — tunaisha sekunde 5 tu.
+      // TimeoutException inaingia kwenye catch ya chini → dashboard (kama
+      // WhatsApp: usimtume mtumiaji login kwa mtandao duni).
+      final res =
+          await _api.getMe().timeout(const Duration(seconds: 5));
       final data = asMap(res.data);
       _user = AuthUser.fromJson(data);
       await _api.saveUserData(data);

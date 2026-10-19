@@ -60,7 +60,11 @@ void main() {
       expect(notified, 0);
     });
 
-    test('request moja kwa funguo (dedup) — ombi lipili mara moja', () async {
+    test('mwaliwa wa pili aliyejiuja WAKATI fetch inaendelea anapata FRESH',
+        () async {
+      // KANUNI MPYA (kasoro ya "badge inaonyesha kitu mpya, orodha HAIONSHEKI"):
+      // Ombi la KALE (lililoanza kwanza) lilirejesha data ya KABLA ya tukio —
+      // yule aliyeingia JUU lake hupata fetch FRESH (data ya BAADA ya tukio).
       final repo = CachedRepository();
       var calls = 0;
       Future<dynamic> fetch() async {
@@ -74,8 +78,8 @@ void main() {
         repo.refresh('page:d', fetch),
       ]);
 
-      expect(calls, 1);
-      expect(repo.readOrNull<dynamic>('page:d'), {'n': 1});
+      expect(calls, 2);
+      expect(repo.readOrNull<dynamic>('page:d'), {'n': 2});
     });
 
     test('fetch inayorejesha null haiandiki diski', () async {

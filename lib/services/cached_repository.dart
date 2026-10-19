@@ -47,6 +47,17 @@ class CachedRepository extends ChangeNotifier {
   final Map<String, DateTime> _updatedAt = {};
   final Map<String, Future<dynamic>> _inflight = {};
 
+  /// Washukaji wa foleni ya "nachukua FRESH" — ombi jipya likija WAKATI
+  /// fetch mwingine unaendelea (mf. pull-to-refresh ikianza, halafu WS
+  /// event ikija: API ya KALE ina data ya ZAMANI). Mwongoza (leader)
+  /// anapomaliza, fetch FRESH MOJA hufanywa kwa washukaji WOTE — kila
+  /// mtu apate data inayotoka BAADA ya tukio lake (hakuna stale).
+  final Map<String, List<Completer<void>>> _waiters = {};
+
+  /// Revision ya diski ambayo ukurasa tayari imeiona — loadPage
+  /// HAIRUDISHI tena data ya diski ile ile (inasafisha stale flash).
+  final Map<String, int> _appliedDiskRev = {};
+
   int _revision = 0;
   int get revision => _revision;
 
@@ -77,7 +88,7 @@ class CachedRepository extends ChangeNotifier {
 
   // ── KUANDIKA (kwa screens zinazo-paginate wenyewe) ─────────────────────────────
 
-  /// Funguo ya cache ya ukurasa maalum wa orodha: "<base>@p<n>" + fingerprint
+  /// Funguo ya cache ya ukurasa maalum wa orodha: `<base>@p<n>` + fingerprint
   /// ya vichujio (search/kategoria n.k.). Kurusa zinazo-paginate (users v2
   /// n.k.) zinatumia hii — kila ukurasa uliowahi kutembelewa unahifadhiwa
   /// kwenye diski, hivyo Next/Ifuatayo inafunguka KUTOKA DISKI hata offline.
@@ -199,32 +210,65 @@ class CachedRepository extends ChangeNotifier {
 
   /// Piga API na, ikifaulu, uandike kwenye diski + arifu (notifyListeners).
   /// Ikishindwa: hakibadilishi chochote kwenye diski wala skrini.
+  ///
+  /// REKEBISHO YA WS/TUKIO: ombi likianza KABLA ya event (mf. skrini
+  /// imetua ukurasa → API ya kwanza inarudisha data ya ZAMANI), na mtumiaji
+  /// anatuma kitu KIPYA katikati ya ombi — event ya LIVE inakutana na
+  /// fetch ya KALE. Kwa zamani: data ya KALE ilitunzwa diski+skrini
+  /// (badge ilionyesha kitu mpya, orodha HAIIIKITI — mpaka ukurasa ule
+  /// utoke na urudi). SASA: washukaji wa foleni wanalazimisha fetch
+  /// FRESH MOJA BAADA ya ile ya KALE — badilisho la haraka kelelo.
   Future<void> refresh(String key, Future<dynamic> Function() fetch) async {
-    // Request Moja kwa funguo — pull-to-refresh, WS, badge... zote
-    // zinashirikisha ombi moja (isiweke kazi mbili kwenye mtandao).
-    var f = _inflight[key];
-    if (f == null) {
-      f = () async {
+    if (_inflight.containsKey(key)) {
+      // FOLLOWER: fetch tayari liko kwenye anga. Jitambulishe kwenye foleni,
+      // subiri ile ikamilike, halafu subiri FRESH ambayo mwongoza huanzisha
+      // hapa chini kwa washukaji wote waliokuja wakati wa run yake.
+      final c = Completer<void>();
+      _waiters.putIfAbsent(key, () => <Completer<void>>[]).add(c);
+      try {
+        await _inflight[key]!;
+      } catch (_) {
+        // Kosa la API — hakibadilishi diski wala skrini (kanuni ya offline).
+      }
+      await c.future;
+      return;
+    }
+    // LEADER: mzunguko — kila kundi la washukaji waliojiunga WAKATI fetch
+    // iliyopita ikiendelea linapata fetch FRESH yake (data ya BAADA ya tukio
+    // lao), na completer zao zinamalizwa BAADA ya fetch hiyo kukamilika.
+    var pending = <Completer<void>>[]; // walisubiri fetch ya KALE — FRESH inakuja
+    while (true) {
+      final cur = pending;
+      pending = <Completer<void>>[];
+      final fut = () async {
         try {
           final data = await fetch();
-          if (data == null) return null;
+          if (data == null) return;
           AppCache().set(key, data, ttl: _diskTtl);
           final now = DateTime.now();
           _updatedAt[key] = now;
           _persistUpdatedAt(key, now);
           _revision++;
           notifyListeners();
-          return data;
         } finally {
           _inflight.remove(key);
         }
       }();
-      _inflight[key] = f;
-    }
-    try {
-      await f;
-    } catch (_) {
-      // Kosa la API — hakibadilishi diski wala skrini (kanuni ya offline).
+      _inflight[key] = fut;
+      try {
+        await fut;
+      } catch (_) {
+        // Kosa la API — hakibadilishi diski wala skrini (kanuni ya offline).
+      }
+      // Waliosubiri KWA SAFU hii: fetch imeisha → waamsha (data iko diski).
+      for (final c in cur) {
+        if (!c.isCompleted) c.complete();
+      }
+      // Washukaji waliojiunga WAKATI fetch hii ikiendelea — wanata FRESH:
+      // fetch nyingine MOJA kwa wote (na washukaji mapya tena kwa mzunguko huu).
+      final waiters = _waiters.remove(key);
+      if (waiters == null || waiters.isEmpty) break;
+      pending = waiters;
     }
   }
 
@@ -232,6 +276,7 @@ class CachedRepository extends ChangeNotifier {
   /// kupitia [clearAll].
   void clearAll() {
     _updatedAt.clear();
+    _appliedDiskRev.clear();
     _revision++;
     notifyListeners();
     () async {
@@ -249,6 +294,7 @@ class CachedRepository extends ChangeNotifier {
   /// invalidatePrefix ya funguo — inaitwa na cleanup ya AppCache (logout).
   void invalidateKey(String key) {
     if (_updatedAt.remove(key) == null) return;
+    _appliedDiskRev.remove(key);
     _revision++;
     notifyListeners();
     () async {
@@ -283,8 +329,19 @@ class CachedRepository extends ChangeNotifier {
     void Function(dynamic data) apply,
   ) async {
     // 1) Diski — PAPO HAPO, kabla ya frame (data AMA NULL — ukurasa unaamua).
+    // KANUNI YA STALE-FLASH: data ya diski ile ILE (revision isiyo-badilika)
+    // hairudishwi kwa skrini tena. WS reload ilikuwa ina-apply diski ya
+    // ZAMANI juu ya data Mpya iliyowahi kufika — mtumiaji anaona data ya
+    // kale kama API ya mpya haikumaliza. Re-apply PEKEE kama diski
+    // IMEBADILIKA (revision mpya = data mpya kweli).
     final cached = readOrNull<dynamic>(key);
-    apply(cached);
+    if (cached == null) {
+      apply(null); // apply huruhusu NULL — ukurasa unaamua (hali ya kwanza)
+      _appliedDiskRev.remove(key);
+    } else if (_appliedDiskRev[key] != revision) {
+      _appliedDiskRev[key] = revision;
+      apply(cached);
+    }
     // 2) Refresh nyuma ya pazia — ikifaulu apply() tena na data mpya.
     unawaited(() async {
       final rev0 = revision;
