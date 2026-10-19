@@ -890,38 +890,39 @@ class _CallCard extends StatelessWidget {
           // top row: type chip, time, chevron
           Row(
             children: [
-              // Kidonge (WhatsApp/Simu/SMS) kina Flexible — kwenye skrini
-              // nyembamba linapunguza nafasi lake kwanza; muda unabaki na
-              // nafasi yake isiyoshindana. Mpangilio ileile, hakuna ellipsis.
-              Flexible(
-                flex: 20,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 240),
-                  child: Container(
-                    height: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: r.type.bgOf(context),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(r.type.icon, size: 19, color: r.type.fgOf(context)),
-                        Flexible(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 7),
-                            child: Text(r.type.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: r.type.fgOf(context))),
-                          ),
+              // Kidonge (WhatsApp/Simu/SMS) si Flexible tena — Flexible ya
+              // loose ilibeba nafasi isiyojitokeza na Spacer haikushika yote,
+              // viliacha space kubwa kwenye mwisho wa kardime (kasoro ya
+              // mtumiaji). Sasa Spacers SHIKA nafasi ZOTE: saa + chevron
+              // zinaletwa hadi mwisho kulia wa kardime, chip inaendana
+              // kushoto bila ellipse kwenye skrini nyembamba (ConstrainedBox
+              // maxWidth bado inaitikia).
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 240),
+                child: Container(
+                  height: 36,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: r.type.bgOf(context),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(r.type.icon, size: 19, color: r.type.fgOf(context)),
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 7),
+                          child: Text(r.type.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: r.type.fgOf(context))),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
