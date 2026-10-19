@@ -10,6 +10,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
 import '../services/network_service.dart';
 
@@ -106,61 +107,71 @@ class _ToastPill extends StatelessWidget {
   final _ToastData d;
   const _ToastPill(this.d);
 
+  /// Icons za Tabler (kama zile za drawer/nav) — si Icons za Material.
+  /// Kila aina ina icon yake HALISI ya mfumo (mfano watu anajiunga,
+  /// malipo, maoni) — ndizo visually fiz and standard za app yote.
+  static (IconData, Color, Color) _look(ToastType type) => switch (type) {
+        ToastType.success => (
+            TablerIcons.circle_check,
+            const Color(0xFF16A34A),
+            const Color(0xFFDCFCE7)
+          ),
+        ToastType.error => (
+            TablerIcons.alert_circle,
+            const Color(0xFFDC2626),
+            const Color(0xFFFEE2E2)
+          ),
+        ToastType.warning => (
+            TablerIcons.alert_triangle,
+            const Color(0xFFB45309),
+            const Color(0xFFFDE68A)
+          ),
+        ToastType.info => (
+            TablerIcons.info_circle,
+            const Color(0xFF2563EB),
+            const Color(0xFFDBEAFE)
+          ),
+        ToastType.offline => (
+            TablerIcons.wifi_off,
+            const Color(0xFF92400E),
+            const Color(0xFFFDE68A)
+          ),
+        ToastType.online => (
+            TablerIcons.wifi,
+            const Color(0xFF16A34A),
+            const Color(0xFFDCFCE7)
+          ),
+      };
+
   @override
   Widget build(BuildContext context) {
-    final (IconData icon, Color color, Color track) = switch (d.type) {
-      ToastType.success => (
-          Icons.check_circle_outline_rounded,
-          const Color(0xFF16A34A),
-          const Color(0xFFDCFCE7)
-        ),
-      ToastType.error => (
-          Icons.error_outline_rounded,
-          const Color(0xFFDC2626),
-          const Color(0xFFFEE2E2)
-        ),
-      ToastType.warning => (
-          Icons.warning_amber_rounded,
-          const Color(0xFFD97706),
-          const Color(0xFFFEF3C7)
-        ),
-      ToastType.info => (
-          Icons.info_outline_rounded,
-          const Color(0xFF2563EB),
-          const Color(0xFFDBEAFE)
-        ),
-      ToastType.offline => (
-          Icons.wifi_off_rounded,
-          const Color(0xFFB45309),
-          const Color(0xFFFEF3C7)
-        ),
-      ToastType.online => (
-          Icons.wifi_rounded,
-          const Color(0xFF16A34A),
-          const Color(0xFFDCFCE7)
-        ),
-    };
+    // ── zodat ya dark mode ──
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final card = dark ? const Color(0xFF1E293B) : Colors.white;
+    final border = dark ? const Color(0xFF334155) : const Color(0xFFE5E7EB);
+    final ink = dark ? const Color(0xFFF1F5F9) : const Color(0xFF111827);
+
+    final (icon, color, track) = _look(d.type);
 
     return Container(
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width - 48,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x1F000000)),
-        boxShadow: const [
+        border: Border.all(color: border),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x1F000000),
+            color: dark ? const Color(0x40000000) : const Color(0x1F000000),
             blurRadius: 16,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
       // Row(mainAxisSize: min) inafanya upana ufuatane maneno bila
-      // IntrinsicWidth — intrinsics za IntrinsicWidth zinapishana hadi
-      // ConstrainedBox na 'width.isFinite' inaanguka (hakuna bound hapa).
+      // IntrinsicWidth — intrinsics na ConstrainedBox ndizo haki hapa.
       child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -169,19 +180,32 @@ class _ToastPill extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, size: 18, color: color),
-                  const SizedBox(width: 8),
+                  // ── ICON DUARA (style za drawer) — duara la rangi (bg soft)
+                  //  + icon za Tabler NYEUSI/RANGI, size 22 — toast iko KISASA
+                  //  na zenye mfumo moja na drawer/nav zote. ──
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: track,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(icon, size: 22, color: color),
+                  ),
+                  const SizedBox(width: 10),
                   ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width - 96,
+                      maxWidth: MediaQuery.of(context).size.width - 116,
                     ),
                     child: Text(
                       d.text,
                       softWrap: true,
-                      style: const TextStyle(
-                        fontSize: 13,
+                      style: TextStyle(
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF111827),
+                        height: 1.35,
+                        color: ink,
                         decoration: TextDecoration.none,
                       ),
                     ),
@@ -193,7 +217,7 @@ class _ToastPill extends StatelessWidget {
               tween: Tween(begin: 1, end: 0),
               duration: d.duration,
               builder: (_, v, __) => Container(
-                height: 2,
+                height: 2.5,
                 color: track,
                 alignment: Alignment.centerLeft,
                 child: FractionallySizedBox(
