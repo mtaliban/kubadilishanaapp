@@ -2,7 +2,10 @@
 ///
 /// Muundo:
 ///  • Channels 3 za Android (Ujumbe / Mechi / Matangazo).
-///  • Canvas large icon: mraba wa rangi + icon ya aina + ES badge chini-kulia.
+///  • Canvas large icon: bg la rangi ya aina + icon ya TABLER ya aina
+///    (zile ZILE za drawer: coin, user_plus, speakerphone, message_2, bolt…)
+///    — bila badge ya logo: Android inaonyesha logo ya app yenyewe kwenye
+///    header ya arifa, badge ya ES ilikuwa inaficha icon ya aina.
 ///  • SubText "Kubadilishana · Malipo · dak 5" kwenye kila arifa.
 ///  • Action buttons: Jibu/Nimesoma (maoni), Thibitisha/Fungua (malipo-admin),
 ///    Tazama (malipo-user), Soma tangazo, Tazama mechi.
@@ -19,7 +22,9 @@ import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show MethodChannel, rootBundle;
+import 'package:flutter/services.dart'
+    show FontLoader, MethodChannel, rootBundle;
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -39,19 +44,24 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 // ─── Canvas large icon cache ──────────────────────────────────────────────────
 
 final _iconBytesCache = <String, Uint8List>{};
-ui.Image? _logoImage;
-bool _logoTried = false;
 
-Future<ui.Image?> _loadLogoImage() async {
-  if (_logoTried) return _logoImage;
-  _logoTried = true;
+bool _tablerFontLoaded = false;
+
+/// Pakia font ya tabler-icons KABLA ya kupaint kwenye Canvas. Bila hii
+/// glyph ya Tabler inaweza kuonekana kama box tupu — font ya package
+/// haijakipakiwa kiotomate kwa painting moja kwa moja (lazy load yakuada).
+Future<void> _ensureTablerFont() async {
+  if (_tablerFontLoaded) return;
+  _tablerFontLoaded = true;
   try {
-    final data = await rootBundle.load('assets/images/ess_badge.png');
-    final codec = await ui.instantiateImageCodec(
-      data.buffer.asUint8List(), targetWidth: 96, targetHeight: 96);
-    _logoImage = (await codec.getNextFrame()).image;
-  } catch (_) {}
-  return _logoImage;
+    final bytes = await rootBundle
+        .load('packages/flutter_tabler_icons/assets/fonts/tabler-icons.ttf');
+    final loader = FontLoader('tabler-icons')
+      ..addFont(Future.value(ByteData.view(bytes.buffer)));
+    await loader.load();
+  } catch (_) {
+    _tablerFontLoaded = false; // jaribu tena arifa inayofuata
+  }
 }
 
 /// Icon kubwa ya mstatili wa rangi + icon ya aina + ES badge chini-kulia.
@@ -63,8 +73,8 @@ Future<Uint8List> buildNotifLargeIcon(String type, {String? status}) async {
 
   const s = 192.0;
   const box = Rect.fromLTWH(8, 8, 160, 160);
-  const badgeCenter = Offset(155, 155);
-  const badgeRadius = 27.0;
+
+  await _ensureTablerFont();
 
   final (iconData, bg, fg) = _iconLook(type, status);
 
@@ -92,30 +102,8 @@ Future<Uint8List> buildNotifLargeIcon(String type, {String? status}) async {
   )..layout();
   tp.paint(c, box.center - Offset(tp.width / 2, tp.height / 2));
 
-  // Border nyeupe ya badge
-  c.drawCircle(badgeCenter, badgeRadius + 5,
-      Paint()..color = Colors.white);
-
-  // ES badge (logo ya app)
-  final logo = await _loadLogoImage();
-  final badgeRect = Rect.fromCircle(center: badgeCenter, radius: badgeRadius);
-  if (logo != null) {
-    c.save();
-    c.clipPath(Path()..addOval(badgeRect));
-    paintImage(canvas: c, rect: badgeRect, image: logo, fit: BoxFit.cover);
-    c.restore();
-  } else {
-    // Fallback: duara la bluu na maandishi "ES"
-    c.drawCircle(badgeCenter, badgeRadius, Paint()..color = const Color(0xFF1E40AF));
-    final bt = TextPainter(
-      textDirection: TextDirection.ltr,
-      text: const TextSpan(
-        text: 'ES',
-        style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Colors.white),
-      ),
-    )..layout();
-    bt.paint(c, badgeCenter - Offset(bt.width / 2, bt.height / 2));
-  }
+  // HAKUNA badge ya logo hapa — Android tayari inaonyesha logo ya app
+  // kwenye header ya arifa; badge (ES) ilikuwa inaficha icon ya aina.
 
   final img = await rec.endRecording().toImage(s.toInt(), s.toInt());
   final bytes = (await img.toByteData(format: ui.ImageByteFormat.png))!
@@ -124,19 +112,22 @@ Future<Uint8List> buildNotifLargeIcon(String type, {String? status}) async {
   return bytes;
 }
 
+// Icon + rangi chodzi HII hii ya drawer (NavItem.accent) — mwonekano
+// wa arifa ya simu ufanane na wa app: coin=Malipo, message_2=Maoni,
+// user_plus=Watu anajiunga, speakerphone=Matangazo, bolt=Mechi.
 (IconData, Color, Color) _iconLook(String type, String? status) {
   return switch (type) {
-    'payment.approved'  => (Icons.verified_outlined,       const Color(0xFFD1FAE5), const Color(0xFF047857)),
-    'payment.rejected'  => (Icons.cancel_outlined,          const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
+    'payment.approved'  => (TablerIcons.circle_check,  const Color(0xFFDCFCE7), const Color(0xFF15803D)),
+    'payment.rejected'  => (TablerIcons.circle_x,      const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
     'payment.submitted' ||
     'payment.message'   ||
-    'payment.reply'     => (Icons.receipt_long_outlined,   const Color(0xFFD1FAE5), const Color(0xFF047857)),
+    'payment.reply'     => (TablerIcons.coin,          const Color(0xFFDBEAFE), const Color(0xFF1565C0)),
     'match.found'       ||
-    'match.new'         => (Icons.compare_arrows_rounded,  const Color(0xFFFCE7F3), const Color(0xFFBE185D)),
-    'user.registered'   => (Icons.person_add_outlined,     const Color(0xFFEDE9FE), const Color(0xFF6D28D9)),
+    'match.new'         => (TablerIcons.bolt,          const Color(0xFFFFE0B2), const Color(0xFFE64A19)),
+    'user.registered'   => (TablerIcons.user_plus,     const Color(0xFFEDE7F6), const Color(0xFF6D28D9)),
     'announcement'      ||
-    'announcement.new'  => (Icons.campaign_outlined,       const Color(0xFFFEF3C7), const Color(0xFFB45309)),
-    _                   => (Icons.chat_bubble_outline_rounded, const Color(0xFFDBEAFE), const Color(0xFF1E40AF)),
+    'announcement.new'  => (TablerIcons.speakerphone,  const Color(0xFFFCE4EC), const Color(0xFFD81B60)),
+    _                   => (TablerIcons.message_2,     const Color(0xFFDCEDC8), const Color(0xFF558B2F)),
   };
 }
 
