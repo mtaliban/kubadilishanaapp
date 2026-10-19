@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import '../services/api_service.dart';
 import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
@@ -123,22 +124,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   // ── Muonekano wa icon kwa kila aina ───────────────────────────────────────
+  /// ── Icons za DRAWER (Tabler) — mtindo MMOJA na drawer/nav ya admin ──
+  /// (mtumia alitaka icons za hapa zikae na zile za drawer; kila aina ina
+  ///  icon yake halisi — mtu anajiunga, malipo, maoni, mechi n.k.)
   static (IconData, Color, Color) _look(String type) {
     return switch (type) {
-      'payment.approved'                    => (Icons.check_circle_outline_rounded,  const Color(0xFFD1FAE5), const Color(0xFF047857)),
-      'payment.rejected'                    => (Icons.cancel_outlined,              const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
+      'payment.approved'                    => (TablerIcons.circle_check,   const Color(0xFFD1FAE5), const Color(0xFF047857)),
+      'payment.rejected'                    => (TablerIcons.circle_x,       const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
       'payment.submitted' ||
       'payment.message'   ||
-      'payment.reply'                       => (Icons.receipt_long_outlined,        const Color(0xFFECFDF5), const Color(0xFF059669)),
-      'match.found' || 'match.new'          => (Icons.compare_arrows_rounded,       const Color(0xFFFCE7F3), const Color(0xFFBE185D)),
-      'user.registered'                     => (Icons.person_add_outlined,          const Color(0xFFEDE9FE), const Color(0xFF6D28D9)),
-      'announcement' || 'announcement.new'  => (Icons.campaign_rounded,             const Color(0xFFFEF3C7), const Color(0xFFB45309)),
-      'feedback.replied' || 'admin.reply'   => (Icons.chat_bubble_outline_rounded,   const Color(0xFFDBEAFE), const Color(0xFF1E40AF)),
-      'feedback.new'                        => (Icons.chat_bubble_outline_rounded,  const Color(0xFFFFF7ED), const Color(0xFFEA580C)),
+      'payment.reply'                       => (TablerIcons.coin,           const Color(0xFFECFDF5), const Color(0xFF059669)), // drawer: Malipo
+      'match.found' || 'match.new'          => (TablerIcons.link,           const Color(0xFFFCE7F3), const Color(0xFFBE185D)), // drawer: Wenzao
+      'user.registered'                     => (TablerIcons.user_plus,      const Color(0xFFEDE9FE), const Color(0xFF6D28D9)), // mtu anajiunga
+      'announcement' || 'announcement.new'  => (TablerIcons.speakerphone,   const Color(0xFFFEF3C7), const Color(0xFFB45309)), // drawer: Matangazo
+      'feedback.replied' || 'admin.reply'   => (TablerIcons.message_2,      const Color(0xFFDBEAFE), const Color(0xFF1E40AF)), // drawer: Maoni
+      'feedback.new'                        => (TablerIcons.message_2,      const Color(0xFFFFF7ED), const Color(0xFFEA580C)),
       'message.sent' || 'message.new' ||
-      'message'                             => (Icons.forum_outlined,               const Color(0xFFDBEAFE), const Color(0xFF1E40AF)),
-      'call.initiated'                      => (Icons.phone_in_talk_outlined,       const Color(0xFFD1FAE5), const Color(0xFF047857)),
-      _                                     => (Icons.notifications_outlined,       _kBrand100,              _kBrand),
+      'message'                             => (TablerIcons.message_dots,   const Color(0xFFDBEAFE), const Color(0xFF1E40AF)),
+      'call.initiated'                      => (TablerIcons.phone,          const Color(0xFFD1FAE5), const Color(0xFF047857)), // drawer: Waliopigiana
+      _                                     => (TablerIcons.bell,           _kBrand100,              _kBrand),
     };
   }
 
@@ -239,11 +243,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   };
 
   static (IconData, Color, Color) _groupStyle(String group) => switch (group) {
-    'wenzao'    => (Icons.compare_arrows_rounded, const Color(0xFFD1FAE5), const Color(0xFF047857)),
-    'malipo'    => (Icons.receipt_long_outlined, const Color(0xFFD1FAE5), const Color(0xFF047857)),
-    'matangazo' => (Icons.campaign_rounded, const Color(0xFFFEF3C7), const Color(0xFFB45309)),
-    'maoni'     => (Icons.mark_chat_read_outlined, _kBrand100, _kBrand),
-    _           => (Icons.notifications_none_rounded, _kGrey100, _kGrey500),
+    'wenzao'    => (TablerIcons.link,          const Color(0xFFD1FAE5), const Color(0xFF047857)),
+    'malipo'    => (TablerIcons.coin,          const Color(0xFFD1FAE5), const Color(0xFF047857)),
+    'matangazo' => (TablerIcons.speakerphone,  const Color(0xFFFEF3C7), const Color(0xFFB45309)),
+    'maoni'     => (TablerIcons.message_2,     _kBrand100, _kBrand),
+    _           => (TablerIcons.bell,          _kGrey100, _kGrey500),
   };
 
   static String _groupName(String group) => switch (group) {
@@ -364,14 +368,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
           // ── Icon ya duara + ES badge ──────────────────────────────────────
           Stack(clipBehavior: Clip.none, children: [
+            // ── Icon ya Duara (interface ya AppToast) — duara la rangi ya
+            //    aina + icon za Tabler KUBWA (26) — hakuna kijivu tupu kila aina.
             Container(
               width: 54, height: 54,
               decoration: BoxDecoration(
-                color: _kGrey100T(context),
+                color: read ? _kGrey100T(context) : iconBg,
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child: Icon(icon, size: 24, color: read ? _kGrey500 : iconFg),
+                child: Icon(icon,
+                    size: 26, color: read ? _kGrey500 : iconFg),
               ),
             ),
             // ES badge — chini-kulia (kama design ya picha)

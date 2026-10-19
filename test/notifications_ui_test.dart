@@ -17,6 +17,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -174,7 +175,10 @@ void main() {
           reason: 'Chip ya Soma Zote inaonekana wakati kuna hazijasomwa');
     });
 
-    testWidgets('Kila arifa ina circle ya kijivu (bila border) + BADGE ya ESS',
+    // DESIGN MPYA (kasoro ya mtumiaji): kila arifa ina duara (bila border)
+    // la rangi ya AINA (kama AppToast mpya) — tabia ya icons za Tabler/drawer.
+    // Unread → duara rangi ya aina; read → kijivu.
+    testWidgets('Kila arifa ina circle bila border + BADGE ya ESS',
         (tester) async {
       await tester.pumpWidget(wrapApp(const NotificationsScreen()));
       await tester.pump(const Duration(milliseconds: 300));
@@ -185,11 +189,12 @@ void main() {
         final d = w.decoration;
         return d is BoxDecoration &&
             d.shape == BoxShape.circle &&
-            d.color == _kGrey100 &&
-            d.border == null; // HAKUNA border — design mpya
+            d.color != null &&
+            d.border == null &&
+            w.constraints?.maxWidth == 54.0; // duara KUBWA za kadi (54px)
       });
       expect(greyCircles, findsNWidgets(3),
-          reason: 'Arifa zote 3 zina circle ya kijivu bila border');
+          reason: 'Arifa zote 3 zina duara kubwa (54px) ya rangi ya aina');
 
       final essBadges = find.byWidgetPredicate((w) =>
           w is Image &&
@@ -205,12 +210,17 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byIcon(Icons.check_circle_outline_rounded), findsOneWidget,
+      // Icons za DRAWER (Tabler) — design mpya ya interface ya arifa.
+      // (Icons zinapatokea pia kwenye chips za summary strip — kwa hivyo
+      // twatafutia ICON KUBWA ya duara pekee: size == 26.0)
+      Finder bigIcon(IconData d) => find.byWidgetPredicate(
+          (w) => w is Icon && w.icon == d && w.size == 26.0);
+      expect(bigIcon(TablerIcons.circle_check), findsOneWidget,
           reason: 'Malipo yamekubaliwa → icon ya kijani (check)');
-      expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget,
-          reason: 'Jibu la admin → icon ya bluu (chat)');
-      expect(find.byIcon(Icons.campaign_rounded), findsOneWidget,
-          reason: 'Tangazo → icon ya megafoni');
+      expect(bigIcon(TablerIcons.message_2), findsOneWidget,
+          reason: 'Jibu la admin → icon ya bluu (chat — kama drawer ya Maoni)');
+      expect(bigIcon(TablerIcons.speakerphone), findsOneWidget,
+          reason: 'Tangazo → icon ya megafoni (kama drawer)');
     });
   });
 
