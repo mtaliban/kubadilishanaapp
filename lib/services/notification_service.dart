@@ -64,8 +64,9 @@ Future<void> _ensureTablerFont() async {
   }
 }
 
-/// Icon kubwa ya mstatili wa rangi + icon ya aina + ES badge chini-kulia.
-/// Inatumika kama largeIcon ya notification kwenye Android.
+/// Icon kubwa ya arifa: bg la rangi ya aina + icon ya Tabler ya aina
+/// (zile zile za drawer) — hakuna badge ya logo. Inatumika kama largeIcon
+/// ya notification kwenye Android.
 Future<Uint8List> buildNotifLargeIcon(String type, {String? status}) async {
   final key = '$type|$status';
   final cached = _iconBytesCache[key];
