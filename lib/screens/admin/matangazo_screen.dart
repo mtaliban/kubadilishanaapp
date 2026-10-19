@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
@@ -1438,12 +1439,25 @@ class AdminMatangazoPage extends StatefulWidget {
 
 class _AdminMatangazoPageState extends State<AdminMatangazoPage> {
   late final ApiMatangazoController _controller;
+  AdminLiveTicket? _liveSub;
 
   @override
   void initState() {
     super.initState();
     _controller = ApiMatangazoController();
     _controller.load();
+    // LIVE — matangazo mapya ya admin mwenenzako + audience mpya (mtumiaji
+    // aliyejiunga/anayefutwa) — historia + makundi zinapakia upya PAPO HAPO.
+    _liveSub = AdminLiveSync().listen(
+        {'user.registered', 'user.changed', 'user.removed', 'data.changed',
+         'announcement', 'announcement.new'},
+        () => _controller.load());
+  }
+
+  @override
+  void dispose() {
+    _liveSub?.call();
+    super.dispose();
   }
 
   @override

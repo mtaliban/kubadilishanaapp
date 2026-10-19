@@ -6,6 +6,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/skeletons.dart';
@@ -34,7 +35,14 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
     CachedRepository().hydrate(_kKey, _applyPairs);
     _loadRegions();
     _load();
+    // LIVE — mechi mpya (match.found) + mtumiaji mpya aliyejaza vituo kwa
+    // mara ya kwanza (user.registered/changed → mechi mpya zinaweza kutokea).    
+    _liveSub = AdminLiveSync().listen(
+        {'match.found', 'user.registered', 'user.changed', 'user.removed'},
+        () => _load());
   }
+
+  AdminLiveTicket? _liveSub;
 
   void _applyPairs(dynamic data) {
     if (data == null) return; // API imeshindwa → diski ibaki
@@ -159,6 +167,12 @@ class _AdminRealMatchesPageState extends State<AdminRealMatchesPage> {
   }
 
   /* ── Build ── */
+
+  @override
+  void dispose() {
+    _liveSub?.call();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

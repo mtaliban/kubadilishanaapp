@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'admin_theme.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import '../../services/api_service.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/app_toast.dart';
@@ -57,6 +58,10 @@ class _State extends State<AdminDashboardPage>
   List<dynamic> _usersList    = [];
   int           _usersTotal   = 0;
 
+  // LIVE — AdminLiveSync: mtumiaji mpya/edit/futwa au data.changed hii ya
+  // mwisho inareload dashibodi PAPO HAPO (badala ya kusubiri mtumiaji atoke).
+  AdminLiveTicket? _liveSub;
+
   @override
   void initState() {
     super.initState();
@@ -76,10 +81,20 @@ class _State extends State<AdminDashboardPage>
     });
     _load();
     _loadDepts();
+    // Arifa ya ADMIN hufika kwenye 'notification' envelope (type=user.registered)
+    // — AdminLiveSync inajua zote mbili (raw + envelope).
+    _liveSub = AdminLiveSync().listen(
+        {'user.registered', 'user.changed', 'user.removed', 'data.changed'},
+        () {
+      _load();
+      // Users tab ikiwa wazi — orodha iendelee kuwa halisi pia.
+      if (_tabCtrl.index == 1) _loadUsers();
+    });
   }
 
   @override
   void dispose() {
+    _liveSub?.call();
     CachedRepository().removeListener(_onRepoChange);
     _tabCtrl.dispose();
     super.dispose();

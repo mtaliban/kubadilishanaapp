@@ -6,6 +6,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/skeletons.dart';
@@ -26,6 +27,8 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
   /// OFFLINE-FIRST — funguo ya diski ya CachedRepository.
   static const String _kKey = 'page:admin/users-with-matches';
 
+  AdminLiveTicket? _liveSub;
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +36,11 @@ class _AdminMatchesPageState extends State<AdminMatchesPage> {
     CachedRepository().hydrate(_kKey, _applyPeople);
     _loadRegions();
     _load();
+    // LIVE — mechi mpya (match.found) + mtumiaji mpya/partner aliyejiunga —
+    // orodha ya Wenzao inarithishwa PAPO HAPO (AdminLiveSync).
+    _liveSub = AdminLiveSync().listen(
+        {'match.found', 'user.registered', 'user.changed', 'user.removed'},
+        () => _load());
   }
 
   void _applyPeople(dynamic data) {

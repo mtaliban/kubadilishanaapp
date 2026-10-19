@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'admin_theme.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
@@ -30,6 +31,8 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
   bool _loading = true; // bado tuna diski KABISA
   List<dynamic> _events = [];
 
+  AdminLiveTicket? _liveSub;
+
   @override
   void initState() {
     super.initState();
@@ -37,10 +40,17 @@ class _AdminMonitoringPageState extends State<AdminMonitoringPage> {
     // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
     CachedRepository().hydrate(_kKey, _applyMonitoring);
     _load();
+    // LIVE — monitoring ni huduma ya "sasa hivi": mtumiaji mpya anayenndani
+    // au anayetokea (registered/removed/changed) — _load inarelahu PAPO HAPO.
+    // Arifa ya admin hufika kwenye 'notification' envelope (type=user.registered.
+    _liveSub = AdminLiveSync().listen(
+        {'user.registered', 'user.changed', 'user.removed', 'contact.activity'},
+        () => _load());
   }
 
   @override
   void dispose() {
+    _liveSub?.call();
     CachedRepository().removeListener(_onRepoChange);
     super.dispose();
   }

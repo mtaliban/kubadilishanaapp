@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'admin_theme.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/skeletons.dart';
@@ -217,6 +218,10 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
   List<Kundi> _makundi = [];
   int _jumlaWote = 0;
 
+  // LIVE — AdminLiveSync: matangazo mpya ya admin mwenenzako + audience
+  // (user.registered/removed + data.changed) — historia zinapakia upya PAPO HAPO.
+  AdminLiveTicket? _liveSub;
+
   @override
   void initState() {
     super.initState();
@@ -228,6 +233,10 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
     _kichwaCtrl.addListener(_onFieldChange);
     _ujumbeCtrl.addListener(_onFieldChange);
     _tafutaCtrl.addListener(_onFieldChange);
+    _liveSub = AdminLiveSync().listen(
+        {'user.registered', 'user.changed', 'user.removed', 'data.changed',
+         'announcement', 'announcement.new'},
+        () => _load());
   }
 
   void _onFieldChange() {
@@ -236,6 +245,7 @@ class _AdminAnnouncementsPageState extends State<AdminAnnouncementsPage> {
 
   @override
   void dispose() {
+    _liveSub?.call();
     _scroll.dispose();
     _kichwaCtrl.dispose();
     _ujumbeCtrl.dispose();

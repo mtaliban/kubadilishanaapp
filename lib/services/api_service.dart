@@ -380,7 +380,9 @@ class ApiService {
 
   // ── Admin ──
   Future<Response> adminStats() =>
-      get('/admin/stats', cacheTtl: _ttlShort);
+      // Bila cache — takwimu ZIPI lazima zipande papo hapo mtumiaji mpya
+      // alipojiunga (Statistics + Dashboard + badge wa Matangazo wanaite).
+      get('/admin/stats', useCache: false);
   Future<Response> adminUsers({Map<String, dynamic>? params, bool useCache = true}) =>
       get('/admin/users', queryParameters: params, useCache: useCache, cacheTtl: _ttlShort);
   Future<Response> adminCreateUser(Map<String, dynamic> data) async {
@@ -440,7 +442,9 @@ class ApiService {
     return delete('/feedback/admin/$feedbackId');
   }
   Future<Response> adminListAnnouncements() =>
-      get('/admin/announcements', cacheTtl: _ttlShort);
+      // Bila cache — matangazo mapya ya admin mwenenzako yanapaswa
+      // kumeonekana PAPO HAPO (AdminLiveSync inarefresh kila event).
+      get('/admin/announcements', useCache: false);
   Future<Response> adminSendAnnouncement(Map<String, dynamic> data) async {
     AppCache().invalidatePrefix('/admin/announcements');
     AppCache().invalidatePrefix('/announcements');
@@ -454,18 +458,20 @@ class ApiService {
   Future<Response> adminListMatches({int limit = 100}) =>
       get('/admin/matches', queryParameters: {'limit': limit}, cacheTtl: _ttlShort);
   Future<Response> adminRealMatches({String? category, String? cadreCode, int limit = 100}) =>
+      // Bila cache — mechi mpya ya kweli lazima ionekane PAPO HAPO
+      // (AdminLiveSync inareload kila event; cache ya dakika 2 ilificha mpya).
       get('/admin/real-matches', queryParameters: {
         if (category != null) 'category': category,
         if (cadreCode != null) 'cadre_code': cadreCode,
         'limit': limit,
-      }, cacheTtl: _ttlShort);
+      }, useCache: false);
   Future<Response> adminReports({int days = 365, String? region, String? category, String? level, bool refresh = false}) =>
       get('/admin/reports', queryParameters: {
         'days': days,
         if (region != null && region.isNotEmpty) 'region': region,
         if (category != null && category.isNotEmpty) 'category': category,
         if (level != null && level.isNotEmpty) 'level': level,
-      }, useCache: !refresh, cacheTtl: _ttlShort);
+      }, useCache: false);
   Future<Response> adminListDepartments() =>
       get('/admin/data/departments', cacheTtl: _ttlSemiStatic);
   Future<Response> adminEvents({String? eventType, int limit = 100, int skip = 0}) =>
@@ -479,15 +485,18 @@ class ApiService {
     return post('/admin/events/clear');
   }
   Future<Response> getContactActivity({int limit = 100}) =>
+      // Bila cache — simu/jibu mpya la mtumiaji lazima liaonekane PAPO HAPO
+      // (AdminLiveSync inarefresh kila contact.activity).
       get('/messages/admin/contacts',
           queryParameters: {'limit': limit},
-          cacheTtl: _ttlShort);
+          useCache: false);
   Future<Response> logContact(String userId, String type) =>
       post('/messages/call', data: {'to_user_id': userId, 'contact_type': type});
   Future<Response> adminListPasswordResets({String status = 'pending'}) =>
+      // Bila cache — ombi jipya la password reset lazima lipatikane PAPO HAPO.
       get('/admin/password-resets',
           queryParameters: {'status': status},
-          cacheTtl: _ttlShort);
+          useCache: false);
   Future<Response> adminApprovePasswordReset(String resetId) async {
     AppCache().invalidatePrefix('/admin/password-resets');
     return post('/admin/password-resets/$resetId/approve');
@@ -551,12 +560,19 @@ class ApiService {
   /// Watumiaji WOTE waliopata matches ("waliopata wenzao") — pamoja na
   /// orodha ya waliokutanishwa nao, hesabu ya matches na mkoa/wilaya.
   Future<Response> adminUsersWithMatches({int limit = 100}) =>
+      // Bila cache — mechi mpya (match.found) inapaswa kuonekana PAPO HAPO
+      // kwenye WenzaoView (AdminLiveSync inarefresh kila event).
       get('/admin/users/with-matches',
-          queryParameters: {'limit': limit}, cacheTtl: _ttlShort);
+          queryParameters: {'limit': limit}, useCache: false);
   Future<Response> adminGetMonitoring() =>
-      get('/admin/monitoring', cacheTtl: _ttlShort);
+      // Bila cache — monitoring ni HUDUMA ya "sasa hivi"; cache ya dakika 2
+      // ilikuwa inaonyesha hali ya zamani (AdminLiveSync inareload kila event).
+      get('/admin/monitoring', useCache: false);
   Future<Response> adminListData(String type) =>
-      get('/admin/data/$type', cacheTtl: _ttlSemiStatic);
+      // Bila cache — CRUD ya data ile ile inatuma WS 'data.changed'; reload
+      // ikiitwa, AppCache-hidden ya dakika 15 ILIRUDISHA data ya zamani —
+      // kasoro halisi "nimeongeza data, nikija ku-edit/import sioni mpya".
+      get('/admin/data/$type', useCache: false);
   /// Data ya reference (mikoa/wilaya/kada/masomo/idara/vituo) inatumiwa PIA
   /// na usajili, wasifu na settings kupitia `/locations/*` na `/cadres*`.
   /// Bila kufuta hizi, mabadiliko ya admin yanaonekana kwenye Data page pekee

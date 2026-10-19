@@ -14,6 +14,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'admin_theme.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/app_toast.dart';
@@ -142,6 +143,10 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
   int _countOf(String c) =>
       _all.where((e) => (e['contact_type'] as String? ?? 'call') == c).length;
 
+  // LIVE — AdminLiveSync: simu/jibu jipya (contact.activity) — orodha
+  // inabadilika PAPO HAPO, si kusubiri kutoka/kurudi ukurasa.
+  AdminLiveTicket? _liveSub;
+
   @override
   void initState() {
     super.initState();
@@ -150,6 +155,7 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
     CachedRepository().addListener(_onRepoChange);
     CachedRepository().hydrate(_kContactsKey, _applyContacts);
     _load();
+    _liveSub = AdminLiveSync().listen({'contact.activity'}, () => _load());
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -239,6 +245,14 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) => _DetailSheet(e: e, sw: sw, onCopy: _copy),
     );
+  }
+
+  @override
+  void dispose() {
+    // LIVE —alongi na kumaliza kuziba _liveSub na listeners
+    _liveSub?.call();
+    CachedRepository().removeListener(_onRepoChange);
+    super.dispose();
   }
 
   @override

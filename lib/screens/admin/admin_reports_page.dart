@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
@@ -155,7 +156,13 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
     _loadRefs();
     _loadUsers();
     _loadNotifs();
+    // LIVE — ripoti ni mabadiliko ya watumiaji/maoni/malipo — reload PAPO HAPO.
+    _liveSub = AdminLiveSync().listen(
+        {'user.registered', 'user.changed', 'user.removed', 'data.changed'},
+        () => _load());
   }
+
+  AdminLiveTicket? _liveSub;
 
   void _onRepoChange() {
     if (mounted) setState(() {});
@@ -163,6 +170,7 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
 
   @override
   void dispose() {
+    _liveSub?.call();
     CachedRepository().removeListener(_onRepoChange);
     _usersCtrl.dispose();
     _usersDebounce?.cancel();

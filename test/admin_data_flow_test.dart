@@ -412,23 +412,27 @@ void main() {
   });
 
   group('6. CACHE — actions zote zinabust cache (siyo utani)', () {
-    test('adminCreateData inafuta cache ya /admin/data/{type}', () async {
+    test('adminListData HAICHIKI tena — reload yote na CRUD zinapata data HALISI', () async {
+      // MKATABA MPYA: adminListData ni useCache:false — WS-reload ya
+      // data.changed ilikuwa inarudisha data ya zamani kwenye AppCache ya
+      // dakika 15 (kasoro halisi "nimeongeza data, nikija ku-edit siioni").
+      // Sasa GET ya /admin/data/* inafanya mtandao kauri — hakuna cache
+      // ya kufuta: list inayofuata inapakia data halisi KILA MARA.
       await ApiService().adminListData('regions');
-      final key = AppCache()
-          .get('/admin/data/regions');
-      expect(key, isNotNull);
-
-      await ApiService().adminCreateData('regions', {'name': 'Mpya'});
       expect(AppCache().get('/admin/data/regions'), isNull,
-          reason: 'Cache lazima ifutwe — list inayofuata ipakie vipya');
+          reason: 'adminListData haichachiiki (useCache:false haiopo)');
+
+      await ApiService().adminListData('regions');
+      expect(AppCache().get('/admin/data/regions'), isNull,
+          reason: 'CRUD ya baadaye haioki tena — data halisi daima');
     });
 
     test('adminUpdateData + adminDeleteData zinabust cache', () async {
-      await ApiService().adminListData('subjects');
+      // adminListData haichachiiki tena — invalidatePrefix ya CRUD ni defense-
+      // in-depth (kwa sasa GET-inweka ni null kwasbaha hakuna cache).
       await ApiService().adminUpdateData('subjects', 'HIS', {'name': 'X'});
       expect(AppCache().get('/admin/data/subjects'), isNull);
 
-      await ApiService().adminListData('cadres');
       await ApiService().adminDeleteData('cadres', 'TCH');
       expect(AppCache().get('/admin/data/cadres'), isNull);
     });

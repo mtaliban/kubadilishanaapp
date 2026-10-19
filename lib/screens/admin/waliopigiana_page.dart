@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../utils/safe_cast.dart';
@@ -376,12 +377,19 @@ class _WaliopigianaPageState extends State<WaliopigianaPage> {
       // DISKI PAPO HAPO — frame ya KWANZA (hakuna spring, hakuna kusubiri).
       CachedRepository().hydrate(_kKey, _applyRecords);
       _load();
+      // LIVE — simu/jibu jipya la mtumiaji yoyote (contact.activity) —
+      // orodha inabadiiika PAPO HAPO (sio kusubiri kutoka / kurudi).
+      _liveSub = AdminLiveSync().listen(
+          {'contact.activity'}, () => _load());
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => widget.onOpened?.call());
   }
 
+  AdminLiveTicket? _liveSub;
+
   @override
   void dispose() {
+    _liveSub?.call();
     _search.dispose();
     super.dispose();
   }
