@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../services/admin_live_sync.dart';
+import '../../widgets/read_more_text.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/skeletons.dart';
@@ -538,7 +539,10 @@ class _MaoniPageState extends State<MaoniPage> {
           ),
           // RANGI DARK-AWARE: default ya _serif ilikuwa _C.body (meusi hardcoded)
           // — kwenye dark mode HAIONEKANI. Tumia bodyOf(context).
-          Text(m.text, style: _serif(17, color: _C.bodyOf(context))),
+          // READ MORE: maoni YAREFU yanapunguzwa kuwa mistari 5 + "Soma
+          // zaidi"/"Punguza" — badala ya kadi kuwa ndefu mno.
+          ReadMoreText(m.text,
+              style: _serif(17, color: _C.bodyOf(context)), collapsedLines: 5),
           Padding(
             padding: const EdgeInsets.only(top: 8, bottom: 10),
             child: Text(
@@ -819,6 +823,13 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
       _apiIds[maoni.id] = (m['id'] ?? m['_id'] ?? '').toString();
       items.add(maoni);
     }
+    // RADHI MAALUM: maoni yasiyojibiwa YAWA JUU (ya kwanza admin ajibu
+    // mara atakayefungua page — siyo kubonyeza kunde ya "Yasiyojibiwa").
+    // Kwenye kundi moja: mapya juu (created_at ni ISO kutoka server).
+    items.sort((a, b) {
+      if (a.answered != b.answered) return a.answered ? 1 : -1;
+      return b.date.compareTo(a.date);
+    });
     setState(() {
       _items = items;
       _loading = false;

@@ -124,8 +124,11 @@ class _MaoniHeaderState extends State<MaoniHeader> {
               _tab(0, 'Yote', widget.allCount,
                   _ndc(context) ? const Color(0xFF14532D) : const Color(0xFFDCFCE7),
                   _ndc(context) ? const Color(0xFF86EFAC) : const Color(0xFF15803D)),
+              // Namba NYEKUNDU ya "Yasiyojibiwa" ni mdudu muhimu — ikuzishwa
+              // kidogo (13) na padding ili mtumiajiuuone uko wazi kutoka mbali.
               _tab(1, 'Yasiyojibiwa', widget.unansweredCount,
-                  const Color(0xFFDC2626), Colors.white),
+                  const Color(0xFFDC2626), Colors.white,
+                  big: true),
               _tab(2, 'Yaliyojibiwa', widget.answeredCount,
                   _ndc(context) ? const Color(0xFF14532D) : const Color(0xFFDCFCE7),
                   _ndc(context) ? const Color(0xFF86EFAC) : const Color(0xFF15803D)),
@@ -137,7 +140,8 @@ class _MaoniHeaderState extends State<MaoniHeader> {
     );
   }
 
-  Widget _tab(int i, String label, int count, Color bg, Color fg) {
+  Widget _tab(int i, String label, int count, Color bg, Color fg,
+      {bool big = false}) {
     final active = widget.selected == i;
     return Expanded(
       child: InkWell(
@@ -166,12 +170,15 @@ class _MaoniHeaderState extends State<MaoniHeader> {
               ),
               const SizedBox(width: 4),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                padding: big
+                    // Namba kubwa kidogo kwenye "Yasiyojibiwa" — padding
+                    // zinazofuata font ndogo hiyo, was kuyaka gwala vigumu.
+                    ? const EdgeInsets.symmetric(horizontal: 10, vertical: 2)
+                    : const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                     color: bg, borderRadius: BorderRadius.circular(9)),
                 child: Text('$count',
-                    style: TextStyle(fontSize: 10, color: fg)),
+                    style: TextStyle(fontSize: big ? 13 : 10, color: fg)),
               ),
             ],
           ),

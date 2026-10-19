@@ -7,6 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../services/admin_live_sync.dart';
 import '../../services/api_service.dart';
 import '../../services/admin_badge_service.dart';
+import '../../widgets/read_more_text.dart';
 import '../../services/cached_repository.dart';
 import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 import '../../widgets/app_toast.dart';
@@ -148,7 +149,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
   void _applyFilter({bool keepPage = false}) {
     final q = _searchCtrl.text.toLowerCase().trim();
     setState(() {
-      _filtered = _all.where((item) {
+      final matched = _all.where((item) {
         final m = asMap(item);
         final name  = (m['user_name'] as String? ?? m['full_name'] as String? ?? '').toLowerCase();
         final msg   = (m['message'] as String? ?? '').toLowerCase();
@@ -165,6 +166,16 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
         if (_filter == 'Yamejibiwa') matchF = replied;
         return matchQ && matchF;
       }).toList();
+      // RADHI MAALUM: yasiyojibiwa YAWA JUU (admin ajibu mara ufunguo wa page
+      // — siyo kubonyeza kidude). Kundi moja: mapya juu (created_at ISO).
+      matched.sort((a, b) {
+        final ra = _isReplied(asMap(a));
+        final rb = _isReplied(asMap(b));
+        if (ra != rb) return ra ? 1 : -1;
+        return (asMap(b)['created_at']?.toString() ?? '')
+            .compareTo(asMap(a)['created_at']?.toString() ?? '');
+      });
+      _filtered = matched;
       if (!keepPage) _page = 0;
     });
   }
@@ -783,12 +794,12 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                 ]),
                 const SizedBox(height: 1),
 
-                // ── Ujumbe (15 h1.4) ──
-                Text(title,
+                // ── Ujumbe (15 h1.4) — READ MORE kwa maandishi marefu ──
+                ReadMoreText(title,
                     style: GoogleFonts.inter(
                         fontSize: 15, height: 1.4, color: _kInkT(context))),
                 if (body.isNotEmpty) ...[
-                  Text(body,
+                  ReadMoreText(body,
                       style: GoogleFonts.inter(
                           fontSize: 15, height: 1.4, color: _kInkT(context))),
                 ],
