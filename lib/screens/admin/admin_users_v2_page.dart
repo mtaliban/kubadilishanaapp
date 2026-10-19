@@ -875,12 +875,18 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
         Expanded(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // NAMBA KUBWA + BLUU (kasoro ya mtumiaji): ilikuwa 30 w900
+            // nyeusi — sasa mtindo ULE ULE wa Takwimu: fontSize 46, w500,
+            // letterSpacing -1, bluu ya statistics (0xFF1A3FA8 / giza 0xFF7AA7FF).
             Text(v2FmtNum(_displayTotal),
                 style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w900,
-                    color: v2TextPrimaryOf(context),
-                    height: 1.0)),
+                    fontSize: 46,
+                    fontWeight: FontWeight.w500,
+                    height: 1.0,
+                    letterSpacing: -1,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF7AA7FF)
+                        : const Color(0xFF1A3FA8))),
             const SizedBox(height: 4),
             Text('Watumiaji Wote',
                 style: TextStyle(
