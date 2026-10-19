@@ -66,10 +66,12 @@ InputDecoration v2FieldDec(BuildContext context, String hint, {Widget? prefixIco
           const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: Color(0xFFD0D7E2))),
+          // FIX: 0xFFD0D7E2 ilikuwa HARDCODED (mweupe) — kwenye dark mode
+          // Ujumbe (mistari) HAIONEKANI. Sasa dark-aware (v2BorderOf).
+          borderSide: BorderSide(color: v2BorderOf(context))),
       enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: Color(0xFFD0D7E2))),
+          borderSide: BorderSide(color: v2BorderOf(context))),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
           borderSide: BorderSide(color: v2AccentOf(context), width: 1.5)),
@@ -2075,7 +2077,8 @@ Color _aaBluePaleT(BuildContext c) =>
 Color _aaHintT(BuildContext c) =>
     Theme.of(c).brightness == Brightness.dark ? const Color(0xFF94A3B8) : _aaHint;
 Color _aaFieldBorderT(BuildContext c) =>
-    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF334155) : _aaFieldBorder;
+// FIX: 0xFF334155 ilikuwa hafu — fields hazipati mistari ya boundary wazi.
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF44506A) : _aaFieldBorder;
 Color _aaRedT(BuildContext c) =>
     Theme.of(c).brightness == Brightness.dark ? const Color(0xFFF87171) : _aaRed;
 Color _aaLabelT(BuildContext c) =>
@@ -2427,7 +2430,8 @@ Color _iuTextT(BuildContext c) =>
 Color _iuMutedT(BuildContext c) =>
     Theme.of(c).brightness == Brightness.dark ? const Color(0xFF9AA8C7) : _iuMuted;
 Color _iuLineT(BuildContext c) =>
-    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF2A3240) : _iuLine;
+// FIX: 0xFF2A3240 ilikuwa hafu sana juu ya giza — mistari haionekani.
+    Theme.of(c).brightness == Brightness.dark ? const Color(0xFF3B4657) : _iuLine;
 
 class _IuSectionTitle extends StatelessWidget {
   const _IuSectionTitle({required this.icon, required this.label});

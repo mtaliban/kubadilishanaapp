@@ -28,7 +28,10 @@ const v2AccentD = Color(0xFF7AA7FF);
 const v2AccentBgD = Color(0xFF1C2A44);
 const v2SurfaceD = Color(0xFF1E293B);
 const v2SurfaceMutedD = Color(0xFF18202F);
-const v2BorderD = Color(0xFF2A3240);
+// FIX: 0xFF2A3240 ilikuwa NYEIFU SANA juu ya background ya giza (0xFF0F172A
+// / 0xFF1E293B) — mistari ya boundaries/Dividers HAIONEKANI kwenye dark mode
+// (kasoro halisi). 0xFF3B4657 ina mwanga — inaonekana uko wazi lakini si kazi.
+const v2BorderD = Color(0xFF3B4657);
 const v2TextPrimaryD = Color(0xFFE7ECF8);
 const v2TextSecondaryD = Color(0xFF9AA8C7);
 const v2TextMutedD = Color(0xFF8B99B4);
