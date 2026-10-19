@@ -1,10 +1,12 @@
 // lib/widgets/app_toast.dart
 //
-// Toast ya app nzima. Muundo umetokana na picha za sample:
-//   - kidonge cheupe, kona 16, mpaka mwembamba wa kijivu, kivuli laini
-//   - ikoni 18 upande wa kushoto, maandishi 13 (w500), mstari wa muda 2px chini
-//   - upana unafuata maneno (haujai skrini)
-//   - inakaa katikati, juu ya bottom nav (kwa sababu ToastHost iko ndani ya body)
+// Toast ya app nzima. Muundo RAFU kama zamani:
+//   - kidonge, kona 16, mpaka mwembamba, kivuli laini
+//   - ikoni ya Tabler (za drawer) 19 upande wa kushoto — BILA duara kubwa
+//     (ilikuwa inaongeza unene — kasoro ya mtumiaji)
+//   - dark-aware: kadi nyeupe au 0xFF1E293B, maandishi 13 (w500)
+//   - mstari wa muda 2px chini
+//   - upana unafuata maneno; inakaa katikati, juu ya bottom nav
 
 import 'dart:async';
 
@@ -145,7 +147,7 @@ class _ToastPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── zodat ya dark mode ──
+    // ── Dark mode ──
     final dark = Theme.of(context).brightness == Brightness.dark;
     final card = dark ? const Color(0xFF1E293B) : Colors.white;
     final border = dark ? const Color(0xFF334155) : const Color(0xFFE5E7EB);
@@ -180,20 +182,12 @@ class _ToastPill extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── ICON DUARA (style za drawer) — duara la rangi (bg soft)
-                  //  + icon za Tabler NYEUSI/RANGI, size 22 — toast iko KISASA
-                  //  na zenye mfumo moja na drawer/nav zote. ──
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: track,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(icon, size: 22, color: color),
-                  ),
-                  const SizedBox(width: 10),
+                  // TOAST RAFU KAMA ZAMANI (kasoro ya mtumiaji: duara la 38px
+                  // kiliongeza unene mkubwa) — icon ya Tabler inline ndogo (19)
+                  // bila duara, padding ile ile ya zamani. Icons za Tabler
+                  // + rangi na dark-aware zimebaki.
+                  Icon(icon, size: 19, color: color),
+                  const SizedBox(width: 9),
                   ConstrainedBox(
                     constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width - 116,
@@ -202,9 +196,8 @@ class _ToastPill extends StatelessWidget {
                       d.text,
                       softWrap: true,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        height: 1.35,
                         color: ink,
                         decoration: TextDecoration.none,
                       ),
@@ -217,7 +210,7 @@ class _ToastPill extends StatelessWidget {
               tween: Tween(begin: 1, end: 0),
               duration: d.duration,
               builder: (_, v, __) => Container(
-                height: 2.5,
+                height: 2,
                 color: track,
                 alignment: Alignment.centerLeft,
                 child: FractionallySizedBox(
