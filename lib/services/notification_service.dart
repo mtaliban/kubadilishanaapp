@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'admin_otp_inbox.dart';
 import 'api_service.dart';
 import 'app_navigator.dart';
 import 'network_service.dart';
@@ -223,6 +224,16 @@ class NotificationService {
         FirebaseMessaging.onMessage.listen((msg) {
           final n    = msg.notification;
           final type = msg.data['type']?.toString() ?? '';
+          // OTP ya admin inafika kwa app yenyewe (FCM push) — inbox inai-subiri
+          // na kuiweka KIOTOMATE kwenye boxes za code (2FA) — hakuna kwenda
+          // Gmail kutafuta code (kasoro halisi ya kwenda email kila wakati).
+          if (type == 'admin.otp') {
+            final otp = msg.data['otp']?.toString() ??
+                (msg.notification?.body ?? '');
+            final digits = otp.replaceAll(RegExp(r'\D'), '');
+            if (digits.length == 6) AdminOtpInbox.instance.push(digits);
+            return; // isiwe na arifa ndogo nyingine — inbox inaonyesha.
+          }
           if (n != null) {
             if (_isDuplicate(type, msg.data['notification_id']?.toString() ?? '',
                 n.title ?? '', n.body ?? '')) return;
@@ -425,6 +436,16 @@ class NotificationService {
 
   void showFromEvent(Map<String, dynamic> event) {
     final type = resolveNotificationEventType(event);
+    // OTP ya admin kupitia WS pia (kama FCM haifiki) — inbox already.
+    if (type == 'admin.otp') {
+      final raw = (event['otp'] ??
+              (event['data'] is Map ? (event['data'] as Map)['otp'] : null))
+          ?.toString() ??
+          '';
+      final digits = raw.replaceAll(RegExp(r'\D'), '');
+      if (digits.length == 6) AdminOtpInbox.instance.push(digits);
+      return;
+    }
 
     const adminNotifiable = {
       'payment.submitted', 'payment.message',

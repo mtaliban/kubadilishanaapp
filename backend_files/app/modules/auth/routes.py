@@ -609,14 +609,27 @@ async def admin_login(body: AdminEmailLoginRequest):
     if not user.get("email_verified"):
         raise HTTPException(403, "Email haijathibitishwa — thibitisha kwanza kupitia 'Thibitisha Email'")
     delivered, code = await _create_and_send_otp(user, "2fa")
+    # OTP ITUMWE KWA APP YENYEWE (FCM push) — admin havibidi kufungua Gmail
+    # kutafuta tarakimu 6 kila mara. App inapokea 'admin.otp' data payload na
+    # kuweka code KIOTOMATE kwenye boxes (AdminOtpInbox). EMAIL inabaki kama
+    # backup (kama push haifiki au simu imezima arifa).
+    try:
+        import asyncio
+        from ...services.fcm import send_push_to_user
+        asyncio.create_task(send_push_to_user(
+            str(user["_id"]), "Code ya uthibitisho (2FA) — Kubadilishana",
+            code,
+            {"type": "admin.otp", "otp": code},
+        ))
+    except Exception as exc:
+        logger.warning("FCM push ya OTP ya 2FA imeshindikana (non-critical): %s", exc)
     resp: dict = {"two_factor_required": True, "email": email,
                   "message": f"Code ya uthibitisho (2FA) imetumwa kwa {email}. Halali dakika {OTP_TTL_MINUTES}."}
     if not delivered:
         # Break-glass (SMTP haijasanidiwa): code inaonekana kwenye response.
         resp["dev_code"] = code
-        resp["message"] = (f"Code haiwezi kutumwa kwa email kwa sasa (SMTP haijasanidiwa) — "
-                           f"code iko kwenye skrini. Halali dakika {OTP_TTL_MINUTES}. "
-                           "Baada ya kuingia, weka email kwenye Mipangilio.")
+        resp["message"] = (f"Code imetumwa kwenye ARIFA ya app yako (na kwenye email "
+                           f"{email} kama backup). Halali dakika {OTP_TTL_MINUTES}.")
     return resp
 
 

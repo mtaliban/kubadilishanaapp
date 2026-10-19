@@ -14,6 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
+import '../services/admin_otp_inbox.dart';
+
 class _C {
   static const primary = Color(0xFF2878D6);
   static const primaryDark = Color(0xFF1B4F9C);
@@ -73,15 +75,30 @@ class _AdminOtpStepState extends State<AdminOtpStep> {
   bool _resending = false;
   String? _error;
 
+  StreamSubscription<String>? _inboxSub;
+
   @override
   void initState() {
     super.initState();
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) => _nodes.first.requestFocus());
+    // LIVE — code ya 2FA inafika kwenye app yenyewe (FCM push ya backend,
+    // type='admin.otp') → inawekwa KIOTOMATE kwenye boxes na ku-submitwa.
+    // Hakuna kubidi kufungua Gmail tarakimu 6 zilizoowa (kasoro halisi).
+    _inboxSub = AdminOtpInbox.instance.codes.listen((code) {
+      if (!mounted || _verifying) return;
+      for (var i = 0; i < _len && i < code.length; i++) {
+        _ctrls[i].text = code[i];
+      }
+      setState(() => _error = null);
+      _nodes.last.requestFocus();
+      if (_complete) _verify();
+    });
   }
 
   @override
   void dispose() {
+    _inboxSub?.cancel();
     _timer?.cancel();
     for (final c in _ctrls) {
       c.dispose();
