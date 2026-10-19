@@ -410,9 +410,9 @@ class _MaoniPageState extends State<MaoniPage> {
               const SizedBox(width: 16),
               _tabItem(_Tab.hayajibiwa, 'Hayajibiwa', _AppIcons.pending,
                   _pending,
-                  _C.redSoftOf(context),
-                  _C.redOf(context),
-                  _C.redOf(context)),
+                  const Color(0xFFDC2626), // NYEKUNDU ILIYOKOLEA (deep red)
+                  Colors.white, // namba nyeupe kwenye nyekundu — uangavu wa juu
+                  _C.redOf(context)), // icon ya tab inabaki nyekundu
               const SizedBox(width: 16),
               _tabItem(_Tab.yamejibiwa, 'Yamejibiwa', _AppIcons.done,
                   _answered,
@@ -461,19 +461,20 @@ class _MaoniPageState extends State<MaoniPage> {
     );
   }
 
-  // Namba ndani ya duara. Hayajibiwa inabaki nyekundu hata ikiwa 0.
+  // Namba ndani ya duara — KUBWA + NZITO (omaombi ya mtumiaji).
+  // Hayajibiwa inabaki nyekundu halii ikiwa 0.
   Widget _badge(int n, Color bg, Color fg) => Container(
-        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-        padding: const EdgeInsets.symmetric(horizontal: 3),
+        constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         alignment: Alignment.center,
         decoration: BoxDecoration(
             color: bg,
             shape: n < 100 ? BoxShape.circle : BoxShape.rectangle,
             borderRadius:
-                n < 100 ? null : BorderRadius.circular(11)),
+                n < 100 ? null : BorderRadius.circular(13)),
         child: Text('$n',
             style: TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w500, color: fg)),
+                fontSize: 15, fontWeight: FontWeight.w800, color: fg)),
       );
 
   Widget _search() => TextField(
@@ -659,7 +660,19 @@ class _MaoniPageState extends State<MaoniPage> {
           ),
           const SizedBox(height: 4),
           Row(
+            // Tuma + Ghairi kwenye MWISHO KABISA wa mstari (omaombi ya
+            // mtumiaji) — Ghairi kwanza, Tuma (kitufe kikuu) mwisho kulia.
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              InkWell(
+                onTap: () => setState(() => _editing = null),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child:
+                      Text('Ghairi', style: TextStyle(fontSize: 14, color: _C.mutedOf(context))),
+                ),
+              ),
+              const SizedBox(width: 18),
               InkWell(
                 onTap: () => _send(m),
                 child: Padding(
@@ -675,15 +688,6 @@ class _MaoniPageState extends State<MaoniPage> {
                               color: _C.blue)),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(width: 18),
-              InkWell(
-                onTap: () => setState(() => _editing = null),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child:
-                      Text('Ghairi', style: TextStyle(fontSize: 14, color: _C.mutedOf(context))),
                 ),
               ),
             ],
