@@ -627,28 +627,31 @@ class _MalipoScreenState extends State<MalipoScreen> {
         ]),
       );
 
-  // SEARCH BOX: ndefu mno ilikuja (contentPadding ya wima 14°) — sasa
-  // ndefu 42dp tu, isDense + contentPadding vya 0 kwa wima; maandishi 14,
-  // ikoni 20 yenye nafasi ndogo kabla ya maandishi (prefixIconConstraints).
-  // Pembe 12 na rangi za border (vijuvinu/vinjari vya bluu) HAZIJABADILIKA.
-  // Nafasi juu/chini ya box: 8dp.
+  // SEARCH BOX ya WASTANI: urefu 44dp (isDense false), contentPadding
+  // horizontal 14 / vertical 12 + textAlignVertical.center — maandishi na
+  // ikoni viko katikati kiwima yenye ≥12dp kutoka border juu/chini.
+  // Ikoni 20; nafasi ikoni↔maandishi = 10dp ((40−20)/2 kwenye icon-box).
+  // Pembe 12 na rangi za border (vijivu/bluu focused) HAZIJABADILIKA.
+  // Nafasi (kiwango-wonekano, ikijumuishwa na padding za majirani): juu ya
+  // box 12dp (6 ya kadi + 6 huku) na chini 12dp (0 huku + 12 ya lebo 'Leo')
+  // — nafasi tupu iliyoziidi imeondolewa.
   Widget _searchField() => Padding(
-        padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+        padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
         child: SizedBox(
-          height: 42,
+          height: 44,
           child: TextField(
             controller: _search,
             autofocus: true,
+            textAlignVertical: TextAlignVertical.center,
             style: TextStyle(fontSize: 14, color: _C.textT(context)),
             decoration: InputDecoration(
-              isDense: true,
               hintText: 'Jina, namba au kodi',
               hintStyle: TextStyle(color: _C.mutedT(context), fontSize: 14),
               prefixIcon: Icon(MpIcons.search, size: 20, color: _C.mutedT(context)),
               prefixIconConstraints:
-                  const BoxConstraints(minWidth: 38, minHeight: 0),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  const BoxConstraints(minWidth: 40, minHeight: 0),
+              contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 12),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: _C.borderStrongT(context), width: 0.8),

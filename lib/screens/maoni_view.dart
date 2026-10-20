@@ -5,6 +5,11 @@ import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/read_more_text.dart';
 
+/// LIVE DATA — MaoniView inapokea orodha Mpya kutoka mzazi (FeedbackScreen)
+/// kila data mpya inapofika (WS `feedback.new` na `feedback.replied`, pole
+/// refresh). [onItemsChanged] inaitwa mtumiaji akitoa au kutuma maoni — ukurasa
+/// unaonyesha data mpya PAPO HAPO bila kutoka na kurudi.
+
 /* ============================================================
    MODEL
    ============================================================ */
@@ -42,6 +47,10 @@ class MaoniView extends StatefulWidget {
   /// Umbali wa toast kutoka chini (juu ya menyu yako ya chini)
   final double toastBottom;
 
+  /// Data MPYA imetoka (WS au refresh) — mzazi anaandika thamani hii kila
+  /// orodha ipya inapofika; MaoniView inaipokea kwa didUpdateWidget.
+  final int dataVersion;
+
   const MaoniView({
     super.key,
     this.items = const [],
@@ -54,6 +63,7 @@ class MaoniView extends StatefulWidget {
     // mengi anayojirudia-rudia.  Sasa ujumbe WOTE unaingia kwa ujumbe moja.
     this.maxLength = 2000,
     this.toastBottom = 16,
+    this.dataVersion = 0,
   });
 
   @override
@@ -75,7 +85,17 @@ class _MaoniViewState extends State<MaoniView> {
   @override
   void didUpdateWidget(covariant MaoniView old) {
     super.didUpdateWidget(old);
-    if (old.items != widget.items) list = List.of(widget.items);
+    // DATA MPYA PAPO HAPO: orodha mpya (WS feedback.new/feedback.replied →
+    // FeedbackScreen._load) AMA thamani mpya ya [dataVersion] → frame hii
+    // moja tu inabadilika — HAKUNA kutoka/kurudi ukurasa.
+    if (old.items != widget.items || old.dataVersion != widget.dataVersion) {
+      list = List.of(widget.items);
+      // Udhibiti wa kurasa: ukiwa uleule (page ≤ mipaka mipya).
+      if (page > 0) {
+        final pages = (list.length / widget.pageSize).ceil().clamp(1, 9999);
+        page = page.clamp(0, pages - 1);
+      }
+    }
   }
 
   @override

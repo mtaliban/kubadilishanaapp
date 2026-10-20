@@ -802,6 +802,11 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
   int _fallbackCounter = 1000;
   bool _loading = true;
 
+  // Kadi ya hariri inapo-funguliwa — poll huwa haisumbui (hidden text input).
+  // (ri jalali — poll inaendelea; CachedRepository.loadPage ina re-apply
+  // tu pale diski imebadilika, hivyo haivunji kadi ya editor.)
+  bool _editingOpen = false;
+
   /// OFFLINE-FIRST — funguo ya diski ya CachedRepository (maoni yote).
   static const String kMaoniCacheKey = 'page:admin/feedback';
 
@@ -812,6 +817,15 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
     }
   }
 
+  // CATCH MAJIBU CHAPU (kasoro: mtumiaji anatuma maoni, admin akiwa page
+  // hii lazima aondokee na arudi ili aone): WS ya kawaida inaweza ikose
+  // (reconnect, envelope tofauti) — hivyo
+  //  1. AdminLiveSync LISTEN-ALL: event YOYOTE ya data (si pong/heartbeat)
+  //     ina-reload — hakuna aina iliyokosekana.
+  //  2. POLL ya sekunde 20 nzima: hata WS ikikufa kabisa, orodha hupakia upya
+  //     na majibu mapya yanaonekana kwenye PAGE HII pekee.
+  Timer? _poll;
+
   @override
   void initState() {
     super.initState();
@@ -819,16 +833,21 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
     CachedRepository().hydrate(kMaoniCacheKey, _applyMaoniDisk);
     _load();
     WebSocketService().on('notification', _onWs);
-    // LIVE — AdminLiveSync: feedback.new (mtumiaji ameandika) + feedback.
-    // replied (>jibu la admin mwenenzako) — orodha inapakia upya PAPO HAPO.
-    _liveSub = AdminLiveSync().listen(
-        {'feedback.new', 'feedback.replied'}, () => _load());
+    // LIVE — AdminLiveSync (listenAll): feedback.new (mtumiaji ameandika) +
+    // feedback.replied (jibu bingwa) + yote mengine ya data — reload PAPO HAPO.
+    _liveSub = AdminLiveSync().listenAll(() => _load());  // POLL ya muda — nyuma ya pazia (loadPage ina-inflight dedupe + diski:
+  // hakuna kelele wala flash ya data ya kale). Kadi ya editor ikiwa wazi,
+  // poll inaruka (isitibitishe maandishi ya admin anayeandika).
+    _poll = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted) _load();
+    });
   }
 
   AdminLiveTicket? _liveSub;
 
   @override
   void dispose() {
+    _poll?.cancel();
     _liveSub?.call();
     WebSocketService().off('notification', _onWs);
     super.dispose();
