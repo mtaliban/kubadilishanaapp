@@ -5,6 +5,7 @@ import '../services/cached_repository.dart';
 import '../services/websocket_service.dart';
 import '../widgets/no_cached_data_widget.dart';
 import '../widgets/skeletons.dart';
+import '../widgets/time_ago.dart';
 
 // OFFLINE-FIRST — funguo ya diski ya arifa za mtumiaji.
 const _kNotifsKey = 'page:notifications';
@@ -146,22 +147,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     };
   }
 
-  static String _shortTime(String iso) {
-    if (iso.isEmpty) return '';
-    try {
-      final d    = DateTime.parse(iso).toLocal();
-      final now  = DateTime.now();
-      final diff = DateTime(now.year, now.month, now.day)
-          .difference(DateTime(d.year, d.month, d.day))
-          .inDays;
-      final hh = d.hour.toString().padLeft(2, '0');
-      final mm = d.minute.toString().padLeft(2, '0');
-      const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ago','Sep','Okt','Nov','Des'];
-      if (diff == 0) return '${d.day} ${months[d.month - 1]} · $hh:$mm';
-      if (diff == 1) return 'Jana';
-      return '${d.day} ${months[d.month - 1]}';
-    } catch (_) { return ''; }
-  }
+  // ARIFA: muda KAMA WHATSAPP — "Sasa hivi", "dak 7", "saa 2", "Jana",
+  // siku "3 Ago". Hapo awali leo ilikuwa "d Mon · HH:MM" tu — mtumiaji
+  // ambaye hajui muda uliopita ("7m ago") ilipaswa kusoma muda halisi.
+  static String _shortTime(String iso) => timeAgoShort(iso);
 
   // ── Build ─────────────────────────────────────────────────────────────────
   @override

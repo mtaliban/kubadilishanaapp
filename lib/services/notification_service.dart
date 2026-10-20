@@ -18,8 +18,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'dart:io';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
@@ -227,13 +225,12 @@ class NotificationService {
         ));
       } catch (_) {}
 
-      // BATTERY OPTIMIZATION (Android): simu nyingi (MIUI/Oppo/Samsung)
-      // hazinzi background apps → FCM push haifikia wakati app imefungwa
-      // (badge kwenye DB, arifa hapana). Tunaomba system dialog ya
-      // "Ruhusu kufanya kazi bila optimization" — MARA MOJA tu kwa app.
-      _ensureBatteryExemption();
-
-      // Token refresh: sikiliza MARA MOJA tu — kila _ensurePermissionAndToken
+      // BATTERY OPTIMIZATION: DIALOG YA MFUMO IMEONDOA (omaombi la mtumiaji
+      // — hakuniachi "Ruhusu ... kufanya kazi background" anayefungua app):
+      // tunaruhusu vhaji na white-list ya Doze kwa mkono mtumiaji akihitaji
+      // kupata arifa wakati app imefungwa (Settings za simu). FCM push
+      // binafsi haitaji hii kuonnect arifa app iko background/omda.
+      // NB: Token refresh listener bado — MARA MOJA tu, kila _ensurePermissionAndToken
       // inayofuata (login mpya / retry) isiongeze listener nyingine.
       try {
         _fcm.onTokenRefresh.listen((t) { _fcmToken = t; _registerToken(t); });
@@ -321,24 +318,10 @@ class NotificationService {
   static const MethodChannel _batteryChannel =
       MethodChannel('kubadilishana/battery');
 
-  /// Omba App-standby exemption (Doze whitelist) — ARIFA ZA BACKGROUND
-  /// HAZIFIKI kwenye simu nyingi bila hii. Dialog ya mfumo huonyeshwa
-  /// mara MMOJA tu (bendera kwenye SharedPreferences), mtumiaji akikubali
-  /// app inaingia kwenye whitelist na push zinafika hata app imefungwa.
-  Future<void> _ensureBatteryExemption() async {
-    if (!Platform.isAndroid) return;
-    try {
-      final needs = await _batteryChannel
-          .invokeMethod<bool>('isIgnoringBatteryOptimizations');
-      if (needs != true) return; // tayari kwenye whitelist
-      final prefs = await SharedPreferences.getInstance();
-      if (prefs.getBool('battery_prompt_shown') == true) return;
-      await prefs.setBool('battery_prompt_shown', true);
-      await _batteryChannel.invokeMethod('requestIgnoreBatteryOptimizations');
-    } catch (_) {
-      // Channel haipo (simu pekee) au simu imekataa — siyo kosa kizuia app.
-    }
-  }
+  // [IMEONDOA] BATTERY DIALOG — "Ruhusu kufanya kazi background"
+  // (user_alililia: nikiingi kila wakati huuliza background): system dialog
+  // haiombwi tena. Doze-whitelist inawekwa kwa mkono kwenye Settings za
+  // simu endapo arifa za background zitahitajika.
 
   /// Ruhusa ya POST_NOTIFICATIONS (Android 13+) + token ya FCM.
   ///

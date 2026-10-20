@@ -23,6 +23,7 @@ import '../../services/api_service.dart';
 import '../../widgets/tight_title.dart';
 import '../../services/cached_repository.dart';
 import '../../services/websocket_service.dart';
+import '../../services/admin_live_sync.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/no_cached_data_widget.dart';
 import '../../widgets/skeletons.dart';
@@ -1774,6 +1775,7 @@ class AdminStatisticsPage extends StatefulWidget {
 }
 
 class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
+  AdminLiveTicket? _liveAll;
   StatsData? _data;
 
   /// Diski ina data halisi ya takwimu (sio ghafi isiyochakata/data bandia).
@@ -1792,6 +1794,13 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
     // Kumbuka: backend inatuma mtumiaji mpya kwa ADMIN kama 'notification'
     // (type=user.registered) — event raw haipiti kwa admin.
     WebSocketService().on('notification', _onWsUsers);
+    // LIVE-BROAD: event YOYOTE ya WS (raw + envelope) inarefresh takwimu —
+    // kila kivuli cha data (mtumiaji mpya, match, malipo, tangazo n.k.)
+    // inapande PAPO HAPO; hii ndiyo fix ya "namba za kale mpaka uhamie
+    // pages nyingine na urudi". WS refresher zote ni zile zile load —
+    // pori la mitandao limezuiliwa ndani ya AdminLiveSync (event moja =
+    // reload moja), vinginevyoListeners zote mbili zingejirudia.
+    _liveAll = AdminLiveSync().listenAll(() => _load());
     // DISKI PAPO HAPO — takwimu za diski KWA FRAME YA KWANZA (hakuna spring).
     CachedRepository().hydrate(_kStatsKey, _applyStats);
     _load();
@@ -1800,6 +1809,7 @@ class _AdminStatisticsPageState extends State<AdminStatisticsPage> {
   @override
   void dispose() {
     WebSocketService().off('notification', _onWsUsers);
+    _liveAll?.call();
     CachedRepository().removeListener(_onRepoChange);
     super.dispose();
   }

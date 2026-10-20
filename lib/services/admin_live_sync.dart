@@ -47,6 +47,22 @@ class AdminLiveSync {
   ///    hupokea mtumiaji mpya kupitia `notification`-envelope yenye
   ///    `type: user.registered`. Kumpanganyika ko hii inafanywa KIMBARA hapa
   ///    — ukurasa hapaswi kujua farada za envelope za backend.
+  /// KUSIKILIZA VYOTE (Broad-mode) — event YOYOTE ya WS (raw + envelope
+  /// 'notification') inaita [onEvent], isipokuwa aina kwenye [skip]
+  /// (kwa mf. 'pong'/'heartbeat'). HII NI YA PAGES ZINAZOTAKA DATA MPYA
+  /// PAPO HAPO bila kujua orodha kamili ya aina — kila ukurasa unaweza
+  /// ku-refresh mara data inabadilika, BILO LA KUSUBIRI mtumiaji atoke
+  /// na arudi (kasoro ya "badge inaonyesha, data bado ya kale").
+  ///
+  /// REJESHO: ticket — iite kwenye dispose() ya ukurasa.
+  AdminLiveTicket listenAll(void Function() onEvent,
+      {Set<String> skip = const {'pong', 'heartbeat'}}) {
+    _hook();
+    final sub = _Sub(const <String>{}, onEvent)..skip = skip;
+    _subs.add(sub);
+    return () => _subs.remove(sub);
+  }
+
   AdminLiveTicket listen(Set<String> events, void Function() onEvent) {
     _hook();
     final sub = _Sub(Set<String>.of(events), onEvent);
@@ -69,7 +85,11 @@ class AdminLiveSync {
     // Snapshot — subscriber mpya anajisajili ndani ya callback hapajitokezi
     // kwenye duara hii (hakuna ConcurrentModificationError).
     for (final s in List<_Sub>.from(_subs)) {
-      if (s.events.intersection(keys).isNotEmpty) {
+      // listenAll (events tupu): kila aina ya event — BILA zilizo kwenye skip.
+      final hit = s.events.isEmpty
+          ? keys.any((k) => !s.skip.contains(k))
+          : s.events.intersection(keys).isNotEmpty;
+      if (hit) {
         try {
           s.onEvent();
         } catch (_) {}
@@ -82,4 +102,7 @@ class _Sub {
   final Set<String> events;
   final void Function() onEvent;
   _Sub(this.events, this.onEvent);
+
+  /// listenAll: aina hizi ZISIJITOE (pong/heartbeat n.k.).
+  Set<String> skip = const <String>{};
 }

@@ -22,6 +22,7 @@ import '../../widgets/skeletons.dart';
 import '../../widgets/tight_title.dart';
 import '../../services/websocket_service.dart';
 import '../../services/admin_badge_service.dart';
+import '../../widgets/time_ago.dart' show timeAgoShortFromDateTime;
 import '../../widgets/app_toast.dart' show AppToast, friendlyError;
 import '../../widgets/app_drawer.dart' show BadgeController, NavItem;
 
@@ -92,6 +93,7 @@ class Maoni {
     required this.name,
     required this.phone,
     required this.date,
+    this.ago = '',
     this.reply = '',
   });
 
@@ -100,6 +102,12 @@ class Maoni {
   final String name;
   final String phone;
   final String date;
+
+  /// MUDA ULIOPITA (WhatsApp-style: "Sasa hivi", "dak 7", "saa 2", "Jana",
+  /// "siku 3") — maoni mapya kwenye jazi inaonyesha KIMUDA KIENO badala ya
+  /// mtumiaji akisoma saa halisi tu ("11 Okt, 06:57").
+  final String ago;
+
   String reply;
 
   bool get answered => reply.trim().isNotEmpty;
@@ -217,16 +225,19 @@ Maoni _maoniFromFeedback(Map<String, dynamic> m, int fallbackId) {
   ].join('\n');
   final reply = (m['admin_reply'] ?? m['reply'] ?? '').toString().trim();
 
-  // Tarehe iko katika mfano "11 Okt, 06:57" kama picha.
+  // Tarehe iko katika mfano "11 Okt, 06:57" kama picha + MUDA ULIOPITA
+  // ("dak 7", "saa 2" n.k. — "Sasa hivi" kwa mapya) — kama WhatsApp.
   final hh = created.hour.toString().padLeft(2, '0');
   final mm = created.minute.toString().padLeft(2, '0');
   final date = '${created.day} ${_monthsShort[created.month - 1]}, $hh:$mm';
+  final ago = timeAgoShortFromDateTime(created);
 
   return Maoni(
     id: idFallback,
     name: name,
     phone: phone,
     date: date,
+    ago: ago,
     text: userText.isEmpty ? '(tupu)' : userText,
     reply: reply,
   );
@@ -461,20 +472,20 @@ class _MaoniPageState extends State<MaoniPage> {
     );
   }
 
-  // Namba ndani ya duara — KUBWA + NZITO (omaombi ya mtumiaji).
-  // Hayajibiwa inabaki nyekundu halii ikiwa 0.
+  // Namba ndani ya duara — PUNGUZA KIDOGO (omaombi wa mtumiaji: ilikuwa
+  // kubwa mno na inapita). Bado nyekundu kali kwenye "Hayajibiwa".
   Widget _badge(int n, Color bg, Color fg) => Container(
-        constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
         padding: const EdgeInsets.symmetric(horizontal: 4),
         alignment: Alignment.center,
         decoration: BoxDecoration(
             color: bg,
             shape: n < 100 ? BoxShape.circle : BoxShape.rectangle,
             borderRadius:
-                n < 100 ? null : BorderRadius.circular(13)),
+                n < 100 ? null : BorderRadius.circular(11)),
         child: Text('$n',
             style: TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w800, color: fg)),
+                fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
       );
 
   Widget _search() => TextField(
@@ -544,10 +555,14 @@ class _MaoniPageState extends State<MaoniPage> {
           // zaidi"/"Punguza" — badala ya kadi kuwa ndefu mno.
           ReadMoreText(m.text,
               style: _serif(17, color: _C.bodyOf(context)), collapsedLines: 5),
+          // Rangi dark-aware + MUDA ULIOPITA ("dak 7", "Jana"…) — kama
+          // "dak 7 (11 Okt, 06:57)"; kaletu muda halisi bila kupoteza tarehe.
           Padding(
             padding: const EdgeInsets.only(top: 8, bottom: 10),
             child: Text(
-              '\u2014 ${m.name} \u00B7 ${m.phone} \u00B7 ${m.date}',
+              m.ago.isEmpty
+                  ? '\u2014 ${m.name} \u00B7 ${m.phone} \u00B7 ${m.date}'
+                  : '\u2014 ${m.name} \u00B7 ${m.phone} \u00B7 ${m.ago} (${m.date})',
               style: TextStyle(fontSize: 12, color: _C.mutedOf(context)),
             ),
           ),

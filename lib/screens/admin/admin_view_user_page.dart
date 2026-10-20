@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/app_toast.dart';
 
@@ -68,18 +68,18 @@ class _IdaraInfo {
 _IdaraInfo _idaraInfo(String raw) {
   final k = raw.trim().toLowerCase();
   if (k == 'health' || k == 'afya') {
-    return _IdaraInfo('Afya', PhosphorIcons.heartbeat(), PhosphorIcons.stethoscope(), _Tone.green);
+    return _IdaraInfo('Afya', TablerIcons.stethoscope, TablerIcons.stethoscope, _Tone.green);
   }
   if (k == 'education' || k == 'elimu') {
-    return _IdaraInfo('Elimu', PhosphorIcons.graduationCap(), PhosphorIcons.chalkboard(), _Tone.blue);
+    return _IdaraInfo('Elimu', TablerIcons.school, TablerIcons.chalkboard, _Tone.blue);
   }
   if (k.contains('agri') || k.contains('kilimo')) {
-    return _IdaraInfo('Kilimo na ufugaji', PhosphorIcons.plant(), PhosphorIcons.plant(), _Tone.green);
+    return _IdaraInfo('Kilimo na ufugaji', TablerIcons.plant, TablerIcons.plant, _Tone.green);
   }
   if (k.contains('public') || k.contains('umma')) {
-    return _IdaraInfo('Watumishi wa umma', PhosphorIcons.bank(), PhosphorIcons.briefcase(), _Tone.amber);
+    return _IdaraInfo('Watumishi wa umma', TablerIcons.buildingBank, TablerIcons.briefcase, _Tone.amber);
   }
-  return _IdaraInfo(raw, PhosphorIcons.briefcase(), PhosphorIcons.identificationBadge(), _Tone.blue);
+  return _IdaraInfo(raw, TablerIcons.briefcase, TablerIcons.idBadge2, _Tone.blue);
 }
 
 const _kadaNames = {
@@ -214,21 +214,21 @@ class UserDetailsPage extends StatelessWidget {
                 children: [
                   _SquareIcon(
                     c: c,
-                    icon: PhosphorIcons.arrowLeft(),
+                    icon: TablerIcons.arrowLeft,
                     tooltip: 'Rudi',
                     onTap: () => Navigator.maybePop(context),
                   ),
                   const Spacer(),
                   _TonalButton(
                     c: c,
-                    icon: PhosphorIcons.pencilSimple(),
+                    icon: TablerIcons.pencil,
                     label: 'Hariri',
                     onTap: onEdit,
                   ),
                   const SizedBox(width: 8),
                   _SquareIcon(
                     c: c,
-                    icon: PhosphorIcons.trash(),
+                    icon: TablerIcons.trash,
                     tooltip: 'Futa',
                     fg: c.red,
                     bg: c.redBg,
@@ -298,29 +298,29 @@ class UserDetailsPage extends StatelessWidget {
                         if ((user.employer ?? '').isNotEmpty)
                           _Pill(
                               label: user.employer!,
-                              icon: PhosphorIcons.bank(),
+                              icon: TablerIcons.buildingBank,
                               fg: c.blue,
                               bg: c.blueBg),
                         user.active
                             ? _Pill(
                                 label: 'Hai',
-                                icon: PhosphorIcons.dot(PhosphorIconsStyle.fill),
+                                icon: TablerIcons.check,
                                 fg: c.green,
                                 bg: c.greenBg)
                             : _Pill(
                                 label: 'Amefungwa',
-                                icon: PhosphorIcons.lock(),
+                                icon: TablerIcons.lock,
                                 fg: c.amber,
                                 bg: c.amberBg),
                         user.paid
                             ? _Pill(
                                 label: 'Amelipa',
-                                icon: PhosphorIcons.receipt(),
+                                icon: TablerIcons.receipt,
                                 fg: c.green,
                                 bg: c.greenBg)
                             : _Pill(
                                 label: 'Hajalipa',
-                                icon: PhosphorIcons.receiptX(),
+                                icon: TablerIcons.receiptOff,
                                 fg: c.red,
                                 bg: c.redBg),
                       ],
@@ -332,7 +332,7 @@ class UserDetailsPage extends StatelessWidget {
                       children: [
                         _QuickAction(
                           c: c,
-                          icon: PhosphorIcons.phoneCall(),
+                          icon: TablerIcons.phoneCall,
                           label: 'Piga',
                           fg: c.blue,
                           bg: c.blueBg,
@@ -341,7 +341,7 @@ class UserDetailsPage extends StatelessWidget {
                         ),
                         _QuickAction(
                           c: c,
-                          icon: PhosphorIcons.whatsappLogo(),
+                          icon: TablerIcons.brandWhatsapp,
                           label: 'WhatsApp',
                           fg: c.green,
                           bg: c.greenBg,
@@ -353,7 +353,7 @@ class UserDetailsPage extends StatelessWidget {
                         ),
                         _QuickAction(
                           c: c,
-                          icon: PhosphorIcons.copy(),
+                          icon: TablerIcons.copy,
                           label: 'Nakili',
                           fg: c.text,
                           bg: c.soft,
@@ -367,7 +367,7 @@ class UserDetailsPage extends StatelessWidget {
                         ),
                         _QuickAction(
                           c: c,
-                          icon: user.active ? PhosphorIcons.lock() : PhosphorIcons.lockOpen(),
+                          icon: user.active ? TablerIcons.lock : TablerIcons.lockOpen,
                           label: user.active ? 'Funga' : 'Fungua',
                           fg: c.amber,
                           bg: c.amberBg,
@@ -387,7 +387,7 @@ class UserDetailsPage extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            Icon(PhosphorIcons.keyhole(), size: 18, color: c.amber),
+                            Icon(TablerIcons.key, size: 18, color: c.amber),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -396,7 +396,7 @@ class UserDetailsPage extends StatelessWidget {
                             ),
                             _TonalButton(
                               c: c,
-                              icon: PhosphorIcons.key(),
+                              icon: TablerIcons.key,
                               label: 'Weka',
                               fg: c.amber,
                               bg: c.page,
@@ -409,17 +409,17 @@ class UserDetailsPage extends StatelessWidget {
                     ],
 
                     // ---------- Mawasiliano ----------
-                    _GroupTitle(c: c, icon: PhosphorIcons.addressBook(), text: 'MAWASILIANO'),
+                    _GroupTitle(c: c, icon: TablerIcons.mail, text: 'MAWASILIANO'),
                     _Group(c: c, children: [
                       _Row(
                         c: c,
-                        icon: PhosphorIcons.phone(),
+                        icon: TablerIcons.phone,
                         label: 'Namba ya simu',
                         value: _prettyPhone(user.phone),
                       ),
                       _Row(
                         c: c,
-                        icon: PhosphorIcons.whatsappLogo(),
+                        icon: TablerIcons.brandWhatsapp,
                         iconFg: c.green,
                         iconBg: c.greenBg,
                         label: 'WhatsApp',
@@ -429,7 +429,7 @@ class UserDetailsPage extends StatelessWidget {
                     ]),
 
                     // ---------- Kazi ----------
-                    _GroupTitle(c: c, icon: PhosphorIcons.briefcaseMetal(), text: 'KAZI'),
+                    _GroupTitle(c: c, icon: TablerIcons.briefcase, text: 'KAZI'),
                     _Group(c: c, children: [
                       _Row(
                         c: c,
@@ -450,21 +450,21 @@ class UserDetailsPage extends StatelessWidget {
                       if (user.masomo.isNotEmpty)
                         _Row(
                           c: c,
-                          icon: PhosphorIcons.books(),
+                          icon: TablerIcons.book,
                           label: 'Masomo',
                           value: user.masomo.map(_somo).join(', '),
                         ),
                       if ((user.employer ?? '').isNotEmpty)
                         _Row(
                           c: c,
-                          icon: PhosphorIcons.bank(),
+                          icon: TablerIcons.buildingBank,
                           label: 'Mwajiri',
                           value: user.employer!,
                         ),
                     ]),
 
                     // ---------- Uhamisho ----------
-                    _GroupTitle(c: c, icon: PhosphorIcons.path(), text: 'UHAMISHO'),
+                    _GroupTitle(c: c, icon: TablerIcons.route, text: 'UHAMISHO'),
                     _RouteCard(
                       c: c,
                       kituo: _place(user.kituo),
@@ -476,11 +476,11 @@ class UserDetailsPage extends StatelessWidget {
                     ),
 
                     // ---------- Akaunti ----------
-                    _GroupTitle(c: c, icon: PhosphorIcons.shield(), text: 'AKAUNTI'),
+                    _GroupTitle(c: c, icon: TablerIcons.shield, text: 'AKAUNTI'),
                     _Group(c: c, children: [
                       _StatusRow(
                         c: c,
-                        icon: PhosphorIcons.userCheck(),
+                        icon: TablerIcons.check,
                         label: 'Hali',
                         value: user.active ? 'Hai' : 'Amefungwa',
                         fg: user.active ? c.green : c.amber,
@@ -488,7 +488,7 @@ class UserDetailsPage extends StatelessWidget {
                       ),
                       _StatusRow(
                         c: c,
-                        icon: PhosphorIcons.receipt(),
+                        icon: TablerIcons.receipt,
                         label: 'Malipo',
                         value: user.paid ? 'Amelipa' : 'Hajalipa',
                         fg: user.paid ? c.green : c.red,
@@ -496,7 +496,7 @@ class UserDetailsPage extends StatelessWidget {
                       ),
                       _StatusRow(
                         c: c,
-                        icon: PhosphorIcons.sealCheck(),
+                        icon: TablerIcons.shieldCheck,
                         label: 'Uthibitisho',
                         value: user.verified ? 'Imethibitishwa' : 'Haijathibitishwa',
                         fg: user.verified ? c.green : c.amber,
@@ -504,7 +504,7 @@ class UserDetailsPage extends StatelessWidget {
                       ),
                       _StatusRow(
                         c: c,
-                        icon: PhosphorIcons.key(),
+                        icon: TablerIcons.key,
                         label: 'Nywila',
                         value: user.hasPassword ? 'Imewekwa' : 'Haijawekwa',
                         fg: user.hasPassword ? c.green : c.amber,
@@ -512,16 +512,16 @@ class UserDetailsPage extends StatelessWidget {
                       ),
                       _StatusRow(
                         c: c,
-                        icon: PhosphorIcons.addressBook(),
+                        icon: TablerIcons.mail,
                         label: 'Kuona mawasiliano',
                         value: user.contactAllowed ? 'Ameruhusiwa' : 'Hajaruhusiwa',
                         fg: user.contactAllowed ? c.green : c.amber,
                         bg: user.contactAllowed ? c.greenBg : c.amberBg,
                       ),
-                      _Row(c: c, icon: PhosphorIcons.user(), label: 'Wajibu', value: user.role),
+                      _Row(c: c, icon: TablerIcons.user, label: 'Wajibu', value: user.role),
                       _Row(
                         c: c,
-                        icon: PhosphorIcons.calendarBlank(),
+                        icon: TablerIcons.calendar,
                         label: 'Imeundwa',
                         value: _date(user.createdAt),
                       ),
@@ -530,7 +530,7 @@ class UserDetailsPage extends StatelessWidget {
                     // ---------- Wanaomwona ----------
                     _GroupTitle(
                       c: c,
-                      icon: PhosphorIcons.users(),
+                      icon: TablerIcons.usersGroup,
                       text: 'WANAOMWONA KWENYE DASHBOARD',
                       trailing: '${user.seenBy}',
                     ),
@@ -540,7 +540,7 @@ class UserDetailsPage extends StatelessWidget {
                         child: Column(
                           children: [
                             Icon(
-                              user.seenBy == 0 ? PhosphorIcons.userMinus() : PhosphorIcons.users(),
+                              user.seenBy == 0 ? TablerIcons.usersMinus : TablerIcons.usersGroup,
                               size: 26,
                               color: c.muted,
                             ),
@@ -934,7 +934,7 @@ class _RouteCard extends StatelessWidget {
                       color: c.blueRing,
                     ),
                   ),
-                  Icon(PhosphorIcons.mapPin(PhosphorIconsStyle.fill), size: 16, color: c.green),
+                  Icon(TablerIcons.mapPinFilled, size: 16, color: c.green),
                 ],
               ),
             ),
@@ -1011,8 +1011,10 @@ class _DColors {
   static const dark = _DColors(
     page: Color(0xFF12161D),
     soft: Color(0xFF1C222C),
-    border: Color(0xFF2A3240),
-    borderStrong: Color(0xFF465164),
+    // FIX DARK MODE: 0xFF2A3240 ilikuwa NYEIFU SANA juu ya page ya giza —
+    // mistari/kadi HAIONEKANI. 0xFF3D4A5E ina mwanga — inaonekana wazi.
+    border: Color(0xFF3D4A5E),
+    borderStrong: Color(0xFF5A677D),
     text: Color(0xFFEEF1F6),
     muted: Color(0xFFA8B1C1),
     blue: Color(0xFF7AA7FF),

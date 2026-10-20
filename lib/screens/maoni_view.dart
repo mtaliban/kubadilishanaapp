@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/read_more_text.dart';
 
 /* ============================================================
    MODEL
@@ -432,8 +433,11 @@ class _FeedbackCard extends StatelessWidget {
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Wewe', style: TextStyle(color: c.muted, fontSize: 11)),
-                    Text(item.message,
-                        style: TextStyle(color: c.text, fontSize: 14, height: 1.45)),
+                    // READ MORE: maoni marefu yanakatwa kuwa mistari 5 « “Soma
+                    // zaidi” ⁄ “Punguza” — bila kupoteza maandishi kamili.
+                    ReadMoreText(item.message,
+                        style: TextStyle(color: c.text, fontSize: 14, height: 1.45),
+                        collapsedLines: 5),
                   ]),
                 ),
               ],
@@ -469,9 +473,10 @@ class _FeedbackCard extends StatelessWidget {
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600)),
                             const SizedBox(height: 1),
-                            Text(item.reply!,
+                            ReadMoreText(item.reply!,
                                 style: TextStyle(
-                                    color: c.text, fontSize: 14, height: 1.45)),
+                                    color: c.text, fontSize: 14, height: 1.45),
+                                collapsedLines: 5),
                           ]),
                     ),
                   ),

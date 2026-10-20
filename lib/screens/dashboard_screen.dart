@@ -288,8 +288,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// API ya board — huitwa na CachedRepository nyuma ya pazia.
+  ///
+  /// FALLBACK "0 BANDIA": board ya scope=incoming inarudisha WANAOKUJA
+  /// mkoa wa mtumiaji TU — kama mtumiaji anaongoza watu ila hakuna aliyekuja
+  /// mkoa wake (au destinations zake hazina candidates), dashboard ilionyeshwa
+  /// 0 badala ya data inayoipo. Sasa: incoming tupu + hakuna vichujio
+  /// vya mkono → tunadondosha scope=all (watumiaji wote) ili mtumiaji
+  /// aone data inayoendelea, kama web (hauni "tuma 0" mwepesi).
   Future<dynamic> _fetchBoard(int? rid, int? did) async {
-    return (await ApiService().get('/matches/board',
+    final data = (await ApiService().get('/matches/board',
         queryParameters: {
           'scope': 'incoming',
           'limit': 100,
@@ -299,6 +306,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // vinginevyo inaweza kurudisha board ya kale YASIYOCHUJWA.
           if (rid != null || did != null) 'bypass_cache': true,
         })).data;
+    final list = (data is Map ? data['candidates'] : null) as List?;
+    // Chujio cha mkono (r/d) hasa kimaValue langu — matokeo kidogo ni kwa kudumu
+    // (mtumiaji anavichuja mbili). Na tupu HAKUNA mtumiaji mwingine kwenye
+    // incoming — fallback scope=all (mtumiaji anaweza kuchuja mwenyewe).
+    if (list != null && list.isNotEmpty) return data;
+    if (rid != null || did != null) return data;
+    try {
+      return (await ApiService().get('/matches/board',
+          queryParameters: {'scope': 'all', 'limit': 100})).data;
+    } catch (_) {
+      return data; // scope=all imekataa — incoming tupu ndiyo sahihi zaidi
+    }
   }
 
   Future<void> _loadTrueMatches() async {

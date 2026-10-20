@@ -1,0 +1,83 @@
+name: Build iOS (unsigned IPA)
+
+# Builds za iPhone — wateja wanaomba kujaribu kwenye vifaa vya iOS.
+# IPA hii ni UNSIGNED (hakuna certificate/provisioning ya Apple Developer
+# kwenye repo) — inafaa kwa TESTFlight/altStore/Sideload kwa mtumiaji
+# aliyeko ndani ya timu, au sideload kwa AltStore.
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-ios:
+    name: Build iOS IPA (unsigned)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # ── Metadata ─────────────────────────────────────────────────────────
+      - name: Get version & date
+        id: meta
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr '+' '-')
+          DATE=$(date +'%Y%m%d-%H%M')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "date=${DATE}" >> $GITHUB_OUTPUT
+
+      # ══════════════════════════════════════════════════════════════════════
+      # ADMIN build (main.dart) — unsigned IPA
+      # ══════════════════════════════════════════════════════════════════════
+
+      - name: Build Admin iOS (no codesign)
+        run: flutter build ios --release --no-codesign -t lib/main.dart
+
+      - name: Package Admin IPA
+        run: |
+          V=${{ steps.meta.outputs.version }}
+          D=${{ steps.meta.outputs.date }}
+          mkdir Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r kubadilishana-admin-ios-v${V}-${D}.zip Payload
+          rm -rf Payload
+
+      # ══════════════════════════════════════════════════════════════════════
+      # USER build (main_user.dart) — unsigned IPA
+      # ══════════════════════════════════════════════════════════════════════
+
+      - name: Build User iOS (no codesign)
+        run: flutter build ios --release --no-codesign -t lib/main_user.dart
+
+      - name: Package User IPA
+        run: |
+          V=${{ steps.meta.outputs.version }}
+          D=${{ steps.meta.outputs.date }}
+          mkdir Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r kubadilishana-user-ios-v${V}-${D}.zip Payload
+          rm -rf Payload
+
+      # ── Upload IPAs kama artifacts ────────────────────────────────────────
+      # NB: iOS inahitaji codesigning ya Apple Developer program kupastia
+      # TestFlight/App Store — IPA hii ni za sideload/altStore tu.
+      - name: Upload IPAs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubadilishana-ios-ipas
+          path: kubadilishana-*ios*.zip
+          if-no-files-found: error

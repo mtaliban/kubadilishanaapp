@@ -6,6 +6,7 @@ import '../../services/admin_badge_service.dart';
 import '../../services/api_service.dart';
 import '../../services/cached_repository.dart';
 import '../../services/websocket_service.dart';
+import '../../services/admin_live_sync.dart';
 import '../../utils/safe_cast.dart';
 import '../../widgets/skeletons.dart';
 import 'admin_delete_user_dialog.dart';
@@ -108,10 +109,29 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
     // ilinyamaza mpaka event nyingine (edit ya admin mwenenzako) au refresh.
     // _onWsUsers inasoma payload['type'] — inafitana na types zote hapa.
     WebSocketService().on('notification', _onWsUsers);
+    // LIVE-BROAD: event YOYOTE ya WS inarefresh orodha + NAMBA ya kadi PAPO
+    // HAPO (omaombi la mtumiaji: "badge inaonyesha mpya ila orodha inasubiri
+    // uhamie pages nyingine na urudi"). Poranda la mitandao limezuiliwa ndani
+    // ya AdminLiveSync (event moja = reload moja), na tag ni TAREHE kwa dispose.
+    _liveBroad = AdminLiveSync().listenAll(_onLiveAny);
+  }
+
+  /// Ticket ya AdminLiveSync.listenAll — kila tukio la WS. [Timer] ndogo
+  /// inazuia kazi nyingi zinazojirudia (events zinazoja kuchipua sasa sasa).
+  AdminLiveTicket? _liveBroad;
+  Timer? _liveBroadDebounce;
+
+  void _onLiveAny() {
+    _liveBroadDebounce ??= Timer(const Duration(milliseconds: 600), () {
+      _liveBroadDebounce = null;
+      if (mounted) _load();
+    });
   }
 
   @override
   void dispose() {
+    _liveBroad?.call();
+    _liveBroadDebounce?.cancel();
     WebSocketService().off('user.registered', _onWsUsers);
     WebSocketService().off('user.updated_by_admin', _onWsUsers);
     WebSocketService().off('user.removed', _onWsUsers);
@@ -358,6 +378,21 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   String _uid(dynamic u) =>
       (u as Map)['user_id']?.toString() ?? u['_id']?.toString() ?? '';
 
+  /// "Wanaomwona kwenye dashboard" — API inaweza kurudisha shape tofauti:
+  /// int (seen_by_count), List ya ID (seen_by), au Map {count: n}.
+  /// [0 bandia] ilikuwa Cupertino ya kilichokitwa View mtumiaji ambaye
+  /// kwenye web anaongoza wengi (kasoro halisi). Salama kwa zote.
+  static int _seenByOf(Map<String, dynamic> u) {
+    final raw = u['seen_by_count'] ?? u['seen_by'] ?? u['wanaomwona'];
+    if (raw is List) return raw.length;
+    if (raw is Map) {
+      final c = raw['count'] ?? raw['total'] ?? raw['value'];
+      return c is num ? c.toInt() : int.tryParse('$c') ?? 0;
+    }
+    if (raw is num) return raw.toInt();
+    return int.tryParse('${raw ?? ''}') ?? 0;
+  }
+
   static UserDetails _toUserDetails(Map<String, dynamic> u) {
     final station = (u['current_station'] as Map?) ?? {};
     final dests = ((u['desired_destinations'] ?? u['destinations']) as List?) ?? [];
@@ -399,7 +434,9 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       contactAllowed: u['contact_enabled'] as bool? ?? false,
       role: u['is_admin'] as bool? ?? false ? 'Admin' : 'Mtumiaji',
       createdAt: created,
-      seenBy: (u['seen_by_count'] ?? u['seen_by'] ?? 0) as int? ?? 0,
+      // FIX "WANAOMWONA KWENYE DASHBOARD 0": kila shape inarudishwa na API
+      // (int / List ya uID / {count}) — hakuna 0 bandia tena.
+      seenBy: _seenByOf(u),
       online: u['is_online'] as bool? ?? false,
     );
   }

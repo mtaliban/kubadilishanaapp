@@ -3,7 +3,8 @@
 // TESTING NGUVU ya ukurasa wa ARIFA (notifications_screen.dart):
 //   A. Design mpya: kichwa 'Arifa', icon circles kijivu (bila border),
 //      BADGE ya ESS logo kwenye kila arifa, icon za rangi husika
-//   B. Muda kulia ya kichwa: '27 Sep · 10:32' (leo), 'Jana', '3 Ago' (zamani)
+//   B. Muda kulia ya kichwa — RELATIVE (kama WhatsApp): 'Sasa hivi' (<1dak),
+//      'dak 30' (<saa), 'saa 10' (<saa 24), 'Jana' (<saa 48), '3 Ago' (zamani)
 //   C. Read/unread: muda wa bluu (haijasomwa) → kijivu (imesomwa) + POST read
 //   D. Navigation: kubofya arifa inafungua page sahihi (malipo/maoni/tangazo)
 //   E. Soma Zote: chip inaonekana, POST read-all inatumwa, subtitle inabadilika
@@ -51,7 +52,7 @@ class _NotifRoutes extends FakeApiAdapter {
           'title': 'Malipo yamekubaliwa',
           'body': 'Ada ya mwezi imethibitishwa',
           'read': false,
-          'created_at': '2026-09-20T09:14:00Z',
+          'created_at': '2026-09-05T09:14:00Z',
         },
         {
           'notification_id': 'n2',
@@ -224,8 +225,11 @@ void main() {
     });
   });
 
-  group('B. MUDA kulia ya kichwa — leo, jana, zamani', () {
-    testWidgets('Leo inaonyesha "d Mon · HH:MM", jana "Jana", zamani "d Mon"',
+  group('B. MUDA kulia ya kichwa — muda uliopita (relative, kama WhatsApp)', () {
+    // Muda ni DETERMINISTIC kwa mbio za dakika: kila seed imetenganishwa
+    // katikati ya bandari (30s / dak 30 / saa 10 / saa 30), hivyo matokeo
+    // hayabadiliki mpaka clock ya test isogee mbele sana.
+    testWidgets('Inaonyesha "Sasa hivi", "dak 30", "saa 10", "Jana", "3 Ago"',
         (tester) async {
       final now = DateTime.now();
       routes.notifications
@@ -234,26 +238,45 @@ void main() {
           {
             'notification_id': 't1',
             'type': 'payment.approved',
-            'title': 'Arifa ya leo',
+            'title': 'Arifa ya punde',
             'body': 'x',
             'read': false,
-            'created_at':
-                DateTime(now.year, now.month, now.day, 12).toIso8601String(),
+            'created_at': now
+                .subtract(const Duration(seconds: 10))
+                .toIso8601String(),
           },
           {
             'notification_id': 't2',
             'type': 'admin.reply',
-            'title': 'Arifa ya jana',
+            'title': 'dak 30 zilizopita',
             'body': 'x',
             'read': false,
-            'created_at': DateTime(now.year, now.month, now.day, 12)
-                .subtract(const Duration(days: 1))
+            'created_at': now
+                .subtract(const Duration(minutes: 30))
                 .toIso8601String(),
           },
           {
             'notification_id': 't3',
             'type': 'announcement',
-            'title': 'Arifa ya zamani',
+            'title': 'saa 10 zilizopita',
+            'body': 'x',
+            'read': true,
+            'created_at':
+                now.subtract(const Duration(hours: 10)).toIso8601String(),
+          },
+          {
+            'notification_id': 't4',
+            'type': 'user.registered',
+            'title': 'Mtu mpya amejiunga',
+            'body': 'x',
+            'read': true,
+            'created_at':
+                now.subtract(const Duration(hours: 30)).toIso8601String(),
+          },
+          {
+            'notification_id': 't5',
+            'type': 'announcement',
+            'title': 'Zamani sana',
             'body': 'x',
             'read': true,
             'created_at': DateTime(2026, 8, 3, 10).toIso8601String(),
@@ -264,13 +287,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      final leo = RegExp(r'^\d{1,2} (Jan|Feb|Mar|Apr|Mei|Jun|Jul|Ago|Sep|Okt|Nov|Des) · \d{2}:\d{2}$');
-      expect(timeText(leo), findsOneWidget,
-          reason: 'Arifa ya leo: "d Mon · HH:MM" (mf. "27 Sep · 10:32")');
-      expect(find.text('Jana'), findsOneWidget,
-          reason: 'Arifa ya jana: "Jana"');
+      // 'Sasa hivi' iko pia kwenye kichwa (title) ya arifa t1 — kwa hivyo
+      // tunatafuta KAMA MUDA (kijivu/kijani/false) sio tu kama mstari.
+      expect(timeText(RegExp(r'^Sasa hivi$')), findsOneWidget,
+          reason: 'Arifa ya punde (<dakika 1): "Sasa hivi"');
+      expect(timeText(RegExp(r'^dak 30$')), findsOneWidget,
+          reason: 'Arifa ya dakika 30: "dak 30"');
+      expect(timeText(RegExp(r'^saa 10$')), findsOneWidget,
+          reason: 'Arifa ya saa 10: "saa 10"');
+      expect(timeText(RegExp(r'^Jana$')), findsOneWidget,
+          reason: 'Arifa ya saa 30: "Jana"');
       expect(timeText(RegExp(r'^3 Ago$')), findsOneWidget,
-          reason: 'Arifa ya zamani: "3 Ago" (mwezi kwa Kiswahili)');
+          reason: 'Arifa ya zamani: "3 Ago" (siku + mwezi)');
     });
   });
 
@@ -281,7 +309,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      final timeRe = RegExp(r'^20 Sep$');
+      final timeRe = RegExp(r'^5 Sep$');
       final t = tester.widget<Text>(timeText(timeRe).first);
       expect(t.style?.color, _kBlue,
           reason: 'Arifa haijasomwa → muda wa bluu');
@@ -377,7 +405,7 @@ void main() {
         'title': 'Arifa mpya LIVE',
         'body': 'Malipo mapya',
         'read': false,
-        'created_at': '2026-09-20T11:00:00Z',
+        'created_at': '2026-09-05T11:00:00Z',
       });
       WebSocketService().dispatchEventForTest({'event': 'notification'});
       await tester.pump(const Duration(milliseconds: 300));
