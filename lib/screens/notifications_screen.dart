@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import '../services/api_service.dart';
@@ -42,6 +44,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   List<dynamic> _notifications = [];
   bool _loading = true;
 
+  // MUDA UNAJISASISHA WENYEWE (WhatsApp-style): 'Sasa hivi' inaingia kuwa
+  // 'dak 7' huku ukiwa kwenye ukurasa — kila sekunde 30 labels zinafanywa upya
+  // (frame moja ndogo tu, hakuna refresh ya data).
+  Timer? _tick;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +59,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _load();
     WebSocketService().on('notification', _onWs);
     WebSocketService().on('notification.new', _onWs);
+    _tick = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {}); // rekembisha muda: 'Sasa hivi' → 'dak 7'
+    });
   }
 
   void _applyNotifs(dynamic data) {
@@ -68,6 +78,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   void dispose() {
+    _tick?.cancel();
     WebSocketService().off('notification', _onWs);
     WebSocketService().off('notification.new', _onWs);
     super.dispose();

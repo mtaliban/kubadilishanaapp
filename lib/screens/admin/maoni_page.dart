@@ -213,16 +213,26 @@ Maoni _maoniFromFeedback(Map<String, dynamic> m, int fallbackId) {
   // na message zinazofanana kama MBILI ("Okay\nOkay", kichwa fkula + ujumbe).
   // Subject inaonyeshwa TU kama SI sehemu ya ujumbe — inatibu pia data ya
   // zamani iliyohifadhiwa kwenye DB bila kubadilisha backend.
-  // Kichwa fkula kina '...' ya truncation (app ya user: herufi 60 + '...') —
-  // tunafuta vitone vinavyoishia na kupima kama subject ni mwanzo wa ujumbe.
-  final subjectCore = subject.replaceAll(RegExp(r'\.{1,3}$'), '').trim();
+  // Kichwa fkula kina alama ya truncation mwishoni: '...' (vitone 1–3) AMA
+  // '…' (herufi moja ya ellipsis) — zote zinafutwa kabla ya kupima.
+  final subjectCore =
+      subject.replaceAll(RegExp(r'(\.{1,3}|\u2026)+\s*$'), '').trim();
+  // DEDUP ya KISATI (case-insensitive) + nafasi zinazojirudia zinafungamanishwa
+  // — bila hii, tofauti ndogo (newline mbili kwa mmoja n.k.) zinalifikana na
+  // ulinganishi wa awali ukose na maneno yarudie mara mbili kwenye kadi.
+  String _norm(String s) =>
+      s.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+  final subjectCoreN = _norm(subjectCore);
+  final messageN = _norm(message);
   final subjectIsPrefix =
-      subjectCore.isNotEmpty && message.startsWith(subjectCore);
-  final userText = [
-    if (subject.isNotEmpty && !message.contains(subject) && !subjectIsPrefix)
-      subject,
-    if (message.isNotEmpty) message,
-  ].join('\n');
+      subjectCoreN.isNotEmpty && messageN.startsWith(subjectCoreN);
+  final subjectInMessage =
+      subjectCoreN.isNotEmpty && messageN.contains(subjectCoreN);
+  // UJUMBE MARA MOJA TU: kama subject ni sehemu ya ujumbe (nzima ama mwanzo
+  // wake), ujumbe WENYEWE ndiyo unatosha — hakuna kichocheo cha pili.
+  final userText = message.isNotEmpty
+      ? message
+      : (subject.isNotEmpty ? subject : '');
   final reply = (m['admin_reply'] ?? m['reply'] ?? '').toString().trim();
 
   // Tarehe iko katika mfano "11 Okt, 06:57" kama picha + MUDA ULIOPITA
@@ -472,20 +482,20 @@ class _MaoniPageState extends State<MaoniPage> {
     );
   }
 
-  // Namba ndani ya duara — PUNGUZA KIDOGO (omaombi wa mtumiaji: ilikuwa
-  // kubwa mno na inapita). Bado nyekundu kali kwenye "Hayajibiwa".
+  // Namba ndani ya duara — NDIGO ZAIDI (omaombi la mtumiaji: "bado kubwa
+  // sana"). Yenyewe sasa ndogo lakini bado nyeupe kwenye nyekundu.
   Widget _badge(int n, Color bg, Color fg) => Container(
-        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
+        padding: const EdgeInsets.symmetric(horizontal: 3),
         alignment: Alignment.center,
         decoration: BoxDecoration(
             color: bg,
             shape: n < 100 ? BoxShape.circle : BoxShape.rectangle,
             borderRadius:
-                n < 100 ? null : BorderRadius.circular(11)),
+                n < 100 ? null : BorderRadius.circular(9)),
         child: Text('$n',
             style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
+                fontSize: 11.5, fontWeight: FontWeight.w600, color: fg)),
       );
 
   Widget _search() => TextField(
@@ -549,12 +559,12 @@ class _MaoniPageState extends State<MaoniPage> {
               Flexible(child: _status(m.answered)),
             ],
           ),
-          // RANGI DARK-AWARE: default ya _serif ilikuwa _C.body (meusi hardcoded)
-          // — kwenye dark mode HAIONEKANI. Tumia bodyOf(context).
-          // READ MORE: maoni YAREFU yanapunguzwa kuwa mistari 5 + "Soma
-          // zaidi"/"Punguza" — badala ya kadi kuwa ndefu mno.
+          // UJUMBE WA MTUMIAJI: font ya APP (si serif), ukubwa 16, uzito wa
+          // kawaida — na UJUMBE MMOJA TU: maxLines 3 + "Soma zaidi" kinachopanua
+          // kwenye Text HIYO HIYO (ReadMoreText).
           ReadMoreText(m.text,
-              style: _serif(17, color: _C.bodyOf(context)), collapsedLines: 5),
+              style: TextStyle(fontSize: 16, height: 1.45, color: _C.bodyOf(context)),
+              collapsedLines: 3),
           // Rangi dark-aware + MUDA ULIOPITA ("dak 7", "Jana"…) — kama
           // "dak 7 (11 Okt, 06:57)"; kaletu muda halisi bila kupoteza tarehe.
           Padding(

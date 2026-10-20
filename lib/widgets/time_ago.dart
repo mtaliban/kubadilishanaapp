@@ -36,7 +36,13 @@ String timeAgoShortFromDateTime(DateTime d, {DateTime? at}) {
   try {
     final local = d.toLocal();
     final ref = (at ?? DateTime.now()).toLocal();
-    final diff = ref.difference(local);
+    var diff = ref.difference(local);
+    // ARIFA ZILIKUWA ZINABAKIA 'Sasa hivi' MILELE kama simu ya mtumiaji iko
+    // NYUMA kidogo ya saa ya server (arifa inaweza kuonekana inatangulia
+    // wakati wa simu → diff hasi → inabaki 'Sasa hivi' milele). Tumia
+    // TOFAUTI KAMILI (abs): arifa yenye 'dak 7' hata kwa simu iliyopinda
+    // inaonyesha 'dak 7', si 'Sasa hivi' milele.
+    if (diff.inSeconds < 0) diff = -diff;
     if (diff.inMinutes < 1) return 'Sasa hivi';
     if (diff.inMinutes < 60) return 'dak ${diff.inMinutes}';
     if (diff.inHours < 24) return 'saa ${diff.inHours}';

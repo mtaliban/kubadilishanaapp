@@ -21,11 +21,15 @@ void main() {
       expect(timeAgoShortFromDateTime(_ref().subtract(const Duration(seconds: 59)), at: _ref()), 'Sasa hivi');
     });
 
-    test('mbele-o-mbele (future) → "Sasa hivi" (salama, hakuna koroma)', () {
+    // SASISHA (BUG YA "NOW MILELE"): zamani muda mbeleni wa simu uligawwa
+    // "Sasa hivi" milele — simu ikinyuma kidogo na server, kila arifa
+    // ilifikia "Sasa hivi" na kuwakali. SASA tunatumia tofauti kamili (abs):
+    // saa 5 "mbeleni" → "saa 5" (si kudumu).
+    test('mbele-o-mbele (future/abs) inahesabiwa halisi — "saa 5", si "Sasa hivi" milele', () {
       expect(
         timeAgoShortFromDateTime(_ref().add(const Duration(hours: 5)),
             at: _ref()),
-        'Sasa hivi',
+        'saa 5',
       );
     });
 

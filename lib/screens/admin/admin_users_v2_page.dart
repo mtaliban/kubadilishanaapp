@@ -14,6 +14,7 @@ import 'admin_filter_users_sheet.dart';
 import 'admin_users_v2_screens.dart';
 import 'admin_view_user_page.dart';
 import 'admin_users_v2_theme.dart';
+import 'card_shared_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // WATUMIAJI (Admin) — MOCKUP TIMELINE LAYOUT:
@@ -823,8 +824,20 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: v2SurfaceOf(context),
+    // BACKGROUND: ileile ya Takwimu (token ya pamoja) — light nyeupe,
+    // dark navy iliyokolea 0xFF0F172A (si rangi ya kadi ya awali).
+    // SURFACETINT: imezimwa (Colors.transparent) kwenye Card na AppBar za
+    // Watumiaji — M3 'surface tint' haipauki tena juu ya rangi hizi;
+    // BottomNavigationBar ya Watumiaji (custom dashboard) haina tint.
+    return Theme(
+      data: Theme.of(context).copyWith(
+        cardTheme: const CardThemeData(surfaceTintColor: Colors.transparent),
+        appBarTheme: Theme.of(context)
+            .appBarTheme
+            .copyWith(surfaceTintColor: Colors.transparent),
+      ),
+      child: Scaffold(
+      backgroundColor: sharedPageBgOf(context),
       body: SafeArea(
         child: Stack(
           children: [
@@ -849,6 +862,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -858,13 +872,14 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
       children: [
-        // ── Stats card ──
+        // ── Kadi ya jumla (watumiaji wote) — border ya Takwimu (1.5) ──
         _statsCard(),
         const SizedBox(height: 10),
+        // ── Kadi ya orodha: search + timeline + pagination (rangi ya kadi) ──
         Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: BoxDecoration(
-            color: v2SurfaceOf(context),
+            color: sharedCardColorOf(context),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -904,9 +919,10 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: v2SurfaceOf(context),
+        color: sharedCardColorOf(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: v2BorderOf(context), width: 0.8),
+        border: Border.all(
+            color: sharedCardBorderOf(context), width: kSharedCardBorderWidth),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Expanded(
@@ -1022,12 +1038,15 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   Widget _searchRow() {
     return Row(children: [
       Expanded(
+        // SEARCH BOX: bporder MOJA tu — unene 1.5 + rangi ile ile ya
+        // Takwimu (token ya pamoja); hakuna border ya ndani/ya nje mbili.
         child: Container(
           height: 40,
           decoration: BoxDecoration(
-            color: v2SurfaceOf(context),
+            color: sharedCardColorOf(context),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: v2BorderOf(context)),
+            border: Border.all(
+                color: sharedCardBorderOf(context), width: kSharedCardBorderWidth),
           ),
           child: TextField(
             controller: _search,
@@ -1256,12 +1275,15 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
   // Bone/SkeletonScope = kung'aa + ku-move kama upepo (shimmer) kama skeletons
   // zingine zote za app.
   Widget _buildSkeleton() {
+    // Skeleton huu ni PAINTA ya kadi zote halisi — unene/rangi ile ile ya
+    // token ya pamoja (Takwimu).
     Widget cardBone({EdgeInsets? padding, required Widget child}) => Container(
           padding: padding ?? const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: v2SurfaceOf(context),
+            color: sharedCardColorOf(context),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: v2BorderOf(context), width: 0.8),
+            border: Border.all(
+                color: sharedCardBorderOf(context), width: kSharedCardBorderWidth),
           ),
           child: child,
         );
@@ -1306,9 +1328,11 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: v2SurfaceOf(context),
+                  color: sharedCardColorOf(context),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: v2BorderOf(context), width: 0.8),
+                  border: Border.all(
+                      color: sharedCardBorderOf(context),
+                      width: kSharedCardBorderWidth),
                 ),
                 child: Row(children: [
                   Expanded(
@@ -1336,7 +1360,7 @@ class _AdminUsersV2PageState extends State<AdminUsersV2Page> {
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                 decoration: BoxDecoration(
-                  color: v2SurfaceOf(context),
+                  color: sharedCardColorOf(context),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(

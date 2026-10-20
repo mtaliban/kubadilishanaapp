@@ -5,6 +5,8 @@ import 'package:tabler_icons_plus/tabler_icons_plus.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'card_shared_tokens.dart';
+
 // ═══════════════════════════════════════════════════════════════════════════
 // WATUMIAJI V2 — theme + shared widgets (Phosphor, kadi pana nyeupe)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -215,8 +217,6 @@ class V2UserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pageBg = Theme.of(context).scaffoldBackgroundColor;
-
     final name = user['full_name'] as String? ?? '';
     final phone =
         user['phone_primary'] as String? ?? user['phone'] as String? ?? '';
@@ -258,18 +258,26 @@ class V2UserCard extends StatelessWidget {
         dests.isEmpty ? '—' : dests.first.split(',').first.trim();
     final restDests = dests.length > 1 ? dests.sublist(1) : <String>[];
 
+    // BORDER: unene 1.5 + rangi ile ile za Takwimu (token ya pamoja).
+    // Border HAIPIKI Container — inachorwa na painter juu na chini ya mstari
+    // wa nukta, ili ikatike (gap) pale mstari unapofika na notch za nusu
+    // duara zichorwe NDANI ya border (stroke tu — HAKUNA rangi ya ukurasa
+    // inayopakiwa juu yake; notchi za kawaida kwa page-bg circles
+    // zimeondolewa).
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: v2SurfaceOf(context),
+        color: sharedCardColorOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: v2BorderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── SEHEMU YA JUU ──
-          Padding(
+          // ── SEHEMU YA JUU ── border ya juu: pembe 16 + notch/gap chini
+          CustomPaint(
+            painter:
+                _V2CardTopBorderPainter(color: sharedCardBorderOf(context)),
+            child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,11 +374,18 @@ class V2UserCard extends StatelessWidget {
               ],
             ),
           ),
+          ),
 
-          // ── MSTARI WA TIKETI (dashes + notch) ──
-          _V2TicketCut(pageBg: pageBg),
+          // ── MSTARI WA TIKETI (dashes) — notch zipo kwenye border painter ──
+          const _V2TicketCut(),
 
-          // ── ANATOKA → ANAELEKEA ──
+          // ── ANATOKA → ANAELEKEA ── border ya chini: notch juu + pembe 16
+          CustomPaint(
+            painter:
+                _V2CardBottomBorderPainter(color: sharedCardBorderOf(context)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             child: Column(
@@ -458,6 +473,9 @@ class V2UserCard extends StatelessWidget {
                 ),
               ),
             ]),
+          ),
+              ],
+            ),
           ),
         ],
       ),
@@ -549,39 +567,107 @@ class V2UserCard extends StatelessWidget {
   }
 }
 
-// ── Sehemu ya kata tiketi (dashes + notch mbili) ──────────────────────────
+// ── Sehemu ya kata tiketi (dashes; notch ZIPO kwenye border painter) ──────
+// Notchi za kawaida za kadi kama awali (CIRCLES ya rangi ya ukurasa) —
+// ZIMEONDOLEWA: mstari wa nukta unapokaa, border ya kadi inakatika (gap)
+// na nusu duara (notch) huchorwa NDANI ya border kwa stroke. Dash tu
+// ndiyo inabaki — unene 1.5, rangi ile ile ya Takwimu (token ya pamoja).
 class _V2TicketCut extends StatelessWidget {
-  final Color pageBg;
-  const _V2TicketCut({required this.pageBg});
+  const _V2TicketCut();
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 20,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: CustomPaint(
-                painter: _V2DashPainter(
-                    color: v2BorderOf(context), dash: 6, gap: 5, stroke: 1.5),
-              ),
-            ),
-          ),
-          Positioned(left: -10, top: 0, child: _notch(pageBg)),
-          Positioned(right: -10, top: 0, child: _notch(pageBg)),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: CustomPaint(
+          painter: _V2DashPainter(
+              color: sharedCardBorderOf(context), dash: 6, gap: 5, stroke: 1.5),
+        ),
       ),
     );
   }
+}
 
-  Widget _notch(Color bg) => Container(
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      );
+// ── Painter za border ya tiketi (juu na chini ya mstari wa kata) ──────
+// Pembe za kadi ni radius 16; nukta (notch) ni radius 10 — arc ya kila
+// nukta inagusa side edge na mstari wa kata kwa TANGENTA na kuelekea
+// NDANI ya kadi. Border ya nje ya kadi inakatika (gap) katika nukta mbili
+// pale mstari wa kata unapopita; notch zichorwa kwa stroke tu — hakuna
+// rangi ya ukurasa inayopakiwa
+class _V2CardTopBorderPainter extends CustomPainter {
+  final Color color;
+  const _V2CardTopBorderPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(
+        ticketBorderPath(size, radius: 16, notch: 10, isTop: true),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_V2CardTopBorderPainter old) => old.color != color;
+}
+
+class _V2CardBottomBorderPainter extends CustomPainter {
+  final Color color;
+  const _V2CardBottomBorderPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(
+        ticketBorderPath(size, radius: 16, notch: 10, isTop: false),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_V2CardBottomBorderPainter old) => old.color != color;
+}
+
+// Kila nukta ni arc ya radius [notch] tangenta na SIDE edge (x=0/x=w)
+// na mstari wa kata (y=h au y=0) — inaelekeza NDANI ya kadi: kwa pamoja
+// (juu + chini) nukta mbili zinaunda nusu duara MOJA ndani ya border;
+// border ya side inakatika (gap) pale mstari wa kata unapofika.
+Path ticketBorderPath(
+    Size size, {
+    required double radius,
+    required double notch,
+    required bool isTop,
+  }) {
+  final w = size.width, h = size.height, r = radius, n = notch;
+  final p = Path();
+  if (isTop) {
+    // JUU: pembe 16 juu + nukta chini (kushoto na kulia).
+    p.moveTo(r, 0);
+    p.lineTo(w - r, 0);
+    p.arcToPoint(Offset(w, r), radius: Radius.circular(r), clockwise: true); // pembe juu-kulia
+    p.lineTo(w, h - n);
+    p.arcToPoint(Offset(w - n, h), radius: Radius.circular(n), clockwise: true); // nukta kulia (ndani)
+    p.moveTo(n, h);
+    p.arcToPoint(Offset(0, h - n), radius: Radius.circular(n), clockwise: true); // nukta kushoto (ndani)
+    p.lineTo(0, r);
+    p.arcToPoint(Offset(r, 0), radius: Radius.circular(r), clockwise: true); // pembe juu-kushoto
+    return p;
+  }
+  // CHINI: nukta juu + pembe 16 chini.
+  p.moveTo(n, 0);
+  p.lineTo(w - n, 0);
+  p.arcToPoint(Offset(w, n), radius: Radius.circular(n), clockwise: true); // nukta kulia
+  p.lineTo(w, h - r);
+  p.arcToPoint(Offset(w - r, h), radius: Radius.circular(r), clockwise: true); // pembe chini-kulia
+  p.lineTo(r, h);
+  p.arcToPoint(Offset(0, h - r), radius: Radius.circular(r), clockwise: true); // pembe chini-kushoto
+  p.lineTo(0, n);
+  p.arcToPoint(Offset(n, 0), radius: Radius.circular(n), clockwise: true); // nukta kushoto
+  return p;
 }
 
 // ── Dashes za usawa (ANATOKA↔ANAELEKEA) ──────────────────────────────────
@@ -692,9 +778,10 @@ class V2SkeletonCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: v2SurfaceOf(context),
+        color: sharedCardColorOf(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: v2BorderOf(context), width: 0.8),
+        border: Border.all(
+            color: sharedCardBorderOf(context), width: kSharedCardBorderWidth),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [

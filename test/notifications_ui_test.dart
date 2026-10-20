@@ -29,6 +29,7 @@ import 'package:kubadilishanaapp/services/api_service.dart';
 import 'package:kubadilishanaapp/services/app_cache.dart';
 import 'package:kubadilishanaapp/services/websocket_service.dart';
 import 'package:kubadilishanaapp/widgets/app_shell.dart' show LanguageProvider;
+import 'package:kubadilishanaapp/widgets/time_ago.dart' show timeAgoShort, timeAgoShortFromDateTime;
 
 import 'helpers/fake_api.dart';
 
@@ -443,6 +444,84 @@ void main() {
       expect(find.text('Jaribu tena'), findsNothing,
           reason: 'Hakuna kitufe cha "Jaribu tena" — pull-to-refresh pekee');
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('H. MUDA — "Sasa hivi" inageuka "dak 7", haiwakai milele', () {
+    testWidgets('Arifa ya dakika 7 iliyopita inaonyesha "dak 7", si "Sasa hivi"',
+        (tester) async {
+      routes.notifications
+        ..clear()
+        ..add({
+          'notification_id': 'n-x',
+          'type': 'payment.approved',
+          'title': 'Malipo yamekubaliwa',
+          'body': 'Ada ya mwezi imethibitishwa',
+          'read': false,
+          'created_at':
+              DateTime.now().subtract(const Duration(minutes: 7)).toIso8601String(),
+        });
+      await tester.pumpWidget(wrapApp(const NotificationsScreen()));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('dak 7'), findsOneWidget,
+          reason: 'Arifa yenye dakika 7 iliyopita inaonyesha muda halisi');
+      expect(find.text('Sasa hivi'), findsNothing,
+          reason: 'Arifa ya dakika 7 iliyopita SI "Sasa hivi"');
+      await tester.pumpWidget(const SizedBox()); // timer idispose (teardown)
+      await tester.pump(const Duration(milliseconds: 50));
+    });
+
+    testWidgets('Ukiwa ukurasa: tick ya sekunde 30 inabadilisha muda ("Sasa hivi" → "dak 1")',
+        (tester) async {
+      // Arifa imetumwa sekunde ~59.5 zilizopita — inaonyesha "Sasa hivi".
+      routes.notifications
+        ..clear()
+        ..add({
+          'notification_id': 'n-y',
+          'type': 'payment.approved',
+          'title': 'Malipo yamekubaliwa',
+          'body': 'Ada ya mwezi imethibitishwa',
+          'read': false,
+          'created_at': DateTime.now()
+              .subtract(const Duration(milliseconds: 59500))
+              .toIso8601String(),
+        });
+      await tester.pumpWidget(wrapApp(const NotificationsScreen()));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Sasa hivi'), findsOneWidget);
+
+      // Wakati halisi unaendelea bila reload yoyote (mtumiaji hajafanya
+      // kitu). Baada ya ~6 s halisi arifa ipo zaidi ya dakika 1 iliyopita —
+      // tick ya sekunde 30 inarebuild labels BILA kufungua upya ukurasa.
+      await tester
+          .runAsync(() => Future<void>.delayed(const Duration(seconds: 6)));
+      await tester.pump(const Duration(seconds: 31));
+
+      expect(find.text('dak 1'), findsOneWidget,
+          reason: 'Tick ya sekunde 30 inaonyesha muda mpya bila reload');
+      await tester.pumpWidget(const SizedBox()); // timer idispose (teardown)
+      await tester.pump(const Duration(milliseconds: 50));
+    });
+
+    test('DIFF HASI — saa ya simu ikinyuma na server: "dak 7" haipotei', () {
+      // Simu ya mtumiaji iko NYUMA kwa dakika 7 ikilinganishwa na server:
+      // zamani diff ilikuwa hasi → arifa zote zibaki "Sasa hivi" MILELE.
+      final ref = DateTime(2026, 10, 20, 14, 0); // wakati wa simu
+      final arifa = DateTime(2026, 10, 20, 14, 7); // dakika 7 "mbeleni" kwa simu
+      expect(timeAgoShortFromDateTime(arifa, at: ref), 'dak 7');
+    });
+
+    test('diff kama kawaida: dakika 7 → "dak 7", chini ya dakika 1 → "Sasa hivi"', () {
+      final now = DateTime.now();
+      expect(
+        timeAgoShortFromDateTime(now.subtract(const Duration(minutes: 7)), at: now),
+        'dak 7',
+      );
+      expect(timeAgoShort(now.toIso8601String()), 'Sasa hivi');
     });
   });
 }

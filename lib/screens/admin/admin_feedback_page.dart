@@ -723,8 +723,29 @@ class _FeedbackCardState extends State<_FeedbackCard> {
     final replied   = reply != null && reply.trim().isNotEmpty;
 
     // Kichwa (bold) + ujumbe (kama picha): title = subject, body = message.
+    // DEDUP (kasoro ya "maneno yanajirudia"): app ya user inatuma subject =
+    // herufi 60 za kwanza za ujumbe mwenyewe — kadi ilionyeshwa maneno YALE
+    // YALE mara mbili ("Okay\nOkay"). Tunaondoa sehemu inayojirudia:
+    //  • subject == ujumbe (au ujumbe ni ndani ya subject) → body = ''
+    //  • subject ni MWANZO wa ujumbe → body = sehemu iliyobaki tu (si prefix)
+    // Kulinganisha ni case-insensitive + vitone ('...') vya truncation
+    // vinapuuzwa, ili data ya zamani ya DB na ya sasavoir au kama kingine.
     final title = subject.isNotEmpty ? subject : msg;
-    final body = (msg.isNotEmpty && msg != subject) ? msg : '';
+    final core = subject.replaceAll(RegExp(r'\.{1,3}$'), '').trim();
+    final coreL = core.toLowerCase();
+    final msgL = msg.toLowerCase().trim();
+    final bool subjectInMsg =
+        coreL.isNotEmpty && msgL.contains(coreL);
+    final bool msgInSubject =
+        msgL.isNotEmpty && coreL.startsWith(msgL);
+    final String body;
+    if (subject.isEmpty || msgInSubject) {
+      body = ''; // ujumbe yote iko kwenye kichwa — hakuna kurudia
+    } else if (subjectInMsg) {
+      body = msg.substring(msgL.indexOf(coreL) + core.length).trim();
+    } else {
+      body = msg;
+    }
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -820,10 +841,14 @@ class _FeedbackCardState extends State<_FeedbackCard> {
                             style: GoogleFonts.inter(
                                 fontSize: 11, color: _kGreyT(context))),
                         const SizedBox(height: 2),
-                        Text(reply,
+                        // READ MORE: jibu refu la admin linakatwa kuwa mistari
+                        // 5 + "Soma zaidi/Punguza" — kama picha (hakuna kadi
+                        // refu mno).
+                        ReadMoreText(reply,
                             style: GoogleFonts.inter(
                                 fontSize: 13, height: 1.4,
-                                color: _kInkT(context))),
+                                color: _kInkT(context)),
+                            collapsedLines: 5),
                       ],
                     ),
                   ),
