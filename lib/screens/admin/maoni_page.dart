@@ -451,7 +451,7 @@ class _MaoniPageState extends State<MaoniPage> {
     return InkWell(
       onTap: () => _setTab(t),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 9),
+        padding: const EdgeInsets.symmetric(vertical: 7),
         decoration: BoxDecoration(
           border: Border(
               bottom: BorderSide(
@@ -483,19 +483,20 @@ class _MaoniPageState extends State<MaoniPage> {
   }
 
   // Namba ndani ya duara — NDIGO ZAIDI (omaombi la mtumiaji: "bado kubwa
-  // sana"). Yenyewe sasa ndogo lakini bado nyeupe kwenye nyekundu.
+  // sana"). PUNGUZWA TENA KIDOGO: duara 17×17, font 10.5 — vatundu vidogo
+  // zaidi watagezekana bila kupoteza uhakika.
   Widget _badge(int n, Color bg, Color fg) => Container(
-        constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
-        padding: const EdgeInsets.symmetric(horizontal: 3),
+        constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+        padding: const EdgeInsets.symmetric(horizontal: 2.5),
         alignment: Alignment.center,
         decoration: BoxDecoration(
             color: bg,
             shape: n < 100 ? BoxShape.circle : BoxShape.rectangle,
             borderRadius:
-                n < 100 ? null : BorderRadius.circular(9)),
+                n < 100 ? null : BorderRadius.circular(8)),
         child: Text('$n',
             style: TextStyle(
-                fontSize: 11.5, fontWeight: FontWeight.w600, color: fg)),
+                fontSize: 10.5, fontWeight: FontWeight.w600, color: fg)),
       );
 
   Widget _search() => TextField(
@@ -822,7 +823,7 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
   // (reconnect, envelope tofauti) — hivyo
   //  1. AdminLiveSync LISTEN-ALL: event YOYOTE ya data (si pong/heartbeat)
   //     ina-reload — hakuna aina iliyokosekana.
-  //  2. POLL ya sekunde 20 nzima: hata WS ikikufa kabisa, orodha hupakia upya
+  //  2. POLL ya sekunde 12: hata WS ikikufa kabisa, orodha hupakia upya
   //     na majibu mapya yanaonekana kwenye PAGE HII pekee.
   Timer? _poll;
 
@@ -835,10 +836,10 @@ class _AdminMaoniPageState extends State<AdminMaoniPage> {
     WebSocketService().on('notification', _onWs);
     // LIVE — AdminLiveSync (listenAll): feedback.new (mtumiaji ameandika) +
     // feedback.replied (jibu bingwa) + yote mengine ya data — reload PAPO HAPO.
-    _liveSub = AdminLiveSync().listenAll(() => _load());  // POLL ya muda — nyuma ya pazia (loadPage ina-inflight dedupe + diski:
-  // hakuna kelele wala flash ya data ya kale). Kadi ya editor ikiwa wazi,
-  // poll inaruka (isitibitishe maandishi ya admin anayeandika).
-    _poll = Timer.periodic(const Duration(seconds: 20), (_) {
+    _liveSub = AdminLiveSync().listenAll(() => _load());
+// POLL ya muda — nyuma ya pazia (loadPage ina-inflight dedupe + diski:
+  // hakuna kelele wala flash ya data ya kale).
+    _poll = Timer.periodic(const Duration(seconds: 12), (_) {
       if (mounted) _load();
     });
   }
