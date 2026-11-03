@@ -1,7 +1,8 @@
 /// API configuration — base URL, WebSocket URL, timeouts.
 class ApiConfig {
-  // Production EC2 backend
-  static const String baseUrl = 'https://api.16-171-23-21.sslip.io';
+  // Production backend (EC2 mpya). HTTPS + BILA trailing slash.
+  // Server ya kale (16.171.23.21 → api.16-171-23-21.sslip.io) imezimwa.
+  static const String baseUrl = 'https://api.13-51-176-163.sslip.io';
 
   static String get apiUrl => '$baseUrl';
   static String get wsUrl => baseUrl.replaceFirst('http', 'ws');

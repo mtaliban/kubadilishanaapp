@@ -89,7 +89,7 @@ jobs:
             2. Nenda Settings → Security → ruhusu "Install from unknown sources"
             3. Bonyeza faili la APK ulilopakua → Install
 
-            > APK hii inaungana na backend: `https://api.16-171-23-21.sslip.io`
+            > APK hii inaungana na backend: `https://api.13-51-176-163.sslip.io`
           files: ${{ env.APK_PATH }}
           draft: false
           prerelease: false
